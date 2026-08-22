@@ -246,7 +246,21 @@ function handleContentImageUpload(contentId) {
 
     if (!mbState.contentSectionImages[contentId]) mbState.contentSectionImages[contentId] = [];
 
-    Array.from(input.files).forEach(file => {
+    /* Sequential, and downscaled on the way in — see image_prep.js.
+       forEach with a FileReader each also meant the images could land in
+       any order, since whichever decoded first pushed first; a chain
+       keeps the order the user picked them in. */
+    const files = Array.from(input.files);
+    input.value = ''; // reset so same file can be re-added
+
+    if (typeof mbPrepareImages === 'function') {
+        mbPrepareImages(files, 'content').then(results => {
+            results.forEach(r => mbState.contentSectionImages[contentId].push(r.dataUrl));
+            renderContentImageGallery(contentId);
+        });
+        return;
+    }
+    files.forEach(file => {
         const reader = new FileReader();
         reader.onload = function(e) {
             mbState.contentSectionImages[contentId].push(e.target.result);
@@ -254,7 +268,6 @@ function handleContentImageUpload(contentId) {
         };
         reader.readAsDataURL(file);
     });
-    input.value = ''; // reset so same file can be re-added
 }
 
 function removeContentImage(contentId, imgIndex) {
@@ -280,18 +293,32 @@ function addInfoQRImage() {
     document.getElementById('info-qr-input').click();
 }
 
+/* QR codes take the 'qr' profile: capped in size but kept as PNG and
+   never JPEG-compressed. They are read by a phone camera at 2.5 cm, and
+   JPEG ringing around the finder patterns is a scan that fails, not a
+   picture that looks slightly worse. */
+function _mbSetQRImage(which, file) {
+    if (!file) return;
+    const preview = document.getElementById(`${which}-qr-preview`);
+
+    const apply = function (dataUrl) {
+        if (preview) preview.innerHTML = `<img src="${dataUrl}" alt="QR Code" style="width: 100px; height: 100px;">`;
+        if (which === 'info') mbState.infoQRImage = dataUrl;
+        else                  mbState.activityQRImage = dataUrl;
+    };
+
+    if (typeof mbPrepareImage === 'function') {
+        mbPrepareImage(file, 'qr').then(out => apply(out.dataUrl));
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(e) { apply(e.target.result); };
+    reader.readAsDataURL(file);
+}
+
 function handleInfoQRUpload() {
     const input = document.getElementById('info-qr-input');
-    const preview = document.getElementById('info-qr-preview');
-    
-    if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            preview.innerHTML = `<img src="${e.target.result}" alt="QR Code" style="width: 100px; height: 100px;">`;
-            mbState.infoQRImage = e.target.result;
-        };
-        reader.readAsDataURL(input.files[0]);
-    }
+    if (input.files && input.files[0]) _mbSetQRImage('info', input.files[0]);
 }
 
 function addActivityQRImage() {
@@ -300,16 +327,7 @@ function addActivityQRImage() {
 
 function handleActivityQRUpload() {
     const input = document.getElementById('activity-qr-input');
-    const preview = document.getElementById('activity-qr-preview');
-    
-    if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            preview.innerHTML = `<img src="${e.target.result}" alt="QR Code" style="width: 100px; height: 100px;">`;
-            mbState.activityQRImage = e.target.result;
-        };
-        reader.readAsDataURL(input.files[0]);
-    }
+    if (input.files && input.files[0]) _mbSetQRImage('activity', input.files[0]);
 }
 
 async function clearInfoSheet() {
@@ -343,13 +361,18 @@ function addInfoImage() {
 function handleInfoImageUpload() {
     const input = document.getElementById('info-image-input');
     const preview = document.getElementById('info-image-preview');
-    
-    if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            preview.innerHTML = `<img src="${e.target.result}" alt="Info image">`;
-            infoImageData = e.target.result;
-        };
-        reader.readAsDataURL(input.files[0]);
+    if (!input.files || !input.files[0]) return;
+
+    const apply = function (dataUrl) {
+        if (preview) preview.innerHTML = `<img src="${dataUrl}" alt="Info image">`;
+        infoImageData = dataUrl;
+    };
+
+    if (typeof mbPrepareImageAndReport === 'function') {
+        mbPrepareImageAndReport(input.files[0], 'content').then(out => apply(out.dataUrl));
+        return;
     }
+    const reader = new FileReader();
+    reader.onload = function(e) { apply(e.target.result); };
+    reader.readAsDataURL(input.files[0]);
 }

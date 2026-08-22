@@ -2,23 +2,49 @@
 // /src/cover_images.js
 // Front/back cover image upload, drop, preview
 // Extracted verbatim from Module_Builder.html lines 2772-2839 (v2.0-legacy).
+//
+// The four handlers below used to be four copies of the same six lines
+// of FileReader. They are one function now, and it goes through
+// mbPrepareImage() so a 12-megapixel phone photo is downscaled to A4 at
+// 300 dpi BEFORE it is ever held in state — see image_prep.js for why
+// that is the difference between a 100 MB module and a 6 MB one.
 // ============================================================
+
+/**
+ * One path for both covers and both ways of supplying a file.
+ *
+ * If image_prep.js has not loaded, this falls back to the original
+ * FileReader behaviour rather than failing: an unoptimised cover is a
+ * degraded outcome, no cover at all is a broken one.
+ */
+function _mbSetCoverImage(side, file) {
+    if (!file || !file.type || file.type.indexOf('image/') !== 0) return;
+
+    var apply = function (dataUrl) {
+        if (side === 'front') mbState.frontCoverImage = dataUrl;
+        else                  mbState.backCoverImage  = dataUrl;
+        _showCoverPreview(side, dataUrl);
+    };
+
+    if (typeof mbPrepareImageAndReport === 'function') {
+        mbPrepareImageAndReport(file, 'cover').then(function (out) { apply(out.dataUrl); });
+        return;
+    }
+    var reader = new FileReader();
+    reader.onload = function (e) { apply(e.target.result); };
+    reader.readAsDataURL(file);
+}
 
 function handleFrontCoverUpload(input) {
     if (!input.files || !input.files[0]) return;
-    const reader = new FileReader();
-    reader.onload = function(e) { mbState.frontCoverImage = e.target.result; _showCoverPreview('front', mbState.frontCoverImage); };
-    reader.readAsDataURL(input.files[0]);
+    _mbSetCoverImage('front', input.files[0]);
 }
 function handleFrontCoverDrop(event) {
     event.preventDefault();
     document.getElementById('front-cover-upload-area').style.background = 'white';
-    const file = event.dataTransfer.files[0];
-    if (!file || !file.type.startsWith('image/')) return;
-    const reader = new FileReader();
-    reader.onload = function(e) { mbState.frontCoverImage = e.target.result; _showCoverPreview('front', mbState.frontCoverImage); };
-    reader.readAsDataURL(file);
+    _mbSetCoverImage('front', event.dataTransfer.files[0]);
 }
+
 function deleteFrontCoverImage() {
     mbState.frontCoverImage = null;
     document.getElementById('front-cover-image-input').value = '';
@@ -30,18 +56,12 @@ function deleteFrontCoverImage() {
 // ── Back Cover functions ────────────────────────────────────────
 function handleBackCoverUpload(input) {
     if (!input.files || !input.files[0]) return;
-    const reader = new FileReader();
-    reader.onload = function(e) { mbState.backCoverImage = e.target.result; _showCoverPreview('back', mbState.backCoverImage); };
-    reader.readAsDataURL(input.files[0]);
+    _mbSetCoverImage('back', input.files[0]);
 }
 function handleBackCoverDrop(event) {
     event.preventDefault();
     document.getElementById('back-cover-upload-area').style.background = 'white';
-    const file = event.dataTransfer.files[0];
-    if (!file || !file.type.startsWith('image/')) return;
-    const reader = new FileReader();
-    reader.onload = function(e) { mbState.backCoverImage = e.target.result; _showCoverPreview('back', mbState.backCoverImage); };
-    reader.readAsDataURL(file);
+    _mbSetCoverImage('back', event.dataTransfer.files[0]);
 }
 function deleteBackCoverImage() {
     mbState.backCoverImage = null;
