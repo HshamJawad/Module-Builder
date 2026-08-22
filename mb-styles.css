@@ -2236,9 +2236,19 @@ textarea:focus             { border-color: #A9AEB3 !important; outline: none; }
       everything around them changes.
    ═══════════════════════════════════════════════════════════════ */
 
+/* Several spellings listed on purpose. GitHub Pages is case-sensitive
+   and the file may have shipped as Cairo.woff2, cairo.woff2 or with a
+   -VF suffix; the browser walks this list and uses the first URL that
+   resolves, so one of them being wrong costs nothing. If ALL of them
+   404, the stack falls through to Segoe UI / Tahoma and the interface
+   still reads correctly — check the Network tab for which name is
+   actually served and the rest can be deleted. */
 @font-face {
     font-family: 'Cairo';
-    src: url('fonts/cairo.woff2') format('woff2');
+    src: url('fonts/Cairo.woff2')         format('woff2'),
+         url('fonts/cairo.woff2')         format('woff2'),
+         url('fonts/Cairo-VF.woff2')      format('woff2'),
+         url('fonts/Cairo-Regular.woff2') format('woff2');
     font-weight: 200 1000;              /* variable */
     font-style: normal;
     font-display: swap;
