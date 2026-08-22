@@ -1788,3 +1788,205 @@ body.mb-nav-no-anim .tabs-container { transition: none !important; }
     .mb-nav-toggle { display: none; }
     .mb-nav-toggle + .figma-divider { display: none; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   VISUAL IDENTITY — paper #FCFCFB, silver controls, faded red for
+   destructive actions
+   ---------------------------------------------------------------
+   This layer sits last on purpose. Much of the original palette
+   lives in inline style="" attributes in the markup, which no
+   ordinary rule can outrank, so the overrides here are matched on
+   the attribute text itself ([style*="#667eea"]) and carry
+   !important. That is the cost of re-skinning without editing
+   several hundred inline attributes by hand — and it keeps every
+   data-act, id and class exactly where the scripts expect them.
+
+   Three colours do the whole job:
+     paper    #FCFCFB   every surface
+     silver   #DADCDE   every control at rest, and the rail
+     faded red          delete / clear / remove only
+
+   Destructive buttons are selected by INTENT, not by class:
+   [data-act^="delete"] and friends also catch the rows that the
+   renderers build at runtime, which a class list would miss.
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+    --mb-paper:       #FCFCFB;
+    --mb-paper-sunk:  #F4F4F2;
+    --mb-line:        #E4E5E2;
+    --mb-line-strong: #D3D5D1;
+    --mb-ink:         #3F464D;
+    --mb-ink-soft:    #6B7379;
+
+    /* Controls at rest — the toolbar's untouched state, everywhere. */
+    --mb-btn:         linear-gradient(180deg, #FBFBFA 0%, #F0F0EE 100%);
+    --mb-btn-hover:   linear-gradient(180deg, #F3F3F1 0%, #E4E5E2 100%);
+
+    /* Destructive — present, not shouting. */
+    --mb-red:         linear-gradient(180deg, #FDF4F3 0%, #F7E7E5 100%);
+    --mb-red-hover:   linear-gradient(180deg, #F9E9E7 0%, #F0D8D5 100%);
+    --mb-red-line:    #EBCCC8;
+    --mb-red-ink:     #A8524B;
+
+    /* The former purple accent, de-saturated to graphite. */
+    --mb-accent:      #5E666D;
+}
+
+/* ── Surfaces ──────────────────────────────────────────────────── */
+body                       { background: #E8E9E6 !important; }
+.container                 { background: var(--mb-paper) !important;
+                             box-shadow: 0 18px 50px rgba(15,23,42,0.18) !important; }
+.tab-content.active        { background: var(--mb-paper) !important; }
+.mb-dialog                 { background: var(--mb-paper); }
+
+/* Panels that were painted white or grey inline, and the boxed areas. */
+.container [style*="background: white"],
+.container [style*="background:white"],
+.container [style*="background: #fff"],
+.container [style*="background:#fff"],
+.container [style*="background: #f9fafb"],
+.container [style*="background:#f9fafb"],
+.container [style*="background: #f8f9fa"],
+.container [style*="background: #f3f4f6"],
+.container [style*="background: #f0f4ff"],
+.container [style*="background:#f0f4ff"] { background: var(--mb-paper) !important; }
+
+/* ── The old purple, neutralised ───────────────────────────────── */
+[style*="color:#667eea"],
+[style*="color: #667eea"]  { color: var(--mb-ink) !important; }
+
+[style*="solid #667eea"]   { border-color: var(--mb-line-strong) !important; }
+
+/* Purple fills: banners, avatars, table headers. */
+[style*="background:#667eea"],
+[style*="background: #667eea"],
+[style*="background:linear-gradient(135deg,#667eea"],
+[style*="background: linear-gradient(135deg, #667eea"] {
+    background: linear-gradient(180deg, #6E767D 0%, #5A6167 100%) !important;
+    box-shadow: none !important;
+}
+
+.app-title-bar h1,
+h1, .section-title,
+.step-label                { color: var(--mb-ink) !important; }
+.app-title-bar p           { color: var(--mb-ink-soft) !important; }
+
+/* ── Every control, at rest, is the toolbar's silver ───────────── */
+button:not(.tab):not(.figma-btn):not(.mark-dropdown-item),
+.container a[style*="background"],
+.mb-dialog-btn {
+    background: var(--mb-btn) !important;
+    background-color: #F5F5F3 !important;
+    color: var(--mb-ink) !important;
+    border: 1px solid var(--mb-line-strong) !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    transition: background 0.15s, border-color 0.15s !important;
+}
+
+button:not(.tab):not(.figma-btn):not(.mark-dropdown-item):hover,
+.container a[style*="background"]:hover,
+.mb-dialog-btn:hover {
+    background: var(--mb-btn-hover) !important;
+    border-color: #C4C7C2 !important;
+}
+
+/* The toolbar keeps its own resting state; only the trash turns red. */
+.figma-btn                 { background: #F7F7F5; border-color: var(--mb-line-strong); }
+.figma-btn-icon.green,
+.figma-btn-icon.blue,
+.figma-btn-icon.purple     { background: #E9EAE7; }
+
+/* ── Destructive actions: delete, clear, remove, reset ─────────── */
+[data-act^="delete"],
+[data-act^="remove"],
+[data-act^="clear"],
+[data-act*="Delete"],
+[data-act*="Remove"],
+[data-act*="Clear"],
+.btn-clear,
+.btn-remove,
+.btn-remove-sheet,
+.btn-clear-section,
+.content-img-delete,
+.objective-format-btn.clear,
+.mb-dialog-ok.is-danger {
+    background: var(--mb-red) !important;
+    background-color: #FBEEEC !important;
+    color: var(--mb-red-ink) !important;
+    border: 1px solid var(--mb-red-line) !important;
+    box-shadow: none !important;
+}
+
+[data-act^="delete"]:hover,
+[data-act^="remove"]:hover,
+[data-act^="clear"]:hover,
+[data-act*="Delete"]:hover,
+[data-act*="Remove"]:hover,
+[data-act*="Clear"]:hover,
+.btn-clear:hover,
+.btn-remove:hover,
+.btn-remove-sheet:hover,
+.btn-clear-section:hover,
+.content-img-delete:hover,
+.objective-format-btn.clear:hover,
+.mb-dialog-ok.is-danger:hover {
+    background: var(--mb-red-hover) !important;
+    border-color: #DFB9B4 !important;
+}
+
+.figma-btn[data-act="clearAll"] {
+    color: var(--mb-red-ink) !important;
+}
+.figma-btn[data-act="clearAll"] .figma-btn-icon.red { background: #F7E3E0; }
+
+/* clearAndStartManual is a reset, not a delete — silver, not red. */
+[data-act="clearAndStartManual"] {
+    background: var(--mb-btn) !important;
+    color: var(--mb-ink) !important;
+    border: 1px solid var(--mb-line-strong) !important;
+}
+[data-act="clearAndStartManual"]:hover { background: var(--mb-btn-hover) !important; }
+
+/* ── Remaining coloured leftovers in the stylesheet itself ─────── */
+.btn-export,
+.btn-activity-sheet {
+    background: var(--mb-btn) !important;
+    color: var(--mb-ink) !important;
+    border: 1px solid var(--mb-line-strong) !important;
+}
+.btn-export:hover,
+.btn-activity-sheet:hover {
+    background: var(--mb-btn-hover) !important;
+    box-shadow: none !important;
+}
+
+.export-info               { background: var(--mb-paper-sunk); border-color: var(--mb-line); }
+.mb-dialog-ok              { background: var(--mb-btn) !important; }
+
+/* Borders and rules throughout drop to one hairline value. */
+.action-buttons            { border-bottom-color: var(--mb-line) !important; }
+.app-title-bar             { border-bottom-color: var(--mb-line) !important; }
+table, table th, table td  { border-color: var(--mb-line-strong) !important; }
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus,
+select:focus,
+textarea:focus             { border-color: #A9AEB3 !important; outline: none; }
+
+/* ── The rail, re-tuned to the same three colours ──────────────── */
+@media (min-width: 1025px) {
+    .tabs-container        { background: linear-gradient(180deg, #EFF0EE 0%, #DADCDE 60%, #CDD0D2 100%); }
+    .tabs .tab.active      { background: var(--mb-paper); color: var(--mb-ink);
+                             border-color: var(--mb-paper);
+                             border-inline-start-color: #6E767D; }
+    .mb-nav-mark           { background: #6E767D; box-shadow: none; }
+}
+
+@media (max-width: 1024px) {
+    .tab                   { background: #EDEEEB; color: var(--mb-ink); }
+    .tab.active            { background: #6E767D !important; color: #fff !important;
+                             box-shadow: none !important; }
+}

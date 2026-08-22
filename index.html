@@ -790,7 +790,51 @@
 <script src="src/exports_docx.js"></script>
 <script src="src/contentlang_ui.js"></script>
 <script src="src/events.js"></script>
-<script src="src/sidenav.js"></script>
+<!-- Side-rail toggle. Inlined rather than shipped as src/sidenav.js so
+     the feature has no second file to deploy: it is 30 lines, it binds
+     one listener to one button, and it touches nothing the dispatch
+     registry in events.js owns. -->
+<script>
+(function () {
+    'use strict';
+    var KEY = 'mb_nav_collapsed', CLASS = 'mb-nav-collapsed';
+
+    function read()  { try { return localStorage.getItem(KEY) === '1'; } catch (e) { return false; } }
+    function write(v){ try { localStorage.setItem(KEY, v ? '1' : '0'); } catch (e) {} }
+
+    function apply(collapsed, btn) {
+        document.body.classList.toggle(CLASS, collapsed);
+        if (btn) btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+    }
+
+    function init() {
+        var btn = document.getElementById('mb-nav-toggle');
+        if (!btn) return;
+
+        /* Restore the saved state without animating it on load. */
+        document.body.classList.add('mb-nav-no-anim');
+        apply(read(), btn);
+        requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+                document.body.classList.remove('mb-nav-no-anim');
+            });
+        });
+
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            var collapsed = !document.body.classList.contains(CLASS);
+            apply(collapsed, btn);
+            write(collapsed);
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+</script>
 <script src="src/app.js"></script>
 <script src="src/autosave.js"></script>
 </body>
