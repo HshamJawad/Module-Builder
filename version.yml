@@ -1,0 +1,45 @@
+# ============================================================
+# Bumps version.json on every push to the site.
+#
+# The patch number is the workflow run number, so it moves once
+# per push and never needs a human to remember it. Major/minor
+# stay under manual control in MAJOR_MINOR below — a run number
+# is a build counter, not a statement about the release.
+#
+# The commit carries [skip ci] and the workflow ignores changes
+# to version.json, so the push it makes cannot retrigger itself.
+# ============================================================
+name: Bump version
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'version.json'
+      - '.github/workflows/version.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write version.json
+        env:
+          MAJOR_MINOR: "2.0"
+        run: |
+          VERSION="${MAJOR_MINOR}.${GITHUB_RUN_NUMBER}"
+          BUILD="$(date -u +%Y-%m-%d)"
+          printf '{\n  "version": "%s",\n  "build": "%s"\n}\n' "$VERSION" "$BUILD" > version.json
+          cat version.json
+
+      - name: Commit
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add version.json
+          git diff --staged --quiet || git commit -m "chore: version bump [skip ci]"
+          git push

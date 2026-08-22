@@ -1824,10 +1824,16 @@ body.mb-nav-no-anim .tabs-container { transition: none !important; }
     --mb-btn-hover:   linear-gradient(180deg, #F3F3F1 0%, #E4E5E2 100%);
 
     /* Destructive — present, not shouting. */
-    --mb-red:         linear-gradient(180deg, #FDF4F3 0%, #F7E7E5 100%);
-    --mb-red-hover:   linear-gradient(180deg, #F9E9E7 0%, #F0D8D5 100%);
-    --mb-red-line:    #EBCCC8;
-    --mb-red-ink:     #A8524B;
+    /* Faded, not pink. The first pass tinted the whole button and it
+       read as a coloured control; a destructive action needs to be
+       recognisable, not loud. The fill is now within a shade of the
+       silver used everywhere else, and the red carries in the text
+       and the hairline only. Colour returns on hover, where the
+       pointer has already committed to the button. */
+    --mb-red:         linear-gradient(180deg, #FCFAFA 0%, #F4EFEE 100%);
+    --mb-red-hover:   linear-gradient(180deg, #FAF0EE 0%, #F1DEDB 100%);
+    --mb-red-line:    #E2D2CF;
+    --mb-red-ink:     #A25B54;
 
     /* The former purple accent, de-saturated to graphite. */
     --mb-accent:      #5E666D;
@@ -1913,7 +1919,7 @@ button:not(.tab):not(.figma-btn):not(.mark-dropdown-item):hover,
 .objective-format-btn.clear,
 .mb-dialog-ok.is-danger {
     background: var(--mb-red) !important;
-    background-color: #FBEEEC !important;
+    background-color: #F8F4F3 !important;
     color: var(--mb-red-ink) !important;
     border: 1px solid var(--mb-red-line) !important;
     box-shadow: none !important;
@@ -1933,7 +1939,7 @@ button:not(.tab):not(.figma-btn):not(.mark-dropdown-item):hover,
 .objective-format-btn.clear:hover,
 .mb-dialog-ok.is-danger:hover {
     background: var(--mb-red-hover) !important;
-    border-color: #DFB9B4 !important;
+    border-color: #D8BEB9 !important;
 }
 
 .figma-btn[data-act="clearAll"] {
@@ -1989,4 +1995,93 @@ textarea:focus             { border-color: #A9AEB3 !important; outline: none; }
     .tab                   { background: #EDEEEB; color: var(--mb-ink); }
     .tab.active            { background: #6E767D !important; color: #fff !important;
                              box-shadow: none !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FOOTER IN THE HELP PANEL  +  UPDATE BANNER
+   ═══════════════════════════════════════════════════════════════ */
+
+/* The footer is now a block of the Help panel rather than the last
+   thing under every tab, so it needs the panel's own separation
+   instead of the page's. */
+#help-tab .footer {
+    margin-top: 28px;
+    padding-top: 20px;
+    border-top: 1px solid var(--mb-line);
+    color: var(--mb-ink-soft);
+    font-size: 0.85em;
+    text-align: center;
+}
+
+#help-tab .mb-credit { color: var(--mb-ink); }
+
+/* Belt and braces: if a stray .footer is ever rendered outside the
+   Help panel again, it stays out of the working panels. */
+.container > .footer { display: none; }
+
+/* ── Update banner ─────────────────────────────────────────────
+   Bottom of the viewport, above the safe-area inset, and it never
+   covers the toolbar. Hidden until version.js opens it. */
+.mb-update-bar {
+    position: fixed;
+    inset-inline: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    margin-inline: auto;
+    max-width: 720px;
+    z-index: 10000;
+
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+
+    background: var(--mb-paper);
+    border: 1px solid var(--mb-line-strong);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.20);
+
+    transform: translateY(140%);
+    opacity: 0;
+    visibility: hidden;
+    transition: transform 0.25s ease, opacity 0.25s ease, visibility 0.25s;
+}
+
+.mb-update-bar.is-open {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+}
+
+.mb-update-icon  { font-size: 1.15em; flex-shrink: 0; }
+.mb-update-copy  { display: flex; flex-direction: column; gap: 2px; flex: 1 1 auto; min-width: 0; }
+.mb-update-text  { font-size: 0.92em; font-weight: 700; color: var(--mb-ink); line-height: 1.35; }
+.mb-update-note  { font-size: 0.8em;  color: var(--mb-ink-soft); line-height: 1.35; }
+
+.mb-update-bar button {
+    flex-shrink: 0;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.86em;
+    font-weight: 600;
+    cursor: pointer;
+    min-height: 38px;
+}
+
+/* The primary action reads a shade darker than the rest of the
+   silver so it is findable without introducing another colour. */
+.mb-update-bar .mb-update-go {
+    background: linear-gradient(180deg, #E9EAE7 0%, #DADCDE 100%) !important;
+    border-color: #C4C7C2 !important;
+}
+.mb-update-bar .mb-update-later {
+    color: var(--mb-ink-soft) !important;
+    background: transparent !important;
+    border-color: transparent !important;
+}
+.mb-update-bar .mb-update-later:hover { background: var(--mb-paper-sunk) !important; }
+
+@media (max-width: 600px) {
+    .mb-update-bar { flex-wrap: wrap; gap: 8px; }
+    .mb-update-copy { flex-basis: 100%; }
+    .mb-update-bar button { flex: 1 1 auto; }
 }

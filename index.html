@@ -13,6 +13,7 @@
 <script src="https://cdn.jsdelivr.net/npm/docx@7.8.2/build/index.js"></script>
 <!-- Error handler must load before any app script -->
 <script src="error-handler2.js"></script>
+<script defer src="version.js"></script>
 <link href="mb-styles.css" rel="stylesheet"/>
 </head>
 <body>
@@ -41,7 +42,7 @@
 </div>
 <!-- Always-visible App Title -->
 <div class="app-title-bar">
-<h1 data-i18n="mbModuleBuilderV20">Module Builder V 2.0</h1>
+<h1 id="mb-app-title">Module Builder</h1>
 <p data-i18n="mbACompetencyBasedTrainingModuleDevelopm">A competency-based training module development tool for structuring learning outcomes, activities, and assessments.</p>
 </div>
 <!-- Tabs / Side navigation -->
@@ -49,7 +50,7 @@
 <div class="mb-nav-head">
 <span class="mb-nav-mark">MB</span>
 <span class="mb-nav-head-text">
-<span class="mb-nav-title" data-i18n="mbModuleBuilderV20">Module Builder V 2.0</span>
+<span class="mb-nav-title" id="mb-nav-title">Module Builder</span>
 </span>
 </div>
 <div class="tabs">
@@ -718,6 +719,19 @@
 </div>
 </div><!-- end grid -->
 </div>
+<!-- Footer. It lives INSIDE the Help panel now, not at the foot of the
+     page: a copyright line and a disclaimer are reference material, and
+     repeating them under every working panel only pushed the real work
+     further up the scroll. The credit line and the version are written
+     by version.js so the name and the build number have exactly one
+     source each. -->
+<div class="footer">
+<div style="text-align: center; line-height: 1.5;">
+<div class="mb-credit" id="mb-credit" style="font-weight: 600; margin-bottom: 4px;"></div>
+<div style="font-size: 0.82em; max-width: 1100px; margin: 0 auto; font-style: italic;">
+<strong data-i18n="mbDisclaimer" style="font-style: normal;">Disclaimer:</strong><span data-i18n="txModuleBuilderIsProvidedAsIs">Module Builder is provided "as is" without warranty of any kind. The developer assumes no responsibility for any inaccuracies, errors, omissions, or inconsistencies in the generated documents. Users and facilitating institutions are solely responsible for verifying, validating, and making final decisions on all content before use.</span></div>
+</div>
+</div>
 </div>
 <!-- Content-language switch. Placed with the status banner so it is
              visible from every tab; it applies to the whole project, not to
@@ -729,15 +743,6 @@
 <div class="content-lang-switch" id="content-lang-switch"></div>
 <div class="content-lang-switch" id="export-lang-switch"></div>
 <div class="status" id="status"></div>
-<div class="footer">
-<div style="text-align: center; line-height: 1.5;">
-<div data-i18n="mb2026ModuleBuilderByHushamJawad" style="font-weight: 600; margin-bottom: 4px;">
-                    © 2026 Module Builder | by Husham Jawad Kadhim | Version 2.0 | All Rights Reserved
-                </div>
-<div style="font-size: 0.82em; max-width: 1100px; margin: 0 auto; font-style: italic;">
-<strong data-i18n="mbDisclaimer" style="font-style: normal;">Disclaimer:</strong><span data-i18n="txModuleBuilderIsProvidedAsIs">Module Builder is provided "as is" without warranty of any kind. The developer assumes no responsibility for any inaccuracies, errors, omissions, or inconsistencies in the generated documents. Users and facilitating institutions are solely responsible for verifying, validating, and making final decisions on all content before use.</span></div>
-</div>
-</div>
 </div>
 <!-- ═══════════════════════════════════════════════════════════════
          Application scripts.
