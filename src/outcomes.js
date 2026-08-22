@@ -4,19 +4,52 @@
 // Extracted verbatim from Module_Builder.html lines 3272-3598 (v2.0-legacy).
 // ============================================================
 
+/**
+ * A caller-supplied title, or nothing.
+ *
+ * events.js appends the ELEMENT and the EVENT after whatever `data-args`
+ * declares:
+ *
+ *     out = fn.apply(el, args.concat([el, ev]));
+ *
+ * The button that adds a learning outcome carries no `data-args`, so the
+ * first parameter of this function received the <button> itself. An
+ * element is truthy, so `defaultTitle || await mbPrompt(...)` short-
+ * circuited: the dialog never opened and the outcome was named
+ * "[object HTMLButtonElement]".
+ *
+ * The convention in events.js is deliberate and worth keeping — several
+ * handlers still want `this` and `event` where their old inline call put
+ * them. What it means is that any handler with an OPTIONAL first
+ * parameter must state what it will accept. This one accepts a string.
+ */
+function _loTitleArg(v) {
+    return (typeof v === 'string' && v.trim()) ? v : null;
+}
+
 async function addNewLearningOutcome(defaultTitle) {
     if (!mbState.currentModuleId) {
         await mbAlert(window.i18n.t('dgPleaseSelectOrCreateA'));
         return;
     }
-    
-    const title = defaultTitle || await mbPrompt(window.i18n.t('dgEnterLearningOutcomeTitle'), window.i18n.tf('dgDefaultLOName', { v0: mbState.learningOutcomesData.length + 1 }));
-    if (!title && !defaultTitle) return;
-    
+
+    const preset = _loTitleArg(defaultTitle);
+    const fallbackName = window.i18n.tf('dgDefaultLOName', { v0: mbState.learningOutcomesData.length + 1 });
+
+    const title = preset || await mbPrompt(window.i18n.t('dgEnterLearningOutcomeTitle'), fallbackName);
+
+    /* Cancelled: mbPrompt resolves null. Only a preset title may skip
+       the dialog, and then there is nothing to cancel. */
+    if (!preset && (title === null || !String(title).trim())) return;
+
     mbState.loIdCounter++;
     const newLO = {
         id: `lo-${mbState.loIdCounter}`,
-        title: title || window.i18n.tf('dgDefaultLOName', { v0: mbState.learningOutcomesData.length + 1 }),
+        /* A pair, not a string. Everything the user TYPES is bilingual;
+           storing a bare string here would work until the first content-
+           language switch, then read as the wrong side. biPut writes the
+           active side and leaves the other empty. */
+        title: biNew(),
         number: '',
         statement: '',
         performanceCriteria: [],
@@ -24,6 +57,8 @@ async function addNewLearningOutcome(defaultTitle) {
         activitySheets: []
     };
     
+    biPut(newLO, 'title', String(title || fallbackName).trim());
+
     mbState.learningOutcomesData.push(newLO);
     saveCurrentModuleLOData(); // Save to current module
     renderLOSelector();
@@ -37,10 +72,27 @@ async function addNewLearningOutcome(defaultTitle) {
     showStatus(window.i18n.t('dgLearningOutcomeAdded'), 'success');
 }
 
+/* An <option> label is plain text, so anything with < or & in it has to
+   be escaped or it silently truncates the name. */
+function _loEscape(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+}
+
+/* One place converts a stored title into something displayable. Titles
+   are { en, ar } pairs; `${lo.title}` printed "[object Object]" into the
+   dropdown. biGet (not biGetStrict) so a title typed on one side only
+   still shows rather than leaving a blank row in the list. */
+function loTitleText(lo) {
+    var t = (typeof biGet === 'function') ? biGet(lo.title, contentLang()) : lo.title;
+    return String(t == null ? '' : t);
+}
+
 function renderLOSelector() {
     const optionsHtml = '<option data-i18n="mbSelectLearningOutcome" value="">' + window.i18n.t('mbSelectLearningOutcome') + '</option>' +
         mbState.learningOutcomesData.map(lo =>
-            `<option value="${lo.id}">${lo.title}</option>`
+            `<option value="${lo.id}">${_loEscape(loTitleText(lo))}</option>`
         ).join('');
 
     // Determine which LO to select: keep mbState.currentLOId if valid, else first LO
@@ -283,10 +335,14 @@ async function renameLearningOutcome() {
     const lo = mbState.learningOutcomesData.find(l => l.id === mbState.currentLOId);
     if (!lo) return;
     
-    const newTitle = await mbPrompt(window.i18n.t('dgEnterNewTitle'), lo.title);
-    if (!newTitle) return;
-    
-    lo.title = newTitle;
+    /* Show the side being edited, and write back to that same side.
+       `lo.title = newTitle` flattened the pair: renaming in Arabic
+       destroyed the English title that had been typed beside it. */
+    const newTitle = await mbPrompt(window.i18n.t('dgEnterNewTitle'), loTitleText(lo));
+    if (newTitle === null || !String(newTitle).trim()) return;
+
+    biPut(lo, 'title', String(newTitle).trim());
+    saveCurrentModuleLOData();
     renderLOSelector();
     showStatus(window.i18n.t('dgLearningOutcomeRenamed'), 'success');
 }
@@ -301,11 +357,20 @@ async function deleteLearningOutcome() {
     if (!lo) return;
     
     const totalSheets = lo.infoSheets.length + lo.activitySheets.length;
-    const message = totalSheets > 0 
-        ? `⚠️ Delete this Learning Outcome?\n\nThis Learning Outcome contains ${totalSheets} sheet(s).\n\nThis action cannot be undone. Continue?`
-        : '⚠️ Delete this Learning Outcome?\n\nThis action cannot be undone. Continue?';
-    
-    if (!await mbConfirm(message)) {
+
+    /* Built here rather than in the markup, so applyTranslations() never
+       saw it: this confirmation stayed English in an Arabic interface.
+       It reads through i18n now, with the English text as the fallback
+       so it degrades to what it said before if the key is missing. */
+    const message = totalSheets > 0
+        ? (window.i18n.has && window.i18n.has('dgConfirmDeleteLOWithSheets')
+            ? window.i18n.tf('dgConfirmDeleteLOWithSheets', { v0: totalSheets })
+            : `⚠️ Delete this Learning Outcome?\n\nThis Learning Outcome contains ${totalSheets} sheet(s).\n\nThis action cannot be undone. Continue?`)
+        : (window.i18n.has && window.i18n.has('dgConfirmDeleteLO')
+            ? window.i18n.t('dgConfirmDeleteLO')
+            : '⚠️ Delete this Learning Outcome?\n\nThis action cannot be undone. Continue?');
+
+    if (!await mbConfirm(message, { danger: true })) {
         return;
     }
     
