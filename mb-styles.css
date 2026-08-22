@@ -1556,3 +1556,182 @@ html[dir="rtl"] .mb-lang-host    { direction: rtl; }
 /* Modal actions: cancel/confirm are ordered in the DOM, and the flex row
    mirrors on its own. Only the alignment needs stating. */
 html[dir="rtl"] .mb-dialog-actions { justify-content: flex-end; }
+
+/* ═══════════════════════════════════════════════════════════════
+   SIDE NAVIGATION  (silver rail)
+   ---------------------------------------------------------------
+   The section switcher moved from a top strip to a fixed vertical
+   rail on the inline-start edge. The markup of the buttons is
+   untouched: same <button class="tab" data-act="switchTab">, same
+   .active class, so tabs.js / events.js keep working exactly as
+   before — only their placement and skin change.
+
+   Everything here is scoped to (min-width: 1025px). Below that the
+   original pill strip stays in force, which is the right shape for
+   a phone.
+
+   Logical properties (inset-inline-start, border-inline-start,
+   padding-inline) are used throughout so the rail flips to the
+   right side by itself when the i18n engine sets html[dir="rtl"].
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+    --mb-nav-w:        272px;
+    --mb-silver:       #DADCDE;
+    --mb-silver-light: #EFF1F2;
+    --mb-silver-dark:  #C6CACE;
+    --mb-silver-line:  #BFC4C9;
+    --mb-nav-ink:      #3F464D;
+    --mb-nav-ink-soft: #6B7379;
+    --mb-accent:       #667eea;
+}
+
+@media (min-width: 1025px) {
+
+    /* Room for the rail. Logical, so RTL needs no second rule. */
+    body { padding-inline-start: calc(var(--mb-nav-w) + 20px); }
+
+    .tabs-container {
+        position: fixed;
+        inset-inline-start: 0;
+        top: 56px;                       /* under the figma toolbar */
+        bottom: 0;
+        width: var(--mb-nav-w);
+        z-index: 9990;
+
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+
+        margin: 0;
+        padding: 18px 14px calc(20px + env(safe-area-inset-bottom, 0px));
+
+        background: linear-gradient(180deg,
+                    var(--mb-silver-light) 0%,
+                    var(--mb-silver)      55%,
+                    var(--mb-silver-dark) 100%);
+        border-inline-end: 1px solid var(--mb-silver-line);
+        box-shadow: 0 0 18px rgba(15, 23, 42, 0.13);
+
+        overflow-x: hidden;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #AEB4BA transparent;
+    }
+    .tabs-container::-webkit-scrollbar        { display: block; width: 8px; }
+    .tabs-container::-webkit-scrollbar-thumb  { background: #AEB4BA; border-radius: 8px; }
+    .tabs-container::-webkit-scrollbar-track  { background: transparent; }
+
+    /* ── Rail header ───────────────────────────────────────────── */
+    .mb-nav-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 4px 8px 14px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.75);
+        box-shadow: 0 1px 0 var(--mb-silver-line);
+        flex-shrink: 0;
+    }
+
+    .mb-nav-mark {
+        width: 34px;
+        height: 34px;
+        flex-shrink: 0;
+        border-radius: 9px;
+        background: var(--mb-accent);
+        color: #fff;
+        font-size: 0.78em;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 6px rgba(102, 126, 234, 0.4);
+        direction: ltr;                  /* the mark is always "MB" */
+    }
+
+    .mb-nav-head-text { min-width: 0; }
+
+    .mb-nav-title {
+        display: block;
+        font-size: 0.86em;
+        font-weight: 700;
+        color: var(--mb-nav-ink);
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+    }
+
+    /* ── The list ──────────────────────────────────────────────── */
+    .tabs {
+        display: flex;
+        flex-direction: column;
+        flex-wrap: nowrap;
+        gap: 4px;
+        flex: 1 1 auto;
+        border-bottom: none;
+        margin: 0;
+        min-width: 0;
+    }
+
+    .tabs .tab {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        width: 100%;
+        text-align: start;
+
+        padding: 11px 14px;
+        min-height: 46px;
+        border-radius: 10px;
+        border: 1px solid transparent;
+        border-inline-start: 3px solid transparent;   /* accent slot, no shift */
+
+        background: transparent;
+        color: var(--mb-nav-ink);
+        font-size: 0.94em;
+        font-weight: 600;
+        line-height: 1.4;
+
+        white-space: normal;             /* long Arabic labels wrap */
+        overflow-wrap: anywhere;
+        flex-shrink: 0;
+        transition: background 0.18s, color 0.18s, border-color 0.18s;
+    }
+
+    .tabs .tab:hover {
+        background: rgba(255, 255, 255, 0.72);
+        border-color: rgba(255, 255, 255, 0.9);
+        border-inline-start-color: var(--mb-silver-dark);
+        color: #2F3439;
+    }
+
+    .tabs .tab:focus-visible {
+        outline: 2px solid var(--mb-accent);
+        outline-offset: 2px;
+    }
+
+    .tabs .tab.active {
+        background: #FFFFFF;
+        color: var(--mb-accent);
+        border-color: #FFFFFF;
+        border-inline-start-color: var(--mb-accent);
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+    }
+
+    /* Help sits at the foot of the rail, where a help entry belongs. */
+    .tabs .tab:last-child {
+        margin-top: auto;
+        color: var(--mb-nav-ink-soft);
+        font-size: 0.88em;
+        min-height: 40px;
+    }
+    .tabs .tab:last-child.active { color: var(--mb-accent); }
+
+    /* The panel no longer needs the strip's clearance. */
+    .tab-content.active { border-radius: 14px; }
+}
+
+/* Phones and small tablets keep the original horizontal pill strip. */
+@media (max-width: 1024px) {
+    .mb-nav-head { display: none; }
+}
