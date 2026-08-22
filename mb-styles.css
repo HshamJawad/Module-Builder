@@ -1735,3 +1735,56 @@ html[dir="rtl"] .mb-dialog-actions { justify-content: flex-end; }
 @media (max-width: 1024px) {
     .mb-nav-head { display: none; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   SIDE NAVIGATION — collapse toggle
+   ---------------------------------------------------------------
+   src/sidenav.js only ever adds or removes .mb-nav-collapsed on
+   <body>. The transform is the one place a physical axis is
+   unavoidable (translate has no logical form), so RTL gets its
+   own mirrored rule rather than a second class name.
+   ═══════════════════════════════════════════════════════════════ */
+
+.figma-btn-icon.silver {
+    background: var(--mb-silver, #DADCDE);
+    color: #3F464D;
+    font-size: 1.05em;
+    line-height: 1;
+}
+
+.mb-nav-toggle { padding: 6px; }
+
+/* Suppress the slide on first paint while the saved state is restored. */
+body.mb-nav-no-anim .tabs-container { transition: none !important; }
+
+@media (min-width: 1025px) {
+
+    .tabs-container {
+        transition: transform 0.22s ease, visibility 0.22s;
+    }
+
+    body { transition: padding-inline-start 0.22s ease; }
+
+    body.mb-nav-collapsed { padding-inline-start: 20px; }
+
+    body.mb-nav-collapsed .tabs-container {
+        transform: translateX(-100%);
+        visibility: hidden;
+    }
+
+    html[dir="rtl"] body.mb-nav-collapsed .tabs-container {
+        transform: translateX(100%);
+    }
+
+    body.mb-nav-collapsed .mb-nav-toggle .figma-btn-icon.silver {
+        background: #EDEEF0;
+        color: #8A9198;
+    }
+}
+
+/* On phones the rail is already the horizontal pill strip, which is
+   the right shape there — nothing to collapse, so the button goes. */
+@media (max-width: 1024px) {
+    .mb-nav-toggle { display: none; }
+    .mb-nav-toggle + .figma-divider { display: none; }
+}

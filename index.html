@@ -18,6 +18,9 @@
 <body>
 <!-- ── Fixed Figma-style Toolbar ─────────────────────────────────── -->
 <div class="figma-toolbar">
+<button aria-controls="mb-sidenav" aria-expanded="true" aria-label="Toggle sections panel" class="figma-btn mb-nav-toggle" id="mb-nav-toggle" title="Toggle sections panel">
+<span class="figma-btn-icon silver">☰</span></button>
+<div class="figma-divider"></div>
 <button class="figma-btn" data-act="saveWork">
 <span class="figma-btn-icon green">💾</span><span data-i18n="txSaveWork">Save Work</span></button>
 <button class="figma-btn" data-act="loadWork">
@@ -787,6 +790,7 @@
 <script src="src/exports_docx.js"></script>
 <script src="src/contentlang_ui.js"></script>
 <script src="src/events.js"></script>
+<script src="src/sidenav.js"></script>
 <script src="src/app.js"></script>
 <script src="src/autosave.js"></script>
 </body>
