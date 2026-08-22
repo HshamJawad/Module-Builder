@@ -53,6 +53,10 @@ async function addNewLearningOutcome(defaultTitle) {
         number: '',
         statement: '',
         performanceCriteria: [],
+        /* Author-defined sections for this outcome — LO contents,
+           assessment methods, training conditions. Travels inside the
+           outcome, so it is saved and loaded with modulesData. */
+        blocks: [],
         infoSheets: [],
         activitySheets: []
     };
@@ -136,6 +140,7 @@ function _applyLOSwitch(selectedLOId) {
             const s = document.getElementById(id);
             if (s) s.value = '';
         });
+        if (typeof mbRenderBlocks === 'function') mbRenderBlocks('lo');
         return;
     }
 
@@ -157,6 +162,10 @@ function _applyLOSwitch(selectedLOId) {
 }
 
 function updateLOSummary() {
+    /* One call covers every branch below: blocks.js hides its own
+       section when there is no outcome to attach a section to. */
+    if (typeof mbRenderBlocks === 'function') mbRenderBlocks('lo');
+
     const summary = document.getElementById('lo-sheets-summary');
     
     if (!mbState.currentLOId) {

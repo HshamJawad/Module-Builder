@@ -106,6 +106,7 @@ function saveWork() {
             teamMembers: mbState.teamMembers,
             teamMemberIdCounter: mbState.teamMemberIdCounter,
             introAdditionalDetails: mbState.introAdditionalDetails,
+            introBlocks: mbState.introBlocks,
             modules: mbState.modulesData,
             currentModuleId: mbState.currentModuleId,
             moduleIdCounter: mbState.moduleIdCounter,
@@ -186,6 +187,10 @@ function handleLoadFile() {
                 if (document.getElementById('intro-additional-details')) {
                     mbState.introAdditionalDetails = biUpgrade(data.introAdditionalDetails);
                 }
+                /* mbNormalizeBlocks is idempotent and tolerates the key
+                   being absent — every file saved before this feature. */
+                mbState.introBlocks = mbNormalizeBlocks(data.introBlocks);
+                mbRenderBlocks('intro');
                 
                 // Load assessment data
                 if (document.getElementById('assessment-simple-content')) {
@@ -268,6 +273,10 @@ function handleLoadFile() {
                 if (document.getElementById('intro-additional-details')) {
                     mbState.introAdditionalDetails = biUpgrade(data.introAdditionalDetails);
                 }
+                /* mbNormalizeBlocks is idempotent and tolerates the key
+                   being absent — every file saved before this feature. */
+                mbState.introBlocks = mbNormalizeBlocks(data.introBlocks);
+                mbRenderBlocks('intro');
                 
                 // Load assessment data
                 if (document.getElementById('assessment-simple-content')) {
@@ -415,6 +424,8 @@ async function clearAll() {
         renderWorkTeam();
         const introDetails = document.getElementById('intro-additional-details');
         if (introDetails) introDetails.value = '';
+        mbState.introBlocks = [];
+        mbRenderBlocks('intro');
 
         // ── Information Sheet tab ─────────────────────────────────
         document.getElementById('info-sheet-number').value = '';

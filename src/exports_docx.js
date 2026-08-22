@@ -69,7 +69,8 @@ async function exportToDocx() {
     const hasCoversContent = coversAdditionalInfo.trim() || coversAdditionalNotes.trim() || mbState.coverRows.some(row => (row.value || '').trim());
     const hasWorkTeam = mbState.teamMembers.some(member => (member.name || '').trim() || (member.task || '').trim() || (member.workLocation || '').trim());
     const introAdditionalDetails = mbState.introAdditionalDetails || '';
-    const hasIntroContent = hasWorkTeam || introAdditionalDetails.trim();
+    const hasIntroBlocks  = mbBlocksAnyFilled(mbState.introBlocks);
+    const hasIntroContent = hasWorkTeam || introAdditionalDetails.trim() || hasIntroBlocks;
     const infoTitle = _info.title || '';
     const contentSections = (_info.contentSections || []);
     let hasInfoContent = false;
@@ -759,7 +760,11 @@ async function exportToDocx() {
         const hasWorkTeam = mbState.teamMembers.some(member => member.name.trim() || member.task.trim() || member.workLocation.trim());
         const introAdditionalDetails = mbState.introAdditionalDetails || '';
         
-        if (hasWorkTeam || introAdditionalDetails.trim()) {
+        /* Only the filled sections exist as far as the document is
+           concerned; an empty one must not create a blank page. */
+        const introBlocks = mbBlocksFilled(mbState.introBlocks);
+
+        if (hasWorkTeam || introAdditionalDetails.trim() || introBlocks.length) {
             const { Table, TableRow, TableCell, WidthType, BorderStyle } = mbDocxLib();
             const introChildren = [];
             
@@ -931,6 +936,45 @@ async function exportToDocx() {
                 });
             }
             
+            /* Extra introduction sections. Each is its own page, so a
+               page break goes BEFORE every section that has something in
+               front of it — the first one breaks only if the work team or
+               the additional details already wrote onto the page. */
+            let introPageUsed = !!(hasWorkTeam || introAdditionalDetails.trim());
+
+            introBlocks.forEach(block => {
+                if (introPageUsed) {
+                    introChildren.push(new Paragraph({ children: [new PageBreak()] }));
+                }
+                introPageUsed = true;
+
+                const blockTitle = (block.title || '').trim();
+                if (blockTitle) {
+                    introChildren.push(new Paragraph({
+                        children: [new TextRun({
+                            text: blockTitle,
+                            size: 28,            // 14pt — a page heading
+                            bold: true,
+                            color: '0070C0',
+                            rightToLeft: _mbRtl(),
+                        })],
+                        alignment: _mbStart(AlignmentType),
+                        bidirectional: _mbRtl(),
+                        spacing: { after: 300, before: 200 },
+                    }));
+                }
+
+                (block.body || '').split('\n').forEach(line => {
+                    if (!line.trim()) return;
+                    introChildren.push(new Paragraph({
+                        children: [new TextRun({ text: line, size: 24, rightToLeft: _mbRtl() })],
+                        alignment: _mbStart(AlignmentType),
+                        bidirectional: _mbRtl(),
+                        spacing: { after: 150 },
+                    }));
+                });
+            });
+
             sections.push({
                 properties: {
                     bidi: _mbRtl()
@@ -1008,6 +1052,35 @@ async function exportToDocx() {
                     });
                 }
                 
+                /* Author-defined sections for this outcome. They sit
+                   between the description and the performance criteria —
+                   the same order the card shows on screen. */
+                mbBlocksFilled(lo.blocks).forEach(block => {
+                    const blockTitle = (block.title || '').trim();
+                    if (blockTitle) {
+                        overviewChildren.push(new Paragraph({
+                            children: [new TextRun({
+                                text: blockTitle,
+                                size: 24,        // 12pt — matches expPerformanceCriteria
+                                bold: true,
+                                rightToLeft: _mbRtl(),
+                            })],
+                            alignment: _mbStart(AlignmentType),
+                            bidirectional: _mbRtl(),
+                            spacing: { after: 200, before: 250 },
+                        }));
+                    }
+                    (block.body || '').split('\n').forEach(line => {
+                        if (!line.trim()) return;
+                        overviewChildren.push(new Paragraph({
+                            children: [new TextRun({ text: line, size: 24, rightToLeft: _mbRtl() })],
+                            alignment: _mbStart(AlignmentType),
+                            bidirectional: _mbRtl(),
+                            spacing: { after: 150 },
+                        }));
+                    });
+                });
+
                 // Performance Criteria (if available)
                 if (lo.performanceCriteria && lo.performanceCriteria.length > 0) {
                     // Performance Criteria heading

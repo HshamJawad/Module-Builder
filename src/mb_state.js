@@ -113,7 +113,14 @@ var mbState = {
     coversAdditionalInfo:  { en: '', ar: '' },
     coversAdditionalNotes: { en: '', ar: '' },
     introAdditionalDetails:{ en: '', ar: '' },
-    assessmentContent:     { en: '', ar: '' }
+    assessmentContent:     { en: '', ar: '' },
+
+    /* Author-added introduction sections:
+           [{ uid, title: { en, ar }, body: { en, ar } }]
+       Not in MB_PROJECT_TEXT below — those four are one textarea each
+       with a fixed id; this is a variable-length list rendered by
+       blocks.js, which binds each box straight to its pair. */
+    introBlocks: []
 };
 
 /* Map of textarea id → mbState key, for the four fields above. */
@@ -130,6 +137,9 @@ function syncProjectTextFromDOM() {
         var el = document.getElementById(id);
         if (el) biPut(mbState, MB_PROJECT_TEXT[id], el.value);
     });
+    /* The section boxes bind live, so this is a belt-and-braces flush
+       for a value set without an input event (a paste by script). */
+    if (typeof mbSyncBlocksFromDOM === 'function') mbSyncBlocksFromDOM();
 }
 
 /** State → DOM, active side only. Call after load or a content-language switch. */
@@ -138,6 +148,7 @@ function applyProjectTextToDOM() {
         var el = document.getElementById(id);
         if (el) el.value = biGetStrict(mbState[MB_PROJECT_TEXT[id]], contentLang());
     });
+    if (typeof mbRenderAllBlocks === 'function') mbRenderAllBlocks();
 }
 
 /* Declared with `var` deliberately: this is a classic script, and `var`
