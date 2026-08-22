@@ -2205,24 +2205,34 @@ textarea:focus             { border-color: #A9AEB3 !important; outline: none; }
 /* ═══════════════════════════════════════════════════════════════
    TYPEFACES
    ---------------------------------------------------------------
-   Cairo for Arabic, JetBrains Mono for English and French, both
-   self-hosted from /fonts. Two notes on the wiring:
+   Cairo for Arabic, the system UI stack for English and French.
+
+   JetBrains Mono is gone. It is a code face — fixed width, tall
+   ascenders, built to make `l` and `1` distinguishable in a
+   terminal — and none of that helps a form full of prose.
+
+   The Latin side needs no font file. "Segoe UI, system-ui, ..."
+   is what the tool has always rendered in, and a system face has
+   one advantage a hosted one cannot match: it is already on the
+   machine, so it paints on the first frame with no swap and no
+   request. If a specific Latin face is wanted later, it drops
+   into --mb-font-latin and nothing else changes.
+
+   Two things the wiring has to get right:
 
    1. The switch is keyed to <html lang>, which the i18n engine
-      already sets — not to a class anyone has to remember to add.
-      One rule per language, and every later font declaration in
-      this file inherits from body rather than restating a family.
+      already sets — not a class anyone has to remember to add.
 
-   2. Cairo stays in the fallback chain for the Latin faces. The
-      INTERFACE language and the CONTENT language are still two
-      different things underneath: a user working in the English
-      interface types Arabic into the bilingual fields, and
-      JetBrains Mono has no Arabic glyphs. Without the fallback
-      that text renders in whatever the browser substitutes,
-      which is how you get one paragraph in three typefaces.
+   2. Cairo stays in the Latin fallback chain. The INTERFACE
+      language and the CONTENT language are still separate
+      underneath: someone working in the English interface types
+      Arabic into the bilingual fields, and the Latin stack has
+      thin Arabic coverage at best. Without the fallback that text
+      renders in whatever the browser substitutes, which is how
+      one paragraph ends up in three typefaces.
 
    3. Form controls do not inherit font-family. They are listed
-      explicitly or the inputs stay on the system UI face while
+      explicitly or the inputs stay on the browser default while
       everything around them changes.
    ═══════════════════════════════════════════════════════════════ */
 
@@ -2234,17 +2244,9 @@ textarea:focus             { border-color: #A9AEB3 !important; outline: none; }
     font-display: swap;
 }
 
-@font-face {
-    font-family: 'JetBrains Mono';
-    src: url('fonts/JetBrainsMono-VF.woff2') format('woff2-variations'),
-         url('fonts/JetBrainsMono-VF.woff2') format('woff2');
-    font-weight: 100 800;               /* variable */
-    font-style: normal;
-    font-display: swap;
-}
-
 :root {
-    --mb-font-latin:  'JetBrains Mono', ui-monospace, 'Cairo', 'Segoe UI', monospace;
+    --mb-font-latin:  'Segoe UI', system-ui, -apple-system, 'Helvetica Neue',
+                      Arial, 'Cairo', sans-serif;
     --mb-font-arabic: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
     --mb-font:        var(--mb-font-latin);
 }
@@ -2265,25 +2267,12 @@ textarea,
 .mb-lang-panel,
 .footer { font-family: var(--mb-font) !important; }
 
-/* JetBrains Mono is a monospace face: at the sizes this interface
-   uses it sets wider than the proportional font it replaces, so the
-   dense controls need a touch less tracking and size to keep the
-   toolbar and the rail from wrapping. Arabic is unaffected. */
-html:not([lang^="ar"]) .figma-btn,
-html:not([lang^="ar"]) .tabs .tab,
-html:not([lang^="ar"]) .mb-lang-opt {
-    letter-spacing: -0.015em;
-}
-
-html:not([lang^="ar"]) .figma-btn { font-size: 0.84em; }
-html:not([lang^="ar"]) .tabs .tab { font-size: 0.88em; }
-
-/* The Arabic face carries a taller x-height; the original sizes were
-   tuned for Segoe UI and read slightly large in Cairo. */
+/* Cairo carries a taller x-height than the Latin stack and reads a
+   size larger at the same value; the interface was tuned for the
+   latter, so the Arabic side comes back down a step. */
 html[lang^="ar"] body { font-size: 1em; }
 
-/* Numbers stay in the Latin face in both directions — a version
-   string and a counter read as data, not as prose. */
+/* Version strings, counters and codes read as data, not prose. */
 .mb-update-bar .mb-update-note,
 #mb-credit,
 .cls-hint,
