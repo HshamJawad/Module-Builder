@@ -164,33 +164,56 @@
         /* ── Snapshot ─────────────────────────────────────────────── */
         function collectSnapshot() {
             try {
-                // Flush current form state into data structures (read-only wrappers)
+                /* Flush current form state into data structures.
+                   syncProjectTextFromDOM() joined this list: without it
+                   the four free-text fields below would be read from
+                   state the editor has not been written into yet. It
+                   also flushes the section boxes (blocks.js). */
                 if (typeof saveCurrentSheetToLO  === 'function') saveCurrentSheetToLO();
                 if (typeof saveCurrentModuleLOData=== 'function') saveCurrentModuleLOData();
                 if (typeof saveCoverData          === 'function') saveCoverData();
                 if (typeof saveWorkTeamData       === 'function') saveWorkTeamData();
+                if (typeof syncProjectTextFromDOM === 'function') syncProjectTextFromDOM();
 
+                /* ── Pairs, not .value ──────────────────────────────
+                   These four were read straight off the textareas:
+                       (document.getElementById('...') || {}).value || ''
+                   A textarea holds ONE side of an { en, ar } pair — the
+                   side currently being edited. So every autosave wrote a
+                   half-project, and a crash after a content-language
+                   switch restored the visible half and dropped the other
+                   one, silently, with no file to fall back on. That is
+                   the exact failure autosave exists to prevent. State
+                   already holds both sides; the flush above makes it
+                   current. */
                 return {
                     version:              '3.0',
+                    schemaVersion:        4,        // matches saveWork()
                     _autosave:            true,
                     _savedAt:             Date.now(),
-                    coversAdditionalInfo: (document.getElementById('covers-additional-info')  || {}).value || '',
-                    coversAdditionalNotes:(document.getElementById('covers-additional-notes') || {}).value || '',
+                    coversAdditionalInfo:   mbState.coversAdditionalInfo,
+                    coversAdditionalNotes:  mbState.coversAdditionalNotes,
                     frontCoverImage:      mbState.frontCoverImage  || null,
                     backCoverImage:       mbState.backCoverImage   || null,
                     coverRows:            mbState.coverRows        || [],
                     coverRowIdCounter:    mbState.coverRowIdCounter|| 7,
                     teamMembers:          mbState.teamMembers      || [],
                     teamMemberIdCounter:  mbState.teamMemberIdCounter || 0,
-                    introAdditionalDetails: (document.getElementById('intro-additional-details') || {}).value || '',
+                    introAdditionalDetails: mbState.introAdditionalDetails,
+                    introBlocks:          mbState.introBlocks      || [],
                     modules:              mbState.modulesData      || [],
                     currentModuleId:      mbState.currentModuleId  || null,
                     moduleIdCounter:      mbState.moduleIdCounter  || 0,
                     currentLOId:          mbState.currentLOId      || null,
                     loIdCounter:          mbState.loIdCounter      || 0,
-                    assessmentContent:    (document.getElementById('assessment-simple-content') || {}).value || '',
+                    assessmentContent:    mbState.assessmentContent,
                     assessmentFormsData:  mbState.assessmentFormsData || {},
-                    referencesTitle:      mbState.referencesTitle  || 'References',
+                    /* null, never 'References' — see the restore note.
+                       The literal here put the English heading into
+                       storage on the first autosave of a new project,
+                       so it came back through the restore path even
+                       after that path was fixed. */
+                    referencesTitle:      mbState.referencesTitle  || null,
                     referencesData:       mbState.referencesData   || [],
                     refIdCounter:         mbState.refIdCounter     || 1,
                 };
@@ -311,10 +334,15 @@
 
             // Mirror the existing v3.0 load path from handleLoadFile
             try {
-                if (document.getElementById('covers-additional-info'))
-                    document.getElementById('covers-additional-info').value = data.coversAdditionalInfo || '';
-                if (document.getElementById('covers-additional-notes'))
-                    document.getElementById('covers-additional-notes').value = data.coversAdditionalNotes || '';
+                /* Into state, then onto the screen through the one
+                   function that knows which side to show. Assigning
+                   .value directly printed "[object Object]" the moment
+                   the snapshot started carrying pairs. biUpgrade keeps
+                   older snapshots working: a bare string is lifted to a
+                   pair, its side guessed from its script, exactly as
+                   biMigrateProject does for old project files. */
+                mbState.coversAdditionalInfo  = biUpgrade(data.coversAdditionalInfo);
+                mbState.coversAdditionalNotes = biUpgrade(data.coversAdditionalNotes);
 
                 mbState.frontCoverImage = data.frontCoverImage || null;
                 mbState.backCoverImage  = data.backCoverImage  || null;
@@ -334,17 +362,35 @@
                     mbState.teamMemberIdCounter  = data.teamMemberIdCounter || 0;
                     renderWorkTeam();
                 }
-                if (document.getElementById('intro-additional-details'))
-                    document.getElementById('intro-additional-details').value = data.introAdditionalDetails || '';
+                mbState.introAdditionalDetails = biUpgrade(data.introAdditionalDetails);
+                /* mbNormalizeBlocks is idempotent and tolerates the key
+                   being absent — every snapshot written before this
+                   feature existed. */
+                if (typeof mbNormalizeBlocks === 'function') {
+                    mbState.introBlocks = mbNormalizeBlocks(data.introBlocks);
+                }
 
-                if (data.assessmentContent && document.getElementById('assessment-simple-content'))
-                    document.getElementById('assessment-simple-content').value = data.assessmentContent;
+                mbState.assessmentContent = biUpgrade(data.assessmentContent);
                 if (data.assessmentFormsData)
                     mbState.assessmentFormsData = data.assessmentFormsData;
 
-                mbState.referencesTitle = data.referencesTitle || 'References';
+                /* One call paints all four textareas and every section
+                   box, on the side the author is editing. */
+                if (typeof applyProjectTextToDOM === 'function') applyProjectTextToDOM();
+
+                /* `|| 'References'` is what overwrote the seeded Arabic
+                   heading on every restore. mb_state.js leaves this null
+                   deliberately: null is the signal mbSeedReferencesTitle()
+                   waits for, and it fills BOTH sides from the dictionary.
+                   A literal here is a translation the dictionary has no
+                   say over — the same mistake the cover-row labels used
+                   to carry. */
+                mbState.referencesTitle = data.referencesTitle
+                    ? biUpgrade(data.referencesTitle)
+                    : null;
                 mbState.referencesData  = data.referencesData  || [];
                 mbState.refIdCounter    = data.refIdCounter    || 1;
+                if (typeof mbSeedReferencesTitle === 'function') mbSeedReferencesTitle();
                 if (typeof renderReferences === 'function') renderReferences();
 
                 if (data.modules && typeof renderModuleSelector === 'function') {
