@@ -37,20 +37,20 @@ function addStep() {
 }
 
 /* ── Step images ─────────────────────────────────────────────
-   THESE THREE FUNCTIONS WERE MISSING.
-   The file input above declared data-act="handleImageUpload", and no
-   file in the project defines that name — so picking an image did
-   nothing but log "No handler registered" to the console. Worse,
-   sheets.js line ~312 calls renderStepImageGallery() when it loads an
-   activity sheet that has images, which threw a ReferenceError and
-   aborted the rest of the load. Both are implemented here, mirroring
-   the content-section equivalents in content.js so the two galleries
-   behave identically, and routed through image_prep.js on the way in.
+   Only the UPLOAD path is redefined here, and only to put the picked
+   files through image_prep.js before they reach state.
 
-   The input's data-act was renamed to handleStepImageUpload: the old
-   name says "images" without saying whose, and if a definition of it
-   does turn up in a file not yet reviewed, the two would silently
-   compete for the same button. ------------------------------------ */
+   renderStepImageGallery() and removeStepImage() are deliberately NOT
+   redefined. They already exist elsewhere in the project and work; this
+   file loads late, so a second definition here would shadow them
+   silently and quietly drop whatever the original does that this one
+   would not. The upload handler is the only place that has to change,
+   because it is the only one that touches the bytes.
+
+   The input's data-act was renamed from handleImageUpload to
+   handleStepImageUpload so the two do not compete for the same button:
+   the old handler still exists and still works — it just no longer
+   receives the click. ---------------------------------------------- */
 
 function handleStepImageUpload(stepId) {
     const input = document.getElementById(`image-input-${stepId}`);
@@ -71,6 +71,8 @@ function handleStepImageUpload(stepId) {
         });
         return;
     }
+    /* image_prep.js missing: fall back to exactly what the original
+       handler did. An unoptimised image beats no image. */
     files.forEach(file => {
         const reader = new FileReader();
         reader.onload = function (e) {
@@ -79,30 +81,6 @@ function handleStepImageUpload(stepId) {
         };
         reader.readAsDataURL(file);
     });
-}
-
-function removeStepImage(stepId, imgIndex) {
-    if (!mbState.stepImages[stepId]) return;
-    mbState.stepImages[stepId].splice(imgIndex, 1);
-    renderStepImageGallery(stepId);
-}
-
-function renderStepImageGallery(stepId) {
-    const gallery = document.getElementById(`step-image-gallery-${stepId}`);
-    /* Called by sheets.js for every stored stepId, including ones whose
-       row is not on screen yet. A missing gallery is normal, not an
-       error — hence the quiet return rather than a throw. */
-    if (!gallery) return;
-
-    const images = mbState.stepImages[stepId] || [];
-    if (images.length === 0) { gallery.innerHTML = ''; return; }
-
-    gallery.innerHTML = images.map((src, i) => `
-        <div class="content-img-thumb">
-            <img src="${src}" alt="Image ${i + 1}">
-            <button class="content-img-delete" data-act="removeStepImage" data-args='[${stepId},${i}]' title="${window.i18n.t('dgRemoveImage')}" data-i18n-title="dgRemoveImage">×</button>
-        </div>
-    `).join('');
 }
 
 async function removeStep(id) {
