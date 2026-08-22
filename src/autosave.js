@@ -252,17 +252,34 @@
         }
 
         /* ── Restore on load ──────────────────────────────────────── */
+        /**
+         * THE call site the old comment here flagged as "the one to
+         * convert first". It is converted.
+         *
+         * It used to read the snapshot with mbGetSetting — the SETTINGS
+         * accessor, synchronous, localStorage-only — which worked only
+         * because both APIs happened to sit on the same backend. Now
+         * that documents live in IndexedDB, a synchronous read cannot
+         * exist: IndexedDB has no such operation at all. So this returns
+         * a Promise, and its one caller awaits it.
+         *
+         * The snapshot also arrives as an OBJECT now, not a JSON string
+         * — structured clone stores the shape itself. The JSON.parse
+         * branch is kept for a snapshot still coming from the
+         * localStorage fallback on a browser that refused IndexedDB.
+         */
         function tryRestore() {
-            try {
-                /* Read synchronously here: restore runs during boot and the
-                   caller is not async. mbLoadDoc's Promise is resolved
-                   immediately by the local backend, but relying on that
-                   would break the day the backend becomes a network — so
-                   this call site is flagged as the one to convert first. */
-                const raw = mbGetSetting(MB_KEYS.autosave);
-                if (!raw) return false;
-                const snap = JSON.parse(raw);
-                if (!snap || !snap._autosave || !snap.version) return false;
+            return mbLoadDoc(MB_KEYS.autosave).then(function (snap) {
+                if (!snap) return false;
+
+                if (snap.__corrupt) {
+                    console.warn('[AutoSave] stored snapshot is unreadable; leaving it in place');
+                    return false;
+                }
+                if (typeof snap === 'string') {
+                    try { snap = JSON.parse(snap); } catch (e) { return false; }
+                }
+                if (!snap._autosave || !snap.version) return false;
 
                 // Re-use the existing handleLoadFile logic by dispatching
                 // data into the same path as manual JSON load
@@ -273,10 +290,10 @@
                     _applySnapshot(snap);
                 }
                 return true;
-            } catch(e) {
+            }).catch(function (e) {
                 console.warn('[AutoSave] restore error:', e);
                 return false;
-            }
+            });
         }
 
         function _applySnapshot(data) {
@@ -426,10 +443,17 @@
 
             // Try restore after DOM + existing init have settled
             setTimeout(function() {
-                const restored = tryRestore();
-                if (restored) showBanner();
+                /* Listeners are attached BEFORE the restore resolves, not
+                   after: the read is asynchronous now and a user typing
+                   during those few milliseconds would otherwise have that
+                   first edit go unwatched. The restore overwrites the
+                   fields either way — it is a restore. */
                 attachListeners();
                 resetReminderTimer();
+
+                tryRestore().then(function (restored) {
+                    if (restored) showBanner();
+                });
             }, 1200);
         }
 
