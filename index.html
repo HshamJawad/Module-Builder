@@ -174,6 +174,26 @@
 </div>
 </div>
 </div>
+<!-- Learning Outcome Sections ────────────────────────────────
+     LO contents, assessment criteria, assessment methods,
+     training conditions — the list differs per ministry, so the
+     title is free text and the datalist only suggests. -->
+<div class="mb-blocks mb-blocks--lo" id="lo-blocks-section" style="display:none;">
+<div class="mb-blocks-head">
+<label class="mb-blocks-label" data-i18n="mbLearningOutcomeSections">Learning Outcome Sections (Optional)</label>
+<span class="mb-blocks-note" data-i18n="mbEmptySectionsNotExported">Empty sections are not exported</span>
+</div>
+<div id="lo-blocks-container"></div>
+<button class="mb-block-add" data-act="addLoBlock" data-i18n="mbAddSection" type="button">
+                        ➕ Add Section
+                    </button>
+<datalist id="lo-block-titles">
+<option value="محتويات محصلة التعلم"></option>
+<option value="معايير التقييم"></option>
+<option value="طرق التقييم"></option>
+<option value="شروط التدريب"></option>
+</datalist>
+</div>
 <!-- Performance Criteria Panel -->
 <div id="performance-criteria-panel" style="margin-top: 15px; padding: 20px; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 12px; border: 2px solid #f59e0b; display: none;">
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -313,6 +333,20 @@
 <span data-i18n="mbStartsOnNewPageIfFilled" style="color: #6b7280; font-size: 0.9em;">Starts on new page if filled</span>
 </div>
 <textarea class="mb-content-field" data-i18n="mbEnterAnyAdditionalIntroductionContentA" data-i18n-attr="placeholder" id="intro-additional-details" placeholder="Enter any additional introduction content (acknowledgments, foreword, etc.). This will start on a new page if filled..." rows="6" style="width: 100%; padding: 10px; border: 2px solid #d1d5db; border-radius: 6px; font-size: 1em;"></textarea>
+</div>
+<!-- Extra Introduction Sections ─────────────────────────────
+     User-added sections. Each is its own page, and an empty one
+     is not exported: the author is never forced to delete a box
+     to keep it out of the document. Rows are built by blocks.js. -->
+<div class="mb-blocks" id="intro-blocks-section">
+<div class="mb-blocks-head">
+<label class="mb-blocks-label" data-i18n="mbExtraIntroductionSections">Extra Introduction Sections (Optional)</label>
+<span class="mb-blocks-note" data-i18n="mbEachSectionStartsOnNewPage">Each section starts on a new page — empty sections are not exported</span>
+</div>
+<div id="intro-blocks-container"></div>
+<button class="mb-block-add" data-act="addIntroBlock" data-i18n="mbAddIntroductionSection" type="button">
+                        ➕ Add Introduction Section
+                    </button>
 </div>
 <!-- Proceed Button -->
 <div style="text-align: center; margin-top: 30px; padding: 20px 0;">
@@ -806,6 +840,7 @@
 <script src="src/workteam.js"></script>
 <script src="src/modules.js"></script>
 <script src="src/outcomes.js"></script>
+<script src="src/blocks.js"></script>
 <script src="src/sheets.js"></script>
 <script src="src/content.js"></script>
 <script src="src/criteria.js"></script>

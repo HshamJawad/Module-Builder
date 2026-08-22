@@ -2287,3 +2287,78 @@ html[lang^="ar"] body { font-size: 1em; }
 #mb-credit,
 .cls-hint,
 .mb-lang-opt-code { font-variant-numeric: tabular-nums; }
+
+/* ── Free text sections (intro pages + learning outcomes) ────
+   Same shape in both hosts so the user learns one control once.
+   Rows are built by blocks.js; this file styles them. */
+.mb-blocks {
+    margin-top: 30px;
+    padding: 15px;
+    background: var(--mb-paper-sunk, #f9fafb);
+    border: 1px solid var(--mb-line, #e5e7eb);
+    border-radius: 8px;
+}
+.mb-blocks--lo { margin-top: 15px; }
+
+.mb-blocks-head {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 10px; flex-wrap: wrap; margin-bottom: 10px;
+}
+.mb-blocks-label { font-weight: 600; color: var(--mb-ink, #374151); }
+.mb-blocks-note  { font-size: 0.9em; color: var(--mb-ink-soft, #6b7280); }
+
+.mb-block {
+    background: var(--mb-paper, #fff);
+    border: 1px solid var(--mb-line, #e5e7eb);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 12px;
+}
+.mb-block-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+
+.mb-block-title {
+    flex: 1; min-width: 0;
+    padding: 8px 10px;
+    border: 2px solid var(--mb-line, #d1d5db);
+    border-radius: 6px;
+    font-size: 1em; font-weight: 600;
+    color: var(--mb-ink, #374151);
+    background: var(--mb-paper, #fff);
+}
+.mb-block-title:focus { outline: 2px solid #667eea; outline-offset: 1px; border-color: #667eea; }
+
+.mb-block-remove {
+    flex-shrink: 0;
+    padding: 8px 10px; border: none; border-radius: 6px;
+    cursor: pointer; font-size: 0.9em; line-height: 1;
+}
+
+.mb-block-body {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid var(--mb-line, #d1d5db);
+    border-radius: 6px;
+    font-size: 1em; font-family: inherit;
+    background: var(--mb-paper, #fff);
+    color: var(--mb-ink, #374151);
+    resize: vertical;
+}
+
+.mb-block-add {
+    background: #10b981; color: #fff;
+    border: none; border-radius: 6px;
+    padding: 8px 16px;
+    font-weight: 600; font-size: 0.9em;
+    cursor: pointer;
+}
+.mb-block-add:hover { filter: brightness(0.95); }
+.mb-block-add:focus-visible { outline: 2px solid #065f46; outline-offset: 2px; }
+
+/* A section whose body is empty is a draft, not a document page.
+   The interface says so quietly rather than blocking the field. */
+.mb-block.is-empty { border-style: dashed; opacity: 0.85; }
+
+@media (max-width: 640px) {
+    .mb-block-head { flex-wrap: wrap; }
+    .mb-block-title { flex-basis: 100%; }
+}
