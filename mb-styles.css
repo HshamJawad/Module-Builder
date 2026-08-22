@@ -2085,3 +2085,139 @@ textarea:focus             { border-color: #A9AEB3 !important; outline: none; }
     .mb-update-copy { flex-basis: 100%; }
     .mb-update-bar button { flex: 1 1 auto; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   LANGUAGE MENU IN THE TOOLBAR
+   ---------------------------------------------------------------
+   One trigger, three switchers inside it. The switchers are the
+   original elements with the original ids — nothing about how they
+   are rendered or what they do has changed, so the styling here is
+   only about fitting them into a 260px panel instead of a full-
+   width page footer.
+   ═══════════════════════════════════════════════════════════════ */
+
+.mb-lang-menu { position: relative; display: inline-flex; }
+
+.mb-lang-trigger { gap: 6px; }
+.mb-lang-trigger #mb-lang-current {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.5px;
+    min-width: 22px;
+    text-align: center;
+}
+.mb-lang-caret { font-size: 0.75em; color: var(--mb-ink-soft); transition: transform 0.15s; }
+.mb-lang-menu.is-open .mb-lang-caret { transform: rotate(180deg); }
+.mb-lang-menu.is-open .mb-lang-trigger { background: var(--mb-btn-hover) !important; border-color: #C4C7C2 !important; }
+
+.mb-lang-panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    inset-inline-end: 0;          /* hangs from the trigger, flips with dir */
+    width: 290px;
+    max-width: calc(100vw - 24px);
+    z-index: 10001;
+
+    background: var(--mb-paper);
+    border: 1px solid var(--mb-line-strong);
+    border-radius: 12px;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18);
+    padding: 12px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px);
+    transition: opacity 0.15s, transform 0.15s, visibility 0.15s;
+}
+
+.mb-lang-menu.is-open .mb-lang-panel {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.mb-lang-group { display: flex; flex-direction: column; gap: 6px; }
+
+.mb-lang-group-label {
+    font-size: 0.76em;
+    font-weight: 700;
+    color: var(--mb-ink-soft);
+    letter-spacing: 0.2px;
+}
+
+/* The switchers, re-fitted: same markup, panel-sized. */
+.mb-lang-panel .mb-lang-host {
+    margin: 0;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+/* !important throughout: the identity layer above sets every button
+   with !important to keep the inline style="" attributes in the markup
+   from winning, so anything that wants to differ has to match it. */
+.mb-lang-panel .mb-lang-btn {
+    flex: 1 1 0;
+    padding: 7px 6px;
+    border: 1px solid var(--mb-line-strong) !important;
+    background: var(--mb-btn) !important;
+    color: var(--mb-ink) !important;
+    border-radius: 8px;
+    min-height: 34px;
+}
+.mb-lang-panel .mb-lang-btn:hover { background: var(--mb-btn-hover) !important; }
+.mb-lang-panel .mb-lang-btn.is-active {
+    background: #6E767D !important;
+    border-color: #6E767D !important;
+    color: #fff !important;
+}
+
+.mb-lang-panel .content-lang-switch {
+    margin: 0;
+    padding: 9px 10px;
+    background: var(--mb-paper-sunk);
+    border: 1px solid var(--mb-line);
+    border-radius: 9px;
+    font-size: 0.82em;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.mb-lang-panel .content-lang-switch .cls-label {
+    flex-basis: 100%;
+    font-size: 0.94em;
+    color: var(--mb-ink-soft);
+    font-weight: 700;
+}
+.mb-lang-panel .content-lang-switch .cls-btn {
+    flex: 1 1 0;
+    padding: 6px 8px;
+    border: 1px solid var(--mb-line-strong) !important;
+    background: var(--mb-btn) !important;
+    color: var(--mb-ink) !important;
+    border-radius: 7px;
+    min-height: 32px;
+}
+.mb-lang-panel .content-lang-switch .cls-btn.active {
+    background: #6E767D !important;
+    border-color: #6E767D !important;
+    color: #fff !important;
+}
+.mb-lang-panel .content-lang-switch .cls-hint {
+    flex-basis: 100%;
+    margin-inline-start: 0;
+    font-size: 0.9em;
+}
+
+/* Narrow screens: the panel anchors to the viewport rather than
+   hanging off a trigger that may be near the edge. */
+@media (max-width: 600px) {
+    .mb-lang-panel {
+        position: fixed;
+        top: 62px;
+        inset-inline: 12px;
+        width: auto;
+    }
+    .mb-lang-trigger #mb-lang-current { display: none; }
+}

@@ -26,7 +26,8 @@
    LANGUAGE
    Read from <html lang>, which the i18n engine already maintains,
    and re-read on change through a MutationObserver. No coupling
-   to the dictionaries: this file carries its own three strings.
+   to the dictionaries: this file carries its own three strings,
+   in the same three languages the interface offers — EN, FR, AR.
    ============================================================ */
 (function () {
     'use strict';
@@ -58,21 +59,21 @@
             later:      'لاحقاً',
             note:       'لن يتأثر عملك المحفوظ.'
         },
-        ku: {
-            app:        'دروستکەری یەکەی ڕاهێنان',
-            credit:     '© ٢٠٢٦ دروستکەری یەکەی ڕاهێنان | ئامادەکردنی هشام جواد کاظم | {v} | هەموو مافەکان پارێزراون',
-            version:    'وەشانی {v}',
-            newVersion: 'وەشانێکی نوێی دروستکەری یەکەی ڕاهێنان بەردەستە',
-            update:     'ئێستا نوێی بکەرەوە',
-            later:      'دواتر',
-            note:       'کارە پاشەکەوتکراوەکەت کاری لێ ناکرێت.'
+        fr: {
+            app:        'Constructeur de Modules',
+            credit:     '© 2026 Constructeur de Modules | par Husham Jawad Kadhim | {v} | Tous droits réservés',
+            version:    'Version {v}',
+            newVersion: 'Une nouvelle version du Constructeur de Modules est disponible',
+            update:     'Mettre à jour',
+            later:      'Plus tard',
+            note:       'Votre travail enregistré n\'est pas affecté.'
         }
     };
 
     function lang() {
         var l = (document.documentElement.getAttribute('lang') || 'en').toLowerCase();
         if (l.indexOf('ar') === 0) return 'ar';
-        if (l.indexOf('ku') === 0 || l.indexOf('ckb') === 0) return 'ku';
+        if (l.indexOf('fr') === 0) return 'fr';
         return 'en';
     }
 

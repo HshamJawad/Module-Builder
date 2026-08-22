@@ -32,6 +32,35 @@
 <div class="figma-divider"></div>
 <button class="figma-btn" data-act="clearAll" style="color:#dc2626;">
 <span class="figma-btn-icon red">🗑️</span><span data-i18n="txClearAll">Clear All</span></button>
+<div class="figma-divider"></div>
+<!-- ── Language menu ──────────────────────────────────────────────
+     The three switchers used to sit stacked under the working panels,
+     where they read as a row of loose buttons with no relationship to
+     each other. They are the SAME ELEMENTS, moved: #mbLangHost,
+     #content-lang-switch and #export-lang-switch keep their ids, so
+     every renderer that fills them by id still fills them. Only the
+     place they are filled has changed.
+
+     They stay three separate controls rather than one, because they
+     answer three different questions: which language the TOOL speaks,
+     which language you are TYPING, and which language gets EXPORTED.
+     Collapsing them would be tidier and wrong. -->
+<div class="mb-lang-menu" id="mb-lang-menu">
+<button aria-expanded="false" aria-haspopup="true" class="figma-btn mb-lang-trigger" id="mb-lang-trigger" type="button">
+<span class="figma-btn-icon silver">🌐</span><span id="mb-lang-current">EN</span><span class="mb-lang-caret">▾</span></button>
+<div class="mb-lang-panel" id="mb-lang-panel">
+<div class="mb-lang-group">
+<span class="mb-lang-group-label" id="mb-lang-ui-label">Interface language</span>
+<div class="mb-lang-host" id="mbLangHost"></div>
+</div>
+<div class="mb-lang-group">
+<div class="content-lang-switch" id="content-lang-switch"></div>
+</div>
+<div class="mb-lang-group">
+<div class="content-lang-switch" id="export-lang-switch"></div>
+</div>
+</div>
+</div>
 </div>
 <div class="container">
 <input accept=".json" data-act="handleLoadFile" data-on="change" id="load-file-input" style="display: none;" type="file"/>
@@ -733,15 +762,6 @@
 </div>
 </div>
 </div>
-<!-- Content-language switch. Placed with the status banner so it is
-             visible from every tab; it applies to the whole project, not to
-             the tab in view. -->
-<!-- Interface language (this file's dictionaries) sits beside content
-     language (the user's { en, ar } pairs) so the difference between them
-     is visible rather than explained in a tooltip. -->
-<div class="mb-lang-host" id="mbLangHost"></div>
-<div class="content-lang-switch" id="content-lang-switch"></div>
-<div class="content-lang-switch" id="export-lang-switch"></div>
 <div class="status" id="status"></div>
 </div>
 <!-- ═══════════════════════════════════════════════════════════════
@@ -830,6 +850,74 @@
             var collapsed = !document.body.classList.contains(CLASS);
             apply(collapsed, btn);
             write(collapsed);
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+</script>
+<!-- Language menu. Open/close only — it does not touch the switchers
+     inside it, which keep their own renderers and their own state. -->
+<script>
+(function () {
+    'use strict';
+
+    var LABEL = { en: 'EN', fr: 'FR', ar: 'AR' };
+    var UI_LABEL = {
+        en: 'Interface language',
+        fr: "Langue de l'interface",
+        ar: 'لغة الواجهة'
+    };
+
+    function lang() {
+        var l = (document.documentElement.getAttribute('lang') || 'en').toLowerCase();
+        if (l.indexOf('ar') === 0) return 'ar';
+        if (l.indexOf('fr') === 0) return 'fr';
+        return 'en';
+    }
+
+    function init() {
+        var menu    = document.getElementById('mb-lang-menu');
+        var trigger = document.getElementById('mb-lang-trigger');
+        if (!menu || !trigger) return;
+
+        function sync() {
+            var l = lang();
+            var cur = document.getElementById('mb-lang-current');
+            if (cur) cur.textContent = LABEL[l];
+            var lbl = document.getElementById('mb-lang-ui-label');
+            if (lbl) lbl.textContent = UI_LABEL[l];
+        }
+
+        function close() {
+            menu.classList.remove('is-open');
+            trigger.setAttribute('aria-expanded', 'false');
+        }
+
+        trigger.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var open = !menu.classList.contains('is-open');
+            menu.classList.toggle('is-open', open);
+            trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+
+        /* Clicks inside the panel belong to the switchers, not to us. */
+        document.addEventListener('click', function (e) {
+            if (!menu.contains(e.target)) close();
+        });
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') close();
+        });
+
+        sync();
+        new MutationObserver(sync).observe(document.documentElement, {
+            attributes: true, attributeFilter: ['lang']
         });
     }
 
