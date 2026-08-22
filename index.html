@@ -34,32 +34,32 @@
 <span class="figma-btn-icon red">🗑️</span><span data-i18n="txClearAll">Clear All</span></button>
 <div class="figma-divider"></div>
 <!-- ── Language menu ──────────────────────────────────────────────
-     The three switchers used to sit stacked under the working panels,
-     where they read as a row of loose buttons with no relationship to
-     each other. They are the SAME ELEMENTS, moved: #mbLangHost,
-     #content-lang-switch and #export-lang-switch keep their ids, so
-     every renderer that fills them by id still fills them. Only the
-     place they are filled has changed.
+     ONE choice, not three. The tool used to expose interface, content
+     and export language separately — a distinction that made sense
+     while the bilingual pipeline was being built and makes none to the
+     person using it: someone who picks Arabic is writing Arabic,
+     wants Arabic on screen, and expects an Arabic document out.
 
-     They stay three separate controls rather than one, because they
-     answer three different questions: which language the TOOL speaks,
-     which language you are TYPING, and which language gets EXPORTED.
-     Collapsing them would be tidier and wrong. -->
+     The three original switchers are still in the page (hidden, ids
+     intact) because their renderers and their state live in src/ and
+     are not ours to rewrite. This menu drives them: one click here
+     sets all three. That keeps the merge to the surface, where a
+     wrong guess costs a style rule rather than a data model. -->
 <div class="mb-lang-menu" id="mb-lang-menu">
 <button aria-expanded="false" aria-haspopup="true" class="figma-btn mb-lang-trigger" id="mb-lang-trigger" type="button">
 <span class="figma-btn-icon silver">🌐</span><span id="mb-lang-current">EN</span><span class="mb-lang-caret">▾</span></button>
 <div class="mb-lang-panel" id="mb-lang-panel">
-<div class="mb-lang-group">
-<span class="mb-lang-group-label" id="mb-lang-ui-label">Interface language</span>
+<button class="mb-lang-opt" data-lang="en" type="button"><span class="mb-lang-opt-name">English</span><span class="mb-lang-opt-code">EN</span></button>
+<button class="mb-lang-opt" data-lang="fr" type="button"><span class="mb-lang-opt-name">Français</span><span class="mb-lang-opt-code">FR</span></button>
+<button class="mb-lang-opt" data-lang="ar" type="button"><span class="mb-lang-opt-name">العربية</span><span class="mb-lang-opt-code">AR</span></button>
+</div>
+</div>
+<!-- The originals. Hidden, never removed: src/ renders into these ids
+     and reads their state, and the menu above clicks them. -->
+<div class="mb-lang-legacy" id="mb-lang-legacy" aria-hidden="true">
 <div class="mb-lang-host" id="mbLangHost"></div>
-</div>
-<div class="mb-lang-group">
 <div class="content-lang-switch" id="content-lang-switch"></div>
-</div>
-<div class="mb-lang-group">
 <div class="content-lang-switch" id="export-lang-switch"></div>
-</div>
-</div>
 </div>
 </div>
 <div class="container">
@@ -860,38 +860,108 @@
     }
 })();
 </script>
-<!-- Language menu. Open/close only — it does not touch the switchers
-     inside it, which keep their own renderers and their own state. -->
+<!-- Language menu. One click sets interface, content and export
+     language together by clicking the three original switchers,
+     which still own their own state and rendering. -->
 <script>
 (function () {
     'use strict';
 
     var LABEL = { en: 'EN', fr: 'FR', ar: 'AR' };
-    var UI_LABEL = {
-        en: 'Interface language',
-        fr: "Langue de l'interface",
-        ar: 'لغة الواجهة'
+
+    /* The originals label themselves differently in each switcher and
+       in each interface language, so matching is done by attribute
+       first and by a text table only as a fallback. */
+    var TEXT = {
+        en: ['en', 'eng', 'english', 'anglais', 'الإنجليزية', 'الانجليزية', 'إنجليزي'],
+        fr: ['fr', 'fra', 'french', 'français', 'francais', 'الفرنسية'],
+        ar: ['ar', 'ara', 'arabic', 'arabe', 'العربية', 'عربي']
     };
 
-    function lang() {
+    function norm(v) {
+        return (v || '').toString().trim().toLowerCase()
+            .replace(/[\u064B-\u0652]/g, '')      /* Arabic diacritics */
+            .replace(/[أإآ]/g, 'ا');
+    }
+
+    function matches(btn, code) {
+        var attr = btn.getAttribute('data-lang')  ||
+                   btn.getAttribute('data-code')  ||
+                   btn.getAttribute('data-value') ||
+                   btn.getAttribute('value')      || '';
+        if (attr && norm(attr).indexOf(code) === 0) return true;
+
+        var text = norm(btn.textContent);
+        var list = TEXT[code];
+        for (var i = 0; i < list.length; i++) {
+            if (text === norm(list[i])) return true;
+        }
+        return false;
+    }
+
+    function pick(scope, code) {
+        if (!scope) return null;
+        var btns = scope.querySelectorAll('button');
+        for (var i = 0; i < btns.length; i++) {
+            if (matches(btns[i], code)) return btns[i];
+        }
+        return null;
+    }
+
+    function isOn(btn) {
+        return !!btn && (btn.classList.contains('active') ||
+                         btn.classList.contains('is-active'));
+    }
+
+    function apply(code) {
+        var ui      = document.getElementById('mbLangHost');
+        var content = document.getElementById('content-lang-switch');
+        var exportL = document.getElementById('export-lang-switch');
+
+        /* Interface first: it re-renders the other two, so clicking it
+           last would click buttons that are about to be replaced. */
+        var b = pick(ui, code);
+        if (b && !isOn(b)) b.click();
+
+        /* Content and export offer English and Arabic only. French
+           interface with an Arabic document is a real combination;
+           French content is not a thing the tool can produce, so it
+           falls back to English rather than failing silently. */
+        var side = (code === 'ar') ? 'ar' : 'en';
+
+        /* Deferred: the interface click above rebuilds these nodes. */
+        setTimeout(function () {
+            [document.getElementById('content-lang-switch'),
+             document.getElementById('export-lang-switch')].forEach(function (host) {
+                var t = pick(host, side);
+                if (t && !isOn(t)) t.click();
+            });
+            sync();
+        }, 60);
+    }
+
+    function current() {
         var l = (document.documentElement.getAttribute('lang') || 'en').toLowerCase();
         if (l.indexOf('ar') === 0) return 'ar';
         if (l.indexOf('fr') === 0) return 'fr';
         return 'en';
     }
 
+    function sync() {
+        var code = current();
+        var cur = document.getElementById('mb-lang-current');
+        if (cur) cur.textContent = LABEL[code];
+
+        var opts = document.querySelectorAll('.mb-lang-opt');
+        for (var i = 0; i < opts.length; i++) {
+            opts[i].classList.toggle('is-active', opts[i].getAttribute('data-lang') === code);
+        }
+    }
+
     function init() {
         var menu    = document.getElementById('mb-lang-menu');
         var trigger = document.getElementById('mb-lang-trigger');
         if (!menu || !trigger) return;
-
-        function sync() {
-            var l = lang();
-            var cur = document.getElementById('mb-lang-current');
-            if (cur) cur.textContent = LABEL[l];
-            var lbl = document.getElementById('mb-lang-ui-label');
-            if (lbl) lbl.textContent = UI_LABEL[l];
-        }
 
         function close() {
             menu.classList.remove('is-open');
@@ -906,7 +976,14 @@
             trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
         });
 
-        /* Clicks inside the panel belong to the switchers, not to us. */
+        menu.addEventListener('click', function (e) {
+            var opt = e.target.closest ? e.target.closest('.mb-lang-opt') : null;
+            if (!opt) return;
+            e.preventDefault();
+            apply(opt.getAttribute('data-lang'));
+            close();
+        });
+
         document.addEventListener('click', function (e) {
             if (!menu.contains(e.target)) close();
         });

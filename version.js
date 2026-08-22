@@ -32,7 +32,7 @@
 (function () {
     'use strict';
 
-    var POLL_MS = 5 * 60 * 1000;          /* five minutes */
+    var POLL_MS = 90 * 1000;              /* ninety seconds */
     var SRC     = 'version.json';
 
     var loaded  = null;                   /* build this page is running */
@@ -147,23 +147,44 @@
     }
 
     /* ── Polling ─────────────────────────────────────────────── */
+    var warned = false;
+
     function check() {
         /* Cache-busted by hand as well as by header: GitHub Pages
            ignores no-store on some edges. */
         fetch(SRC + '?t=' + Date.now(), { cache: 'no-store' })
-            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (r) {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+            })
             .then(function (data) {
-                if (!data || !data.version) return;
+                if (!data || !data.version) throw new Error('no version field');
                 latest = String(data.version);
 
                 if (loaded === null) {      /* first read: this is us */
                     loaded = latest;
                     paint();
+                    console.info('[Version] running build ' + loaded +
+                                 ' — watching ' + SRC + ' every ' +
+                                 (POLL_MS / 1000) + 's');
                     return;
                 }
-                if (latest !== loaded) showBanner();
+                if (latest !== loaded) {
+                    console.info('[Version] ' + loaded + ' → ' + latest + ' available');
+                    showBanner();
+                }
             })
-            .catch(function () { /* offline, or no version.json — stay quiet */ });
+            .catch(function (err) {
+                /* Silent for the user, loud enough in the console to
+                   diagnose: a missing version.json is the single most
+                   likely reason the update banner never appears. */
+                if (!warned) {
+                    warned = true;
+                    console.warn('[Version] could not read ' + SRC + ' (' + err.message +
+                                 '). The version number and the update banner stay off ' +
+                                 'until that file is reachable.');
+                }
+            });
     }
 
     function init() {
