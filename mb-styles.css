@@ -1,0 +1,1558 @@
+/* ============================================================
+   mb-styles.css — Module Builder
+   Extracted verbatim from Module_Builder.html <style> (lines 18-1384).
+   Step 2 will split this into -typography / -components / -responsive / -rtl.
+   ============================================================ */
+
+* {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            min-height: 100dvh;
+            padding: 20px;
+            padding-top: 76px;
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+            /* `direction: ltr` used to sit here. It overrode the dir="rtl"
+               that the i18n engine sets on <html>, which is why switching
+               the interface to Arabic changed the words but not the layout:
+               the tabs, the headings and every flex row stayed left-to-right.
+               Direction now comes from <html> and nowhere else. */
+            overflow-x: hidden;
+        }
+
+        /* ── Figma-style fixed toolbar ─────────────────────────────── */
+        .figma-toolbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 56px;
+            background: #ffffff;
+            border-bottom: 1px solid #e5e7eb;
+            box-shadow: 0 1px 8px rgba(0,0,0,0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            z-index: 9998;
+            padding: 0 24px;
+            /* PHYSICAL on purpose. The notch and the home indicator are
+               on physical edges of the device; they do not move when the
+               text direction does, so these two must not become logical. */
+            padding-left:  max(24px, env(safe-area-inset-left));
+            padding-right: max(24px, env(safe-area-inset-right));
+            padding-top: env(safe-area-inset-top, 0px);
+        }
+
+        .figma-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px 6px 6px;
+            border-radius: 999px;
+            border: 1.5px solid #e5e7eb;
+            background: #f9fafb;
+            cursor: pointer;
+            font-size: 0.88em;
+            font-weight: 600;
+            color: #374151;
+            transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+            white-space: nowrap;
+            text-decoration: none;
+        }
+
+        .figma-btn:hover {
+            background: #f3f4f6;
+            border-color: #d1d5db;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .figma-btn:active {
+            transform: scale(0.97);
+        }
+
+        .figma-btn-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1em;
+            flex-shrink: 0;
+        }
+
+        .figma-btn-icon.green  { background: #dcfce7; }
+        .figma-btn-icon.blue   { background: #dbeafe; }
+        .figma-btn-icon.purple { background: #ede9fe; }
+        .figma-btn-icon.red    { background: #fee2e2; }
+
+        .figma-divider {
+            width: 1px;
+            height: 28px;
+            background: #e5e7eb;
+            margin: 0 4px;
+        }
+
+        /* disabled state for export btn */
+        #export-btn:disabled .figma-btn-icon.purple { background: #e5e7eb; }
+        #export-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* ── App title (always visible, centered, above tabs) ───────── */
+        .app-title-bar {
+            text-align: center;
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .app-title-bar h1 {
+            margin: 0 0 6px 0;
+            font-size: 1.9em;
+            color: #667eea;
+        }
+
+        .app-title-bar p {
+            margin: 0;
+            font-size: 0.93em;
+            color: #6b7280;
+            font-weight: 400;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+            overflow-x: hidden;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 2em;
+        }
+
+        .tabs-container {
+            margin-bottom: 30px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .tabs-container::-webkit-scrollbar { display: none; }
+
+        .tabs {
+            display: flex;
+            gap: 5px;
+            border-bottom: 3px solid #667eea;
+            margin-bottom: 0;
+            flex-wrap: wrap;
+            min-width: 0;
+        }
+
+        .tab {
+            padding: 15px 30px;
+            background: #e0e0e0;
+            border: none;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s;
+            white-space: nowrap;
+            flex-shrink: 0;
+            min-height: 44px;
+        }
+
+        .tab:hover {
+            background: #d0d0d0;
+        }
+
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+
+        .tab-content.active {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            min-height: 500px !important;
+            background: #f5f5f5 !important;
+            padding: 20px !important;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 2px solid #e0e0e0;
+            flex-wrap: wrap;
+        }
+
+        .btn-action {
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 0;
+            white-space: nowrap;
+            justify-content: center;
+            flex-shrink: 0;
+            min-height: 40px;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-action:active {
+            transform: translateY(0);
+        }
+
+        .btn-save {
+            background: #10b981;
+        }
+
+        .btn-save:hover {
+            background: #059669;
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-load {
+            background: #3b82f6;
+        }
+
+        .btn-load:hover {
+            background: #2563eb;
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-export-word {
+            background: #8b5cf6;
+        }
+
+        .btn-export-word:hover {
+            background: #7c3aed;
+            box-shadow: 0 5px 15px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-clear {
+            background: #ef4444;
+        }
+
+        .btn-clear:hover {
+            background: #dc2626;
+            box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
+        }
+
+        .title-section {
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .btn-remove-sheet {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-bottom: 15px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-remove-sheet:hover {
+            background: #dc2626;
+        }
+
+        .title-group {
+            width: 100%;
+        }
+
+        .title-input-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .title-input-row input[type="text"] {
+            flex: 1;
+        }
+
+        .title-input-row input[type="text"]:first-child {
+            flex: 0 0 100px;
+        }
+
+        .form-group {
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #333;
+            font-weight: 600;
+            font-size: 1em;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+            text-align: start;   /* logical: follows the element's dir */
+            direction: inherit;   /* was ltr — now follows the field\'s own dir attribute, set by contentLang */
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 1em;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            resize: vertical;
+            min-height: 80px;
+            transition: border-color 0.3s;
+            text-align: start;   /* logical: follows the element's dir */
+            direction: inherit;   /* was ltr — now follows the field\'s own dir attribute, set by contentLang */
+        }
+
+        .example-text {
+            color: #888;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .section-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .btn-add {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 5px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-add:hover {
+            background: #059669;
+        }
+
+        .resource-item,
+        .step-item {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .step-item textarea {
+            direction: inherit;   /* was ltr — now follows the field\'s own dir attribute, set by contentLang */
+            text-align: start;   /* logical: follows the element's dir */
+        }
+
+        .content-section-item {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .content-section-item textarea {
+            direction: inherit;   /* was ltr — now follows the field\'s own dir attribute, set by contentLang */
+            text-align: start;   /* logical: follows the element's dir */
+            width: 100%;
+            min-height: 150px;
+            resize: vertical;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .content-section-item textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .criteria-item {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .criteria-number {
+            min-width: 40px;
+            font-weight: 600;
+            font-size: 1.1em;
+            color: #333;
+        }
+
+        .criteria-text {
+            flex: 1;
+        }
+
+        .criteria-table-container {
+            background: white;
+            border: 1px solid #000;
+            margin-top: 20px;
+        }
+
+        .criteria-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .criteria-table td {
+            border: 1px solid #000;
+            padding: 10px;
+        }
+
+        .criteria-table input[type="text"] {
+            width: 100%;
+            border: none;
+            padding: 5px;
+            font-size: 1em;
+            direction: inherit;   /* was ltr — now follows the field\'s own dir attribute, set by contentLang */
+            text-align: start;   /* logical: follows the element's dir */
+        }
+
+        .criteria-table input[type="text"]:focus {
+            outline: 1px solid #667eea;
+        }
+
+        .criteria-table .criteria-row-number {
+            text-align: center;
+            font-weight: 600;
+            width: 8%;
+        }
+
+        .criteria-table .criteria-row-remove {
+            text-align: center;
+            width: 5%;
+        }
+
+        /* criteria edit checkboxes removed */
+
+        .resource-row {
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+        }
+
+        .resource-number {
+            min-width: 30px;
+            font-weight: 600;
+            font-size: 1.2em;
+            color: #333;
+        }
+
+        .resource-name {
+            flex: 1;
+            min-height: 60px;
+            resize: vertical;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: start;   /* logical: follows the element's dir */
+            direction: inherit;   /* was ltr — now follows the field\'s own dir attribute, set by contentLang */
+            width: 100%;
+        }
+
+        .resource-name:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .resource-quantity {
+            width: 80px;
+            height: 45px;
+            text-align: center;
+            padding: 8px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .resource-quantity:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        /* Style the number input arrows */
+        .resource-quantity::-webkit-inner-spin-button,
+        .resource-quantity::-webkit-outer-spin-button {
+            opacity: 1;
+            height: 40px;
+        }
+
+        .resource-name-input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+            text-align: start;   /* logical: follows the element's dir */
+            direction: inherit;   /* was ltr — now follows the field\'s own dir attribute, set by contentLang */
+        }
+
+        .resource-name-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn-remove {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: 700;
+            transition: background 0.2s;
+            width: 28px;
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            line-height: 1;
+        }
+
+        .btn-remove:hover {
+            background: #b91c1c;
+        }
+
+        .step-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .step-label {
+            color: #667eea;
+            font-weight: 600;
+            font-size: 1em;
+        }
+
+        .btn-add-image {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 5px;
+            font-size: 0.85em;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-add-image:hover {
+            background: #059669;
+        }
+
+        /* ── Instructional Mark Styles ────────────────────────────────── */
+        .btn-add-mark {
+            background: #f59e0b;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 5px;
+            font-size: 0.85em;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+        .btn-add-mark:hover { background: #d97706; }
+
+        .mark-dropdown-menu {
+            position: fixed;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+            z-index: 99999;
+            min-width: 200px;
+            padding: 6px 0;
+            animation: markDropFade 0.12s ease;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        @keyframes markDropFade {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .mark-dropdown-item {
+            padding: 9px 18px;
+            cursor: pointer;
+            font-size: 0.93em;
+            font-weight: 500;
+            color: #374151;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.1s;
+        }
+        .mark-dropdown-item:hover { background: #f3f4f6; }
+
+        .mark-item {
+            border-radius: 8px;
+            margin-top: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .mark-item-header {
+            padding: 7px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 700;
+            font-size: 0.9em;
+        }
+        .mark-item-header .mark-remove-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2em;
+            opacity: 0.75;
+            line-height: 1;
+            padding: 0 2px;
+            transition: opacity 0.15s;
+        }
+        .mark-item-header .mark-remove-btn:hover { opacity: 1; }
+        .mark-item textarea {
+            width: 100%;
+            border: none;
+            outline: none;
+            padding: 9px 12px;
+            min-height: 62px;
+            font-size: 0.9em;
+            resize: vertical;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+        .marks-container { margin-top: 0; }
+
+        /* ── Inline editable table widget ─────────────────────────── */
+        .content-table-widget {
+            margin-top: 10px;
+            border: 1.5px solid #667eea;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #fff;
+        }
+        .content-table-toolbar {
+            background: #f0f4ff;
+            border-bottom: 1.5px solid #667eea;
+            padding: 6px 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .content-table-toolbar .ctb-left {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .content-table-toolbar .ctb-right {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .content-table-toolbar span {
+            font-size: 0.8em;
+            font-weight: 600;
+            color: #4f46e5;
+            margin-inline-end: 4px;
+        }
+        .ctb {
+            border: none;
+            border-radius: 5px;
+            padding: 4px 10px;
+            font-size: 0.78em;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            transition: background 0.15s;
+        }
+        .ctb-add  { background: #10b981; color: #fff; }
+        .ctb-add:hover  { background: #059669; }
+        .ctb-del  { background: #ef4444; color: #fff; }
+        .ctb-del:hover  { background: #b91c1c; }
+        .ctb-close { background: #6b7280; color: #fff; }
+        .ctb-close:hover { background: #374151; }
+        .content-table-grid { overflow-x: auto; }
+        .content-table-grid table { border-collapse: collapse; width: 100%; }
+        .content-table-grid td {
+            border: 1px solid #d1d5db;
+            padding: 3px;
+            min-width: 100px;
+        }
+        .content-table-grid td textarea {
+            width: 100%;
+            min-height: 48px;
+            border: none;
+            outline: none;
+            resize: both;
+            padding: 5px;
+            font-size: 0.88em;
+            font-family: inherit;
+            background: transparent;
+            box-sizing: border-box;
+        }
+
+        /* ── Multi-image gallery (Info Sheet content sections) ─────────── */
+        .content-image-gallery {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .content-img-thumb {
+            position: relative;
+            display: inline-block;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+            background: #f3f4f6;
+        }
+        .content-img-thumb img {
+            display: block;
+            max-width: 160px;
+            max-height: 120px;
+            object-fit: cover;
+        }
+        .content-img-delete {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: rgba(220,38,38,0.85);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: 700;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s;
+        }
+        .content-img-delete:hover { background: #dc2626; }
+
+        .btn-export {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 30px;
+        }
+
+        .btn-export:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-export:active {
+            transform: translateY(0);
+        }
+
+        .btn-activity-sheet {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            border-radius: 10px;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 40px;
+            margin-bottom: 40px;
+        }
+
+        .btn-activity-sheet:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
+            background: #2563eb;
+        }
+
+        .btn-activity-sheet:active {
+            transform: translateY(0);
+        }
+
+        .footer {
+            text-align: center;
+            color: #888;
+            font-size: 0.95em;
+            padding: 10px 0;
+            margin-top: 10px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 600;
+            display: none;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            display: block;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+
+        .status.info {
+            background: #cfe2ff;
+            color: #084298;
+            display: block;
+        }
+
+        .image-preview {
+            margin-top: 10px;
+            max-width: 300px;
+        }
+
+        .image-preview img {
+            max-width: 100%;
+            border-radius: 5px;
+            border: 2px solid #e0e0e0;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            position: relative;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px;
+            border-radius: 16px 16px 0 0;
+            text-align: center;
+            color: white;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 24px;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .contact-item {
+            background: #f9fafb;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .contact-item h4 {
+            color: #374151;
+            font-size: 0.9em;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .contact-item p,
+        .contact-item a {
+            color: #667eea;
+            font-size: 1em;
+            margin: 0;
+            word-break: break-word;
+        }
+
+        .contact-item a {
+            text-decoration: none;
+        }
+
+        .contact-item a:hover {
+            text-decoration: underline;
+        }
+
+        /* Objective Formatting Controls */
+        .objective-wrapper {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .objective-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .objective-header label {
+            margin: 0;
+        }
+
+        .objective-formatting-controls {
+            display: flex;
+            gap: 5px;
+        }
+
+        .objective-format-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .objective-format-btn:hover {
+            background: #5568d3;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        .objective-format-btn:active {
+            transform: translateY(0);
+        }
+
+        .objective-format-btn.clear {
+            background: #ef4444;
+        }
+
+        .objective-format-btn.clear:hover {
+            background: #dc2626;
+        }
+
+        .btn-clear-section {
+            background: #f59e0b;
+            color: white;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8em;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: background 0.2s;
+            line-height: 1;
+        }
+        .btn-clear-section:hover { background: #d97706; }
+
+        /* Export info message styling */
+        .export-info {
+            background: #eff6ff;
+            border: 2px solid #93c5fd;
+            color: #1e40af;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+
+        .export-info.show {
+            display: flex;
+        }
+
+        .export-warning {
+            background: #fef3c7;
+            border: 2px solid #fbbf24;
+            color: #92400e;
+        }
+
+        /* ── Responsive helpers ─────────────────────────────────────── */
+        .mgmt-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .mgmt-row select {
+            flex: 1;
+            min-width: 120px;
+        }
+        .mgmt-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        /* ══════════════════════════════════════════════════════════════
+           RESPONSIVE BREAKPOINTS
+           Desktop  : > 900px  (current default styles)
+           Tablet   : 600–900px
+           Mobile   : < 600px
+           Small    : < 400px
+        ══════════════════════════════════════════════════════════════ */
+
+        /* ── Tablet (600–900px) ──────────────────────────────────────── */
+        @media (max-width: 900px) {
+            body {
+                padding: 10px;
+                padding-top: 68px;
+                padding-bottom: env(safe-area-inset-bottom, 0px);
+            }
+            .container { padding: 20px 16px; border-radius: 14px; }
+
+            /* Toolbar */
+            .figma-toolbar {
+                gap: 4px;
+                padding: 0 12px;
+                padding-left:  max(12px, env(safe-area-inset-left));
+                padding-right: max(12px, env(safe-area-inset-right));
+                height: 52px;
+            }
+            .figma-btn { padding: 5px 10px 5px 5px; font-size: 0.82em; }
+
+            /* Tabs */
+            .tabs-container { -webkit-overflow-scrolling: touch; }
+            .tab  { padding: 10px 16px; font-size: 0.88em; }
+
+            /* App title */
+            .app-title-bar h1 { font-size: 1.6em; }
+
+            /* Module/LO management */
+            .mgmt-header { flex-wrap: wrap; gap: 8px; }
+
+            /* Cover table */
+            .cover-row { grid-template-columns: 1fr 1fr auto auto !important; }
+
+            /* Assessment */
+            .assessment-form { overflow-x: auto; }
+        }
+
+        /* ── Mobile (< 600px) ───────────────────────────────────────── */
+        @media (max-width: 600px) {
+            body {
+                padding: 0;
+                padding-top: 60px;
+                padding-bottom: env(safe-area-inset-bottom, 0px);
+                background: #667eea;
+                -webkit-tap-highlight-color: transparent;
+                touch-action: pan-y;
+                overscroll-behavior-y: contain;
+            }
+            .container {
+                padding: 14px 12px 24px;
+                border-radius: 0;
+                box-shadow: none;
+                min-height: calc(100vh - 60px);
+            }
+
+            /* ── Toolbar ── */
+            .figma-toolbar {
+                height: 56px;
+                padding: 0 8px;
+                padding-left:  max(8px, env(safe-area-inset-left));
+                padding-right: max(8px, env(safe-area-inset-right));
+                gap: 2px;
+                justify-content: space-around;
+            }
+            /* Hide text labels on mobile, keep icons */
+            .figma-btn span:not(.figma-btn-icon) { display: none; }
+            .figma-btn {
+                padding: 7px;
+                border-radius: 12px;
+                border: none;
+                background: transparent;
+                flex-direction: column;
+                gap: 2px;
+                min-width: 44px;
+                min-height: 44px;
+                justify-content: center;
+            }
+            .figma-btn:hover { background: #f3f4f6; }
+            .figma-btn-icon { width: 34px; height: 34px; font-size: 1.15em; }
+            .figma-divider { display: none; }
+
+            /* ── App title ── */
+            .app-title-bar { margin-bottom: 16px; padding-bottom: 14px; }
+            .app-title-bar h1 { font-size: 1.3em; }
+            .app-title-bar p  { font-size: 0.8em; }
+
+            /* ── Tabs: horizontally scrollable pill strip ── */
+            .tabs-container {
+                margin-bottom: 18px;
+                margin-inline: -12px;
+                padding: 0 12px;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+            .tabs-container::-webkit-scrollbar { display: none; }
+            .tabs {
+                border-bottom: none;
+                flex-wrap: nowrap;
+                gap: 6px;
+                padding-bottom: 4px;
+            }
+            .tab {
+                padding: 9px 14px;
+                font-size: 0.78em;
+                border-radius: 20px;
+                white-space: nowrap;
+                flex-shrink: 0;
+                background: #e5e7eb;
+                min-height: 36px;
+            }
+            .tab.active {
+                background: #667eea;
+                color: white;
+                box-shadow: 0 2px 8px rgba(102,126,234,0.35);
+            }
+            /* No bottom border trick — tabs are pills */
+            .tab-content.active { border-radius: 12px; }
+
+            /* ── Form elements: full-width touch-friendly ── */
+            input[type="text"],
+            input[type="number"],
+            input[type="date"],
+            select,
+            textarea {
+                font-size: 16px !important; /* prevents iOS zoom */
+                border-radius: 8px;
+            }
+            .btn-action {
+                padding: 10px 14px;
+                font-size: 0.88em;
+                min-height: 42px;
+                touch-action: manipulation;
+            }
+            .btn-remove-sheet {
+                padding: 10px 14px;
+                font-size: 0.88em;
+                min-height: 42px;
+                touch-action: manipulation;
+            }
+
+            /* ── Management rows ── */
+            .mgmt-header { flex-direction: column; align-items: stretch; gap: 8px; }
+            .mgmt-header .btn-action { width: 100%; justify-content: center; }
+            .mgmt-row { flex-direction: column; align-items: stretch; gap: 8px; }
+            .mgmt-row label  { margin-bottom: 2px; }
+            .mgmt-row select { width: 100%; }
+            .mgmt-row .btn-action { width: 100%; justify-content: center; }
+
+            /* ── Sheet nav header (info/activity tabs) ── */
+            /* LO selector row */
+            [id$="-lo-selector"] { font-size: 15px !important; }
+            /* Controls row: stack vertically */
+            #info-tab .title-section > div:nth-child(2),
+            #activity-tab .title-section > div:nth-child(2) {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            #info-tab .title-section > div:nth-child(2) > div,
+            #activity-tab .title-section > div:nth-child(2) > div {
+                justify-content: space-between;
+                width: 100%;
+            }
+            #info-tab .title-section > div:nth-child(2) > button,
+            #activity-tab .title-section > div:nth-child(2) > button {
+                width: 100%;
+                justify-content: center;
+            }
+
+            /* ── Title input rows ── */
+            .title-input-row { flex-wrap: wrap; gap: 8px; }
+            .title-input-row input[type="text"]:first-child {
+                width: 72px !important;
+                flex: 0 0 72px !important;
+            }
+
+            /* ── Resource / step rows ── */
+            .resource-row { flex-wrap: wrap; gap: 8px; }
+            .step-header   { flex-wrap: wrap; gap: 8px; }
+
+            /* ── Scrollable tables ── */
+            .criteria-table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .assessment-form          { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+            /* ── Cover table: 2-column on mobile ── */
+            .cover-row { grid-template-columns: 1fr auto !important; gap: 6px !important; }
+
+            /* ── Section/objective headers ── */
+            .section-header { flex-wrap: wrap; gap: 8px; }
+            .objective-formatting-controls { flex-wrap: wrap; gap: 4px; }
+            .objective-format-btn { padding: 4px 8px !important; font-size: 0.78em !important; }
+
+            /* ── Modal ── */
+            .modal-content {
+                max-height: 92vh;
+                margin: 4vh auto;
+                border-radius: 16px;
+                padding: 20px 16px;
+            }
+
+            /* ── LO sheets summary grid: 1 column ── */
+            #lo-sheets-summary > div > div { grid-template-columns: 1fr !important; gap: 10px !important; }
+
+            /* ── Back/Front cover upload areas ── */
+            #front-cover-upload-area,
+            #back-cover-upload-area { padding: 16px; }
+
+            /* ── Proceed buttons full width ── */
+            [onclick^="proceedToTab"] {
+                width: 100%;
+                text-align: center;
+                justify-content: center;
+            }
+
+            /* ── References list ── */
+            .ref-entry { flex-wrap: wrap; }
+
+            /* ── Help tab: stack cards vertically ── */
+            #help-tab .form-group > div:last-child { grid-template-columns: 1fr !important; }
+        }
+
+        /* ── Small phones (< 400px) ─────────────────────────────────── */
+        @media (max-width: 400px) {
+            .container { padding: 10px 8px 20px; }
+            .tab  { padding: 8px 11px; font-size: 0.74em; }
+            .figma-btn-icon { width: 30px; height: 30px; font-size: 1em; }
+            .app-title-bar h1 { font-size: 1.15em; }
+            .btn-action { padding: 9px 10px; font-size: 0.82em; }
+        }
+
+
+/* ── Content-language switch ────────────────────────────────────────
+   Visually distinct from the (future) interface-language switch on
+   purpose. Users conflate the two constantly, and the cost of the
+   confusion is asymmetric: picking the wrong interface language is
+   noticed instantly, picking the wrong content side means typing a
+   paragraph into the slot meant for the other language. */
+.content-lang-switch {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 0;
+    padding: 8px 14px;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 0.9em;
+}
+.content-lang-switch .cls-label { font-weight: 600; color: #334155; }
+.content-lang-switch .cls-btn {
+    padding: 5px 14px;
+    border: 1px solid #94a3b8;
+    background: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95em;
+}
+.content-lang-switch .cls-btn.active {
+    background: #0ea5e9;
+    border-color: #0ea5e9;
+    color: #fff;
+    font-weight: 600;
+}
+.content-lang-switch .cls-hint { margin-inline-start: auto; color: #64748b; font-variant-numeric: tabular-nums; }
+
+
+
+
+/* ══════════════════════════════════════════════════════════════════
+   RTL INTERFACE LAYER
+   Hooked to html[dir="rtl"], which the i18n engine sets, and scoped to
+   INTERFACE chrome only. Editor fields are not touched here: their
+   direction follows contentLang, a different setting, and the two are
+   allowed to disagree — an Arabic interface editing English content is
+   a normal working state, not an error.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* NO flex-direction: row-reverse anywhere in this layer.
+   That was the bug behind the screenshot: `dir="rtl"` ALREADY reverses
+   the main axis of a flex row, so adding row-reverse reverses it a
+   second time and lands back at left-to-right — which is why the first
+   tab kept sitting on the left. A flex container in an RTL document
+   needs no direction rule at all; it needs to be left alone.
+
+   The same applied to .mgmt-header, .mgmt-row and .section-header, which
+   is why the Module Management and Learning Outcome Management cards
+   came out mirrored while the plain tabs did not. */
+
+/* Body copy and headings inside the tabs. */
+html[dir="rtl"] .tab-content,
+html[dir="rtl"] .container,
+html[dir="rtl"] .section,
+html[dir="rtl"] h1, html[dir="rtl"] h2,
+html[dir="rtl"] h3, html[dir="rtl"] h4,
+html[dir="rtl"] label            { text-align: start; }
+
+/* Interface tables: header cells too. */
+html[dir="rtl"] table th         { text-align: start; }
+
+/* CSS Grid does not flip the way flex does: `grid-template-columns` is
+   physical, so a 2fr/2fr/2fr/auto row keeps its delete button on the
+   physical right in both directions. Rows built with grid therefore need
+   their column order stated for RTL — unlike flex, which needs nothing. */
+html[dir="rtl"] .team-member-row { direction: rtl; }
+
+/* Interface tables. Editor tables whose CELLS hold content are handled
+   by applyContentDirection instead — a table can have an Arabic header
+   row and English cells. */
+html[dir="rtl"] table            { direction: rtl; }
+html[dir="rtl"] table th,
+html[dir="rtl"] table td         { text-align: start; }
+
+/* Logical properties do the mirroring for spacing, so no rule here has
+   to be written twice. Anything still using left/right in the original
+   sheet is a candidate for conversion as it is touched. */
+html[dir="rtl"] .btn-action,
+html[dir="rtl"] .figma-btn       { margin-inline: 0 8px; }
+
+/* Arabic renders short at the same nominal size; Tahoma carries the
+   full Arabic range on Windows, which Segoe UI does not. */
+html[dir="rtl"] body             { font-family: 'Segoe UI', Tahoma, 'Traditional Arabic', sans-serif; font-size: 1.04em; }
+
+/* Emoji and arrows inside translated labels. An arrow glyph in an RTL
+   run keeps its own direction unless isolated, so "المتابعة إلى … ←"
+   renders with the arrow adrift. */
+html[dir="rtl"] [data-i18n]      { unicode-bidi: isolate; }
+
+/* ── Interface-language pills ───────────────────────────────────────
+   Three pills, not a <select>: a dropdown costs two taps and hides the
+   active language behind a closed control. */
+.mb-lang-host { display: flex; gap: 6px; align-items: center; margin: 12px 0 0; }
+#mbLangWrap { display: inline-flex; gap: 4px; }
+.mb-lang-btn {
+    padding: 4px 12px; border: 1px solid #94a3b8; background: #fff;
+    border-radius: 6px; cursor: pointer; font-size: 0.85em; font-weight: 600;
+}
+.mb-lang-btn.is-active { background: #334155; border-color: #334155; color: #fff; }
+#mbLangWrap.is-locked .mb-lang-btn { opacity: .55; cursor: not-allowed; }
+
+/* An earlier `body.mb-rtl` block sat here duplicating the RTL layer
+   above — and its row-reverse rules were half the reason the header
+   cards came out mirrored. Deleted rather than fixed: two stylesheets
+   competing over the same elements is how this bug survived one round
+   of fixing already. `html[dir="rtl"]` is now the only RTL hook. */
+
+
+/* ── Modal dialog ───────────────────────────────────────────────────
+   Replaces alert/confirm/prompt, which cannot be translated: their
+   buttons follow the browser's locale, not the page's. */
+.mb-dialog-overlay {
+    position: fixed; inset: 0; z-index: 10000;
+    background: rgba(15, 23, 42, .55);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+}
+.mb-dialog {
+    background: #fff; border-radius: 12px; padding: 24px;
+    max-width: 480px; width: 100%;
+    box-shadow: 0 20px 50px rgba(0,0,0,.3);
+    font-size: 1em;
+}
+/* pre-line, not pre: the messages carry meaningful \n breaks but should
+   still wrap at the box width. */
+.mb-dialog-msg { white-space: pre-line; line-height: 1.6; color: #1e293b; }
+.mb-dialog-input {
+    width: 100%; margin-top: 16px; padding: 10px;
+    border: 2px solid #cbd5e1; border-radius: 8px; font-size: 1em;
+}
+.mb-dialog-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+.mb-dialog-btn {
+    padding: 9px 20px; border-radius: 8px; border: 1px solid #cbd5e1;
+    background: #fff; cursor: pointer; font-size: .95em; font-weight: 600;
+    min-height: 44px;
+}
+.mb-dialog-ok { background: #0ea5e9; border-color: #0ea5e9; color: #fff; }
+.mb-dialog-ok.is-danger { background: #dc2626; border-color: #dc2626; }
+.mb-dialog-cancel { color: #475569; }
+
+
+/* Inline layouts that reversed wrongly under dir=rtl.
+   Grid is physical — grid-template-columns keeps its order regardless of
+   direction — so every grid row that ends in an action button needs its
+   direction stated. Flex needs nothing; adding row-reverse to flex is
+   what broke the tabs in the first round. */
+html[dir="rtl"] .cover-row,
+html[dir="rtl"] .team-member-row,
+html[dir="rtl"] .mgmt-row        { direction: rtl; }
+
+/* Numeric fields stay LTR in both directions: digits read
+   left-to-right in Arabic too, and flipping a number input only moves
+   the caret to the wrong end. */
+input[type="number"],
+.resource-quantity               { direction: ltr; text-align: center; }
+
+/* Emoji + label buttons. An emoji is direction-neutral and joins the
+   surrounding run, so in an RTL line "🗑️ حذف" can render with the icon
+   adrift. Isolating the label keeps the pair together. */
+html[dir="rtl"] button [data-i18n] { unicode-bidi: isolate; }
+
+/* The status banner and both language switches sit above the tabs and
+   read as interface, so they follow the interface direction. */
+html[dir="rtl"] .status,
+html[dir="rtl"] .content-lang-switch,
+html[dir="rtl"] .mb-lang-host    { direction: rtl; }
+
+/* Modal actions: cancel/confirm are ordered in the DOM, and the flex row
+   mirrors on its own. Only the alignment needs stating. */
+html[dir="rtl"] .mb-dialog-actions { justify-content: flex-end; }
