@@ -29,11 +29,80 @@ function addStep() {
             <button data-act="addStep" style="background:#667eea;color:white;border:none;padding:6px 14px;border-radius:5px;font-size:0.85em;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;">➕ <span data-i18n="dgAddStep">${window.i18n.t('dgAddStep')}</span></button>
             ${addMarkBtnHtml(`step-marks-${sc}`)}
         </div>
-        <input type="file" id="image-input-${sc}" accept="image/*" multiple style="display:none;" data-act="handleImageUpload" data-on="change" data-args='[${sc}]'>
+        <input type="file" id="image-input-${sc}" accept="image/*" multiple style="display:none;" data-act="handleStepImageUpload" data-on="change" data-args='[${sc}]'>
         <div id="step-image-gallery-${sc}" class="content-image-gallery"></div>
         <div id="step-marks-${sc}" class="marks-container"></div>
     `;
     container.appendChild(stepDiv);
+}
+
+/* ── Step images ─────────────────────────────────────────────
+   THESE THREE FUNCTIONS WERE MISSING.
+   The file input above declared data-act="handleImageUpload", and no
+   file in the project defines that name — so picking an image did
+   nothing but log "No handler registered" to the console. Worse,
+   sheets.js line ~312 calls renderStepImageGallery() when it loads an
+   activity sheet that has images, which threw a ReferenceError and
+   aborted the rest of the load. Both are implemented here, mirroring
+   the content-section equivalents in content.js so the two galleries
+   behave identically, and routed through image_prep.js on the way in.
+
+   The input's data-act was renamed to handleStepImageUpload: the old
+   name says "images" without saying whose, and if a definition of it
+   does turn up in a file not yet reviewed, the two would silently
+   compete for the same button. ------------------------------------ */
+
+function handleStepImageUpload(stepId) {
+    const input = document.getElementById(`image-input-${stepId}`);
+    if (!input || !input.files || !input.files.length) return;
+
+    if (!mbState.stepImages[stepId]) mbState.stepImages[stepId] = [];
+
+    /* Sequential, and downscaled on the way in. A step often carries
+       four or five process photos; decoding them in parallel is how a
+       phone browser runs out of memory. */
+    const files = Array.from(input.files);
+    input.value = '';   // reset so the same file can be re-added
+
+    if (typeof mbPrepareImages === 'function') {
+        mbPrepareImages(files, 'content').then(results => {
+            results.forEach(r => mbState.stepImages[stepId].push(r.dataUrl));
+            renderStepImageGallery(stepId);
+        });
+        return;
+    }
+    files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            mbState.stepImages[stepId].push(e.target.result);
+            renderStepImageGallery(stepId);
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+function removeStepImage(stepId, imgIndex) {
+    if (!mbState.stepImages[stepId]) return;
+    mbState.stepImages[stepId].splice(imgIndex, 1);
+    renderStepImageGallery(stepId);
+}
+
+function renderStepImageGallery(stepId) {
+    const gallery = document.getElementById(`step-image-gallery-${stepId}`);
+    /* Called by sheets.js for every stored stepId, including ones whose
+       row is not on screen yet. A missing gallery is normal, not an
+       error — hence the quiet return rather than a throw. */
+    if (!gallery) return;
+
+    const images = mbState.stepImages[stepId] || [];
+    if (images.length === 0) { gallery.innerHTML = ''; return; }
+
+    gallery.innerHTML = images.map((src, i) => `
+        <div class="content-img-thumb">
+            <img src="${src}" alt="Image ${i + 1}">
+            <button class="content-img-delete" data-act="removeStepImage" data-args='[${stepId},${i}]' title="${window.i18n.t('dgRemoveImage')}" data-i18n-title="dgRemoveImage">×</button>
+        </div>
+    `).join('');
 }
 
 async function removeStep(id) {
