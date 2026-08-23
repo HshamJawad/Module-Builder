@@ -131,9 +131,9 @@ function renderCoverTable() {
                    placeholder="${window.i18n.t('dgEnterValue')}" data-i18n-placeholder="dgEnterValue" 
                    style="padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; width: 100%; text-align: start;"
                    >
-            <button data-act="renameCoverLabel" data-args='[${row.id}]' 
+            <button class="mb-has-ico" data-act="renameCoverLabel" data-args='[${row.id}]' 
                     style="padding: 6px 12px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em; white-space: nowrap;">
-                ✏️ <span data-i18n="rxRename">${window.i18n.t('rxRename')}</span>
+                <svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4.5 19.5h4l10-10a2.1 2.1 0 0 0-3-3l-10 10z"/><path d="M14.5 6.5l3 3"/><path d="M4.5 19.5l.6-3.4"/></svg><span data-i18n="rxRename">${window.i18n.t('rxRename')}</span>
             </button>
             <button class="mb-icon-btn danger" data-act="deleteCoverRow" data-args='[${row.id}]'
                     title="${window.i18n.t('mbDelete')}" data-i18n-title="mbDelete">

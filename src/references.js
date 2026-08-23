@@ -45,7 +45,8 @@ function renderReferences() {
                 style="flex:1;padding:9px 12px;border:2px solid #d1d5db;border-radius:6px;font-size:0.97em;background:white;"
                 value="${escapeHtml(ref.value)}"
                 data-act="updateReferenceValue" data-on="input" data-args='[${ref.id},"$value"]' />
-            ${mbState.referencesData.length > 1 ? `<button data-act="deleteReference" data-args='[${ref.id}]' style="background:#ef4444;color:white;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:0.85em;flex-shrink:0;">🗑</button>` : ''}
+            ${mbState.referencesData.length > 1 ? `<button class="mb-icon-btn danger" data-act="deleteReference" data-args='[${ref.id}]'
+                    title="${window.i18n.t('mbDelete')}" data-i18n-title="mbDelete"><svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg></button>` : ''}
         `;
         list.appendChild(row);
     });
