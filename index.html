@@ -1044,11 +1044,14 @@
         var b = pick(ui, code);
         if (b && !isOn(b)) b.click();
 
-        /* Content and export offer English and Arabic only. French
-           interface with an Arabic document is a real combination;
-           French content is not a thing the tool can produce, so it
-           falls back to English rather than failing silently. */
-        var side = (code === 'ar') ? 'ar' : 'en';
+        /* All three switches now speak the same three languages, so the
+           combined control sets the content and export sides to match
+           the interface directly. It used to fold French onto English
+           here, because content was a two-sided pair and French was not
+           a side it had; that is no longer true. Choosing a different
+           content side afterwards still works — this control is a
+           shortcut for "everything in one language", not a lock. */
+        var side = code;
 
         /* Deferred: the interface click above rebuilds these nodes. */
         setTimeout(function () {
