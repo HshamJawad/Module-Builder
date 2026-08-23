@@ -101,8 +101,8 @@ function addContentTable(contentId, initialData) {
                 <button class="ctb ctb-add" data-act="ctAddCol" data-args='[${tid}]' title="${window.i18n.t('dgAddColumn')}" data-i18n-title="dgAddColumn">➕ <span data-i18n="rxCol">${window.i18n.t('rxCol')}</span></button>
             </div>
             <div class="ctb-right">
-                <button class="ctb ctb-del" data-act="ctDelRow" data-args='[${tid}]' title="${window.i18n.t('dgDeleteLastRow')}" data-i18n-title="dgDeleteLastRow">🗑 <span data-i18n="rxRow">${window.i18n.t('rxRow')}</span></button>
-                <button class="ctb ctb-del" data-act="ctDelCol" data-args='[${tid}]' title="${window.i18n.t('dgDeleteLastColumn')}" data-i18n-title="dgDeleteLastColumn">🗑 <span data-i18n="rxCol">${window.i18n.t('rxCol')}</span></button>
+                <button class="ctb ctb-del mb-has-ico" data-act="ctDelRow" data-args='[${tid}]' title="${window.i18n.t('dgDeleteLastRow')}" data-i18n-title="dgDeleteLastRow"><svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg><span data-i18n="rxRow">${window.i18n.t('rxRow')}</span></button>
+                <button class="ctb ctb-del mb-has-ico" data-act="ctDelCol" data-args='[${tid}]' title="${window.i18n.t('dgDeleteLastColumn')}" data-i18n-title="dgDeleteLastColumn"><svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg><span data-i18n="rxCol">${window.i18n.t('rxCol')}</span></button>
                 <button class="ctb ctb-close" data-act="ctRemove" data-args='[${tid}]' title="${window.i18n.t('dgRemoveTable')}" data-i18n-title="dgRemoveTable">✕ <span data-i18n="rxRemove">${window.i18n.t('rxRemove')}</span></button>
             </div>
         </div>
@@ -208,7 +208,7 @@ function addContentSection() {
             <div class="step-label" data-i18n-num="dgContentN" data-i18n-num-v0="${csc}">${window.i18n.tf('dgContentN', { v0: csc })}</div>
             <div style="display:flex;gap:5px;align-items:center;">
                 <button class="btn-clear-section" data-act="clearContentSection" data-args='[${csc}]' title="${window.i18n.t('dgClearContent')}" data-i18n-title="dgClearContent">✕</button>
-                <button class="btn-remove" data-act="removeContentSection" data-args='[${csc}]' title="${window.i18n.t('dgRemoveContent')}" data-i18n-title="dgRemoveContent">🗑</button>
+                <button class="btn-remove mb-icon-btn danger" data-act="removeContentSection" data-args='[${csc}]' title="${window.i18n.t('dgRemoveContent')}" data-i18n-title="dgRemoveContent"><svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg></button>
             </div>
         </div>
         <textarea class="mb-content-field" placeholder="${window.i18n.t('dgEnterContent')}" data-i18n-placeholder="dgEnterContent" data-content-id="${csc}"  style="text-align: left;"></textarea>
