@@ -47,10 +47,13 @@
    SAME dictionary entry the cover table uses, so a rename of that
    wording happens once. */
 var MB_TVQF_MIRROR = ['cvSector', 'cvOccupation', 'cvJob', 'cvQualification',
-                      'cvModuleCode', 'cvLevel', 'cvVersion'];
+                      'cvUnitTitle', 'cvModuleCode', 'cvLevel', 'cvVersion'];
 
+/* `unitTitle` used to live here as an editable field. It is a cover row
+   now — see mbEnsureUnitTitleRow() — so it is mirrored like the other
+   seven rather than asked for twice. _mbTvqfAdoptUnitTitle() below
+   carries across anything typed into it while it was still here. */
 var MB_TVQF_BASIC = [
-    { name: 'unitTitle',     label: 'tqUnitTitle',     type: 'text',   bi: true  },
     { name: 'frameworkName', label: 'tqFramework',     type: 'text',   bi: true,
       hint: 'tqFrameworkHint' },
     { name: 'notionalHours', label: 'tqHours',         type: 'number', bi: false },
@@ -75,6 +78,33 @@ var MB_TVQF_EXTENDED = [
     { name: 'alignmentNote',     label: 'tqAlignment',   type: 'textarea', bi: true,
       hint: 'tqAlignmentHint' }
 ];
+
+/**
+ * Move a unit title typed into the card's old field onto the cover row.
+ *
+ * The field existed for one release. Dropping it without this would
+ * make whatever was typed there disappear from the screen AND from the
+ * export, with the data still sitting in the project file — the worst
+ * of the three possible outcomes.
+ *
+ * Both sides are carried, and only into an EMPTY row: if the user has
+ * since filled the cover row, that is the newer and more deliberate
+ * value and it wins. The old key is deleted either way, so this runs
+ * once per project and never fights the user afterwards.
+ */
+function _mbTvqfAdoptUnitTitle() {
+    var basic = mbState.tvqfBasic;
+    if (!basic || basic.unitTitle === undefined) return;
+
+    var row = _mbTvqfMirrorRow('cvUnitTitle');
+    if (row && biEmpty(row.value)) {
+        BILANG_CODES.forEach(function (code) {
+            var v = biGetStrict(basic.unitTitle, code);
+            if (v) biSet(row, 'value', code, v);
+        });
+    }
+    delete basic.unitTitle;
+}
 
 function _mbTvqfGroup(group) {
     if (group === 'ext') {
@@ -199,6 +229,12 @@ function _mbTvqfFieldHtml(group, field) {
 function mbRenderTvqf() {
     var basic = document.getElementById('tvqf-basic-fields');
     var ext   = document.getElementById('tvqf-ext-fields');
+
+    /* Here rather than at load: every load path ends in a render, and
+       the cover rows have to exist before the title can be moved onto
+       one. */
+    if (typeof mbEnsureUnitTitleRow === 'function') mbEnsureUnitTitleRow();
+    _mbTvqfAdoptUnitTitle();
 
     if (basic) {
         /* The mirrors first: they are what the reader of an NQF card

@@ -2,7 +2,57 @@
    Order matters only as a fallback: it is how a row that lost BOTH its
    seedKey and its recognisable text is re-identified, by position. */
 var MB_COVER_SEED_KEYS = ['cvSector', 'cvOccupation', 'cvJob', 'cvQualification',
-                          'cvModuleCode', 'cvLevel', 'cvVersion'];
+                          'cvModuleCode', 'cvLevel', 'cvVersion',
+                          /* APPENDED, not inserted after cvQualification where
+                             the row actually displays. This array's order is
+                             the POSITIONAL fallback for a legacy row that lost
+                             both its seedKey and its recognisable text — and
+                             every file on disk was written when there were
+                             seven rows in the original order. Inserting here
+                             would shift index 4 onward and re-key those rows
+                             to the wrong fields. Display order lives in
+                             mbState.coverRows; this is identity recovery. */
+                          'cvUnitTitle'];
+
+/* DISPLAY order, which is not the same list in the same order — and the
+   two must not be collapsed into one. Above is identity recovery, which
+   is pinned to how legacy files were written; this is what a new or
+   reset project looks like on screen, where the unit title belongs
+   beside the qualification it is part of. */
+var MB_COVER_ROW_ORDER = ['cvSector', 'cvOccupation', 'cvJob', 'cvQualification',
+                          'cvUnitTitle', 'cvModuleCode', 'cvLevel', 'cvVersion'];
+
+/**
+ * Give an older project the unit-title row it was saved without.
+ *
+ * Without this, a project created before the row existed can never get
+ * one: the factory list in mb_state.js only applies to a NEW project,
+ * and a loaded file replaces coverRows wholesale. The user would have
+ * to add a custom row by hand and it would carry no seedKey, so it
+ * would not follow the interface language and would not be mirrored
+ * into the framework card.
+ *
+ * Idempotent, and it inserts rather than appends: the row belongs
+ * directly after the qualification it names a part of, not at the
+ * bottom under Version.
+ */
+function mbEnsureUnitTitleRow() {
+    var rows = mbState.coverRows || [];
+    for (var i = 0; i < rows.length; i++) {
+        if (rows[i].seedKey === 'cvUnitTitle') return;
+    }
+    var at = rows.length;
+    for (var j = 0; j < rows.length; j++) {
+        if (rows[j].seedKey === 'cvQualification') { at = j + 1; break; }
+    }
+    mbState.coverRowIdCounter = (mbState.coverRowIdCounter || rows.length) + 1;
+    rows.splice(at, 0, {
+        id: mbState.coverRowIdCounter,
+        seedKey: 'cvUnitTitle',
+        label: biNew(),
+        value: biNew()
+    });
+}
 
 /**
  * Give a factory row its `seedKey` back.
@@ -69,6 +119,9 @@ function mbRecoverCoverSeedKeys() {
  */
 function mbSeedCoverLabels() {
     mbRecoverCoverSeedKeys();
+    /* After recovery, never before: a legacy row whose seedKey is about
+       to be restored must not be mistaken for a missing one. */
+    mbEnsureUnitTitleRow();
     mbState.coverRows.forEach(function (row) {
         if (!row.seedKey) return;
         /* A recovered row still holds the old English text on both sides

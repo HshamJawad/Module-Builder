@@ -438,10 +438,14 @@ async function clearAll() {
            and is (correctly) never translated. Empty bilingual pairs +
            the key: mbSeedCoverLabels() fills the text in both languages
            on the next render. */
-        mbState.coverRows = MB_COVER_SEED_KEYS.map(function (key, i) {
+        /* MB_COVER_ROW_ORDER, not MB_COVER_SEED_KEYS: the second is the
+           positional fallback for identifying legacy rows and is frozen
+           in the order those files were written. Using it here would put
+           the unit title at the bottom, under Version. */
+        mbState.coverRows = MB_COVER_ROW_ORDER.map(function (key, i) {
             return { id: i + 1, seedKey: key, label: biNew(), value: biNew() };
         });
-        mbState.coverRowIdCounter = MB_COVER_SEED_KEYS.length;
+        mbState.coverRowIdCounter = MB_COVER_ROW_ORDER.length;
         renderCoverTable();
 
         // ── Introduction tab ──────────────────────────────────────

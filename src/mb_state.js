@@ -92,11 +92,19 @@ var mbState = {
         { id: 2, seedKey: 'cvOccupation', label: { en: '', ar: '' }, value: { en: '', ar: '' } },
         { id: 3, seedKey: 'cvJob', label: { en: '', ar: '' }, value: { en: '', ar: '' } },
         { id: 4, seedKey: 'cvQualification', label: { en: '', ar: '' }, value: { en: '', ar: '' } },
+        /* The unit's own title, distinct from the qualification's: a
+           qualification is composed of units, so the two are different
+           levels of granularity and naming them the same way is what
+           made "Module code and Title" hold two facts in one field.
+           id 8, not 5, because the ids are identity and renumbering the
+           rows below it would orphan every project file that refers to
+           them. Position in this array is display order; the id is not. */
+        { id: 8, seedKey: 'cvUnitTitle', label: { en: '', ar: '' }, value: { en: '', ar: '' } },
         { id: 5, seedKey: 'cvModuleCode', label: { en: '', ar: '' }, value: { en: '', ar: '' } },
         { id: 6, seedKey: 'cvLevel', label: { en: '', ar: '' }, value: { en: '', ar: '' } },
         { id: 7, seedKey: 'cvVersion', label: { en: '', ar: '' }, value: { en: '', ar: '' } }
     ],
-    coverRowIdCounter: 7,
+    coverRowIdCounter: 8,
 
     // ── Work team ──────────────────────────────────────────────
     teamMembers: [],

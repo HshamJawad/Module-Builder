@@ -108,6 +108,11 @@ var BILANG_FIELDS = {
        CODE ('principal', 'yes') that the interface and the export each
        resolve to a word in their own language. Translating a code would
        break both. */
+    /* 'unitTitle' stays listed even though the card no longer offers the
+       field: a project file written while it did still carries the key,
+       and it has to arrive as a PAIR for _mbTvqfAdoptUnitTitle() to read
+       both sides off it. It is deleted from state on the first render
+       after that; this line is only about how it is read in. */
     tvqfBasic:  ['unitTitle', 'frameworkName', 'awardingBody'],
     tvqfExt:    ['knowledge', 'skill', 'competence', 'entryRequirements',
                  'progression', 'assessmentMethod', 'alignmentNote'],
