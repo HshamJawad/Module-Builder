@@ -57,8 +57,9 @@ function _mbBuildDialog(opts) {
            language. This is the one place the two directions meet, and
            getting it wrong means typing Arabic into a left-aligned box. */
         var cl = (typeof contentLang === 'function') ? contentLang() : 'en';
-        input.setAttribute('dir', cl === 'ar' ? 'rtl' : 'ltr');
-        input.style.textAlign = cl === 'ar' ? 'right' : 'left';
+        var rtl = (typeof biIsRtl === 'function') ? biIsRtl(cl) : (cl === 'ar');
+        input.setAttribute('dir', rtl ? 'rtl' : 'ltr');
+        input.style.textAlign = rtl ? 'right' : 'left';
         box.appendChild(input);
     }
 

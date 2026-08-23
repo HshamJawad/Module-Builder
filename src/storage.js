@@ -26,7 +26,7 @@ function mbSeedCriteriaPlaceholders(sheetNumber) {
         if (!el) return;
         el.value = '';
         el.placeholder = vars ? window.i18n.tfIn(key, cl, vars) : window.i18n.tIn(key, cl);
-        el.setAttribute('dir', cl === 'ar' ? 'rtl' : 'ltr');
+        el.setAttribute('dir', biIsRtl(cl) ? 'rtl' : 'ltr');
         el.style.textAlign = 'start';
     };
     set('criteria-title',       'expCriteriaCheckList', { v0: num });

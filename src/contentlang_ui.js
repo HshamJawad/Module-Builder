@@ -3,7 +3,7 @@
 // The content-language switch.
 //
 // Deliberately NOT the interface-language switch. This one changes which
-// side of every { en, ar } pair the editor is bound to; it does not
+// side of every { en, ar, fr } value the editor is bound to; it does not
 // translate a single button. The two are separate controls because a
 // curriculum developer in Baghdad commonly authors Arabic content in an
 // English interface — the tool's own labels are not what they are
@@ -26,7 +26,7 @@ function renderExportLangSwitch() {
         '<span class="cls-label">' + window.i18n.t('mbExportLanguage') + '</span>' +
         BILANG_CODES.map(function (c) {
             return '<button type="button" class="cls-btn' + (c === cur ? ' active' : '') +
-                   '" data-lang="' + c + '">' + (c === 'ar' ? 'العربية' : 'English') + '</button>';
+                   '" data-lang="' + c + '">' + biLangLabel(c) + '</button>';
         }).join('');
     host.querySelectorAll('.cls-btn').forEach(function (b) {
         b.addEventListener('click', function () {
@@ -44,7 +44,7 @@ function renderContentLangSwitch() {
         '<span class="cls-label">' + window.i18n.t('mbContentLanguage') + '</span>' +
         BILANG_CODES.map(function (c) {
             return '<button type="button" class="cls-btn' + (c === cur ? ' active' : '') +
-                   '" data-lang="' + c + '">' + (c === 'ar' ? 'العربية' : 'English') + '</button>';
+                   '" data-lang="' + c + '">' + biLangLabel(c) + '</button>';
         }).join('') +
         '<span class="cls-hint" id="cls-hint"></span>';
 
@@ -83,7 +83,11 @@ function switchContentLang(code) {
     applyContentDirection();
     renderContentLangSwitch();
     renderExportLangSwitch();
-    showStatus(code === 'ar' ? 'تم التبديل إلى المحتوى العربي' : 'Switched to English content', 'success');
+    /* Announced in the language just switched TO, not in the interface
+       language: the message confirms which side the editor is now bound
+       to, and saying so in that language is the shortest possible proof
+       that the switch did what it said. */
+    showStatus(window.i18n.tfIn('dgSwitchedTo', code, { v0: biLangLabel(code) }), 'success');
 }
 
 /**
@@ -95,7 +99,7 @@ function switchContentLang(code) {
  * dozens of times a day.
  */
 function applyContentDirection() {
-    var rtl = contentLang() === 'ar';
+    var rtl = biIsRtl(contentLang());
     /* `.mb-content-field` is stamped on every editor input in the markup;
        the rest are rows built at runtime by the renderers, which is why
        this has to run again after every re-render, not once at boot.
@@ -171,7 +175,7 @@ function applyContentDirection() {
         var txt = ('value' in el && typeof el.value === 'string') ? el.value : (el.textContent || '');
         var d = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(txt) ? 'rtl'
               : (/[A-Za-z\u00C0-\u024F]/.test(txt) ? 'ltr'
-              : (contentLang() === 'ar' ? 'rtl' : 'ltr'));
+              : (biIsRtl(contentLang()) ? 'rtl' : 'ltr'));
         if (el.getAttribute('dir') !== d) { el.setAttribute('dir', d); el.style.textAlign = 'start'; }
     }, true);
 });
@@ -185,13 +189,28 @@ function applyContentDirection() {
 function updateContentLangHint() {
     var hint = document.getElementById('cls-hint');
     if (!hint) return;
-    var other = contentLang() === 'ar' ? 'en' : 'ar';
-    var total = 0, filled = 0;
+    /* With two languages there was exactly one "other side" to report on.
+       With three there are two, and collapsing them into a single number
+       would hide the case this meter exists for: a module fully authored
+       in English and Arabic and not started in French would read as
+       almost complete. One count per other language, side by side. */
+    var cur = contentLang();
+    var others = BILANG_CODES.filter(function (c) { return c !== cur; });
+    var total = 0, filled = {};
+    others.forEach(function (c) { filled[c] = 0; });
 
     function walk(v) {
         if (v === null || typeof v !== 'object') return;
         if (biIs(v)) {
-            if (!biEmpty(v)) { total++; if (biGetStrict(v, other).trim()) filled++; }
+            /* biEmpty, so a field nobody has filled in ANY language is
+               not counted as missing work — an untouched optional field
+               is not a translation debt. */
+            if (!biEmpty(v)) {
+                total++;
+                others.forEach(function (c) {
+                    if (biGetStrict(v, c).trim()) filled[c]++;
+                });
+            }
             return;
         }
         Object.keys(v).forEach(function (k) { walk(v[k]); });
@@ -200,8 +219,9 @@ function updateContentLangHint() {
     walk(mbState.coverRows);
     walk(mbState.teamMembers);
 
-    hint.textContent = total === 0 ? '' :
-        (other === 'ar' ? 'العربية: ' : 'English: ') + filled + '/' + total;
+    hint.textContent = total === 0 ? '' : others.map(function (c) {
+        return biLangLabel(c) + ': ' + filled[c] + '/' + total;
+    }).join('  ·  ');
 }
 
 window.addEventListener('mb:contentlangchange', function () {

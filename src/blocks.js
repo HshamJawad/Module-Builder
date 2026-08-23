@@ -288,8 +288,14 @@ function _mbAddBlock(host) {
        second one is whatever the author needs next, and guessing would
        just be a label they have to clear. */
     if (cfg.seedKey && list.length === 0) {
-        block.title = biNew(window.i18n.tIn(cfg.seedKey, 'en'),
-                            window.i18n.tIn(cfg.seedKey, 'ar'));
+        /* Every language, from the code list — a two-argument biNew()
+           call left the French side of a seeded title empty, so a
+           French export printed a heading the author never removed
+           because they never saw it. */
+        block.title = biNew();
+        BILANG_CODES.forEach(function (code) {
+            biSet(block, 'title', code, window.i18n.tIn(cfg.seedKey, code));
+        });
     }
 
     list.push(block);

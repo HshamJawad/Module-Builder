@@ -376,7 +376,12 @@ function mbRecoverCoverSeedKeys() {
         /* Read both sides plus the legacy bare-string shape. */
         var candidates = [];
         if (typeof row.label === 'string') candidates.push(row.label);
-        else if (biIs(row.label)) { candidates.push(row.label.en, row.label.ar); }
+        else if (biIs(row.label)) {
+            /* Every side, from the code list. A row whose label survives
+               only in French would otherwise look like a rename and
+               never get its seedKey back. */
+            BILANG_CODES.forEach(function (c) { candidates.push(row.label[c]); });
+        }
         candidates = candidates.filter(function (c) { return norm(c); });
         if (!candidates.length) {
             /* Empty label in one of the first seven rows: it can only be

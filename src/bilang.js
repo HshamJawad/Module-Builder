@@ -2,7 +2,13 @@
 // /src/bilang.js
 // Bilingual content primitive — Schema v4.
 //
-// A bilingual value is a plain object: { en: '', ar: '' }.
+// A multilingual value is a plain object: { en: '', ar: '', fr: '' }.
+// The name «bilang» is historical — the primitive carried two sides when
+// it was written and carries three now. Renaming it would have meant
+// touching 341 call sites to say the same thing, so the file keeps its
+// name and the CODE LIST is the single source of truth: every loop below
+// walks BILANG_CODES, and adding a fourth language is one entry here
+// plus one dictionary in mb-translations.js.
 // Everything the user TYPES is a bilingual value. Everything the
 // INTERFACE says is an i18n key and lives in translations.js. These are
 // two different problems and must never share a mechanism: interface
@@ -21,17 +27,29 @@
 
 /* ── The pair ──────────────────────────────────────────────── */
 
-var BILANG_CODES = ['en', 'ar'];
+/* ORDER IS MEANINGFUL. It is the fallback order used by biGet() when the
+   requested side is empty, so English sits first as the language most
+   likely to be readable by whoever opens a half-finished module. It is
+   also the order the two language switches render their buttons in. */
+var BILANG_CODES = ['en', 'ar', 'fr'];
 
-/** A fresh empty pair. */
-function biNew(en, ar) {
-    return { en: en || '', ar: ar || '' };
+/** A fresh empty value, one empty string per language. */
+function biNew(en, ar, fr) {
+    return { en: en || '', ar: ar || '', fr: fr || '' };
 }
 
-/** True for anything shaped like a bilingual pair. */
+/** True for anything shaped like a multilingual value.
+
+    Tests every code, but a value carrying ANY of them counts: files
+    written before French existed hold { en, ar } and nothing else, and
+    demanding all three would make every one of them unrecognisable —
+    which is to say, would flatten every existing project to nothing. */
 function biIs(v) {
-    return v !== null && typeof v === 'object' && !Array.isArray(v) &&
-           ('en' in v || 'ar' in v);
+    if (v === null || typeof v !== 'object' || Array.isArray(v)) return false;
+    for (var i = 0; i < BILANG_CODES.length; i++) {
+        if (BILANG_CODES[i] in v) return true;
+    }
+    return false;
 }
 
 /**
@@ -49,10 +67,16 @@ function biGet(v, lang) {
     if (v === null || v === undefined) return '';
     if (typeof v === 'string') return v;          // legacy v3 value
     if (!biIs(v)) return String(v);
-    var want  = v[lang] || '';
+    var want = v[lang] || '';
     if (want.trim()) return want;
-    var other = lang === 'ar' ? v.en : v.ar;
-    return other || '';
+    /* Walk the code list rather than naming "the other one": with three
+       languages there is no single other, and an author who has written
+       only the Arabic side must not get an empty French export. */
+    for (var i = 0; i < BILANG_CODES.length; i++) {
+        var alt = v[BILANG_CODES[i]];
+        if (typeof alt === 'string' && alt.trim()) return alt;
+    }
+    return '';
 }
 
 function biGetStrict(v, lang) {
@@ -70,14 +94,39 @@ function biSet(obj, key, lang, value) {
     return cur;
 }
 
-/** True when both sides carry text. */
+/** True when EVERY language carries text. */
 function biComplete(v) {
-    return !!(biGetStrict(v, 'en').trim() && biGetStrict(v, 'ar').trim());
+    for (var i = 0; i < BILANG_CODES.length; i++) {
+        if (!biGetStrict(v, BILANG_CODES[i]).trim()) return false;
+    }
+    return true;
 }
 
-/** True when at least one side does. */
+/** True when no language does. */
 function biEmpty(v) {
-    return !biGetStrict(v, 'en').trim() && !biGetStrict(v, 'ar').trim();
+    for (var i = 0; i < BILANG_CODES.length; i++) {
+        if (biGetStrict(v, BILANG_CODES[i]).trim()) return false;
+    }
+    return true;
+}
+
+/* Which languages are written right-to-left. A list, not `=== 'ar'`,
+   for the same reason the interface engine keeps RTL_LANGS: the test is
+   asked in five files and each one that hard-codes Arabic is a file that
+   has to be found again when Kurdish or Farsi is added. */
+var BILANG_RTL = ['ar'];
+
+function biIsRtl(code) {
+    return BILANG_RTL.indexOf(code || contentLang()) !== -1;
+}
+
+/* The name of a language, written in that language. Used by both
+   switches; kept here so the two cannot disagree about what to call
+   French. */
+var BILANG_LABELS = { en: 'English', ar: '\u0627\u0644\u0639\u0631\u0628\u064a\u0629', fr: 'Fran\u00e7ais' };
+
+function biLangLabel(code) {
+    return BILANG_LABELS[code] || String(code || '').toUpperCase();
 }
 
 /* ── Which fields are bilingual ─────────────────────────────

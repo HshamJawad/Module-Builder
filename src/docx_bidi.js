@@ -111,15 +111,32 @@ function _mbBeginExport(rawState) {
         }
     } catch (e) { /* settings unavailable — fall through to detection */ }
 
-    if (stored === 'ar' || stored === 'en') {   // explicit choice wins
+    /* Any language the tool actually ships wins outright. Tested against
+       BILANG_CODES rather than a two-name list: with French added, the
+       old `=== 'ar' || === 'en'` silently ignored an explicit choice of
+       French and fell through to script DETECTION — which counts Latin
+       letters and would have answered "English" for every French module
+       ever written. */
+    if (typeof BILANG_CODES !== 'undefined' && BILANG_CODES.indexOf(stored) !== -1) {
         _MB_DOC_LANG = stored;
         return _MB_DOC_LANG;
     }
 
+    /* Script detection, for a project whose export language was never
+       chosen. It can only answer "Arabic or Latin" — French and English
+       share an alphabet and no amount of letter counting separates them.
+       So a Latin-majority project falls to contentLang() when that is a
+       Latin language, and to English otherwise: the side the author is
+       editing is a far better guess than a coin flip between the two. */
     var acc = { ar: 0, latin: 0 };
     _mbCountScripts(rawState, acc);
     if (acc.ar || acc.latin) {
-        _MB_DOC_LANG = acc.ar > acc.latin ? 'ar' : 'en';
+        if (acc.ar > acc.latin) {
+            _MB_DOC_LANG = 'ar';
+        } else {
+            var cl = (typeof contentLang === 'function') ? contentLang() : 'en';
+            _MB_DOC_LANG = (cl === 'ar') ? 'en' : cl;
+        }
     } else {
         _MB_DOC_LANG = (typeof contentLang === 'function') ? contentLang() : 'en';
     }
@@ -138,7 +155,9 @@ function _mbLang() {
 
 /** Direction of the DOCUMENT — see the note above. */
 function _mbRtl() {
-    return _mbLang() === 'ar';
+    return (typeof biIsRtl === 'function')
+        ? biIsRtl(_mbLang())
+        : _mbLang() === 'ar';
 }
 
 /**
@@ -448,7 +467,10 @@ function _mbTitledAlready(text, key) {
     var s = String(text === null || text === undefined ? '' : text).trim();
     if (!s || !window.i18n) return false;
     if (/^\s*\d+\s*:/.test(s)) return true;              // bare "1: …"
-    var locales = ['en', 'ar'];
+    /* Every locale the tool ships, not a hard-coded pair: a title
+       prefixed in French, or a criteria heading left at the French
+       default, has to be recognised as ours too. */
+    var locales = (typeof BILANG_CODES !== 'undefined') ? BILANG_CODES : ['en', 'ar'];
     for (var i = 0; i < locales.length; i++) {
         var pattern = window.i18n.tIn(key, locales[i]);
         if (typeof pattern !== 'string') continue;
@@ -484,7 +506,10 @@ function _mbBoilerplate(stored, key, vars) {
     if (!s) return out;
     if (!window.i18n) return s;
 
-    var locales = ['en', 'ar'];
+    /* Every locale the tool ships, not a hard-coded pair: a title
+       prefixed in French, or a criteria heading left at the French
+       default, has to be recognised as ours too. */
+    var locales = (typeof BILANG_CODES !== 'undefined') ? BILANG_CODES : ['en', 'ar'];
     for (var i = 0; i < locales.length; i++) {
         var pattern = window.i18n.tIn(key, locales[i]);
         if (typeof pattern !== 'string' || !pattern) continue;
