@@ -1029,7 +1029,20 @@ async function exportToDocx() {
                 // Learning Outcome number and title
                 const loNumber = index + 1;
                 const loTitle = lo.title || '';
-                const loHeadingText = _mbTf('expLearningOutcomeN', { v0: loNumber, v1: loTitle });
+                /* Same guard the assessment forms already used, applied
+                   here too. It matters far more in French than it ever
+                   did in English: the DEFAULT outcome name and the
+                   export PREFIX are the same words — dgDefaultLOName is
+                   «Résultat d'apprentissage {v0}» and expLearningOutcomeN
+                   opens with «Résultat d'apprentissage {v0} :» — so an
+                   outcome the author never renamed printed its own name
+                   twice in a row. In English the two happened to differ
+                   enough ("Learning Outcome 1" vs "Learning Outcome 1:")
+                   that nobody noticed the guard was missing from two of
+                   the three call sites. */
+                const loHeadingText = _mbTitledAlready(loTitle, 'expLearningOutcomeN')
+                    ? loTitle
+                    : _mbTf('expLearningOutcomeN', { v0: loNumber, v1: loTitle });
                 
                 overviewChildren.push(new Paragraph({
                     children: [
@@ -1338,7 +1351,25 @@ async function exportToDocx() {
 
         // Loop ALL LOs in order: LO heading → all info sheets → all activity sheets
         mbState.learningOutcomesData.forEach((lo, loIndex) => {
-            const loHdCh = [new Paragraph({ children: [new TextRun({ text: _mbTf('expLearningOutcomeN', { v0: loIndex + 1, v1: lo.title || '' }), size: 28, bold: true, color: '0070C0', rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 400, before: 200 } })];
+            /* An outcome with no sheets gets no heading page.
+               The loops below skip an untitled info or activity sheet,
+               so an outcome that has none — or only untitled ones —
+               produced a page carrying its name and nothing else. In a
+               four-outcome module where the author had filled in one,
+               that was three orphan pages, and they read as sections the
+               export had failed to finish rather than as sections that
+               were never started. Same rule as the assessment forms and
+               the cover rows: presence is not content. */
+            const loHasSheets =
+                (lo.infoSheets     || []).some(sh => (sh.title || '').trim()) ||
+                (lo.activitySheets || []).some(sh => (sh.title || '').trim());
+            if (!loHasSheets) return;
+
+            const loHdTitle = lo.title || '';
+            const loHdText = _mbTitledAlready(loHdTitle, 'expLearningOutcomeN')
+                ? loHdTitle
+                : _mbTf('expLearningOutcomeN', { v0: loIndex + 1, v1: loHdTitle });
+            const loHdCh = [new Paragraph({ children: [new TextRun({ text: loHdText, size: 28, bold: true, color: '0070C0', rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 400, before: 200 } })];
             sections.push({ properties: { bidi: _mbRtl() }, children: loHdCh });
 
             (lo.infoSheets || []).forEach((info, si) => {
