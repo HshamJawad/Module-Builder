@@ -227,9 +227,7 @@
 <select data-act="switchModule" data-on="change" id="current-module-selector" style="padding: 10px; border: 2px solid #0ea5e9; border-radius: 8px; font-size: 1em; font-weight: 600; background: white;">
 <option data-i18n="mbSelectModule" value="">-- Select Module --</option>
 </select>
-<button class="btn-action" data-act="renameModule" data-i18n="mbRename" style="background: #3b82f6;">
-                    ✏️ Rename
-                </button>
+<button class="btn-action" data-act="renameModule" style="background: #3b82f6;"><svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4.5 19.5h4l10-10a2.1 2.1 0 0 0-3-3l-10 10z"/><path d="M14.5 6.5l3 3"/><path d="M4.5 19.5l.6-3.4"/></svg><span data-i18n="mbRename">Rename</span></button>
 <button class="btn-action" data-act="deleteModule"  style="background: #ef4444;"><svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg><span data-i18n="mbDelete">Delete</span></button>
 </div>
 <div id="module-summary" style="margin-top: 15px; padding: 15px; background: rgba(255,255,255,0.95); border-radius: 8px; display: none;">
@@ -258,9 +256,7 @@
 <select data-act="switchLearningOutcome" data-on="change" id="current-lo-selector" style="padding: 10px; border: 2px solid #667eea; border-radius: 8px; font-size: 1em; background: white;">
 <option data-i18n="mbSelectLearningOutcome" value="">-- Select Learning Outcome --</option>
 </select>
-<button class="btn-action" data-act="renameLearningOutcome" data-i18n="mbRename" style="background: #3b82f6;">
-                    ✏️ Rename
-                </button>
+<button class="btn-action" data-act="renameLearningOutcome" style="background: #3b82f6;"><svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4.5 19.5h4l10-10a2.1 2.1 0 0 0-3-3l-10 10z"/><path d="M14.5 6.5l3 3"/><path d="M4.5 19.5l.6-3.4"/></svg><span data-i18n="mbRename">Rename</span></button>
 <button class="btn-action" data-act="deleteLearningOutcome"  style="background: #ef4444;"><svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg><span data-i18n="mbDelete">Delete</span></button>
 </div>
 <div id="lo-sheets-summary" style="margin-top: 15px; padding: 15px; background: white; border-radius: 8px; display: none;">
@@ -756,7 +752,7 @@
 <!-- Header row: editable title + rename button -->
 <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
 <span data-i18n="mbReferences" id="references-title-display" style="font-size: 1.2em; font-weight: 600; color: #667eea;">📚 References</span>
-<button data-act="renameReferencesTitle" data-i18n="mbRename" data-i18n-title="tiRenameSectionHeading" style="background: #f3f4f6; color: #374151; border: 1.5px solid #d1d5db; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 0.82em; font-weight: 600; transition: background 0.2s;" title="Rename section heading">✏️ Rename</button>
+<button class="mb-has-ico" data-act="renameReferencesTitle" data-i18n-title="tiRenameSectionHeading" style="background: #f3f4f6; color: #374151; border: 1.5px solid #d1d5db; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 0.82em; font-weight: 600; transition: background 0.2s;" title="Rename section heading"><svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4.5 19.5h4l10-10a2.1 2.1 0 0 0-3-3l-10 10z"/><path d="M14.5 6.5l3 3"/><path d="M4.5 19.5l.6-3.4"/></svg><span data-i18n="mbRename">Rename</span></button>
 </div>
 <!-- Fixed first reference entry -->
 <div id="references-list">
