@@ -19,6 +19,67 @@
      every load and logs a 404 — harmless, but it sits in the console
      next to real errors and makes them harder to see. -->
 <link href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%236E767D'/%3E%3Ctext x='32' y='43' font-family='Segoe UI,sans-serif' font-size='30' font-weight='700' fill='%23FCFCFB' text-anchor='middle'%3EMB%3C/text%3E%3C/svg%3E" rel="icon" type="image/svg+xml"/>
+<style>
+/* ── List-formatting controls: icon buttons ──────────────────
+   Was three emoji-and-word buttons per box ("🔢 Number"), which
+   set the strip's width by its longest translation and pushed the
+   controls onto a second line in Arabic. Icons are the same size
+   in every language.
+
+   data-i18n was REMOVED from these buttons and only
+   data-i18n-title kept. applyTranslations() writes the text
+   content of anything carrying data-i18n, so leaving it would
+   overwrite the <svg> with a word on the first language switch —
+   the icon would survive until the user touched the language
+   menu, then vanish. The tooltip is now the only translated part,
+   which is also the only part still made of words.
+
+   The icons are inline SVG on purpose: no sprite to fetch, no
+   font to fail, and `stroke: currentColor` means the danger
+   variant recolours the glyph by setting one property. */
+.objective-formatting-controls .objective-format-btn {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  border: 1px solid #e3e8ef;
+  border-radius: 10px;
+  background: #eef1f6;
+  color: #475569;
+  /* Any text left inside — a stray label, a translation that slips
+     back in — collapses to nothing instead of shoving the icon. */
+  font-size: 0;
+  line-height: 0;
+  box-shadow: none;
+}
+.objective-formatting-controls .objective-format-btn:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+  transform: none;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, .12);
+}
+.objective-formatting-controls .objective-format-btn:active { transform: translateY(1px); }
+.objective-formatting-controls .objective-format-btn:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+.objective-formatting-controls .objective-format-btn svg { display: block; }
+
+/* Destructive action, kept visually apart from the three that only
+   reformat: this one deletes the number and the content. */
+.objective-formatting-controls .objective-format-btn.danger {
+  background: #fef2f2;
+  border-color: #fee2e2;
+  color: #dc2626;
+}
+.objective-formatting-controls .objective-format-btn.danger:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+</style>
 </head>
 <body>
 <!-- ── Fixed Figma-style Toolbar ─────────────────────────────────── -->
@@ -398,15 +459,9 @@
 <div class="objective-header">
 <label data-i18n="mbObjective" for="info-objective">Objective:</label>
 <div class="objective-formatting-controls">
-<button class="objective-format-btn" data-act="formatObjective" data-args='["info-objective", "number"]' data-i18n="mbNumber" data-i18n-title="tiConvertToNumberedList" title="Convert to numbered list" type="button">
-                                🔢 Number
-                            </button>
-<button class="objective-format-btn" data-act="formatObjective" data-args='["info-objective", "bullet"]' data-i18n="mbBullet" data-i18n-title="tiConvertToBulletedList" title="Convert to bulleted list" type="button">
-                                • Bullet
-                            </button>
-<button class="objective-format-btn clear" data-act="formatObjective" data-args='["info-objective", "clear"]' data-i18n="mbClear" data-i18n-title="tiClearFormatting" title="Clear formatting" type="button">
-                                ✖ Clear
-                            </button>
+<button class="objective-format-btn" data-act="formatObjective" data-args='["info-objective", "number"]' data-i18n-title="tiConvertToNumberedList" title="Convert to numbered list" type="button"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10 6h10M10 12h10M10 18h10"/><path d="M3.9 5.6 5.3 4.9V9"/><path d="M3.5 14.3a1.45 1.45 0 0 1 2.5 1c0 1-2.5 1.8-2.5 2.9h2.9"/></svg></button>
+<button class="objective-format-btn" data-act="formatObjective" data-args='["info-objective", "bullet"]' data-i18n-title="tiConvertToBulletedList" title="Convert to bulleted list" type="button"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9.5 6h10.5M9.5 12h10.5M9.5 18h10.5"/><circle cx="4.6" cy="6" r="1.35" fill="currentColor" stroke="none"/><circle cx="4.6" cy="12" r="1.35" fill="currentColor" stroke="none"/><circle cx="4.6" cy="18" r="1.35" fill="currentColor" stroke="none"/></svg></button>
+<button class="objective-format-btn clear" data-act="formatObjective" data-args='["info-objective", "clear"]' data-i18n-title="tiClearFormatting" title="Clear formatting" type="button"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9.5 5h5M9.5 19h5M12 5v14"/></svg></button>
 </div>
 </div>
 <textarea class="mb-content-field" data-i18n="mbEnterTheLearningObjective" data-i18n-attr="placeholder" id="info-objective" placeholder="Enter the learning objective..." style=""></textarea>
@@ -448,10 +503,10 @@
 <div class="objective-formatting-controls" style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
 <span style="font-size:0.82em;color:#6b7280;margin-right:4px;"><span data-i18n="txNo">No:</span></span>
 <input class="mb-content-field" id="self-check-number" placeholder="1-1" style="width:70px;padding:5px 8px;border:1.5px solid #d1d5db;border-radius:5px;font-size:0.85em;" type="text"/>
-<button class="objective-format-btn" data-act="formatObjective" data-args='["self-check-content", "number"]' data-i18n="mbNumber" data-i18n-title="tiNumberedList" title="Numbered list" type="button">🔢 Number</button>
-<button class="objective-format-btn" data-act="formatObjective" data-args='["self-check-content", "bullet"]' data-i18n="mbBullet" data-i18n-title="tiBulletList" title="Bullet list" type="button">• Bullet</button>
-<button class="objective-format-btn clear" data-act="formatObjective" data-args='["self-check-content", "clear"]' data-i18n="mbClear" data-i18n-title="tiRemoveNumberingBullets" title="Remove numbering/bullets" type="button">✖ Clear</button>
-<button class="btn-remove" data-act="clearSelfCheckSection" data-i18n="mbClearAllNumberContent" data-i18n-attr="title" style="width:28px;height:28px;" title="Clear all (number + content)" type="button">🗑</button>
+<button class="objective-format-btn" data-act="formatObjective" data-args='["self-check-content", "number"]' data-i18n-title="tiNumberedList" title="Numbered list" type="button"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10 6h10M10 12h10M10 18h10"/><path d="M3.9 5.6 5.3 4.9V9"/><path d="M3.5 14.3a1.45 1.45 0 0 1 2.5 1c0 1-2.5 1.8-2.5 2.9h2.9"/></svg></button>
+<button class="objective-format-btn" data-act="formatObjective" data-args='["self-check-content", "bullet"]' data-i18n-title="tiBulletList" title="Bullet list" type="button"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9.5 6h10.5M9.5 12h10.5M9.5 18h10.5"/><circle cx="4.6" cy="6" r="1.35" fill="currentColor" stroke="none"/><circle cx="4.6" cy="12" r="1.35" fill="currentColor" stroke="none"/><circle cx="4.6" cy="18" r="1.35" fill="currentColor" stroke="none"/></svg></button>
+<button class="objective-format-btn clear" data-act="formatObjective" data-args='["self-check-content", "clear"]' data-i18n-title="tiRemoveNumberingBullets" title="Remove numbering/bullets" type="button"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9.5 5h5M9.5 19h5M12 5v14"/></svg></button>
+<button class="btn-remove objective-format-btn danger" data-act="clearSelfCheckSection" data-i18n-attr="title" title="Clear all (number + content)" type="button"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg></button>
 </div>
 </div>
 <textarea class="mb-content-field" data-i18n="mbEnterSelfCheckQuestionsAndContent" data-i18n-attr="placeholder" id="self-check-content" placeholder="Enter self-check questions and content..." rows="6" style="resize:vertical;width:100%;padding:12px;border:2px solid #e0e0e0;border-radius:8px;font-size:1em;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;"></textarea>
@@ -464,10 +519,10 @@
 <div class="objective-formatting-controls" style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
 <span style="font-size:0.82em;color:#6b7280;margin-right:4px;"><span data-i18n="txNo">No:</span></span>
 <input class="mb-content-field" id="answers-key-number" placeholder="1-1" style="width:70px;padding:5px 8px;border:1.5px solid #d1d5db;border-radius:5px;font-size:0.85em;" type="text"/>
-<button class="objective-format-btn" data-act="formatObjective" data-args='["answers-key-content", "number"]' data-i18n="mbNumber" data-i18n-title="tiNumberedList" title="Numbered list" type="button">🔢 Number</button>
-<button class="objective-format-btn" data-act="formatObjective" data-args='["answers-key-content", "bullet"]' data-i18n="mbBullet" data-i18n-title="tiBulletList" title="Bullet list" type="button">• Bullet</button>
-<button class="objective-format-btn clear" data-act="formatObjective" data-args='["answers-key-content", "clear"]' data-i18n="mbClear" data-i18n-title="tiRemoveNumberingBullets" title="Remove numbering/bullets" type="button">✖ Clear</button>
-<button class="btn-remove" data-act="clearAnswersKeySection" data-i18n="mbClearAllNumberContent" data-i18n-attr="title" style="width:28px;height:28px;" title="Clear all (number + content)" type="button">🗑</button>
+<button class="objective-format-btn" data-act="formatObjective" data-args='["answers-key-content", "number"]' data-i18n-title="tiNumberedList" title="Numbered list" type="button"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10 6h10M10 12h10M10 18h10"/><path d="M3.9 5.6 5.3 4.9V9"/><path d="M3.5 14.3a1.45 1.45 0 0 1 2.5 1c0 1-2.5 1.8-2.5 2.9h2.9"/></svg></button>
+<button class="objective-format-btn" data-act="formatObjective" data-args='["answers-key-content", "bullet"]' data-i18n-title="tiBulletList" title="Bullet list" type="button"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9.5 6h10.5M9.5 12h10.5M9.5 18h10.5"/><circle cx="4.6" cy="6" r="1.35" fill="currentColor" stroke="none"/><circle cx="4.6" cy="12" r="1.35" fill="currentColor" stroke="none"/><circle cx="4.6" cy="18" r="1.35" fill="currentColor" stroke="none"/></svg></button>
+<button class="objective-format-btn clear" data-act="formatObjective" data-args='["answers-key-content", "clear"]' data-i18n-title="tiRemoveNumberingBullets" title="Remove numbering/bullets" type="button"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9.5 5h5M9.5 19h5M12 5v14"/></svg></button>
+<button class="btn-remove objective-format-btn danger" data-act="clearAnswersKeySection" data-i18n-attr="title" title="Clear all (number + content)" type="button"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg></button>
 </div>
 </div>
 <textarea class="mb-content-field" data-i18n="mbEnterAnswersKeyContent" data-i18n-attr="placeholder" id="answers-key-content" placeholder="Enter answers-key content..." rows="6" style="resize:vertical;width:100%;padding:12px;border:2px solid #e0e0e0;border-radius:8px;font-size:1em;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;"></textarea>
@@ -522,15 +577,9 @@
 <div class="objective-header">
 <label data-i18n="mbObjective" for="objective">Objective:</label>
 <div class="objective-formatting-controls">
-<button class="objective-format-btn" data-act="formatObjective" data-args='["objective", "number"]' data-i18n="mbNumber" data-i18n-title="tiConvertToNumberedList" title="Convert to numbered list" type="button">
-                            🔢 Number
-                        </button>
-<button class="objective-format-btn" data-act="formatObjective" data-args='["objective", "bullet"]' data-i18n="mbBullet" data-i18n-title="tiConvertToBulletedList" title="Convert to bulleted list" type="button">
-                            • Bullet
-                        </button>
-<button class="objective-format-btn clear" data-act="formatObjective" data-args='["objective", "clear"]' data-i18n="mbClear" data-i18n-title="tiClearFormatting" title="Clear formatting" type="button">
-                            ✖ Clear
-                        </button>
+<button class="objective-format-btn" data-act="formatObjective" data-args='["objective", "number"]' data-i18n-title="tiConvertToNumberedList" title="Convert to numbered list" type="button"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10 6h10M10 12h10M10 18h10"/><path d="M3.9 5.6 5.3 4.9V9"/><path d="M3.5 14.3a1.45 1.45 0 0 1 2.5 1c0 1-2.5 1.8-2.5 2.9h2.9"/></svg></button>
+<button class="objective-format-btn" data-act="formatObjective" data-args='["objective", "bullet"]' data-i18n-title="tiConvertToBulletedList" title="Convert to bulleted list" type="button"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9.5 6h10.5M9.5 12h10.5M9.5 18h10.5"/><circle cx="4.6" cy="6" r="1.35" fill="currentColor" stroke="none"/><circle cx="4.6" cy="12" r="1.35" fill="currentColor" stroke="none"/><circle cx="4.6" cy="18" r="1.35" fill="currentColor" stroke="none"/></svg></button>
+<button class="objective-format-btn clear" data-act="formatObjective" data-args='["objective", "clear"]' data-i18n-title="tiClearFormatting" title="Clear formatting" type="button"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9.5 5h5M9.5 19h5M12 5v14"/></svg></button>
 </div>
 </div>
 <textarea data-i18n="mbEnterTheLearningObjectiveForThis" data-i18n-attr="placeholder" id="objective" placeholder="Enter the learning objective for this activity..."></textarea>
