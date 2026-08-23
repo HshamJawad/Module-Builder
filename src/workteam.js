@@ -8,15 +8,43 @@ function initializeWorkTeam() {
     renderWorkTeam();
 }
 
+/**
+ * One empty row, always.
+ *
+ * The card used to open on the sentence "no team members yet", which
+ * reads as a status report rather than an invitation: several users
+ * took the card for a display of something filled in elsewhere and
+ * never found the button. A visible row of empty fields says what the
+ * card is for without a word of instruction. "Add member" keeps its
+ * job — every member after the first.
+ *
+ * Called from renderWorkTeam rather than seeded in mb_state.js, because
+ * the state is replaced wholesale on three other paths (new project,
+ * reset, and opening a file that has an empty team) and each of them
+ * ends in a render. Putting it here covers all four with one line;
+ * seeding the initial value would cover only the first.
+ *
+ * Pairs, not bare strings: the row is v4-shaped from the moment it
+ * exists, so nothing downstream depends on biPut's legacy-string
+ * upgrade to make it so.
+ */
+function mbEnsureTeamMemberRow() {
+    if (mbState.teamMembers.length) return;
+    mbState.teamMemberIdCounter++;
+    mbState.teamMembers.push({
+        id: mbState.teamMemberIdCounter,
+        name: biNew(),
+        task: biNew(),
+        workLocation: biNew()
+    });
+}
+
 function renderWorkTeam() {
     const container = document.getElementById('work-team-container');
     if (!container) return;
-    
-    if (mbState.teamMembers.length === 0) {
-        container.innerHTML = '<p style="color: #9ca3af; text-align: center; padding: 20px;">' +
-            window.i18n.t('dgNoTeamMembersYet') + '</p>';
-        return;
-    }
+
+    mbEnsureTeamMemberRow();
+
     
     container.innerHTML = mbState.teamMembers.map((member, index) => `
         <div class="team-member-row" style="display: grid; grid-template-columns: 2fr 2fr 2fr auto; gap: 10px; align-items: center; padding: 12px; border-bottom: 1px solid #e5e7eb; background: ${index % 2 === 0 ? '#ffffff' : '#f9fafb'};">
@@ -64,18 +92,39 @@ function addTeamMember() {
     mbState.teamMemberIdCounter++;
     mbState.teamMembers.push({
         id: mbState.teamMemberIdCounter,
-        name: '',
-        task: '',
-        workLocation: ''
+        name: biNew(),
+        task: biNew(),
+        workLocation: biNew()
     });
     renderWorkTeam();
 }
 
 async function deleteTeamMember(memberId) {
-    if (await mbConfirm(window.i18n.t('dgConfirmDeletionthisWillPermanently9'), { danger: true })) {
+    /* The last row is CLEARED, not removed. Removing it would land in
+       mbEnsureTeamMemberRow on the next render and come straight back
+       with a new id, which looks like the delete button is broken. The
+       row keeps its id so nothing that referenced it goes stale, and
+       BOTH languages are wiped: the user asked for the member to be
+       gone, not for the side they happen to be editing to be gone.
+
+       The two cases get two different confirm texts. A prompt that
+       promises permanent removal before an action that visibly leaves
+       the row on screen teaches the user to distrust every other
+       confirm dialog in the app. */
+    const isLast = mbState.teamMembers.length === 1;
+    const msgKey = isLast ? 'dgConfirmClearLastTeamMember'
+                          : 'dgConfirmDeletionthisWillPermanently9';
+    if (!await mbConfirm(window.i18n.t(msgKey), { danger: true })) return;
+
+    if (isLast) {
+        const member = mbState.teamMembers[0];
+        member.name         = biNew();
+        member.task         = biNew();
+        member.workLocation = biNew();
+    } else {
         mbState.teamMembers = mbState.teamMembers.filter(m => m.id !== memberId);
-        renderWorkTeam();
     }
+    renderWorkTeam();
 }
 
 function saveWorkTeamData() {
