@@ -115,6 +115,22 @@ var mbState = {
     introAdditionalDetails:{ en: '', ar: '' },
     assessmentContent:     { en: '', ar: '' },
 
+    /* ── Qualifications-framework card ──────────────────────────
+       Project level, not per module: this tool builds one document per
+       project, and the framework placement describes the qualification
+       that document IS — the same scope as coverRows and teamMembers,
+       which sit here for the same reason.
+
+       Empty objects rather than a fixed set of keys: every field is
+       optional, and tvqf.js writes a key the first time the user types
+       in it. A pre-declared skeleton of eleven empty pairs would make
+       "has the user filled anything in?" a question about values rather
+       than about presence, and the export has to answer that question
+       on every run. See MB_TVQF_BASIC / MB_TVQF_EXTENDED for the field
+       list, which is the one place it is declared. */
+    tvqfBasic: {},
+    tvqfExtended: {},
+
     /* Author-added introduction sections:
            [{ uid, title: { en, ar }, body: { en, ar } }]
        Not in MB_PROJECT_TEXT below — those four are one textarea each

@@ -117,6 +117,12 @@ function saveWork() {
             referencesTitle: mbState.referencesTitle,
             referencesData: mbState.referencesData,
             refIdCounter: mbState.refIdCounter,
+            /* Saved whole, empty or not. An empty object costs two bytes
+               and keeps the load path symmetric with this one; the
+               "don't print empty fields" rule belongs to the export, not
+               to the file format. */
+            tvqfBasic: mbState.tvqfBasic,
+            tvqfExtended: mbState.tvqfExtended,
         };
 
         // Create and download JSON file
@@ -218,6 +224,16 @@ function handleLoadFile() {
                     mbState.referencesTitle = biUpgrade(data.referencesTitle);
                 }
                 renderReferences();
+
+                /* Absent in every project file written before this
+                   feature existed, which is why the fallback is an empty
+                   object rather than a skeleton: an older file simply has
+                   no framework card, and tvqf.js creates the keys as the
+                   user types. biMigrateProject has already upgraded the
+                   prose fields to pairs by this point. */
+                mbState.tvqfBasic    = data.tvqfBasic    || {};
+                mbState.tvqfExtended = data.tvqfExtended || {};
+                if (typeof mbRenderTvqf === 'function') mbRenderTvqf();
                 
                 // Load module data
                 mbState.modulesData = data.modules || [];
@@ -304,6 +320,16 @@ function handleLoadFile() {
                     mbState.referencesTitle = biUpgrade(data.referencesTitle);
                 }
                 renderReferences();
+
+                /* Absent in every project file written before this
+                   feature existed, which is why the fallback is an empty
+                   object rather than a skeleton: an older file simply has
+                   no framework card, and tvqf.js creates the keys as the
+                   user types. biMigrateProject has already upgraded the
+                   prose fields to pairs by this point. */
+                mbState.tvqfBasic    = data.tvqfBasic    || {};
+                mbState.tvqfExtended = data.tvqfExtended || {};
+                if (typeof mbRenderTvqf === 'function') mbRenderTvqf();
                 
                 // Convert v2.0 to v3.0: wrap LOs in a module
                 mbState.moduleIdCounter = 1;
@@ -480,6 +506,11 @@ async function clearAll() {
         mbState.referencesData = [{ id: 1, value: '' }];
         mbState.refIdCounter = 1;
         renderReferences();
+
+        // ── Qualifications-framework card ─────────────────────────
+        mbState.tvqfBasic = {};
+        mbState.tvqfExtended = {};
+        if (typeof mbRenderTvqf === 'function') mbRenderTvqf();
 
         // ── Instructional marks ───────────────────────────────────
         document.querySelectorAll('.marks-container').forEach(c => { c.innerHTML = ''; });

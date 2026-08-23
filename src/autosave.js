@@ -216,6 +216,13 @@
                     referencesTitle:      mbState.referencesTitle  || null,
                     referencesData:       mbState.referencesData   || [],
                     refIdCounter:         mbState.refIdCounter     || 1,
+                    /* The framework card is project-level state like the
+                       cover rows, so it belongs in the crash snapshot for
+                       the same reason they do: a browser that dies with
+                       an hour of accreditation detail typed into it and
+                       never saved to a file has lost it otherwise. */
+                    tvqfBasic:            mbState.tvqfBasic        || {},
+                    tvqfExtended:         mbState.tvqfExtended     || {},
                 };
             } catch(e) {
                 console.warn('[AutoSave] snapshot error:', e);
@@ -409,6 +416,10 @@
                 mbState.refIdCounter    = data.refIdCounter    || 1;
                 if (typeof mbSeedReferencesTitle === 'function') mbSeedReferencesTitle();
                 if (typeof renderReferences === 'function') renderReferences();
+
+                mbState.tvqfBasic    = data.tvqfBasic    || {};
+                mbState.tvqfExtended = data.tvqfExtended || {};
+                if (typeof mbRenderTvqf === 'function') mbRenderTvqf();
 
                 if (data.modules && typeof renderModuleSelector === 'function') {
                     mbState.modulesData      = data.modules;

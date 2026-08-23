@@ -100,6 +100,17 @@ var BILANG_FIELDS = {
     project:    ['coversAdditionalInfo', 'coversAdditionalNotes',
                  'introAdditionalDetails', 'assessmentContent',
                  'referencesTitle'],
+    /* The framework card. Only the PROSE fields are pairs — an author
+       writing an Arabic module still submits it to a body whose name
+       has an Arabic and an English form. The rest are single-valued for
+       the reason given above: `notionalHours` is a number, the two
+       dates are ISO strings, and `qualificationType` and `rpl` store a
+       CODE ('principal', 'yes') that the interface and the export each
+       resolve to a word in their own language. Translating a code would
+       break both. */
+    tvqfBasic:  ['unitTitle', 'frameworkName', 'awardingBody'],
+    tvqfExt:    ['knowledge', 'skill', 'competence', 'entryRequirements',
+                 'progression', 'assessmentMethod', 'alignmentNote'],
     coverRow:   ['label', 'value'],
     teamMember: ['name', 'role', 'organization'],
     module:     ['title', 'code', 'description'],
@@ -161,6 +172,8 @@ function biMigrateProject(data) {
     if (data.schemaVersion === 4) return data;               // idempotent
 
     biUpgradeFields(data, BILANG_FIELDS.project);
+    if (data.tvqfBasic)    biUpgradeFields(data.tvqfBasic,    BILANG_FIELDS.tvqfBasic);
+    if (data.tvqfExtended) biUpgradeFields(data.tvqfExtended, BILANG_FIELDS.tvqfExt);
     (data.coverRows   || []).forEach(function (r) { biUpgradeFields(r, BILANG_FIELDS.coverRow); });
     (data.teamMembers || []).forEach(function (m) { biUpgradeFields(m, BILANG_FIELDS.teamMember); });
 
