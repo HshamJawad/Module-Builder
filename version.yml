@@ -29,7 +29,7 @@ jobs:
 
       - name: Write version.json
         env:
-          MAJOR_MINOR: "2.0"
+          MAJOR_MINOR: "2.1"
         run: |
           VERSION="${MAJOR_MINOR}.${GITHUB_RUN_NUMBER}"
           BUILD="$(date -u +%Y-%m-%d)"
