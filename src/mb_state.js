@@ -106,6 +106,19 @@ var mbState = {
     ],
     coverRowIdCounter: 8,
 
+    /* The nine qualifications-framework rows — entry requirements,
+       qualification type, framework name, notional hours, awarding body,
+       RPL, accreditation date, review due date, referencing — are NOT
+       listed above. They are added by mbEnsureFrameworkRows(), which runs
+       from every render, because the same nine rows also have to reach
+       projects that were saved before they existed. One code path that
+       serves new, loaded and legacy projects alike is one place for the
+       list to be wrong; two would eventually disagree.
+
+       This flag is what stops them coming back after the user deletes the
+       ones their own framework does not ask for. */
+    coverFrameworkSeeded: false,
+
     // ── Work team ──────────────────────────────────────────────
     teamMembers: [],
     teamMemberIdCounter: 0,
@@ -123,19 +136,18 @@ var mbState = {
     introAdditionalDetails:{ en: '', ar: '' },
     assessmentContent:     { en: '', ar: '' },
 
-    /* ── Qualifications-framework card ──────────────────────────
-       Project level, not per module: this tool builds one document per
-       project, and the framework placement describes the qualification
-       that document IS — the same scope as coverRows and teamMembers,
-       which sit here for the same reason.
+    /* ── Retired framework card ─────────────────────────────────
+       Kept as empty objects, and read on load, PURELY for migration.
+       The TVQF/NQF card these held is gone: its nine own fields are
+       rows of the cover table now (covers.js), and every project file
+       written while the card existed still carries these two keys.
+       mbMigrateTvqfRows() empties them into the table on the first
+       render after a load, so a saved file never loses what was typed
+       into a card the tool no longer shows.
 
-       Empty objects rather than a fixed set of keys: every field is
-       optional, and tvqf.js writes a key the first time the user types
-       in it. A pre-declared skeleton of eleven empty pairs would make
-       "has the user filled anything in?" a question about values rather
-       than about presence, and the export has to answer that question
-       on every run. See MB_TVQF_BASIC / MB_TVQF_EXTENDED for the field
-       list, which is the one place it is declared. */
+       Do not add fields here. When enough time has passed that no file
+       in circulation still carries a card, both keys and the migration
+       go together. */
     tvqfBasic: {},
     tvqfExtended: {},
 

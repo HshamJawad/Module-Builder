@@ -103,6 +103,12 @@ function saveWork() {
             backCoverImage: mbState.backCoverImage,
             coverRows: mbState.coverRows,
             coverRowIdCounter: mbState.coverRowIdCounter,
+            /* Whether the nine qualifications-framework rows have already
+               been added to this project. Saved because "already added"
+               is not recoverable from the rows themselves once the user
+               has deleted the ones their ministry does not ask for —
+               without it, every one of them would come back on load. */
+            coverFrameworkSeeded: mbState.coverFrameworkSeeded,
             teamMembers: mbState.teamMembers,
             teamMemberIdCounter: mbState.teamMemberIdCounter,
             introAdditionalDetails: mbState.introAdditionalDetails,
@@ -181,6 +187,13 @@ function handleLoadFile() {
                 if (data.coverRows) {
                     mbState.coverRows = data.coverRows;
                     mbState.coverRowIdCounter = data.coverRowIdCounter || 7;
+                    /* Read from the FILE, not left over from whatever was
+                       open before: loading an older project into a session
+                       that has already seeded a newer one must not make the
+                       older one look as if it had been seeded too, or its
+                       framework rows would never be created and the card it
+                       does carry would have nowhere to migrate to. */
+                    mbState.coverFrameworkSeeded = !!data.coverFrameworkSeeded;
                     renderCoverTable();
                 }
                 
@@ -225,15 +238,22 @@ function handleLoadFile() {
                 }
                 renderReferences();
 
-                /* Absent in every project file written before this
-                   feature existed, which is why the fallback is an empty
-                   object rather than a skeleton: an older file simply has
-                   no framework card, and tvqf.js creates the keys as the
-                   user types. biMigrateProject has already upgraded the
-                   prose fields to pairs by this point. */
+                /* The qualifications-framework card that used to own these
+                   two objects is gone; its fields are rows of the module
+                   information table now. They are still READ, because
+                   every project file written while the card existed still
+                   carries them, and mbMigrateTvqfRows() — which runs from
+                   mbSeedCoverLabels(), inside renderCoverTable() — moves
+                   their contents onto the rows and empties them.
+
+                   The render below is therefore not cosmetic and not a
+                   duplicate of the one further up: the table was drawn
+                   before these keys were loaded, so without a second pass
+                   the migration would run against the PREVIOUS project's
+                   card and this one's would sit in the file unseen. */
                 mbState.tvqfBasic    = data.tvqfBasic    || {};
                 mbState.tvqfExtended = data.tvqfExtended || {};
-                if (typeof mbRenderTvqf === 'function') mbRenderTvqf();
+                if (typeof renderCoverTable === 'function') renderCoverTable();
                 
                 // Load module data
                 mbState.modulesData = data.modules || [];
@@ -277,6 +297,13 @@ function handleLoadFile() {
                 if (data.coverRows) {
                     mbState.coverRows = data.coverRows;
                     mbState.coverRowIdCounter = data.coverRowIdCounter || 7;
+                    /* Read from the FILE, not left over from whatever was
+                       open before: loading an older project into a session
+                       that has already seeded a newer one must not make the
+                       older one look as if it had been seeded too, or its
+                       framework rows would never be created and the card it
+                       does carry would have nowhere to migrate to. */
+                    mbState.coverFrameworkSeeded = !!data.coverFrameworkSeeded;
                     renderCoverTable();
                 }
                 
@@ -321,15 +348,22 @@ function handleLoadFile() {
                 }
                 renderReferences();
 
-                /* Absent in every project file written before this
-                   feature existed, which is why the fallback is an empty
-                   object rather than a skeleton: an older file simply has
-                   no framework card, and tvqf.js creates the keys as the
-                   user types. biMigrateProject has already upgraded the
-                   prose fields to pairs by this point. */
+                /* The qualifications-framework card that used to own these
+                   two objects is gone; its fields are rows of the module
+                   information table now. They are still READ, because
+                   every project file written while the card existed still
+                   carries them, and mbMigrateTvqfRows() — which runs from
+                   mbSeedCoverLabels(), inside renderCoverTable() — moves
+                   their contents onto the rows and empties them.
+
+                   The render below is therefore not cosmetic and not a
+                   duplicate of the one further up: the table was drawn
+                   before these keys were loaded, so without a second pass
+                   the migration would run against the PREVIOUS project's
+                   card and this one's would sit in the file unseen. */
                 mbState.tvqfBasic    = data.tvqfBasic    || {};
                 mbState.tvqfExtended = data.tvqfExtended || {};
-                if (typeof mbRenderTvqf === 'function') mbRenderTvqf();
+                if (typeof renderCoverTable === 'function') renderCoverTable();
                 
                 // Convert v2.0 to v3.0: wrap LOs in a module
                 mbState.moduleIdCounter = 1;
@@ -442,10 +476,15 @@ async function clearAll() {
            positional fallback for identifying legacy rows and is frozen
            in the order those files were written. Using it here would put
            the unit title at the bottom, under Version. */
+        /* mbMakeCoverRow, not an inline literal: the framework rows carry
+           a `field` marker that decides whether they render as a date
+           picker, a dropdown or a text box, and a second constructor here
+           is exactly how that marker would go missing on reset only. */
         mbState.coverRows = MB_COVER_ROW_ORDER.map(function (key, i) {
-            return { id: i + 1, seedKey: key, label: biNew(), value: biNew() };
+            return mbMakeCoverRow(key, i + 1);
         });
         mbState.coverRowIdCounter = MB_COVER_ROW_ORDER.length;
+        mbState.coverFrameworkSeeded = true;
         renderCoverTable();
 
         // ── Introduction tab ──────────────────────────────────────
@@ -511,10 +550,13 @@ async function clearAll() {
         mbState.refIdCounter = 1;
         renderReferences();
 
-        // ── Qualifications-framework card ─────────────────────────
+        /* ── Retired framework card ────────────────────────────────
+           Cleared, not rendered: there is no card left to render, and
+           leaving stale values here would have the migration write a
+           reset project's table full of the previous project's
+           accreditation dates on the next render. */
         mbState.tvqfBasic = {};
         mbState.tvqfExtended = {};
-        if (typeof mbRenderTvqf === 'function') mbRenderTvqf();
 
         // ── Instructional marks ───────────────────────────────────
         document.querySelectorAll('.marks-container').forEach(c => { c.innerHTML = ''; });

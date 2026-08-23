@@ -197,6 +197,7 @@
                     backCoverImage:       mbState.backCoverImage   || null,
                     coverRows:            mbState.coverRows        || [],
                     coverRowIdCounter:    mbState.coverRowIdCounter|| 7,
+                    coverFrameworkSeeded: !!mbState.coverFrameworkSeeded,
                     teamMembers:          mbState.teamMembers      || [],
                     teamMemberIdCounter:  mbState.teamMemberIdCounter || 0,
                     introAdditionalDetails: mbState.introAdditionalDetails,
@@ -379,6 +380,7 @@
                 if (data.coverRows && typeof renderCoverTable === 'function') {
                     mbState.coverRows         = data.coverRows;
                     mbState.coverRowIdCounter = data.coverRowIdCounter || 7;
+                    mbState.coverFrameworkSeeded = !!data.coverFrameworkSeeded;
                     renderCoverTable();
                 }
                 if (data.teamMembers && typeof renderWorkTeam === 'function') {
@@ -417,9 +419,15 @@
                 if (typeof mbSeedReferencesTitle === 'function') mbSeedReferencesTitle();
                 if (typeof renderReferences === 'function') renderReferences();
 
+                /* Still restored, still migrated: a snapshot taken while
+                   the framework card existed carries these keys, and
+                   renderCoverTable() is what moves them onto the rows.
+                   It has to run AFTER the assignment — the table was
+                   drawn a hundred lines above, before these keys were
+                   read — which is why this is not a redundant render. */
                 mbState.tvqfBasic    = data.tvqfBasic    || {};
                 mbState.tvqfExtended = data.tvqfExtended || {};
-                if (typeof mbRenderTvqf === 'function') mbRenderTvqf();
+                if (typeof renderCoverTable === 'function') renderCoverTable();
 
                 if (data.modules && typeof renderModuleSelector === 'function') {
                     mbState.modulesData      = data.modules;

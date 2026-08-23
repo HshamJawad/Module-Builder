@@ -70,8 +70,10 @@ async function exportToDocx() {
     const hasWorkTeam = mbState.teamMembers.some(member => (member.name || '').trim() || (member.task || '').trim() || (member.workLocation || '').trim());
     const introAdditionalDetails = mbState.introAdditionalDetails || '';
     const hasIntroBlocks  = mbBlocksAnyFilled(mbState.introBlocks);
-    const hasTvqf = (typeof mbTvqfHasContent === 'function') && mbTvqfHasContent(mbState);
-    const hasIntroContent = hasWorkTeam || introAdditionalDetails.trim() || hasIntroBlocks || hasTvqf;
+    /* The qualifications-framework card used to count as intro content
+       of its own. Its fields are rows of the module information table
+       now, so they are already covered by hasCoversContent. */
+    const hasIntroContent = hasWorkTeam || introAdditionalDetails.trim() || hasIntroBlocks;
     const infoTitle = _info.title || '';
     const contentSections = (_info.contentSections || []);
     let hasInfoContent = false;
@@ -688,18 +690,30 @@ async function exportToDocx() {
                         margins: { top: 150, bottom: 150, left: 150, right: 150 },
                     }));
                     
-                    // Value cell
+                    /* Value cell.
+                       Split on newlines rather than emitted as one run:
+                       entry requirements is a textarea and people list
+                       prerequisites one per line. A single run would
+                       print those as one unreadable paragraph, with the
+                       breaks silently swallowed by Word. */
+                    const valueLines = String(row.value).split('\n').filter(function (l, i, all) {
+                        /* Trailing blank lines only — an intentional gap
+                           between two paragraphs is kept. */
+                        return l.trim() || all.slice(i).some(function (r) { return r.trim(); });
+                    });
                     cells.push(new TableCell({
-                        children: [new Paragraph({
-                            children: [new TextRun({
-                                text: row.value,
-                                bold: true,
-                                size: 36, // 18pt
-                                rightToLeft: _mbRtl(),
-                            })],
-                            alignment: _mbStart(AlignmentType),
-                            bidirectional: _mbRtl(),
-                        })],
+                        children: (valueLines.length ? valueLines : ['']).map(function (line) {
+                            return new Paragraph({
+                                children: [new TextRun({
+                                    text: line,
+                                    bold: true,
+                                    size: 36, // 18pt
+                                    rightToLeft: _mbRtl(),
+                                })],
+                                alignment: _mbStart(AlignmentType),
+                                bidirectional: _mbRtl(),
+                            });
+                        }),
                         width: { size: 65, type: WidthType.PERCENTAGE },
                         margins: { top: 150, bottom: 150, left: 150, right: 150 },
                     }));
@@ -765,12 +779,7 @@ async function exportToDocx() {
            concerned; an empty one must not create a blank page. */
         const introBlocks = mbBlocksFilled(mbState.introBlocks);
 
-        /* The framework card counts as intro content in its own right:
-           a project may carry nothing else on these pages and still
-           need to state where its qualification sits. */
-        const tvqfOnPage = (typeof mbTvqfHasContent === 'function') && mbTvqfHasContent(mbState);
-
-        if (hasWorkTeam || introAdditionalDetails.trim() || introBlocks.length || tvqfOnPage) {
+        if (hasWorkTeam || introAdditionalDetails.trim() || introBlocks.length) {
             const { Table, TableRow, TableCell, WidthType, BorderStyle } = mbDocxLib();
             const introChildren = [];
             
@@ -781,83 +790,6 @@ async function exportToDocx() {
             
             // No page break needed - intro section already starts on new section
             
-            /* ── Qualifications-framework card ──────────────────────
-               First on the introduction pages, before the work team:
-               an accreditation reader opens the document looking for
-               the level and the awarding body, not for who wrote it.
-
-               Built as a two-column label/value table rather than a
-               heading-and-paragraph run, because that is what makes it
-               scannable — and because a card is what the ministry form
-               it will be copied into looks like.
-
-               mbTvqfExportRows() has already dropped every empty field,
-               so there is no `if (value)` in this loop: a row that
-               reached here has something to say. The extended block is
-               emitted only when it produced rows of its own, which is
-               why the two calls are separate rather than concatenated. */
-            if (tvqfOnPage) {
-                const tvqfTable = function (headingKey, rows) {
-                    if (!rows.length) return;
-
-                    introChildren.push(new Paragraph({
-                        children: [new TextRun({
-                            text: _mbT(headingKey),
-                            size: 24,
-                            bold: true,
-                            rightToLeft: _mbRtl(),
-                        })],
-                        alignment: _mbStart(AlignmentType),
-                        bidirectional: _mbRtl(),
-                        spacing: { after: 200, before: 200 },
-                    }));
-
-                    const cell = function (text, bold, pct) {
-                        return new TableCell({
-                            children: [new Paragraph({
-                                children: [new TextRun({
-                                    text: String(text),
-                                    size: 22,          // 11pt — a card, not body copy
-                                    bold: !!bold,
-                                    rightToLeft: _mbRtl(),
-                                })],
-                                alignment: _mbStart(AlignmentType),
-                                bidirectional: _mbRtl(),
-                            })],
-                            width: { size: pct, type: WidthType.PERCENTAGE },
-                            margins: { top: 80, bottom: 80, left: 100, right: 100 },
-                        });
-                    };
-
-                    introChildren.push(new Table({
-                        rows: rows.map(function (r) {
-                            return new TableRow({
-                                children: [cell(r.label, true, 38), cell(r.value, false, 62)],
-                            });
-                        }),
-                        width: { size: 9072, type: WidthType.DXA },   // 16cm
-                        borders: {
-                            top:              { style: BorderStyle.SINGLE, size: 1, color: '000000' },
-                            bottom:           { style: BorderStyle.SINGLE, size: 1, color: '000000' },
-                            left:             { style: BorderStyle.SINGLE, size: 1, color: '000000' },
-                            right:            { style: BorderStyle.SINGLE, size: 1, color: '000000' },
-                            insideHorizontal: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
-                            insideVertical:   { style: BorderStyle.SINGLE, size: 1, color: '000000' },
-                        },
-                    }));
-                };
-
-                tvqfTable('tqCardHeading', mbTvqfExportRows(mbState, 'basic', _mbT));
-                tvqfTable('tqExtHeading',  mbTvqfExportRows(mbState, 'ext',   _mbT));
-
-                /* Anything after the card starts a fresh page. Without
-                   this the work-team table runs on directly underneath
-                   it and the two read as one table. */
-                if (hasWorkTeam || introAdditionalDetails.trim() || introBlocks.length) {
-                    introChildren.push(new Paragraph({ children: [new PageBreak()] }));
-                }
-            }
-
             // Work Team Table (if has team members)
             if (hasWorkTeam) {
                 // Title
@@ -1023,10 +955,7 @@ async function exportToDocx() {
                page break goes BEFORE every section that has something in
                front of it — the first one breaks only if the work team or
                the additional details already wrote onto the page. */
-            /* tvqfOnPage included: the card writes onto this page too,
-               so a following section needs its own break — otherwise
-               the first extra section lands underneath the card. */
-            let introPageUsed = !!(hasWorkTeam || introAdditionalDetails.trim() || tvqfOnPage);
+            let introPageUsed = !!(hasWorkTeam || introAdditionalDetails.trim());
 
             introBlocks.forEach(block => {
                 if (introPageUsed) {
