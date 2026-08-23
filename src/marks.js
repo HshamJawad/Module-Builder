@@ -105,8 +105,17 @@ function restoreMarks(containerId, marksArray) {
 }
 
 function buildMarkDocxTable(mt, text) {
+    /* mbDocxLib(), not window.docx. This was the last place in the
+       project still destructuring the raw library, and it is why marks
+       came out of an Arabic export underlined in red with a mirrored
+       table handle while every other block was clean: the wrappers are
+       what emit <w:lang> (the DICTIONARY — Word was checking Arabic
+       against an English one and flagging every word) and
+       <w:bidiVisual/> (the TABLE's own direction, separate from the
+       direction of the paragraphs inside it). Bypassing the factory
+       bypassed both at once. */
     const { Table, TableRow, TableCell, WidthType, BorderStyle,
-            Paragraph, TextRun, AlignmentType } = window.docx;
+            Paragraph, TextRun, AlignmentType } = mbDocxLib();
 
     // Strip '#' from hex colors
     const headerFill = mt.header.replace('#', '');
@@ -118,26 +127,31 @@ function buildMarkDocxTable(mt, text) {
     const headerCell = new TableCell({
         children: [new Paragraph({
             children: [new TextRun({
-                text: window.i18n.tIn(mt.label, (typeof exportLang === 'function' ? exportLang() : 'en')),
+                /* _mbT, not i18n.tIn(exportLang()): the label is
+                   boilerplate and must be in the DOCUMENT's language.
+                   exportLang() falls back to contentLang(), so an author
+                   typing Arabic into the English side got an English
+                   "NOTE" heading above an Arabic body. */
+                text: _mbT(mt.label),
                 bold: true,
                 size: 22,
                 color: headerTextColor,
-                rightToLeft: false,
+                rightToLeft: _mbRtl(),
             })],
-            alignment: AlignmentType.LEFT,
-            bidirectional: false,
+            alignment: _mbStart(AlignmentType),
+            bidirectional: _mbRtl(),
         })],
         shading: { fill: headerFill, color: 'auto' },
         margins: { top: 100, bottom: 100, left: 150, right: 150 },
     });
 
     // Content row cell
-    const lines = text.split('\n').filter(l => l.trim());
+    const lines = String(text || '').split('\n').filter(l => l.trim());
     const contentParas = lines.length > 0
         ? lines.map(line => new Paragraph({
-            children: [new TextRun({ text: line, size: 22, rightToLeft: false })],
-            alignment: AlignmentType.LEFT,
-            bidirectional: false,
+            children: [new TextRun({ text: line, size: 22, rightToLeft: _mbRtl() })],
+            alignment: _mbStart(AlignmentType),
+            bidirectional: _mbRtl(),
             spacing: { after: 100 },
         }))
         : [new Paragraph({ children: [new TextRun({ text: ' ' })] })];
