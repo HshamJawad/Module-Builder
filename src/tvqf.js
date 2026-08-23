@@ -108,7 +108,27 @@ function _mbTvqfMirrorRow(seedKey) {
     for (var i = 0; i < rows.length; i++) {
         if (rows[i].seedKey === seedKey) return rows[i];
     }
+    /* No row carries the key: the user RENAMED that row, which deletes
+       the seedKey (covers.js). The value is still theirs and still the
+       one this mirror is about, so fall back to the factory position —
+       but only if the row there has no key of its own, which would mean
+       it is a different field that merely happens to sit at that index. */
+    var idx = MB_TVQF_MIRROR.indexOf(seedKey);
+    if (idx !== -1 && rows[idx] && !rows[idx].seedKey) return rows[idx];
     return null;
+}
+
+/* The label to show beside a mirrored value.
+
+   Not window.i18n.t(seedKey) unconditionally: a row the user renamed
+   is their content, and the card must call it what the table calls it.
+   mbCoverLabelText() already encodes that rule for the cover table —
+   reusing it is how the two stay in agreement instead of drifting. */
+function _mbTvqfMirrorLabel(seedKey, row) {
+    if (row && !row.seedKey && typeof mbCoverLabelText === 'function') {
+        return mbCoverLabelText(row).replace(/:\s*$/, '');
+    }
+    return window.i18n.t(seedKey).replace(/:\s*$/, '');
 }
 
 function _mbTvqfMirrorValue(seedKey) {
@@ -185,13 +205,19 @@ function mbRenderTvqf() {
            looks for, and putting the two new fields above them would
            bury the level and the code under the framework's name. */
         var mirrorHtml = MB_TVQF_MIRROR.map(function (key) {
-            var v = _mbTvqfMirrorValue(key);
+            var row = _mbTvqfMirrorRow(key);
+            var v   = _mbTvqfMirrorValue(key);
+            /* No data-i18n on the label: a renamed row's label is the
+               user's own words, and applyTranslations() would overwrite
+               it with the dictionary's on the next interface switch.
+               The whole card is re-rendered on mb:langchange instead,
+               which repaints the un-renamed ones correctly. */
             return '<div class="mb-tvqf-field mb-tvqf-field--mirror">' +
-                     '<label class="mb-tvqf-label" data-i18n="' + key + '">' +
-                       _mbTvqfEsc(window.i18n.t(key)) + '</label>' +
+                     '<label class="mb-tvqf-label">' +
+                       _mbTvqfEsc(_mbTvqfMirrorLabel(key, row)) + '</label>' +
                      '<input type="text" class="mb-tvqf-input" dir="auto" readonly tabindex="-1"' +
                        ' value="' + _mbTvqfEsc(v) + '"' +
-                       ' placeholder="' + _mbTvqfEsc(window.i18n.t('tqFromCovers')) + '"/>' +
+                       ' placeholder="' + _mbTvqfEsc(window.i18n.t('tqFromUnitTable')) + '"/>' +
                    '</div>';
         }).join('');
 
@@ -295,6 +321,82 @@ function mbTvqfExportRows(state, group, t) {
 
     return rows;
 }
+
+/* ── Keeping the mirrors current ─────────────────────────────
+   The mirrors are a VIEW of the cover table, and a view that only
+   refreshes when its own tab is rebuilt is a view that lies. Typing a
+   level into the table and seeing the card still show the old one is
+   worse than showing nothing: the user has no way to tell which of the
+   two the export will use.
+
+   A refresh button was the alternative and it is the wrong shape for
+   this: a button that must be pressed for the screen to stop being
+   wrong puts the correctness of the display in the user's hands, and
+   the one time they forget is the time it matters.
+
+   So it is delegated from the document, in the capture phase, for the
+   same reason events.js binds that way: the cover rows are rebuilt by
+   renderCoverTable() whenever a row is added, renamed or deleted, and
+   a listener attached to the inputs themselves would be thrown away
+   with them.
+
+   Only the mirror INPUTS are rewritten, not the whole card. Re-rendering
+   would rebuild the editable fields too, and a rebuild while the user is
+   typing in one of them loses the caret. */
+function mbTvqfSyncMirrors() {
+    var box = document.getElementById('tvqf-basic-fields');
+    if (!box) return;
+    var inputs = box.querySelectorAll('.mb-tvqf-field--mirror .mb-tvqf-input');
+    /* Positional, and safe to be: the renderer emits exactly one input
+       per entry of MB_TVQF_MIRROR, in that order, in the same pass. */
+    for (var i = 0; i < inputs.length && i < MB_TVQF_MIRROR.length; i++) {
+        var key = MB_TVQF_MIRROR[i];
+        var v   = _mbTvqfMirrorValue(key);
+        if (inputs[i].value !== v) inputs[i].value = v;
+        var label = inputs[i].parentNode.querySelector('.mb-tvqf-label');
+        if (label) {
+            var text = _mbTvqfMirrorLabel(key, _mbTvqfMirrorRow(key));
+            if (label.textContent !== text) label.textContent = text;
+        }
+    }
+}
+
+/* `input`, not `change`: change waits for the field to lose focus, so
+   the card would stay stale for as long as the user kept typing — which
+   is precisely the window in which they are looking at both. */
+['input', 'change'].forEach(function (evt) {
+    document.addEventListener(evt, function (e) {
+        var el = e.target;
+        if (!el || !el.classList || !el.classList.contains('cover-value')) return;
+
+        /* Write through BEFORE reading. The cover inputs are bound with
+           data-on="change", so mid-typing the state still holds the
+           previous value — a mirror refreshed on `input` alone would
+           faithfully redisplay the stale one and look broken in exactly
+           the way it was meant to fix. updateCoverValue() is the same
+           function the change handler calls, and calling it early is
+           harmless: it writes the active side of the pair and nothing
+           else. */
+        var m = /^cover-value-(\d+)$/.exec(el.id || '');
+        if (m && typeof updateCoverValue === 'function') updateCoverValue(Number(m[1]));
+
+        mbTvqfSyncMirrors();
+    }, true);
+});
+
+/* A row added, renamed or deleted replaces the table wholesale, and
+   those paths call renderCoverTable() rather than firing an input
+   event. Wrapping it is how the card hears about them without
+   renderCoverTable having to know the card exists. */
+(function wrapCoverRender() {
+    if (typeof window.renderCoverTable !== 'function') return;
+    var original = window.renderCoverTable;
+    window.renderCoverTable = function () {
+        var out = original.apply(this, arguments);
+        mbTvqfSyncMirrors();
+        return out;
+    };
+})();
 
 /* ── Emptying the card ───────────────────────────────────────
    Both halves at once, and in BOTH languages. A clear that wiped only
