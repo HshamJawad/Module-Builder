@@ -4,6 +4,30 @@
 // Extracted verbatim from Module_Builder.html lines 2421-2709 (v2.0-legacy).
 // ============================================================
 
+/**
+ * The outcome title, as text.
+ *
+ * `lo.title` has been a bilingual pair since Schema v4, and this header
+ * interpolated it straight into a template string — which is how the
+ * form came to read "Learning Outcome 1: [object Object]". Every other
+ * renderer in the tool goes through biGetStrict/biGet; this one was
+ * missed because it builds its markup as one long string rather than
+ * per field.
+ *
+ * biGetStrict first, then biGet: show the side being edited, but fall
+ * back to the other language rather than printing an empty heading for
+ * an outcome that does have a name. The legacy bare-string shape and a
+ * genuinely untitled outcome are both handled on the way through.
+ */
+function _mbAsmTitle(lo) {
+    if (!lo) return '';
+    var lang = (typeof contentLang === 'function') ? contentLang() : 'en';
+    var t = (typeof biGetStrict === 'function') ? biGetStrict(lo.title, lang) : '';
+    if (!t && typeof biGet === 'function') t = biGet(lo.title, lang);
+    if (!t && typeof lo.title === 'string') t = lo.title;
+    return t || window.i18n.t('mbUntitled');
+}
+
 function renderAssessmentForms() {
     const container = document.getElementById('assessment-forms-list');
     if (!container) return;
@@ -43,16 +67,16 @@ function renderAssessmentForms() {
             <div style="background: #667eea; color: white; padding: 15px; border-radius: 6px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
                 <div>
                     <h4 style="margin: 0; font-size: 1.2em;"><span data-i18n="expAssessmentUnit">${window.i18n.t('expAssessmentUnit')}</span></h4>
-                    <p style="margin: 5px 0 0 0; font-size: 1em; font-weight: 600;">Learning Outcome ${index + 1}: ${lo.title || 'Untitled'}</p>
+                    <p style="margin: 5px 0 0 0; font-size: 1em; font-weight: 600;" dir="auto">${window.i18n.tf('expLearningOutcomeN', { v0: index + 1, v1: _mbAsmTitle(lo) })}</p>
                 </div>
                 <div style="display: flex; gap: 10px;">
                     <button data-act="clearAssessmentForm" data-args='["${lo.id}"]' 
                         style="background: #f59e0b; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9em;">
-                        🗑️ <span data-i18n="rxClearForm">${window.i18n.t('rxClearForm')}</span>
+                        <svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg> <span data-i18n="rxClearForm">${window.i18n.t('rxClearForm')}</span>
                     </button>
                     <button data-act="deleteAssessmentForm" data-args='["${lo.id}"]' 
                         style="background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9em;">
-                        ❌ <span data-i18n="dgDeleteForm">${window.i18n.t('dgDeleteForm')}</span>
+                        <svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg> <span data-i18n="dgDeleteForm">${window.i18n.t('dgDeleteForm')}</span>
                     </button>
                 </div>
             </div>
@@ -103,9 +127,9 @@ function renderAssessmentForms() {
                             style="width: 100%; border: 1px solid #e5e7eb; padding: 6px; border-radius: 4px; font-size: 0.9em;">
                     </td>
                     <td style="border: 1px solid #d1d5db; padding: 8px; text-align: center;">
-                        <button data-act="deleteAssessmentRow" data-args='["${lo.id}",${rowIndex}]' 
-                            style="background: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 0.85em;">
-                            🗑️
+                        <button class="mb-icon-btn danger" data-act="deleteAssessmentRow" data-args='["${lo.id}",${rowIndex}]'
+                            title="${window.i18n.t('mbDelete')}" data-i18n-title="mbDelete">
+                            <svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg>
                         </button>
                     </td>
                 </tr>
@@ -123,7 +147,7 @@ function renderAssessmentForms() {
                     </button>
                     <button data-act="clearAssessmentRows" data-args='["${lo.id}"]' 
                         style="background: #f59e0b; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9em;">
-                        🗑️ <span data-i18n="rxClearRows">${window.i18n.t('rxClearRows')}</span>
+                        <svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg> <span data-i18n="rxClearRows">${window.i18n.t('rxClearRows')}</span>
                     </button>
                 </div>
             </div>

@@ -28,7 +28,7 @@ function addResource() {
                 style="width:70px;border:1px solid #e5e7eb;padding:6px;border-radius:4px;font-size:0.9em;text-align:center;font-family:inherit;">
         </td>
         <td style="border:1px solid #d1d5db;padding:6px 8px;text-align:center;">
-            <button class="btn-remove" data-act="removeResource" data-args='[${rc}]' title="${window.i18n.t('dgRemoveRow')}" data-i18n-title="dgRemoveRow">🗑</button>
+            <button class="btn-remove mb-icon-btn danger" data-act="removeResource" data-args='[${rc}]' title="${window.i18n.t('dgRemoveRow')}" data-i18n-title="dgRemoveRow"><svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg></button>
         </td>
     `;
     tbody.appendChild(tr);
