@@ -296,6 +296,30 @@ function mbTvqfExportRows(state, group, t) {
     return rows;
 }
 
+/* ── Emptying the card ───────────────────────────────────────
+   Both halves at once, and in BOTH languages. A clear that wiped only
+   the side being edited would leave the other one intact and invisible
+   — the user would see empty boxes, save, and find the old Arabic text
+   back in the export. Replacing the objects outright is the only
+   version of "clear" that means what the button says.
+
+   Confirmed first: this is the one control in the card that destroys
+   work, and an accreditation block can represent an afternoon of
+   looking things up. */
+async function mbTvqfClear() {
+    if (!mbTvqfHasContent(mbState)) return;      /* nothing to lose, nothing to ask */
+
+    var ok = (typeof mbConfirm === 'function')
+        ? await mbConfirm(window.i18n.t('tqClearConfirm'), { danger: true })
+        : true;
+    if (!ok) return;
+
+    mbState.tvqfBasic = {};
+    mbState.tvqfExtended = {};
+    mbRenderTvqf();
+    if (typeof showStatus === 'function') showStatus(window.i18n.t('tqCleared'), 'success');
+}
+
 /* ── Wiring ──────────────────────────────────────────────────
    Rebuilt on a content-language switch (the state holds both sides;
    the boxes just re-bind to the other one) and on an interface-language
