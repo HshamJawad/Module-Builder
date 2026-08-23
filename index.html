@@ -58,7 +58,21 @@
   width: 18px;
   height: 18px;
   flex-shrink: 0;
-  display: block;
+  /* inline-block, not block: several of these sit beside a word inside
+     buttons that carry their own inline styles and are NOT flex
+     containers. `display: block` there would push the label onto a
+     second line. Inside .mb-icon-btn the rule below puts it back to
+     block, where the button IS a flex container and baseline alignment
+     is not wanted. */
+  display: inline-block;
+  vertical-align: -4px;
+}
+
+/* Buttons that keep a word next to the glyph. */
+.mb-has-ico {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .mb-icon-btn .mb-ico,
