@@ -1364,7 +1364,16 @@ async function exportToDocx() {
         console.log('Preparing Assessment Unit section...');
         const assessmentSimpleContent = mbState.assessmentContent || '';
         const hasAssessmentContent = assessmentSimpleContent.trim() !== '';
-        const hasAssessmentForms = mbState.learningOutcomesData.some(lo => mbState.assessmentFormsData[lo.id]);
+        /* mbAssessmentFormFilled, not `!!formsData[lo.id]`: opening the
+           Assessment tab creates a blank form for EVERY outcome in the
+           module, so presence proved only that the tab had been opened.
+           A module with four outcomes and one real assessment exported
+           four forms, three of them empty grids. See the function's own
+           note in assessment.js for what counts as filled. */
+        const _asmFilled = (typeof mbAssessmentFormFilled === 'function')
+            ? mbAssessmentFormFilled
+            : function (f) { return !!f; };
+        const hasAssessmentForms = mbState.learningOutcomesData.some(lo => _asmFilled(mbState.assessmentFormsData[lo.id]));
         console.log('Assessment content:', hasAssessmentContent, 'Assessment forms:', hasAssessmentForms);
         
         if (hasAssessmentContent || hasAssessmentForms) {
@@ -1422,8 +1431,8 @@ async function exportToDocx() {
             // Assessment Forms for Each Learning Outcome
             if (hasAssessmentForms) {
                 mbState.learningOutcomesData.forEach((lo, loIndex) => {
-                    // Skip LOs that have no form created
-                    if (!mbState.assessmentFormsData[lo.id]) return;
+                    // Skip LOs whose form was never filled in
+                    if (!_asmFilled(mbState.assessmentFormsData[lo.id])) return;
 
                     console.log(`Creating assessment form for LO ${loIndex + 1}:`, lo.title);
                     const formChildren = [];

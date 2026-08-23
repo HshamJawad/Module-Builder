@@ -28,6 +28,73 @@ function _mbAsmTitle(lo) {
     return t || window.i18n.t('mbUntitled');
 }
 
+/* ── Is this form worth printing? ────────────────────────────
+   Opening the Assessment tab CREATES a blank form for every learning
+   outcome in the module (tabs.js), which is the right thing on screen —
+   the user sees four outcomes and four forms and fills in the ones that
+   apply. It was the wrong thing in the DOCX: a module with four
+   outcomes and one completed assessment exported four forms, three of
+   them a heading, a five-row empty grid and two blank signature lines.
+   A reader cannot tell that kind of page from an assessment that was
+   attempted and left unfinished.
+
+   So presence stopped meaning anything and CONTENT decides. Same rule
+   as the cover table and the blocks: a field the user never filled does
+   not appear, and a form in which no field was ever filled does not
+   appear either.
+
+   What counts as filled is deliberately broad — any cell of any row,
+   either result checkbox, or any of the six name/signature/date fields.
+   A form carrying only the assessor's name is still a form somebody
+   started on purpose, and guessing that they did not mean it is not a
+   guess this function is entitled to make. What does NOT count is the
+   blank rows themselves: five empty rows are the default shape of the
+   grid, not something the user typed.
+
+   Tolerates both shapes of the data. The export flattens every
+   bilingual pair to a string before it gets here, but the same function
+   has to be usable against live state, where `criteria` is a pair. */
+function mbAssessmentFormFilled(form) {
+    if (!form || typeof form !== 'object') return false;
+
+    var text = function (v) {
+        if (v === null || v === undefined) return '';
+        if (typeof v === 'string') return v;
+        /* A bilingual pair counts as filled if EITHER side is: an
+           author who has written only the Arabic half has still written
+           the form, and it must not vanish from an English export. */
+        if (typeof v === 'object') {
+            var joined = '';
+            (typeof BILANG_CODES !== 'undefined' ? BILANG_CODES : ['en', 'ar'])
+                .forEach(function (c) { joined += (typeof v[c] === 'string' ? v[c] : ''); });
+            return joined;
+        }
+        return String(v);
+    };
+
+    if (form.competent === true || form.notYetCompetent === true) return true;
+
+    var singles = ['teacherName', 'teacherSignature', 'teacherDate',
+                   'learnerName', 'learnerSignature', 'learnerDate'];
+    for (var i = 0; i < singles.length; i++) {
+        if (text(form[singles[i]]).trim()) return true;
+    }
+
+    var rows = form.rows || [];
+    for (var r = 0; r < rows.length; r++) {
+        var row = rows[r] || {};
+        /* Object.keys, not a fixed list: addAssessmentRow() and the
+           legacy files disagree about which cell keys exist, and a form
+           whose only content sits in a key this function forgot to name
+           would be silently dropped from the document. */
+        var keys = Object.keys(row);
+        for (var k = 0; k < keys.length; k++) {
+            if (text(row[keys[k]]).trim()) return true;
+        }
+    }
+    return false;
+}
+
 function renderAssessmentForms() {
     const container = document.getElementById('assessment-forms-list');
     if (!container) return;
