@@ -1791,7 +1791,18 @@ async function exportToDocx() {
         
         // Show success message with document details
         const fileSizeMB = (blob.size / (1024 * 1024)).toFixed(2);
-        showStatus(window.i18n.tf('dgDocumentExportedSuccessfullyFileMb', { v0: filename, v1: fileSizeMB }), 'success');
+        /* The language the document was actually written in, named in the
+           success message. The export language is a THIRD switch, stored
+           separately from the interface and content ones, and it is
+           perfectly possible — and was in practice common — to set the
+           whole tool to one language and leave this one on a value chosen
+           weeks earlier. Nothing on screen said so, and the mismatch was
+           only discovered after opening the file in Word. Naming it here
+           costs a few words and closes that gap for good. */
+        const docLangLabel = (typeof _mbLang === 'function' && typeof biLangLabel === 'function')
+            ? biLangLabel(_mbLang()) : '';
+        showStatus(window.i18n.tf('dgDocumentExportedSuccessfullyFileMb', { v0: filename, v1: fileSizeMB }) +
+                   (docLangLabel ? '  ·  ' + docLangLabel : ''), 'success');
 
     } catch (error) {
         console.error('Error:', error);
