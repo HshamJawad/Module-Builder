@@ -55,11 +55,18 @@ function _mbHasArabic(s) { return _MB_ARABIC_RE.test(String(s === null || s === 
 
 var _MB_DOC_LANG = null;
 
-/* Set the moment any run or paragraph holding Arabic is constructed.
-   Runs and paragraphs are always built BEFORE the Table that contains
-   them, so by the time a Table asks, the answer is already known. This
-   is how a table gets <w:bidiVisual/> even when the document-level flag
-   is wrong or absent. Reset per export. */
+/* True once ANY run or paragraph holding Arabic has been constructed in
+   this export. Diagnostic only.
+
+   It used to decide table direction, and could not: it is a fact about
+   the whole document, and a table needs a fact about ITSELF. One Arabic
+   paragraph anywhere — a heading, a single bilingual field that fell
+   back to its Arabic side — latched this to true and every table built
+   afterwards came out mirrored, including the all-English ones. That is
+   the LTR export whose marks carried a right-hand table handle.
+
+   Table direction is now decided per table, from the Arabic actually
+   inside it: see __mbAr below. Reset per export. */
 var _mbSawArabic = false;
 
 /* Keys whose values are never prose: base64 images alone would swamp
@@ -209,6 +216,9 @@ function _mbWithArabicLang(BaseRun) {
                hold Arabic?" — by then the runs are constructed objects
                and their text is no longer reachable any other way. */
             try { this.__mbText = txt; } catch (e) { /* frozen instance */ }
+            /* And the answer itself, so a cell, a row and finally a
+               Table can ask their own children rather than a global. */
+            try { this.__mbAr = isAr; } catch (e) { /* frozen instance */ }
             if (isAr) {
                 try {
                     /* Appended last, which is also where <w:lang> belongs
@@ -312,6 +322,35 @@ function _mbWithArabicLangParagraph(BaseParagraph, WrappedRun) {
             } else {
                 super(o);
             }
+            try { this.__mbAr = hasAr; } catch (e) { /* frozen instance */ }
+        }
+    };
+}
+
+/* ── Does this subtree hold Arabic? ─────────────────────────
+   Each wrapper stamps `__mbAr` on itself as it is built, so by the time
+   a Table is constructed its rows can be asked directly. The walk is one
+   level per wrapper — cell asks its paragraphs, row asks its cells,
+   table asks its rows — because the library's objects are opaque once
+   constructed and their text is not reachable again from outside. */
+function _mbNodeHasArabic(n) {
+    if (!n) return false;
+    if (typeof n === 'string') return _mbHasArabic(n);
+    return n.__mbAr === true;
+}
+
+function _mbAnyArabic(list) {
+    return Array.isArray(list) && list.some(_mbNodeHasArabic);
+}
+
+/** Wraps TableCell / TableRow purely to carry the flag upward. */
+function _mbWithArabicFlag(Base) {
+    return class extends Base {
+        constructor(options) {
+            var o = options || {};
+            var ar = _mbAnyArabic(o.children);
+            super(o);
+            try { this.__mbAr = ar; } catch (e) { /* frozen instance */ }
         }
     };
 }
@@ -361,13 +400,17 @@ function _mbWithRtlTable(BaseTable) {
     return class extends BaseTable {
         constructor(options) {
             var o = options || {};
-            /* `_mbRtl() || _mbSawArabic`: the table mirrors its columns if
-               the document is Arabic OR if Arabic text has been built into
-               it. Both halves of the decision — this and the paragraph
-               alignment above — now read the same source, so they can no
-               longer contradict each other the way the exported file did. */
-            var rtl = _mbRtl() || _mbSawArabic;
+            /* THIS table's own rows, not a document-wide flag. A table
+               mirrors its columns if the document is Arabic, or if the
+               text inside this particular table is. An English table in
+               a mixed project stays LTR, which the old sticky flag could
+               not express: it went true on the first Arabic paragraph
+               anywhere and stayed true for the rest of the export. */
+            var rtl = _mbRtl() || _mbAnyArabic(o.rows);
             super(rtl ? Object.assign({}, o, { visuallyRightToLeft: true }) : o);
+            /* Propagate, so a table nested in a cell reaches the outer
+               table the same way a paragraph does. */
+            try { this.__mbAr = _mbAnyArabic(o.rows); } catch (e) { /* frozen instance */ }
         }
     };
 }
@@ -467,6 +510,13 @@ function mbDocxLib() {
     return Object.assign({}, lib, {
         TextRun: WrappedRun,
         Paragraph: _mbWithArabicLangParagraph(lib.Paragraph, WrappedRun),
+        /* TableCell and TableRow do nothing to the XML — they only carry
+           `__mbAr` up from the paragraphs so Table can read it. They must
+           come from here for that chain to be unbroken: a cell built from
+           raw window.docx is a gap, and its table falls back to the
+           document flag. */
+        TableCell: _mbWithArabicFlag(lib.TableCell),
+        TableRow:  _mbWithArabicFlag(lib.TableRow),
         Table: _mbWithRtlTable(lib.Table)
     });
 }
