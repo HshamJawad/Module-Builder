@@ -309,39 +309,6 @@
 </div>
 </div>
 </div>
-<!-- ── Qualifications-framework card (TVQF / NQF) ─────────────
-     Two <details>, not a scripted show/hide. The element already does
-     collapsed-by-default, keyboard operation, the disclosure triangle's
-     ARIA semantics and find-in-page expansion — all of which a div and
-     a click handler would have to re-implement, and usually only the
-     first of them gets implemented. The chevron and the bar are the
-     tool's own styling in mb-styles.css; the behaviour is the
-     browser's.
-
-     Both cards are entirely optional: nothing here blocks a save or an
-     export, and a field left empty is simply absent from the DOCX. -->
-<details class="mb-fold" id="tvqf-basic-fold">
-<summary class="mb-fold-bar">
-<span class="mb-fold-icon" aria-hidden="true">🏛️</span>
-<span class="mb-fold-title" data-i18n="tqBasicCard">TVQF/NQF Basic Card</span>
-<span class="mb-fold-chevron" aria-hidden="true">▾</span>
-</summary>
-<div class="mb-fold-body">
-<p class="mb-fold-note" data-i18n="tqBasicNote">Optional. Describes where this module sits in a national qualifications framework. Fields left empty are not exported.</p>
-<div class="mb-tvqf-grid" id="tvqf-basic-fields"></div>
-</div>
-</details>
-<details class="mb-fold" id="tvqf-ext-fold">
-<summary class="mb-fold-bar">
-<span class="mb-fold-icon" aria-hidden="true">🧩</span>
-<span class="mb-fold-title" data-i18n="tqExtCard">TVQF/NQF Extended Fields (Optional)</span>
-<span class="mb-fold-chevron" aria-hidden="true">▾</span>
-</summary>
-<div class="mb-fold-body">
-<p class="mb-fold-note" data-i18n="tqExtNote">Only the fields you fill in appear in the exported document.</p>
-<div class="mb-tvqf-grid" id="tvqf-ext-fields"></div>
-</div>
-</details>
 </div>
 <!-- End Basic Info Tab -->
 <!-- Covers Tab -->
@@ -429,6 +396,44 @@
 <button data-act="deleteBackCoverImage"  style="background:#ef4444; color:white; border:none; padding:7px 18px; border-radius:7px; cursor:pointer; font-weight:600; font-size:0.88em; display:inline-flex; align-items:center; gap:6px;"><svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg><span data-i18n="mbRemoveBackCoverImage">Remove Back Cover Image</span></button>
 </div>
 </div>
+<!-- ── Qualifications-framework card (TVQF / NQF) ─────────────
+     ON THIS TAB, NOT BASIC INFO. Six of the fields in the card are
+     mirrored from the cover table on this very tab, and Basic Info
+     comes FIRST in the tab order — so a user following the tabs in
+     order would have met a card of empty grey boxes before ever
+     reaching the table that fills them. The card belongs after its
+     own source.
+
+     ONE fold, not two. The extended block is a section inside it
+     rather than a second bar: both are the same card to the person
+     filling it in, and two bars asked them to decide which one they
+     wanted before they had seen either.
+
+     <details>/<summary>, not a scripted show/hide: the element
+     already gives collapsed-by-default, keyboard operation, the
+     disclosure ARIA semantics and find-in-page expansion. The bar and
+     the chevron are styling in mb-styles.css; the behaviour is the
+     browser's.
+
+     Entirely optional: nothing here blocks a save or an export, and a
+     field left empty is simply absent from the DOCX. -->
+<details class="mb-fold" id="tvqf-fold">
+<summary class="mb-fold-bar">
+<span class="mb-fold-icon" aria-hidden="true">🏛️</span>
+<span class="mb-fold-title" data-i18n="tqCard">Qualifications Framework Card (TVQF/NQF)</span>
+<span class="mb-fold-chevron" aria-hidden="true">▾</span>
+</summary>
+<div class="mb-fold-body">
+<div class="mb-fold-head">
+<p class="mb-fold-note" data-i18n="tqBasicNote">Optional. Describes where this module sits in a national qualifications framework. Fields left empty are not exported.</p>
+<button class="mb-has-ico mb-fold-clear" data-act="mbTvqfClear" data-i18n-title="tqClear" title="Clear framework card" type="button"><svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg><span data-i18n="tqClear">Clear framework card</span></button>
+</div>
+<div class="mb-tvqf-grid" id="tvqf-basic-fields"></div>
+<h4 class="mb-tvqf-subhead" data-i18n="tqExtCard">Extended Fields (Optional)</h4>
+<p class="mb-fold-note" data-i18n="tqExtNote">Only the fields you fill in appear in the exported document.</p>
+<div class="mb-tvqf-grid" id="tvqf-ext-fields"></div>
+</div>
+</details>
 <!-- Proceed Button -->
 <div style="text-align: center; margin-top: 30px; padding: 20px 0;">
 <button data-act="proceedToTab" data-args='["intro"]' data-i18n="mbProceedToIntroductionPages" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 32px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3); transition: all 0.3s ease;">

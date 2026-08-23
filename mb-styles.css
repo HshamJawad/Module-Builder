@@ -2375,28 +2375,35 @@ html[lang^="ar"] body { font-size: 1em; }
    ══════════════════════════════════════════════════════════════ */
 .mb-fold {
     margin-top: 15px;
-    border: 2px solid #10b981;
+    border: 1px solid #cbd5e1;
     border-radius: 12px;
     overflow: hidden;
     background: var(--mb-paper, #fff);
 }
 
+/* Silver, with dark ink. The saturated bar read as a call to action —
+   it was the loudest thing on the tab, for a card that is optional and
+   that most projects will never open. A neutral bar says "there is more
+   here" without competing with the Proceed button below it, and it
+   matches the toolbar and the icon buttons, which are the tool's other
+   two neutral surfaces. */
 .mb-fold-bar {
     display: flex;
     align-items: center;
     gap: 10px;
     padding: 14px 18px;
     cursor: pointer;
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    color: #fff;
+    background: linear-gradient(135deg, #f3f4f6 0%, #dfe3e8 100%);
+    color: var(--mb-ink, #374151);
+    border-bottom: 1px solid #cbd5e1;
     font-weight: 700;
     font-size: 1.05em;
     list-style: none;               /* Firefox + standards */
     user-select: none;
 }
 .mb-fold-bar::-webkit-details-marker { display: none; }   /* Safari/Chrome */
-.mb-fold-bar:hover  { filter: brightness(1.05); }
-.mb-fold-bar:focus-visible { outline: 3px solid #fde047; outline-offset: -3px; }
+.mb-fold-bar:hover  { background: linear-gradient(135deg, #e9ecef 0%, #d3d9e0 100%); }
+.mb-fold-bar:focus-visible { outline: 3px solid #667eea; outline-offset: -3px; }
 
 .mb-fold-icon  { font-size: 1.2em; flex-shrink: 0; }
 .mb-fold-title { flex: 1; min-width: 0; }
@@ -2415,6 +2422,43 @@ html[lang^="ar"] body { font-size: 1em; }
 }
 
 .mb-fold-body { padding: 18px; background: var(--mb-paper-sunk, #f9fafb); }
+
+/* The note and the clear button share a row: the destructive control
+   sits at the END of it, away from the fields it would empty. */
+.mb-fold-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.mb-fold-head .mb-fold-note { flex: 1; min-width: 200px; }
+
+.mb-fold-clear {
+    flex-shrink: 0;
+    padding: 7px 13px;
+    border: 1px solid #fee2e2;
+    border-radius: 8px;
+    background: #fef2f2;
+    color: #dc2626;
+    font-family: inherit;
+    font-size: 0.85em;
+    font-weight: 600;
+    cursor: pointer;
+}
+.mb-fold-clear:hover { background: #fee2e2; color: #b91c1c; }
+.mb-fold-clear:focus-visible { outline: 2px solid #dc2626; outline-offset: 2px; }
+
+/* Divides the two halves of one card — it is a section heading, not a
+   second bar. */
+.mb-tvqf-subhead {
+    margin: 22px 0 4px;
+    padding-top: 16px;
+    border-top: 1px solid var(--mb-line, #e5e7eb);
+    font-size: 1em;
+    font-weight: 700;
+    color: var(--mb-ink, #374151);
+}
 .mb-fold-note {
     margin: 0 0 14px;
     font-size: 0.9em;
@@ -2452,7 +2496,7 @@ html[lang^="ar"] body { font-size: 1em; }
     text-align: start;
     margin-bottom: 0;
 }
-.mb-tvqf-input:focus { outline: 2px solid #10b981; outline-offset: 1px; border-color: #10b981; }
+.mb-tvqf-input:focus { outline: 2px solid #667eea; outline-offset: 1px; border-color: #667eea; }
 textarea.mb-tvqf-input { min-height: 0; resize: vertical; }
 
 .mb-tvqf-hint { font-size: 0.8em; color: var(--mb-ink-soft, #9ca3af); }
