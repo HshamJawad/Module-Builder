@@ -1206,10 +1206,24 @@ async function exportToDocx() {
                 info.objective.split('\n').forEach(line => { if (line.trim()) ch.push(new Paragraph({ children: [new TextRun({ text: line, size: 24, rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 150 } })); });
             }
             if (info.contentSections) {
+                /* The card's name, when the author gave it one. Printed in
+                   the same blue bold as «Objective:» so a renamed section
+                   reads as a real heading and not as body text. An
+                   untouched card has no heading at all: «Content 3:» is
+                   editor scaffolding and must never reach the page. */
+                const _pushCsHeading = (cs) => {
+                    const h = (cs.heading || '').trim();
+                    if (!h) return;
+                    ch.push(new Paragraph({
+                        children: [new TextRun({ text: h, bold: true, size: 24, color: '0070C0', rightToLeft: _mbRtl() })],
+                        alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 150 }
+                    }));
+                };
                 info.contentSections.forEach((cs) => {
                     if (!cs.text || !cs.text.trim()) {
                         // still export tables even if text is empty
                         if (cs.tables && cs.tables.length) {
+                            _pushCsHeading(cs);
                             cs.tables.forEach(t => {
                                 const tbl = _buildUserTable(t, Table, TableRow, TableCell, WidthType, BorderStyle);
                                 if (tbl) { ch.push(tbl); ch.push(new Paragraph({ children: [new TextRun({ text: '' })], spacing: { after: 200 } })); }
@@ -1217,6 +1231,7 @@ async function exportToDocx() {
                         }
                         return;
                     }
+                    _pushCsHeading(cs);
                     const pt = processTextForWordExport(cs.text);
                     const csid = cs.contentId;
                     let imgs = (info.contentSectionImages && info.contentSectionImages[csid]) || [];

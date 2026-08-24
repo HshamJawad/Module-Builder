@@ -195,7 +195,89 @@ function restoreContentTables(contentId, tablesData) {
     tablesData.forEach(t => addContentTable(contentId, t));
 }
 
-function addContentSection() {
+/* ── Content section headings ───────────────────────────────
+   A content card is born as «Content 1:» — a NUMBER, produced by the
+   dictionary through data-i18n-num, so an interface-language switch can
+   repaint it without rebuilding the card and losing what is typed in it.
+
+   The moment the author renames it to «Introduction» that text is THEIR
+   content, not interface, and the same rule the cover table and the
+   free-text blocks already follow applies: the i18n attributes come off,
+   the name is stored as a bilingual pair beside the section's text, and a
+   language switch must never overwrite it. It is exported as the
+   section's heading, so a renamed card prints its name in the DOCX and an
+   untouched one prints nothing — «Content 3:» is scaffolding for the
+   editor, never something a ministry should read in a deliverable.
+
+   The name lives in the DOM (data-heading on the card) for exactly as
+   long as the older content fields do: sheets.js collects it at save time
+   alongside the textarea and merges it into the stored pair. */
+
+function mbContentHeading(id) {
+    const sec = document.getElementById(`content-section-${id}`);
+    return (sec && sec.dataset.heading) ? sec.dataset.heading : '';
+}
+
+/** Repaint one card's label from its stored name, or back to the number. */
+function mbApplyContentHeading(id, heading) {
+    const sec   = document.getElementById(`content-section-${id}`);
+    const label = document.getElementById(`content-label-${id}`);
+    if (!sec || !label) return;
+
+    const text = (heading || '').trim();
+    if (text) {
+        sec.dataset.heading = text;
+        /* Off, not just overwritten: applyTranslations() sweeps every
+           [data-i18n-num] on a language switch and would put «Content 1:»
+           straight back over the author's own words. */
+        label.removeAttribute('data-i18n-num');
+        label.removeAttribute('data-i18n-num-v0');
+        label.textContent = text;
+        label.setAttribute('dir', 'auto');
+        label.style.textAlign = 'start';
+        label.classList.add('is-renamed');
+    } else {
+        delete sec.dataset.heading;
+        label.setAttribute('data-i18n-num', 'dgContentN');
+        label.setAttribute('data-i18n-num-v0', String(id));
+        label.textContent = window.i18n.tf('dgContentN', { v0: id });
+        label.removeAttribute('dir');
+        label.classList.remove('is-renamed');
+    }
+}
+
+/**
+ * Rename one content card.
+ *
+ * An empty answer RESTORES the default number rather than leaving a
+ * blank heading — a card with no label at all is unreadable in the
+ * editor, and clearing the box is the only way back that a user would
+ * think to try. Cancel (null) changes nothing.
+ */
+async function renameContentSection(id) {
+    const cur = mbContentHeading(id);
+    const newName = await mbPrompt(
+        window.i18n.t('dgEnterContentHeading'),
+        cur || window.i18n.tf('dgContentN', { v0: id }).replace(/:$/, '').trim()
+    );
+    if (newName === null || newName === undefined) return;   // cancelled
+
+    const text = newName.trim();
+    /* Typing the default number back in is a request for the default, not
+       for a hard-coded copy of it that would then stop following the
+       interface language. */
+    const isDefault = text === '' ||
+        BILANG_CODES.some(function (code) {
+            return text === window.i18n.tIn('dgContentN', code).replace('{v0}', String(id)).replace(/:$/, '').trim();
+        });
+
+    mbApplyContentHeading(id, isDefault ? '' : text);
+    if (typeof showStatus === 'function') {
+        showStatus(window.i18n.t(isDefault ? 'dgContentHeadingReset' : 'dgContentRenamed'), 'success');
+    }
+}
+
+function addContentSection(heading) {
     mbState.contentSectionCount++;
     const csc = mbState.contentSectionCount;
     const container = document.getElementById('content-sections-container');
@@ -205,8 +287,9 @@ function addContentSection() {
     sectionDiv.id = `content-section-${csc}`;
     sectionDiv.innerHTML = `
         <div class="step-header">
-            <div class="step-label" data-i18n-num="dgContentN" data-i18n-num-v0="${csc}">${window.i18n.tf('dgContentN', { v0: csc })}</div>
+            <div class="step-label" id="content-label-${csc}" data-i18n-num="dgContentN" data-i18n-num-v0="${csc}">${window.i18n.tf('dgContentN', { v0: csc })}</div>
             <div style="display:flex;gap:5px;align-items:center;">
+                <button class="btn-rename-section mb-has-ico" data-act="renameContentSection" data-args='[${csc}]' title="${window.i18n.t('dgRenameContent')}" data-i18n-title="dgRenameContent"><svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4.5 19.5h4l10-10a2.1 2.1 0 0 0-3-3l-10 10z"/><path d="M14.5 6.5l3 3"/><path d="M4.5 19.5l.6-3.4"/></svg><span data-i18n="rxRename">${window.i18n.t('rxRename')}</span></button>
                 <button class="btn-clear-section" data-act="clearContentSection" data-args='[${csc}]' title="${window.i18n.t('dgClearContent')}" data-i18n-title="dgClearContent">✕</button>
                 <button class="btn-remove mb-icon-btn danger" data-act="removeContentSection" data-args='[${csc}]' title="${window.i18n.t('dgRemoveContent')}" data-i18n-title="dgRemoveContent"><svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg></button>
             </div>
@@ -224,6 +307,15 @@ function addContentSection() {
         <div id="content-marks-${csc}" class="marks-container"></div>
     `;
     container.appendChild(sectionDiv);
+    /* After the append: mbApplyContentHeading looks the card up by id, so
+       it has to be in the document first.
+
+       `typeof === 'string'` is not defensive noise. This function is also
+       a data-act, and events.js appends the element and the event after
+       whatever data-args declares — the ➕ button carries none, so a click
+       calls addContentSection(buttonElement, event). Anything looser here
+       would name every hand-added card "[object HTMLButtonElement]". */
+    if (typeof heading === 'string' && heading.trim()) mbApplyContentHeading(csc, heading);
 }
 
 async function removeContentSection(id) {

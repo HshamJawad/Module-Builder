@@ -44,12 +44,20 @@ function saveCurrentSheetToLO() {
         const cid    = content.dataset.contentId;
         const tables = collectContentTables(cid);
         const marks  = collectMarks(`content-marks-${cid}`);
-        if (content.value.trim() || tables.length || marks.length) {
-            incomingSections.push({ text: content.value, contentId: cid, marks, tables,
+        /* The card's own name, when the author renamed it. Collected as
+           the ACTIVE side's plain string, exactly like `text`, so
+           biMergeArrayById writes it onto the stored pair instead of
+           replacing the pair with a bare value. */
+        const heading = (typeof mbContentHeading === 'function') ? mbContentHeading(cid) : '';
+        /* A renamed but still-empty card is kept. Dropping it would throw
+           away the name the moment the author typed it and moved on to
+           fill the box in later. */
+        if (content.value.trim() || tables.length || marks.length || heading.trim()) {
+            incomingSections.push({ text: content.value, heading, contentId: cid, marks, tables,
                                     uid: mbRowUid(content) });
         }
     });
-    infoData.contentSections = biMergeArrayById(storedInfo.contentSections, incomingSections, ['text']);
+    infoData.contentSections = biMergeArrayById(storedInfo.contentSections, incomingSections, ['text', 'heading']);
 
     /* Saved when the ACTIVE side has content. The v2 test was
        `title.trim() || objective.trim()` on a bare string; on a pair it
@@ -182,7 +190,10 @@ function loadInfoSheetAtIndex(lo, index) {
         
         if (info.contentSections && info.contentSections.length > 0) {
             info.contentSections.forEach((contentData) => {
-                addContentSection();
+                /* biGetStrict, not biGet: a name written only in English
+                   must not fall back into the Arabic editing side, where
+                   the author would see it as already translated. */
+                addContentSection(biGetStrict(contentData.heading, contentLang()));
                 const lastContent = document.querySelector(`[data-content-id="${mbState.contentSectionCount}"]`);
                 if (lastContent) {
                     lastContent.value = biGetStrict(contentData.text, contentLang());
