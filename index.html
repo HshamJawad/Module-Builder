@@ -506,6 +506,14 @@
 <div class="section-title" data-i18n="mbContent">Content:</div>
 </div>
 <div id="content-sections-container"></div>
+<!-- The add button that lives OUTSIDE the cards. The one inside each
+     card is a convenience; this is the one that still exists after the
+     last card is deleted, or after Clear All empties the container.
+     Without it the section is a dead end with no way back. -->
+<div class="mb-empty-hint" id="content-sections-empty" style="display:none;" data-i18n="mbNoContentSections">No content sections yet. Use the button below to add one.</div>
+<div style="display:flex;gap:8px;margin-top:10px;">
+<button class="btn-add" data-act="addContentSection" style="padding:6px 14px;font-size:0.85em;">➕ <span data-i18n="dgAddContent">Add Content</span></button>
+</div>
 </div>
 <div class="form-group">
 <div class="section-header">
@@ -648,6 +656,12 @@
 <div class="section-title" data-i18n="mbActivitySteps">Activity Steps:</div>
 </div>
 <div id="steps-container"></div>
+<!-- Same reasoning as the content section above: deleting the last step
+     otherwise left the activity sheet with no way to add another. -->
+<div class="mb-empty-hint" id="steps-empty" style="display:none;" data-i18n="mbNoSteps">No steps yet. Use the button below to add one.</div>
+<div style="display:flex;gap:8px;margin-top:10px;">
+<button class="btn-add" data-act="addStep" style="padding:6px 14px;font-size:0.85em;">➕ <span data-i18n="dgAddStep">Add Step</span></button>
+</div>
 </div>
 <div class="form-group">
 <div class="section-header">

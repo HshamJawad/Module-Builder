@@ -1082,6 +1082,19 @@
            than matching the 36px icon-only buttons: it carries a word,
            so it is a small pill, not a square. The theme layer paints
            every button silver, which is where its colour comes from. */
+        /* Shown only when a card container is empty. Dashed, muted and
+           quiet: it is a state, not an error, and the button underneath
+           it is the actual instruction. */
+        .mb-empty-hint {
+            border: 1px dashed #c9cdc7;
+            border-radius: 8px;
+            padding: 14px 16px;
+            color: #6b7280;
+            font-size: 0.9em;
+            text-align: center;
+            background: transparent;
+        }
+
         .btn-rename-section {
             background: #f5f5f3;
             color: #3f4a54;
