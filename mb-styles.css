@@ -1077,6 +1077,38 @@
             background: #dc2626;
         }
 
+        /* Rename, beside the clear and delete controls on a content
+           card. Sized to sit level with the 28px clear square rather
+           than matching the 36px icon-only buttons: it carries a word,
+           so it is a small pill, not a square. The theme layer paints
+           every button silver, which is where its colour comes from. */
+        .btn-rename-section {
+            background: #f5f5f3;
+            color: #3f4a54;
+            border: 1px solid #dfe3e8;
+            height: 28px;
+            padding: 0 10px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 0.8em;
+            font-weight: 600;
+            white-space: nowrap;
+            flex-shrink: 0;
+            transition: background 0.15s, border-color 0.15s;
+            line-height: 1;
+        }
+        .btn-rename-section .mb-ico { width: 15px; height: 15px; }
+        .btn-rename-section:hover { background: #ebebe8; }
+
+        /* A card the author has named. The dotted underline is the only
+           signal that the heading is editable text rather than the
+           numbered scaffolding — enough to notice, quiet enough not to
+           compete with the section titles above it. */
+        .step-label.is-renamed {
+            border-bottom: 1px dotted #c4c7c2;
+            padding-bottom: 1px;
+        }
+
         .btn-clear-section {
             background: #f59e0b;
             color: white;
