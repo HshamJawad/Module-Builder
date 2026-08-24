@@ -468,3 +468,69 @@ function handleInfoImageUpload() {
     reader.onload = function(e) { apply(e.target.result); };
     reader.readAsDataURL(input.files[0]);
 }
+
+/* ── Empty containers are not dead ends ──────────────────────
+   The «Add Content» and «Add Step» buttons used to live INSIDE each
+   card. Delete the last card — or run Clear All, which empties the
+   container without re-seeding it — and the button went with it: the
+   section was left blank with no control anywhere on the page that could
+   bring a card back. The only way out was reloading the project.
+
+   index.html now carries an add button BELOW each container, outside the
+   cards, the way the resources table and the criteria table already did.
+   The in-card buttons stay: they are the convenient ones while you are
+   working down a long sheet. This file's job is only the hint that
+   appears when a container is empty, so a blank area reads as "add one"
+   rather than as something broken.
+
+   A MutationObserver rather than a call at each site: the two containers
+   are emptied from six places across three files (the two loaders, the
+   two clear-sheet handlers, removeInfoSheet and clearAll), and a
+   seventh will be added the day someone writes another reset. An
+   observer cannot be forgotten by code that does not know it exists. */
+
+var MB_EMPTY_HINTS = [
+    { container: 'content-sections-container', hint: 'content-sections-empty', counter: 'contentSectionCount' },
+    { container: 'steps-container',            hint: 'steps-empty',            counter: 'stepCount' }
+];
+
+function mbUpdateEmptyHints() {
+    MB_EMPTY_HINTS.forEach(function (cfg) {
+        var box  = document.getElementById(cfg.container);
+        var hint = document.getElementById(cfg.hint);
+        if (!box || !hint) return;
+
+        var empty = box.children.length === 0;
+        hint.style.display = empty ? '' : 'none';
+
+        /* Numbering restarts at 1 for a container the user has emptied.
+           The counter only ever went up, so clearing three cards and
+           adding one produced «Content 4:» with nothing above it.
+
+           Read from the LIVE DOM, which is the whole reason this is safe
+           to do here: loadInfoSheetAtIndex empties the container and
+           refills it synchronously, and by the time this callback runs
+           the cards are already back — so `empty` is false and the
+           counter it just set is left alone. Resetting eagerly at the
+           moment of removal would instead hand the next card an id that
+           collides with one already on screen. */
+        if (empty && mbState[cfg.counter]) mbState[cfg.counter] = 0;
+    });
+}
+
+(function watchEmptyContainers() {
+    function start() {
+        mbUpdateEmptyHints();
+        if (!window.MutationObserver) return;
+        var obs = new MutationObserver(mbUpdateEmptyHints);
+        MB_EMPTY_HINTS.forEach(function (cfg) {
+            var box = document.getElementById(cfg.container);
+            if (box) obs.observe(box, { childList: true });
+        });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', start);
+    } else {
+        start();
+    }
+})();
