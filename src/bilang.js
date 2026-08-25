@@ -169,9 +169,9 @@ var BILANG_FIELDS = {
     teamMember: ['name', 'role', 'organization'],
     module:     ['title', 'code', 'description'],
     outcome:    ['title', 'performanceCriteria'],   // PC is an array of pairs
-    infoSheet:  ['title', 'objective'],
+    infoSheet:  ['title', 'objectiveLead', 'objective'],
     contentSec: ['heading', 'text'],
-    activity:   ['title', 'objective', 'criteriaTitle',
+    activity:   ['title', 'objectiveLead', 'objective', 'criteriaTitle',
                  'criteriaInstruction', 'criteriaFooter'],
     step:       ['text'],
     resource:   ['text'],

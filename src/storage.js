@@ -38,6 +38,7 @@ async function clearForm() {
     if (await mbConfirm(window.i18n.t('dgAreYouSureYouWant2'))) {
         document.getElementById('sheet-number').value = '';
         document.getElementById('title').value = '';
+        document.getElementById('objective-lead').value = window.i18n.tIn('mbActivityObjectiveLead', contentLang());
         document.getElementById('objective').value = '';
         document.getElementById('duration').value = '0';
         document.getElementById('resources-container').innerHTML = '';
@@ -499,6 +500,7 @@ async function clearAll() {
         // ── Information Sheet tab ─────────────────────────────────
         document.getElementById('info-sheet-number').value = '';
         document.getElementById('info-title').value = '';
+        document.getElementById('info-objective-lead').value = window.i18n.tIn('mbInfoObjectiveLead', contentLang());
         document.getElementById('info-objective').value = '';
         document.getElementById('info-link-subject').value = '';
         document.getElementById('info-link-url').value = '';
@@ -515,6 +517,7 @@ async function clearAll() {
         // ── Activity / Job Sheet tab ──────────────────────────────
         document.getElementById('sheet-number').value = '';
         document.getElementById('title').value = '';
+        document.getElementById('objective-lead').value = window.i18n.tIn('mbActivityObjectiveLead', contentLang());
         document.getElementById('objective').value = '';
         document.getElementById('duration').value = '0';
         document.getElementById('activity-link-subject').value = '';

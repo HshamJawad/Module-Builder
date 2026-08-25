@@ -138,6 +138,7 @@ function applyContentDirection() {
 
     document.querySelectorAll('.mb-content-field, [data-content-id], [data-step-id], ' +
                               '.criteria-text, .resource-name, .cover-value, .cover-label, ' +
+                              '.objective-lead, ' +
                               '.ref-input, .team-member-input, .reference-input, ' +
                               '#criteria-title, #criteria-instruction, #criteria-footer')
         .forEach(function (el) {

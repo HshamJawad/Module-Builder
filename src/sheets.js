@@ -11,6 +11,33 @@
 const INFO_BI     = ['title', 'objective', 'selfCheckContent', 'answersKeyContent'];
 const ACTIVITY_BI = ['title', 'objective', 'criteriaTitle', 'criteriaInstruction', 'criteriaFooter'];
 
+/* ── The objective lead-in ───────────────────────────────────
+   The line that stands between «Objective:» and the list itself:
+   «After studying this information sheet, you will be able to:».
+
+   Boilerplate, not authored content — which is why it is seeded into
+   ALL THREE sides at once rather than only the side being edited. Every
+   other bilingual field is deliberately one-sided: writing an Arabic
+   sentence into the English slot would be a fabricated translation. But
+   this sentence already HAS an official wording in each language, sitting
+   in the dictionary, so seeding each side with its own is not a guess.
+   The alternative was ugly: author in Arabic, export in English, and the
+   line silently disappears from a document whose objective list then
+   begins with no introduction.
+
+   Seeded only when the key is ABSENT. Once the key exists the stored
+   value wins, empty included — a user who deletes the line means to
+   delete it, and the export must respect that rather than helpfully
+   putting it back on the next load. */
+
+function mbSeedObjectiveLead(data, dictKey) {
+    if (!data || data.objectiveLead !== undefined) return;
+    data.objectiveLead = biNew();
+    BILANG_CODES.forEach(function (code) {
+        biSet(data, 'objectiveLead', code, window.i18n.tIn(dictKey, code));
+    });
+}
+
 /** Text on ANY side of a bilingual pair (or a bare pre-v4 string). */
 function _mbBiHasAny(v) {
     if (!v) return false;
@@ -68,6 +95,12 @@ function saveCurrentSheetToLO() {
         answersKeyNumber: document.getElementById('answers-key-number').value,
         contentSectionImages: { ...mbState.contentSectionImages }
     });
+    /* Seed BEFORE biPut: a brand-new sheet gets all three sides from the
+       dictionary, then the active side is overwritten by whatever is on
+       screen — the default itself, or the user's edit, or '' if they
+       cleared it. */
+    mbSeedObjectiveLead(infoData, 'mbInfoObjectiveLead');
+    biPut(infoData, 'objectiveLead',     document.getElementById('info-objective-lead').value);
     biPut(infoData, 'title',             document.getElementById('info-title').value);
     biPut(infoData, 'objective',         document.getElementById('info-objective').value);
     biPut(infoData, 'selfCheckContent',  document.getElementById('self-check-content').value);
@@ -140,6 +173,8 @@ function saveCurrentSheetToLO() {
         images: { ...mbState.stepImages },
         includeCriteria: true
     });
+    mbSeedObjectiveLead(activityData, 'mbActivityObjectiveLead');
+    biPut(activityData, 'objectiveLead', document.getElementById('objective-lead').value);
     ACTIVITY_BI.forEach(k => {
         const el = document.getElementById(
             k === 'title' ? 'title' :
@@ -221,6 +256,11 @@ function loadInfoSheetAtIndex(lo, index) {
         if (!info.sheetNumber) info.sheetNumber = getAutoSheetNumber(loIndex, index);
         document.getElementById('info-sheet-number').value = info.sheetNumber;
         document.getElementById('info-title').value = biGetStrict(info.title, contentLang());
+        /* Seeded here too, not only on save: a sheet stored before this
+           field existed has no key, and it should show the line rather
+           than a blank box the user has to discover and fill. */
+        mbSeedObjectiveLead(info, 'mbInfoObjectiveLead');
+        document.getElementById('info-objective-lead').value = biGetStrict(info.objectiveLead, contentLang());
         document.getElementById('info-objective').value = biGetStrict(info.objective, contentLang());
         document.getElementById('info-link-subject').value = info.linkSubject || '';
         document.getElementById('info-link-url').value = info.linkUrl || '';
@@ -281,6 +321,7 @@ function loadInfoSheetAtIndex(lo, index) {
     } else {
         document.getElementById('info-sheet-number').value = '';
         document.getElementById('info-title').value = '';
+        document.getElementById('info-objective-lead').value = window.i18n.tIn('mbInfoObjectiveLead', contentLang());
         document.getElementById('info-objective').value = '';
         document.getElementById('info-link-subject').value = '';
         document.getElementById('info-link-url').value = '';
@@ -319,6 +360,8 @@ function loadActivitySheetAtIndex(lo, index) {
            (placeholder text, export fallback); it never needs to be
            copied into criteriaTitle at all. */
         document.getElementById('title').value = biGetStrict(activity.title, contentLang());
+        mbSeedObjectiveLead(activity, 'mbActivityObjectiveLead');
+        document.getElementById('objective-lead').value = biGetStrict(activity.objectiveLead, contentLang());
         document.getElementById('objective').value = biGetStrict(activity.objective, contentLang());
         document.getElementById('duration').value = activity.duration || '0';
         document.getElementById('activity-link-subject').value = activity.linkSubject || '';
@@ -424,6 +467,7 @@ function loadActivitySheetAtIndex(lo, index) {
     } else {
         document.getElementById('sheet-number').value = '';
         document.getElementById('title').value = '';
+        document.getElementById('objective-lead').value = window.i18n.tIn('mbActivityObjectiveLead', contentLang());
         document.getElementById('objective').value = '';
         document.getElementById('duration').value = '0';
         document.getElementById('activity-link-subject').value = '';
@@ -574,6 +618,7 @@ async function removeCurrentInfoSheet() {
         // Clear the form and add a blank section
         document.getElementById('info-sheet-number').value = '';
         document.getElementById('info-title').value = '';
+        document.getElementById('info-objective-lead').value = window.i18n.tIn('mbInfoObjectiveLead', contentLang());
         document.getElementById('info-objective').value = '';
         document.getElementById('info-link-subject').value = '';
         document.getElementById('info-link-url').value = '';
@@ -657,6 +702,7 @@ async function removeCurrentActivitySheet() {
     if (lo.activitySheets.length === 0) {
         document.getElementById('sheet-number').value = '';
         document.getElementById('title').value = '';
+        document.getElementById('objective-lead').value = window.i18n.tIn('mbActivityObjectiveLead', contentLang());
         document.getElementById('objective').value = '';
         document.getElementById('duration').value = '0';
         document.getElementById('activity-link-subject').value = '';

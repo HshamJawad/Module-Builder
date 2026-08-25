@@ -1203,6 +1203,13 @@ async function exportToDocx() {
             }
             if (info.objective && info.objective.trim()) {
                 ch.push(new Paragraph({ children: [new TextRun({ text: _mbT('expObjective'), bold: true, size: 24, color: '0070C0', rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 200 } }));
+                /* Same blue bold heading style as «Objective:» itself, by
+                   request: it reads as part of the heading block, not as
+                   the first item of the list. Skipped when empty — a user
+                   who deleted the line meant to delete it. */
+                if (info.objectiveLead && info.objectiveLead.trim()) {
+                    ch.push(new Paragraph({ children: [new TextRun({ text: info.objectiveLead, bold: true, size: 24, color: '0070C0', rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 200 } }));
+                }
                 info.objective.split('\n').forEach(line => { if (line.trim()) ch.push(new Paragraph({ children: [new TextRun({ text: line, size: 24, rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 150 } })); });
             }
             if (info.contentSections) {
@@ -1281,6 +1288,13 @@ async function exportToDocx() {
             }
             if (activity.objective && activity.objective.trim()) {
                 ch.push(new Paragraph({ children: [new TextRun({ text: _mbT('expObjective'), bold: true, size: 24, color: '0070C0', rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 200 } }));
+                /* Same blue bold heading style as «Objective:» itself, by
+                   request: it reads as part of the heading block, not as
+                   the first item of the list. Skipped when empty — a user
+                   who deleted the line meant to delete it. */
+                if (activity.objectiveLead && activity.objectiveLead.trim()) {
+                    ch.push(new Paragraph({ children: [new TextRun({ text: activity.objectiveLead, bold: true, size: 24, color: '0070C0', rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 200 } }));
+                }
                 activity.objective.split('\n').forEach(line => { if (line.trim()) ch.push(new Paragraph({ children: [new TextRun({ text: line, size: 24, rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 150 } })); });
             }
             if (activity.duration && parseInt(activity.duration) > 0) {
