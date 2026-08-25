@@ -4,6 +4,23 @@
 // Extracted verbatim from Module_Builder.html lines 4153-4501 (v2.0-legacy).
 // ============================================================
 
+/* Guards the two paste-button strings against exactly the failure this
+   button has hit twice: a dictionary that does not carry rxPasteImage /
+   rxPasteImageTip, whether from a stale deploy or a partial file swap.
+   window.i18n.t() falls back to the key ITSELF when a key is missing
+   from every locale — which is the literal "rxPasteImage" text on the
+   button that keeps getting reported. A local, English, last-resort
+   string is a better failure than the raw dictionary key, and self-
+   contained here rather than borrowed from image_paste.js so this file
+   does not depend on that one's load order to stay correct. */
+function _mbContentLabelT(key, fallback) {
+    if (window.i18n && window.i18n.t) {
+        var v = window.i18n.t(key);
+        if (v && v !== key) return v;
+    }
+    return fallback;
+}
+
 function clearAllForms() {
     mbState.currentInfoSheetIndex = 0;
     mbState.currentActivitySheetIndex = 0;
@@ -297,7 +314,7 @@ function addContentSection(heading) {
         <textarea class="mb-content-field" placeholder="${window.i18n.t('dgEnterContent')}" data-i18n-placeholder="dgEnterContent" data-content-id="${csc}"  style="text-align: left;"></textarea>
         <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;">
             <button class="btn-add-image" data-act="addContentImage" data-args='[${csc}]'>🖼️ <span data-i18n="rxAddImageS">${window.i18n.t('rxAddImageS')}</span></button>
-            <button class="btn-add-image btn-paste-image" data-act="pasteContentImage" data-args='[${csc}]' title="${window.i18n.t('rxPasteImageTip')}" data-i18n-title="rxPasteImageTip">📋 <span data-i18n="rxPasteImage">${window.i18n.t('rxPasteImage')}</span></button>
+            <button class="btn-add-image btn-paste-image" data-act="pasteContentImage" data-args='[${csc}]' title="${_mbContentLabelT('rxPasteImageTip', 'Paste an image copied from the clipboard or a web page')}" data-i18n-title="rxPasteImageTip">📋 <span data-i18n="rxPasteImage">${_mbContentLabelT('rxPasteImage', 'Paste Image')}</span></button>
             <button data-act="addContentSection" style="background:#667eea;color:white;border:none;padding:6px 14px;border-radius:5px;font-size:0.85em;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;">➕ <span data-i18n="dgAddContent">${window.i18n.t('dgAddContent')}</span></button>
             ${addMarkBtnHtml(`content-marks-${csc}`)}
             <button class="btn-add-mark" data-act="addContentTable" data-args='[${csc}]' style="background:#0ea5e9;" title="${window.i18n.t('dgAddTable')}" data-i18n-title="dgAddTable">📋 <span data-i18n="dgAddTableBtn">${window.i18n.t('dgAddTableBtn')}</span></button>

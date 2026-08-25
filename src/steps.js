@@ -4,6 +4,23 @@
 // Extracted verbatim from Module_Builder.html lines 5223-5319 (v2.0-legacy).
 // ============================================================
 
+/* Guards the two paste-button strings against exactly the failure this
+   button has hit twice: a dictionary that does not carry rxPasteImage /
+   rxPasteImageTip, whether from a stale deploy or a partial file swap.
+   window.i18n.t() falls back to the key ITSELF when a key is missing
+   from every locale — which is the literal "rxPasteImage" text on the
+   button that keeps getting reported. A local, English, last-resort
+   string is a better failure than the raw dictionary key, and self-
+   contained here rather than borrowed from image_paste.js so this file
+   does not depend on that one's load order to stay correct. */
+function _mbStepLabelT(key, fallback) {
+    if (window.i18n && window.i18n.t) {
+        var v = window.i18n.t(key);
+        if (v && v !== key) return v;
+    }
+    return fallback;
+}
+
 function addStep() {
     mbState.stepCount++;
     const sc = mbState.stepCount;
@@ -26,7 +43,7 @@ function addStep() {
         <textarea class="mb-content-field" placeholder="${window.i18n.t('dgDescribeThisStep')}" data-i18n-placeholder="dgDescribeThisStep" data-step-id="${sc}"  style="text-align: left;"></textarea>
         <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;">
             <button class="btn-add-image" data-act="addImage" data-args='[${sc}]'>🖼️ ${window.i18n.t('dgAddImages')}</button>
-            <button class="btn-add-image btn-paste-image" data-act="pasteStepImage" data-args='[${sc}]' title="${window.i18n.t('rxPasteImageTip')}" data-i18n-title="rxPasteImageTip">📋 <span data-i18n="rxPasteImage">${window.i18n.t('rxPasteImage')}</span></button>
+            <button class="btn-add-image btn-paste-image" data-act="pasteStepImage" data-args='[${sc}]' title="${_mbStepLabelT('rxPasteImageTip', 'Paste an image copied from the clipboard or a web page')}" data-i18n-title="rxPasteImageTip">📋 <span data-i18n="rxPasteImage">${_mbStepLabelT('rxPasteImage', 'Paste Image')}</span></button>
             <button data-act="addStep" style="background:#667eea;color:white;border:none;padding:6px 14px;border-radius:5px;font-size:0.85em;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;">➕ <span data-i18n="dgAddStep">${window.i18n.t('dgAddStep')}</span></button>
             ${addMarkBtnHtml(`step-marks-${sc}`)}
         </div>
