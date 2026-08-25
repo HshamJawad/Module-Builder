@@ -1193,6 +1193,88 @@ async function exportToDocx() {
             return new Table({ rows, width: { size: 9072, type: WidthType.DXA }, borders });
         };
 
+        /* Helper: render a Learning Guide MODEL as docx children.
+           The model comes from learning_guide.js and is the same object
+           the on-screen preview renders, which is the only way the two
+           can be guaranteed to agree. This function knows about docx and
+           nothing about learning guides; that file knows about learning
+           guides and nothing about docx. */
+        const _buildLearningGuideDocx = (model) => {
+            if (!model || !model.sections || !model.sections.length) return null;
+            const { Table, TableRow, TableCell, WidthType, BorderStyle } = mbDocxLib();
+
+            const bdr = {
+                top:    { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                bottom: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                left:   { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                right:  { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                insideHorizontal: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                insideVertical:   { style: BorderStyle.SINGLE, size: 1, color: '000000' }
+            };
+            const mgn = { top: 120, bottom: 120, left: 150, right: 150 };
+            /* Fixed DXA on the table AND on every cell — percentage widths
+               survive Word but collapse in Google Docs, which is where
+               half of these modules get reviewed. */
+            const COL_A = 4536, COL_B = 4536;
+
+            const para = (text, opts) => new Paragraph({
+                children: [new TextRun(Object.assign(
+                    { text: text, size: 24, rightToLeft: _mbRtl() },
+                    opts || {}
+                ))],
+                alignment: _mbStart(AlignmentType),
+                bidirectional: _mbRtl(),
+                spacing: { after: 60 }
+            });
+            const cell = (children, width) => new TableCell({
+                children: children.length ? children : [new Paragraph({ text: '' })],
+                width: { size: width, type: WidthType.DXA },
+                margins: mgn
+            });
+
+            const rows = [];
+
+            // Column headers
+            rows.push(new TableRow({ children: [
+                cell([para(model.colActivities,   { bold: true, size: 26, color: '1F4788' })], COL_A),
+                cell([para(model.colInstructions, { bold: true, size: 26, color: '1F4788' })], COL_B)
+            ] }));
+
+            model.sections.forEach((sec) => {
+                /* Heading beside its instructions, and the sheet titles
+                   underneath with an empty right-hand cell. The
+                   instructions belong to the KIND of activity, not to any
+                   one sheet, so repeating them on every row would be
+                   three identical bullet lists down the page. */
+                rows.push(new TableRow({ children: [
+                    cell([para(sec.header, { bold: true })], COL_A),
+                    cell(sec.instructions.map(t => para('•  ' + t)), COL_B)
+                ] }));
+
+                if (sec.groupItems) {
+                    rows.push(new TableRow({ children: [
+                        cell(sec.items.map(t => para(t)), COL_A),
+                        cell([], COL_B)
+                    ] }));
+                } else {
+                    sec.items.forEach((t) => {
+                        rows.push(new TableRow({ children: [
+                            cell([para(t)], COL_A),
+                            cell([], COL_B)
+                        ] }));
+                    });
+                }
+            });
+
+            return [
+                new Paragraph({
+                    children: [new TextRun({ text: model.title, size: 28, bold: true, color: '0070C0', rightToLeft: _mbRtl() })],
+                    alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 300, before: 200 }
+                }),
+                new Table({ rows, width: { size: 9072, type: WidthType.DXA }, layout: 'fixed', columnWidths: [COL_A, COL_B], borders: bdr })
+            ];
+        };
+
         // Helper: build info sheet children from stored data
         const buildInfoCh = (info, loIndex, sheetIndex) => {
             const { Table, TableRow, TableCell, WidthType, BorderStyle } = mbDocxLib();
@@ -1400,6 +1482,24 @@ async function exportToDocx() {
                 : _mbTf('expLearningOutcomeN', { v0: loIndex + 1, v1: loHdTitle });
             const loHdCh = [new Paragraph({ children: [new TextRun({ text: loHdText, size: 28, bold: true, color: '0070C0', rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 400, before: 200 } })];
             sections.push({ properties: { bidi: _mbRtl() }, children: loHdCh });
+
+            /* ── Learning Guide ──────────────────────────────────────
+               Its own section, so it lands on its own page and the next
+               page is this outcome's first information sheet — which is
+               the whole point of the guide: the trainee reads what they
+               are about to be asked to do, then turns the page and
+               starts doing it.
+
+               Built from `lo` AFTER the flatten, so its cells are plain
+               strings in the export language, like everything else here.
+               Returns null when there is nothing to list, and a null
+               guide emits no page at all — the same "presence is not
+               content" rule that governs the heading above it. */
+            if (typeof mbLearningGuideOn === 'function' && mbLearningGuideOn()
+                && typeof mbBuildLearningGuideModel === 'function') {
+                const lgCh = _buildLearningGuideDocx(mbBuildLearningGuideModel(lo, loIndex, _mbLang()));
+                if (lgCh) sections.push({ properties: { bidi: _mbRtl() }, children: lgCh });
+            }
 
             (lo.infoSheets || []).forEach((info, si) => {
                 if (!info.title || !info.title.trim()) return;

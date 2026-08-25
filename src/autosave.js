@@ -202,6 +202,7 @@
                     teamMemberIdCounter:  mbState.teamMemberIdCounter || 0,
                     introAdditionalDetails: mbState.introAdditionalDetails,
                     introBlocks:          mbState.introBlocks      || [],
+                    includeLearningGuide: !!mbState.includeLearningGuide,
                     modules:              mbState.modulesData      || [],
                     currentModuleId:      mbState.currentModuleId  || null,
                     moduleIdCounter:      mbState.moduleIdCounter  || 0,
@@ -395,6 +396,8 @@
                 if (typeof mbNormalizeBlocks === 'function') {
                     mbState.introBlocks = mbNormalizeBlocks(data.introBlocks);
                 }
+                mbState.includeLearningGuide = !!data.includeLearningGuide;
+                if (typeof mbRenderLearningGuideToggle === 'function') mbRenderLearningGuideToggle();
 
                 mbState.assessmentContent = biUpgrade(data.assessmentContent);
                 if (data.assessmentFormsData)

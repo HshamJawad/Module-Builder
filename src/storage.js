@@ -114,6 +114,10 @@ function saveWork() {
             teamMemberIdCounter: mbState.teamMemberIdCounter,
             introAdditionalDetails: mbState.introAdditionalDetails,
             introBlocks: mbState.introBlocks,
+            /* One boolean. The guide table itself is derived from the
+               outcomes at render time, so there is nothing else to
+               save — and nothing that can come back stale. */
+            includeLearningGuide: !!mbState.includeLearningGuide,
             modules: mbState.modulesData,
             currentModuleId: mbState.currentModuleId,
             moduleIdCounter: mbState.moduleIdCounter,
@@ -211,6 +215,10 @@ function handleLoadFile() {
                    being absent — every file saved before this feature. */
                 mbState.introBlocks = mbNormalizeBlocks(data.introBlocks);
                 mbRenderBlocks('intro');
+                /* Absent in every file saved before this feature, and
+                   absent means off — the guide is opt-in. */
+                mbState.includeLearningGuide = !!data.includeLearningGuide;
+                if (typeof mbRenderLearningGuideToggle === 'function') mbRenderLearningGuideToggle();
                 
                 // Load assessment data
                 if (document.getElementById('assessment-simple-content')) {
@@ -321,6 +329,10 @@ function handleLoadFile() {
                    being absent — every file saved before this feature. */
                 mbState.introBlocks = mbNormalizeBlocks(data.introBlocks);
                 mbRenderBlocks('intro');
+                /* Absent in every file saved before this feature, and
+                   absent means off — the guide is opt-in. */
+                mbState.includeLearningGuide = !!data.includeLearningGuide;
+                if (typeof mbRenderLearningGuideToggle === 'function') mbRenderLearningGuideToggle();
                 
                 // Load assessment data
                 if (document.getElementById('assessment-simple-content')) {
@@ -496,6 +508,8 @@ async function clearAll() {
         if (introDetails) introDetails.value = '';
         mbState.introBlocks = [];
         mbRenderBlocks('intro');
+        mbState.includeLearningGuide = false;
+        if (typeof mbRenderLearningGuideToggle === 'function') mbRenderLearningGuideToggle();
 
         // ── Information Sheet tab ─────────────────────────────────
         document.getElementById('info-sheet-number').value = '';
