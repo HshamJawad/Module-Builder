@@ -97,12 +97,6 @@ function saveWork() {
         const data = {
             version: '3.0',
             schemaVersion: 4,      // bilingual { en, ar } content
-            /* Which SIDE of every { en, ar, fr } triple this project was
-               authored on. Not a preference — without it, opening the
-               file in a browser set to another side renders every field
-               from an empty slot and the module looks lost. See
-               mbProjectContentLang() in bilang.js. */
-            contentLang: (typeof contentLang === 'function') ? contentLang() : 'en',
             coversAdditionalInfo: mbState.coversAdditionalInfo,
             coversAdditionalNotes: mbState.coversAdditionalNotes,
             frontCoverImage: mbState.frontCoverImage,
@@ -168,34 +162,14 @@ function handleLoadFile() {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = async function (e) {
+    reader.onload = function(e) {
         try {
             const data = mbAssignProjectUids(biMigrateProject(JSON.parse(e.target.result)));
             /* Every project file written before Schema v4 holds bare
                strings. Migration runs here, on the way IN, and nowhere
                else — so the rest of the app may assume pairs, and a file
                is never rewritten on disk until the user saves. */
-
-            /* ── Adopt the file's language, before anything is drawn ──
-               Mandatory, not offered. The alternative is a project whose
-               fields all render empty because the browser is bound to a
-               side this file never used — indistinguishable from data
-               loss, and one keystroke away from real data loss, since
-               the next save would write onto the empty side.
-
-               Alert, not confirm: there is no sensible "no". The user is
-               told what is happening and why; the language switches are
-               still there afterwards if they want the interface back in
-               another language. */
-            const fileLang = (typeof mbProjectContentLang === 'function')
-                ? mbProjectContentLang(data) : null;
-            if (fileLang && fileLang !== contentLang()) {
-                await mbAlert(window.i18n.tf('dgImportLangSwitch', {
-                    v0: biLangLabel(fileLang), v1: biLangLabel(contentLang())
-                }));
-                mbAdoptProjectLang(fileLang);
-            }
-
+            
             // Check if this is v3.0 with module support
             if (data.version === '3.0' && data.modules) {
                 // Load cover data
@@ -475,15 +449,6 @@ function handleLoadFile() {
             /* Route to error handler with LOAD context */
             if (window.onerror) window.onerror('[LOAD] ' + error.message, 'handleLoadFile', 0, 0, error);
         }
-
-        /* After the branches, and after the catch on purpose: even a
-           partly-failed import has already adopted the file's language,
-           and leaving the switches showing the old one — or the fields
-           laid out left-to-right for Arabic text — would misreport the
-           state the editor is actually in. */
-        if (typeof applyContentDirection      === 'function') applyContentDirection();
-        if (typeof renderContentLangSwitch    === 'function') renderContentLangSwitch();
-        if (typeof renderExportLangSwitch     === 'function') renderExportLangSwitch();
     };
     reader.readAsText(file);
     input.value = '';
