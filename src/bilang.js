@@ -391,3 +391,65 @@ function exportLang() {
 function setExportLang(code) {
     if (BILANG_CODES.indexOf(code) !== -1) mbSetSetting(MB_KEYS.exportLang, code);
 }
+
+/* ── Which side of a project file holds the content ──────────
+   A v4 project is not "an Arabic file". Every text is a triple
+   { en, ar, fr } and an Arabic-authored module is one where `ar` is
+   filled and the other two are empty. So the question on import is not
+   what language the letters are in — it is which SIDE has anything at
+   all. English technical terms inside an Arabic sentence live in
+   `ar`, so a module full of "PDR" and "GPR" still reads as Arabic here;
+   nothing inspects the characters.
+
+   This matters because contentLang() is a per-BROWSER setting, not part
+   of the project. Open an Arabic module in a browser last used for an
+   English one and every field renders from the empty `en` side: the
+   whole module looks lost. Worse, typing anything then saves onto `en`
+   while the Arabic sits untouched in the file, invisible.
+
+   Primary source is the explicit `contentLang` that saveWork now writes.
+   The scan below is only for files saved before that field existed —
+   the ones already on your disk from testing. */
+
+function mbProjectContentLang(data) {
+    if (!data) return null;
+    if (BILANG_CODES.indexOf(data.contentLang) !== -1) return data.contentLang;
+
+    /* Flatten the whole project onto each side in turn and measure what
+       is there. Length, not a boolean: a side may carry a word or two
+       left behind by an experiment with the switch, and the winner
+       should be the side that actually holds the module. */
+    var best = null, bestLen = 0;
+    BILANG_CODES.forEach(function (code) {
+        var len = 0;
+        try {
+            var flat = biFlattenDeep(data, code);
+            len = JSON.stringify(flat, function (k, v) {
+                /* Base64 cover and step images would swamp the count and
+                   are identical on every side anyway. */
+                return (typeof v === 'string' && v.lastIndexOf('data:', 0) === 0) ? '' : v;
+            }).length;
+        } catch (e) { len = 0; }
+        if (len > bestLen) { bestLen = len; best = code; }
+    });
+    return best;
+}
+
+/**
+ * Adopt a project's language WITHOUT the normal switch machinery.
+ *
+ * setContentLang() flushes the screen into state first, and the
+ * mb:contentlangchange listeners reload the sheets. Both are correct for
+ * a user-initiated switch and both are wrong here: at import time the
+ * screen still holds the PREVIOUS project, so flushing would write its
+ * leftovers into the file being opened. This writes the setting and
+ * nothing else; the import that follows repaints everything anyway.
+ */
+function mbAdoptProjectLang(code) {
+    if (BILANG_CODES.indexOf(code) === -1) return;
+    mbSetSetting(MB_KEYS.contentLang, code);
+    if (window.i18n && typeof window.i18n.setLang === 'function' &&
+        window.i18n.getLang() !== code) {
+        window.i18n.setLang(code);
+    }
+}
