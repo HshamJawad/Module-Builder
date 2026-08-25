@@ -2602,11 +2602,41 @@ textarea.mb-tvqf-input { min-height: 0; resize: vertical; }
     cursor: default;
 }
 
+/* ── Paste-image button & fallback paste zone ─────────────────────
+   The paste button reuses .btn-add-image's geometry so the two sit as a
+   pair, and only changes hue: teal reads as "same family, different
+   source" where a second green would read as a duplicate button. */
+.btn-paste-image {
+    background: #0d9488;
+}
+.btn-paste-image:hover {
+    background: #0f766e;
+}
+
+/* The fallback target for Ctrl+V. It is contenteditable, so it needs a
+   visible edge — an invisible box that must be focused to work is a dead
+   end for the user who cannot see where to press. min-height keeps it a
+   comfortable target on touch; the caret is hidden because nothing typed
+   here is ever kept. */
+.mb-paste-zone {
+    margin-top: 14px;
+    min-height: 90px;
+    border: 2px dashed #94a3b8;
+    border-radius: 8px;
+    background: #f8fafc;
+    padding: 10px;
+    outline: none;
+    caret-color: transparent;
+    overflow: hidden;
+}
+.mb-paste-zone:focus {
+    border-color: #0d9488;
+    background: #f0fdfa;
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+
 /* ============================================================
    Learning Guide — toggle card + read-only preview
-   The preview is a separate overlay from .mb-dialog because that
-   dialog takes textContent only, on purpose: every message it
-   shows interpolates text the user typed. A table is not a message.
    ============================================================ */
 
 .lg-card {
@@ -2632,17 +2662,27 @@ textarea.mb-tvqf-input { min-height: 0; resize: vertical; }
 .lg-choice input { width: 17px; height: 17px; accent-color: #7c3aed; cursor: pointer; }
 .lg-preview-btn {
     margin-inline-start: auto;
-    background: #7c3aed;
-    color: #fff;
-    border: none;
     padding: 8px 18px;
     border-radius: 8px;
     font-weight: 700;
     font-size: 0.9em;
     letter-spacing: 0.03em;
 }
-.lg-preview-btn:not(:disabled):hover { background: #6d28d9; }
 .lg-hint { margin: 12px 0 0; color: #6b7280; font-size: 0.85em; line-height: 1.6; }
+
+/* Same silver-flattening rule in this theme applies to every button
+   (see the `button:not(.tab)…` rule earlier in this file), so the
+   preview button marks itself with colour rather than fighting a fill
+   that would lose to `!important` anyway. */
+button#lg-preview-btn {
+    color: #5b21b6 !important;
+    border-color: #a78bfa !important;
+    font-weight: 700 !important;
+}
+button#lg-preview-btn:disabled {
+    color: #9ca3af !important;
+    border-color: #e5e7eb !important;
+}
 
 /* ── Preview overlay ───────────────────────────────────────── */
 .lg-overlay {
@@ -2702,20 +2742,3 @@ textarea.mb-tvqf-input { min-height: 0; resize: vertical; }
 .lg-table tr.lg-head-row td { background: #f9fafb; }
 .lg-instr { margin: 0; padding-inline-start: 18px; }
 .lg-instr li { margin-bottom: 4px; }
-
-/* ── Preview button, inside the silver theme ───────────────────────
-   The theme flattens EVERY button to silver with `!important` (see the
-   `button:not(.tab)…` rule above), which is deliberate — so this button
-   does not fight it with a purple fill that would lose anyway. It marks
-   itself with weight and colour instead, and states its disabled state
-   in colour rather than in opacity alone, since a 45%-opacity purple on
-   silver is not legibly different from an enabled one. */
-button#lg-preview-btn {
-    color: #5b21b6 !important;
-    border-color: #a78bfa !important;
-    font-weight: 700 !important;
-}
-button#lg-preview-btn:disabled {
-    color: #9ca3af !important;
-    border-color: #e5e7eb !important;
-}

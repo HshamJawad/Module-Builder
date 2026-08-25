@@ -454,11 +454,8 @@
 
      NO data-i18n on the text here, deliberately. These strings live in
      learning_guide.js and are painted by mbRenderLearningGuideToggle()
-     on load and on every mb:langchange. A data-i18n sweep can only
-     render keys the dictionary knows, and a missing key renders as the
-     literal key — which is exactly what «lgSectionLabel» on screen
-     means. Keeping the strings with the code that uses them removes
-     that failure mode instead of documenting it. -->
+     on load and on every mb:langchange, so this card cannot go stale
+     if mb-translations.js is ever swapped for an older copy. -->
 <div class="lg-card" id="learning-guide-section">
 <div class="lg-card-head">
 <label class="lg-card-label" id="lg-card-label"></label>
@@ -956,6 +953,7 @@
 <script src="src/bilang.js"></script>
 <script src="src/uid.js"></script>
 <script src="src/image_prep.js"></script>
+<script src="src/image_paste.js"></script>
 <script src="src/dialog.js"></script>
 <script src="src/docx_bidi.js"></script>
 <script src="src/ui.js"></script>
