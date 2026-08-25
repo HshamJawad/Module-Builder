@@ -15,27 +15,56 @@ const ACTIVITY_BI = ['title', 'objective', 'criteriaTitle', 'criteriaInstruction
    The line that stands between «Objective:» and the list itself:
    «After studying this information sheet, you will be able to:».
 
-   Boilerplate, not authored content — which is why it is seeded into
-   ALL THREE sides at once rather than only the side being edited. Every
-   other bilingual field is deliberately one-sided: writing an Arabic
-   sentence into the English slot would be a fabricated translation. But
-   this sentence already HAS an official wording in each language, sitting
-   in the dictionary, so seeding each side with its own is not a guess.
-   The alternative was ugly: author in Arabic, export in English, and the
-   line silently disappears from a document whose objective list then
-   begins with no introduction.
+   Seeded on the ACTIVE SIDE ONLY, like every other bilingual field.
 
-   Seeded only when the key is ABSENT. Once the key exists the stored
-   value wins, empty included — a user who deletes the line means to
-   delete it, and the export must respect that rather than helpfully
-   putting it back on the next load. */
+   The first version of this seeded all three sides at once, reasoning
+   that the sentence is boilerplate with an official wording already in
+   the dictionary, so filling each side was not a fabricated
+   translation. That reasoning was right about the sentence and wrong
+   about the consequences, in two ways:
+
+   1. _mbBeginExport() in docx_bidi.js picks the document language, when
+      the export switch was never touched, by COUNTING SCRIPTS across the
+      whole project. Seeding the English and French defaults injected
+      about 104 Latin characters per sheet into an Arabic project — more
+      than enough to outvote the author's own Arabic and flip an entire
+      module to English headings and left-to-right layout.
+
+   2. Even with the export language set correctly, this would have been
+      the one field that ignores the tool's rule that content lives on
+      the side it was authored on — printing an English sentence above
+      an Arabic objective list.
+
+   The cost is the case the old version was trying to cover: author in
+   Arabic, export in English, and the line is absent. That is exactly
+   what the title, the objective and every other field already do, so
+   the line's absence now means the same thing everywhere — and points
+   at the real problem, which is an export language that does not match
+   the module. Masking it was worse than showing it. */
 
 function mbSeedObjectiveLead(data, dictKey) {
-    if (!data || data.objectiveLead !== undefined) return;
-    data.objectiveLead = biNew();
-    BILANG_CODES.forEach(function (code) {
-        biSet(data, 'objectiveLead', code, window.i18n.tIn(dictKey, code));
-    });
+    if (!data) return;
+    const cl = contentLang();
+
+    if (data.objectiveLead === undefined) {
+        data.objectiveLead = biNew();
+        biSet(data, 'objectiveLead', cl, window.i18n.tIn(dictKey, cl));
+        return;
+    }
+
+    /* Self-heal a project saved by the all-sides version: a side that
+       still holds that language's UNTOUCHED default, and is not the side
+       being edited, was put there by the old seeder and never by the
+       author. Clearing it restores the script balance. An edited side is
+       left alone, because it no longer matches the dictionary. */
+    if (biIs(data.objectiveLead)) {
+        BILANG_CODES.forEach(function (code) {
+            if (code === cl) return;
+            if (data.objectiveLead[code] === window.i18n.tIn(dictKey, code)) {
+                data.objectiveLead[code] = '';
+            }
+        });
+    }
 }
 
 /** Text on ANY side of a bilingual pair (or a bare pre-v4 string). */
@@ -226,7 +255,30 @@ function saveCurrentSheetToLO() {
     updateLOSummary();
 }
 
+/**
+ * Run the self-heal over EVERY sheet in the project, not just the one
+ * on screen.
+ *
+ * The seeder above only reaches the sheet being loaded or saved, but the
+ * damage it repairs is project-wide: the export counts script across the
+ * whole of mbState, so one untouched sheet in another learning outcome
+ * still carries enough Latin to swing the vote. Cheap enough to run on
+ * every load — it walks objects already in memory and touches nothing
+ * that does not exactly match a dictionary default.
+ */
+function mbHealObjectiveLeads() {
+    if (typeof BILANG_CODES === 'undefined' || !window.i18n) return;
+    const heal = (sheets, key) => (sheets || []).forEach(s => mbSeedObjectiveLead(s, key));
+    const walk = (los) => (los || []).forEach(lo => {
+        heal(lo.infoSheets,     'mbInfoObjectiveLead');
+        heal(lo.activitySheets, 'mbActivityObjectiveLead');
+    });
+    (mbState.modulesData || []).forEach(m => walk(m.learningOutcomes));
+    walk(mbState.learningOutcomesData);
+}
+
 function loadCurrentLOSheets() {
+    mbHealObjectiveLeads();
     if (!mbState.currentLOId) {
         clearAllForms();
         return;
