@@ -2601,3 +2601,36 @@ textarea.mb-tvqf-input { min-height: 0; resize: vertical; }
     color: var(--mb-ink-soft, #6b7280);
     cursor: default;
 }
+
+/* ── Paste-image button & fallback paste zone ─────────────────────
+   The paste button reuses .btn-add-image's geometry so the two sit as a
+   pair, and only changes hue: teal reads as "same family, different
+   source" where a second green would read as a duplicate button. */
+.btn-paste-image {
+    background: #0d9488;
+}
+.btn-paste-image:hover {
+    background: #0f766e;
+}
+
+/* The fallback target for Ctrl+V. It is contenteditable, so it needs a
+   visible edge — an invisible box that must be focused to work is a dead
+   end for the user who cannot see where to press. min-height keeps it a
+   comfortable target on touch; the caret is hidden because nothing typed
+   here is ever kept. */
+.mb-paste-zone {
+    margin-top: 14px;
+    min-height: 90px;
+    border: 2px dashed #94a3b8;
+    border-radius: 8px;
+    background: #f8fafc;
+    padding: 10px;
+    outline: none;
+    caret-color: transparent;
+    overflow: hidden;
+}
+.mb-paste-zone:focus {
+    border-color: #0d9488;
+    background: #f0fdfa;
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
