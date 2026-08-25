@@ -551,21 +551,62 @@ function renderCoverTable() {
     if (!container) return;
 
     container.innerHTML = mbState.coverRows.map(row => `
-        <div class="cover-row" style="display: grid; grid-template-columns: 2fr 3fr auto auto; gap: 10px; align-items: center; padding: 12px; border-bottom: 1px solid #e5e7eb; background: ${mbState.coverRows.indexOf(row) % 2 === 0 ? '#ffffff' : '#f9fafb'};">
-            <div class="cover-label" dir="auto" data-dir-auto="1" style="font-weight: 600; color: #374151; word-break: break-word; text-align: start;">
-                ${escapeHtml(mbCoverLabelText(row))}
-            </div>
+        <div class="cover-row" style="display: grid; grid-template-columns: 2fr 3fr auto; gap: 10px; align-items: center; padding: 12px; border-bottom: 1px solid #e5e7eb; background: ${mbState.coverRows.indexOf(row) % 2 === 0 ? '#ffffff' : '#f9fafb'};">
+            <input type="text" class="cover-label" id="cover-label-${row.id}" dir="auto" data-dir-auto="1"
+                   value="${escapeHtml(mbCoverLabelText(row))}"
+                   data-act="updateCoverLabel" data-on="change" data-args='[${row.id}]'
+                   title="${window.i18n.t('cvLabelEditHint')}" data-i18n-title="cvLabelEditHint">
             ${_mbCoverControl(row)}
-            <button class="mb-has-ico" data-act="renameCoverLabel" data-args='[${row.id}]' 
-                    style="padding: 6px 12px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em; white-space: nowrap;">
-                <svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4.5 19.5h4l10-10a2.1 2.1 0 0 0-3-3l-10 10z"/><path d="M14.5 6.5l3 3"/><path d="M4.5 19.5l.6-3.4"/></svg><span data-i18n="rxRename">${window.i18n.t('rxRename')}</span>
-            </button>
             <button class="mb-icon-btn danger" data-act="deleteCoverRow" data-args='[${row.id}]'
                     title="${window.i18n.t('mbDelete')}" data-i18n-title="mbDelete">
                 <svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg>
             </button>
         </div>
     `).join('');
+}
+
+/* ── Editing a label ─────────────────────────────────────────
+   Was a blue «Rename» button opening a prompt: click, read, type,
+   confirm — four steps to change one word, on a table where the box
+   next to it is edited by simply typing in it. The label is now an
+   input like every other field, and the button is gone.
+
+   What the button did that typing does not is still done here:
+   deleting `seedKey`. A row keeps its dictionary key only while it
+   carries the factory wording; mbSeedCoverLabels() rewrites the label
+   from that key on EVERY render, and a render happens on every
+   language switch. Leave the key in place after an edit and the user's
+   own wording is silently replaced the next time they touch the
+   language switch. The key is therefore dropped the moment the wording
+   stops being the factory's — which is what a rename has always
+   meant here, only without the dialog. */
+
+function updateCoverLabel(rowId) {
+    const input = document.getElementById(`cover-label-${rowId}`);
+    const row   = mbState.coverRows.find(r => r.id === rowId);
+    if (!row || !input) return;
+
+    const text = input.value.trim();
+
+    /* Emptied: put the old wording back rather than accept a nameless
+       row. A dialog had Cancel; a live input does not, so an
+       accidental select-all-and-delete needs somewhere to land — and
+       an unlabelled row in an exported module is worse than a
+       mis-worded one. */
+    if (!text) {
+        input.value = mbCoverLabelText(row);
+        return;
+    }
+
+    const labelled = text.endsWith(':') ? text : text + ':';
+    if (labelled === mbCoverLabelText(row)) return;   // nothing changed
+
+    biPut(row, 'label', labelled);
+    /* `field` is deliberately NOT deleted — see the file header: a
+       rename changes the wording, not the kind of answer the field
+       takes. A renamed date row is still a date row. */
+    delete row.seedKey;
+    input.value = labelled;
 }
 
 function updateCoverValue(rowId) {
@@ -600,22 +641,9 @@ function updateCoverValue(rowId) {
     biPut(row, 'value', input.value);
 }
 
-async function renameCoverLabel(rowId) {
-    const row = mbState.coverRows.find(r => r.id === rowId);
-    if (!row) return;
-    
-    const cur = biGet(row.label, contentLang()) || '';
-    const newLabel = await mbPrompt(window.i18n.t('dgEnterNewLabelName'), cur.replace(':', ''));
-    if (newLabel) {
-        biPut(row, 'label', newLabel.trim().endsWith(':') ? newLabel.trim() : newLabel.trim() + ':');
-        /* Renamed: this row is now the user's, in every language.
-           `field` is deliberately NOT deleted — see the header note: a
-           rename changes the wording, not the kind of answer the field
-           takes. */
-        delete row.seedKey;
-        renderCoverTable();
-    }
-}
+/* renameCoverLabel() is gone: its one caller was the blue button in
+   renderCoverTable(), and its work now happens in updateCoverLabel()
+   above, without a dialog. */
 
 async function deleteCoverRow(rowId) {
     if (await mbConfirm(window.i18n.t('dgConfirmDeletionthisWillPermanently3'), { danger: true })) {
@@ -639,6 +667,12 @@ async function addCoverRow() {
 function saveCoverData() {
     // Update values from inputs before saving
     mbState.coverRows.forEach(row => {
+        /* Labels first, and read here rather than trusting the change
+           event alone: `change` fires on blur, and a user who types a
+           new label then hits Ctrl+S without leaving the field would
+           otherwise save the old wording. */
+        const labelEl = document.getElementById(`cover-label-${row.id}`);
+        if (labelEl) updateCoverLabel(row.id);
         const input = document.getElementById(`cover-value-${row.id}`);
         if (input) updateCoverValue(row.id);
     });
