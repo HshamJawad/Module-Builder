@@ -128,7 +128,7 @@ async function exportToDocx() {
         // Module Title and Performance Criteria are intentionally excluded from Activity/Job Sheet export
         // Activity/Job Sheets should start directly with their own title for clean, self-contained pages
 
-        // Title with sheet number - New format: Activity/Job Sheet 1-1 \ Title
+        // Title with sheet number - New format: Activity/Job Sheet 1-1 / Title
         if (sheetNumber.trim() && title.trim()) {
             const titleText = _mbTf('expActivitySheetTitled', { v0: sheetNumber, v1: title });
             children.push(new Paragraph({
