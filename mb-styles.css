@@ -2602,35 +2602,103 @@ textarea.mb-tvqf-input { min-height: 0; resize: vertical; }
     cursor: default;
 }
 
-/* ── Paste-image button & fallback paste zone ─────────────────────
-   The paste button reuses .btn-add-image's geometry so the two sit as a
-   pair, and only changes hue: teal reads as "same family, different
-   source" where a second green would read as a duplicate button. */
-.btn-paste-image {
-    background: #0d9488;
-}
-.btn-paste-image:hover {
-    background: #0f766e;
-}
+/* ============================================================
+   Learning Guide — toggle card + read-only preview
+   The preview is a separate overlay from .mb-dialog because that
+   dialog takes textContent only, on purpose: every message it
+   shows interpolates text the user typed. A table is not a message.
+   ============================================================ */
 
-/* The fallback target for Ctrl+V. It is contenteditable, so it needs a
-   visible edge — an invisible box that must be focused to work is a dead
-   end for the user who cannot see where to press. min-height keeps it a
-   comfortable target on touch; the caret is hidden because nothing typed
-   here is ever kept. */
-.mb-paste-zone {
-    margin-top: 14px;
-    min-height: 90px;
-    border: 2px dashed #94a3b8;
+.lg-card {
+    margin-top: 30px;
+    padding: 18px 20px;
+    background: #f5f3ff;
+    border: 2px solid #a78bfa;
+    border-radius: 10px;
+}
+.lg-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+.lg-card-label { font-weight: 700; color: #5b21b6; font-size: 1.05em; }
+.lg-card-note  { color: #6b7280; font-size: 0.85em; }
+.lg-question   { margin: 6px 0 12px; color: #374151; font-weight: 600; }
+.lg-choices    { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.lg-choice     { display: inline-flex; align-items: center; gap: 7px; cursor: pointer; color: #374151; }
+.lg-choice input { width: 17px; height: 17px; accent-color: #7c3aed; cursor: pointer; }
+.lg-preview-btn {
+    margin-inline-start: auto;
+    background: #7c3aed;
+    color: #fff;
+    border: none;
+    padding: 8px 18px;
     border-radius: 8px;
-    background: #f8fafc;
-    padding: 10px;
-    outline: none;
-    caret-color: transparent;
+    font-weight: 700;
+    font-size: 0.9em;
+    letter-spacing: 0.03em;
+}
+.lg-preview-btn:not(:disabled):hover { background: #6d28d9; }
+.lg-hint { margin: 12px 0 0; color: #6b7280; font-size: 0.85em; line-height: 1.6; }
+
+/* ── Preview overlay ───────────────────────────────────────── */
+.lg-overlay {
+    position: fixed; inset: 0; z-index: 10000;
+    background: rgba(17, 24, 39, 0.55);
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+}
+.lg-modal {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    width: min(900px, 100%);
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
 }
-.mb-paste-zone:focus {
-    border-color: #0d9488;
-    background: #f0fdfa;
-    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+.lg-modal-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+    color: #fff;
 }
+.lg-modal-title { font-weight: 700; font-size: 1.05em; }
+.lg-close {
+    background: transparent; border: none; color: #fff;
+    font-size: 1.1em; cursor: pointer; padding: 2px 6px; line-height: 1;
+}
+.lg-readonly-note {
+    padding: 9px 20px;
+    background: #fef3c7;
+    color: #92400e;
+    font-size: 0.85em;
+    border-bottom: 1px solid #fde68a;
+}
+.lg-modal-body { padding: 20px; overflow-y: auto; }
+.lg-modal-foot { padding: 12px 20px; border-top: 1px solid #e5e7eb; text-align: end; }
+.lg-close-btn {
+    background: #e5e7eb; border: none; padding: 8px 20px;
+    border-radius: 7px; font-weight: 600; cursor: pointer; color: #374151;
+}
+
+.lg-block { margin-bottom: 28px; }
+.lg-lo-label { font-size: 0.85em; color: #6b7280; margin-bottom: 4px; }
+.lg-page-title { font-weight: 700; color: #1f2937; margin-bottom: 8px; font-size: 1.05em; }
+.lg-empty { color: #6b7280; font-style: italic; }
+
+.lg-table { width: 100%; border-collapse: collapse; font-size: 0.92em; }
+.lg-table th, .lg-table td {
+    border: 1px solid #9ca3af;
+    padding: 8px 10px;
+    vertical-align: top;
+    line-height: 1.7;
+}
+.lg-table th { background: #ede9fe; color: #4c1d95; }
+.lg-table tr.lg-head-row td { background: #f9fafb; }
+.lg-instr { margin: 0; padding-inline-start: 18px; }
+.lg-instr li { margin-bottom: 4px; }

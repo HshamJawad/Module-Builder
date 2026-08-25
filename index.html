@@ -445,6 +445,25 @@
                         ➕ Add Introduction Section
                     </button>
 </div>
+<!-- Learning Guide ──────────────────────────────────────────
+     A radio pair, not a checkbox: including the guide is an editorial
+     decision some frameworks require and others forbid, and a checkbox
+     reads as "extra". The table itself is never edited here — it is
+     derived from the sheets, so there would be nowhere for an edit to
+     go. See learning_guide.js. -->
+<div class="lg-card" id="learning-guide-section">
+<div class="lg-card-head">
+<label class="lg-card-label" data-i18n="lgSectionLabel">📑 Learning Guide (Optional)</label>
+<span class="lg-card-note" data-i18n="lgSectionNote">One guide per learning outcome — placed just before its first information sheet</span>
+</div>
+<p class="lg-question" data-i18n="lgQuestion">Include a Learning Guide table for each learning outcome?</p>
+<div class="lg-choices">
+<label class="lg-choice"><input data-act="mbSetLearningGuide" data-args='[true]' data-on="change" id="lg-include-yes" name="lg-include" type="radio"/><span data-i18n="lgYes">Yes, include it</span></label>
+<label class="lg-choice"><input checked="checked" data-act="mbSetLearningGuide" data-args='[false]' data-on="change" id="lg-include-no" name="lg-include" type="radio"/><span data-i18n="lgNo">No</span></label>
+<button class="lg-preview-btn" data-act="previewLearningGuide" data-i18n="lgPreviewBtn" id="lg-preview-btn" type="button">👁 PREVIEW</button>
+</div>
+<p class="lg-hint" data-i18n="lgHint">The table fills itself from the sheet titles and self-check numbers you have already entered. It is read-only here; edit it in Word after export if you need to.</p>
+</div>
 <!-- Proceed Button -->
 <div style="text-align: center; margin-top: 30px; padding: 20px 0;">
 <button data-act="proceedToTab" data-args='["info"]' data-i18n="mbProceedToInformationSheet" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 32px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3); transition: all 0.3s ease;">
@@ -929,7 +948,6 @@
 <script src="src/bilang.js"></script>
 <script src="src/uid.js"></script>
 <script src="src/image_prep.js"></script>
-<script src="src/image_paste.js"></script>
 <script src="src/dialog.js"></script>
 <script src="src/docx_bidi.js"></script>
 <script src="src/ui.js"></script>
@@ -940,6 +958,7 @@
 <script src="src/modules.js"></script>
 <script src="src/outcomes.js"></script>
 <script src="src/blocks.js"></script>
+<script src="src/learning_guide.js"></script>
 <script src="src/sheets.js"></script>
 <script src="src/content.js"></script>
 <script src="src/criteria.js"></script>
