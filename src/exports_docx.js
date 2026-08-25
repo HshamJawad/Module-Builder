@@ -1495,10 +1495,19 @@ async function exportToDocx() {
                Returns null when there is nothing to list, and a null
                guide emits no page at all — the same "presence is not
                content" rule that governs the heading above it. */
-            if (typeof mbLearningGuideOn === 'function' && mbLearningGuideOn()
-                && typeof mbBuildLearningGuideModel === 'function') {
-                const lgCh = _buildLearningGuideDocx(mbBuildLearningGuideModel(lo, loIndex, _mbLang()));
-                if (lgCh) sections.push({ properties: { bidi: _mbRtl() }, children: lgCh });
+            if (mbState.includeLearningGuide) {
+                if (typeof mbBuildLearningGuideModel !== 'function') {
+                    /* The flag is on, so the author asked for the guide,
+                       and the page it should occupy is about to be
+                       skipped in silence. That is the worst kind of
+                       missing file: the document looks finished. Say so
+                       — in the console and on the status line. */
+                    console.warn('Learning Guide is enabled but src/learning_guide.js is not loaded — no guide will be exported.');
+                    if (typeof showStatus === 'function') showStatus('learning_guide.js not loaded — Learning Guide skipped', 'error');
+                } else {
+                    const lgCh = _buildLearningGuideDocx(mbBuildLearningGuideModel(lo, loIndex, _mbLang()));
+                    if (lgCh) sections.push({ properties: { bidi: _mbRtl() }, children: lgCh });
+                }
             }
 
             (lo.infoSheets || []).forEach((info, si) => {
