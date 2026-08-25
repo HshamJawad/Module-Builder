@@ -2702,3 +2702,20 @@ textarea.mb-tvqf-input { min-height: 0; resize: vertical; }
 .lg-table tr.lg-head-row td { background: #f9fafb; }
 .lg-instr { margin: 0; padding-inline-start: 18px; }
 .lg-instr li { margin-bottom: 4px; }
+
+/* ── Preview button, inside the silver theme ───────────────────────
+   The theme flattens EVERY button to silver with `!important` (see the
+   `button:not(.tab)…` rule above), which is deliberate — so this button
+   does not fight it with a purple fill that would lose anyway. It marks
+   itself with weight and colour instead, and states its disabled state
+   in colour rather than in opacity alone, since a 45%-opacity purple on
+   silver is not legibly different from an enabled one. */
+button#lg-preview-btn {
+    color: #5b21b6 !important;
+    border-color: #a78bfa !important;
+    font-weight: 700 !important;
+}
+button#lg-preview-btn:disabled {
+    color: #9ca3af !important;
+    border-color: #e5e7eb !important;
+}

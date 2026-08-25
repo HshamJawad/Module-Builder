@@ -450,19 +450,27 @@
      decision some frameworks require and others forbid, and a checkbox
      reads as "extra". The table itself is never edited here — it is
      derived from the sheets, so there would be nowhere for an edit to
-     go. See learning_guide.js. -->
+     go. See learning_guide.js.
+
+     NO data-i18n on the text here, deliberately. These strings live in
+     learning_guide.js and are painted by mbRenderLearningGuideToggle()
+     on load and on every mb:langchange. A data-i18n sweep can only
+     render keys the dictionary knows, and a missing key renders as the
+     literal key — which is exactly what «lgSectionLabel» on screen
+     means. Keeping the strings with the code that uses them removes
+     that failure mode instead of documenting it. -->
 <div class="lg-card" id="learning-guide-section">
 <div class="lg-card-head">
-<label class="lg-card-label" data-i18n="lgSectionLabel">📑 Learning Guide (Optional)</label>
-<span class="lg-card-note" data-i18n="lgSectionNote">One guide per learning outcome — placed just before its first information sheet</span>
+<label class="lg-card-label" id="lg-card-label"></label>
+<span class="lg-card-note" id="lg-card-note"></span>
 </div>
-<p class="lg-question" data-i18n="lgQuestion">Include a Learning Guide table for each learning outcome?</p>
+<p class="lg-question" id="lg-question"></p>
 <div class="lg-choices">
-<label class="lg-choice"><input data-act="mbSetLearningGuide" data-args='[true]' data-on="change" id="lg-include-yes" name="lg-include" type="radio"/><span data-i18n="lgYes">Yes, include it</span></label>
-<label class="lg-choice"><input checked="checked" data-act="mbSetLearningGuide" data-args='[false]' data-on="change" id="lg-include-no" name="lg-include" type="radio"/><span data-i18n="lgNo">No</span></label>
-<button class="lg-preview-btn" data-act="previewLearningGuide" data-i18n="lgPreviewBtn" id="lg-preview-btn" type="button">👁 PREVIEW</button>
+<label class="lg-choice"><input data-act="mbSetLearningGuide" data-args='[true]' data-on="change" id="lg-include-yes" name="lg-include" type="radio"/><span id="lg-yes-label"></span></label>
+<label class="lg-choice"><input checked="checked" data-act="mbSetLearningGuide" data-args='[false]' data-on="change" id="lg-include-no" name="lg-include" type="radio"/><span id="lg-no-label"></span></label>
+<button class="lg-preview-btn" data-act="previewLearningGuide" id="lg-preview-btn" type="button"></button>
 </div>
-<p class="lg-hint" data-i18n="lgHint">The table fills itself from the sheet titles and self-check numbers you have already entered. It is read-only here; edit it in Word after export if you need to.</p>
+<p class="lg-hint" id="lg-hint"></p>
 </div>
 <!-- Proceed Button -->
 <div style="text-align: center; margin-top: 30px; padding: 20px 0;">
