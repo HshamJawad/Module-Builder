@@ -1090,6 +1090,31 @@
            form. Borderless until hovered or focused, so the affordance
            appears exactly when the pointer says the user is looking for
            it, and the table stays a table the rest of the time. */
+        /* The lead-in between «Objective:» and the list. It prints as a
+           heading in the DOCX, so it is shown as one here: same blue,
+           same weight. Borderless until hovered or focused, like the
+           cover-table labels — it is prefilled boilerplate the author
+           will usually leave alone, and a permanent input box around it
+           would read as one more field waiting to be filled. */
+        .objective-lead {
+            width: 100%;
+            margin: 0 0 8px;
+            padding: 6px 8px;
+            font-weight: 600;
+            font-size: 0.95em;
+            font-family: inherit;
+            color: #0070C0;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            outline: none;
+            text-align: start;
+            transition: border-color 0.15s, background 0.15s;
+        }
+        .objective-lead::placeholder { color: #9bbfd8; font-weight: 500; }
+        .objective-lead:hover { border-color: #dfe3e8; background: rgba(255,255,255,0.7); }
+        .objective-lead:focus { border-color: #3b82f6; background: #ffffff; }
+
         .cover-label {
             font-weight: 600;
             color: #374151;
