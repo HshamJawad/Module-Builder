@@ -1085,6 +1085,28 @@
         /* Shown only when a card container is empty. Dashed, muted and
            quiet: it is a state, not an error, and the button underneath
            it is the actual instruction. */
+        /* The row label. An input, but it must still READ as a table
+           label — a grid of boxed fields turns a reference table into a
+           form. Borderless until hovered or focused, so the affordance
+           appears exactly when the pointer says the user is looking for
+           it, and the table stays a table the rest of the time. */
+        .cover-label {
+            font-weight: 600;
+            color: #374151;
+            text-align: start;
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            background: transparent;
+            font-size: inherit;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.15s, background 0.15s;
+        }
+        .cover-label:hover  { border-color: #dfe3e8; background: rgba(255,255,255,0.7); }
+        .cover-label:focus  { border-color: #3b82f6; background: #ffffff; }
+
         .mb-empty-hint {
             border: 1px dashed #c9cdc7;
             border-radius: 8px;
