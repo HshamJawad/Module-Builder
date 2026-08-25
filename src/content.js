@@ -4,22 +4,49 @@
 // Extracted verbatim from Module_Builder.html lines 4153-4501 (v2.0-legacy).
 // ============================================================
 
-/* Guards the two paste-button strings against exactly the failure this
-   button has hit twice: a dictionary that does not carry rxPasteImage /
-   rxPasteImageTip, whether from a stale deploy or a partial file swap.
-   window.i18n.t() falls back to the key ITSELF when a key is missing
-   from every locale — which is the literal "rxPasteImage" text on the
-   button that keeps getting reported. A local, English, last-resort
-   string is a better failure than the raw dictionary key, and self-
-   contained here rather than borrowed from image_paste.js so this file
-   does not depend on that one's load order to stay correct. */
-function _mbContentLabelT(key, fallback) {
-    if (window.i18n && window.i18n.t) {
-        var v = window.i18n.t(key);
-        if (v && v !== key) return v;
-    }
-    return fallback;
+/* This button's label has now been reported broken three times running,
+   each time traced to the SAME root cause: the mb-translations.js that
+   is actually loaded on the live page does not match the one reviewed
+   locally — a stale deploy or an old cached file, not a defect in this
+   code. Every fix attempt that still asked window.i18n.t() to look the
+   key up first was therefore still hostage to that mismatch: an English
+   fallback is progress over the raw key, but it is still the wrong
+   language on an Arabic screen.
+
+   So these two strings are resolved from a small table THIS FILE OWNS —
+   window.i18n.t() is not consulted for them at all — matched to the
+   CURRENT INTERFACE LANGUAGE. Same fix as the Learning Guide card hit
+   the identical failure and was given its own string table for the same
+   reason. Whatever mb-translations.js does or does not contain from now
+   on, this button reads correctly in Arabic on an Arabic screen. */
+var _MB_PASTE_LABELS = {
+    ar: { rxPasteImage: 'لصق صورة', rxPasteImageTip: 'لصق صورة منسوخة من الحافظة أو من صفحة ويب' },
+    en: { rxPasteImage: 'Paste Image', rxPasteImageTip: 'Paste an image copied from the clipboard or a web page' },
+    fr: { rxPasteImage: 'Coller une image', rxPasteImageTip: 'Coller une image copiée depuis le presse-papiers ou une page web' }
+};
+function _mbContentLabelT(key) {
+    var lang = (window.i18n && window.i18n.getLang) ? window.i18n.getLang() : 'en';
+    var table = _MB_PASTE_LABELS[lang] || _MB_PASTE_LABELS.en;
+    return table[key] || _MB_PASTE_LABELS.en[key] || key;
 }
+
+/* NO data-i18n / data-i18n-title on the paste button, deliberately (see
+   the markup below). Leaving them on would let applyTranslations()'s
+   normal sweep re-overwrite this text from mb-translations.js on the
+   very next language switch — undoing the fix the moment the failure
+   mode it exists for (a stale dictionary) actually occurs. This
+   listener repaints every paste button already on the page instead,
+   from the same local table, every time the interface language
+   changes. Scoped to `[data-act="pasteContentImage"]` so it repaints
+   only the buttons THIS file renders; steps.js does the identical thing
+   for its own. */
+window.addEventListener('mb:langchange', function () {
+    document.querySelectorAll('[data-act="pasteContentImage"]').forEach(function (btn) {
+        var span = btn.querySelector('span');
+        if (span) span.textContent = _mbContentLabelT('rxPasteImage');
+        btn.title = _mbContentLabelT('rxPasteImageTip');
+    });
+});
 
 function clearAllForms() {
     mbState.currentInfoSheetIndex = 0;
@@ -314,7 +341,7 @@ function addContentSection(heading) {
         <textarea class="mb-content-field" placeholder="${window.i18n.t('dgEnterContent')}" data-i18n-placeholder="dgEnterContent" data-content-id="${csc}"  style="text-align: left;"></textarea>
         <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;">
             <button class="btn-add-image" data-act="addContentImage" data-args='[${csc}]'>🖼️ <span data-i18n="rxAddImageS">${window.i18n.t('rxAddImageS')}</span></button>
-            <button class="btn-add-image btn-paste-image" data-act="pasteContentImage" data-args='[${csc}]' title="${_mbContentLabelT('rxPasteImageTip', 'Paste an image copied from the clipboard or a web page')}" data-i18n-title="rxPasteImageTip">📋 <span data-i18n="rxPasteImage">${_mbContentLabelT('rxPasteImage', 'Paste Image')}</span></button>
+            <button class="btn-add-image btn-paste-image" data-act="pasteContentImage" data-args='[${csc}]' title="${_mbContentLabelT('rxPasteImageTip')}">📋 <span>${_mbContentLabelT('rxPasteImage')}</span></button>
             <button data-act="addContentSection" style="background:#667eea;color:white;border:none;padding:6px 14px;border-radius:5px;font-size:0.85em;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;">➕ <span data-i18n="dgAddContent">${window.i18n.t('dgAddContent')}</span></button>
             ${addMarkBtnHtml(`content-marks-${csc}`)}
             <button class="btn-add-mark" data-act="addContentTable" data-args='[${csc}]' style="background:#0ea5e9;" title="${window.i18n.t('dgAddTable')}" data-i18n-title="dgAddTable">📋 <span data-i18n="dgAddTableBtn">${window.i18n.t('dgAddTableBtn')}</span></button>
