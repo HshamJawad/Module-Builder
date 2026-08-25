@@ -383,7 +383,18 @@ function _lgEscape(s) {
         });
 }
 
-/** One outcome's guide as an HTML table. */
+/**
+ * One outcome's guide as an HTML table.
+ *
+ * The instructions cell is ONE cell per section — it spans, via
+ * rowspan, from the section's header row down through every sheet-item
+ * row belonging to it. Splitting it into a row-per-item would repeat
+ * the same three bullet points beside every sheet title; merging it is
+ * also what the sample document does (it uses a vertical cell merge
+ * for exactly this column), so the preview and the printed table now
+ * agree with each other and with the source the format was copied
+ * from.
+ */
 function _lgRenderTable(model, rtl) {
     var align = rtl ? 'right' : 'left';
     var html = '<table class="lg-table" dir="' + (rtl ? 'rtl' : 'ltr') + '">';
@@ -393,19 +404,25 @@ function _lgRenderTable(model, rtl) {
         '</tr></thead><tbody>';
 
     model.sections.forEach(function (sec) {
+        /* Header row + one item row per entry (a grouped section, like
+           the self-check numbers, is a single row of its own). That
+           count is the rowspan for the one instructions cell. */
+        var itemRowCount = sec.groupItems ? 1 : sec.items.length;
+        var span = 1 + itemRowCount;
+
         html += '<tr class="lg-head-row">' +
             '<td style="text-align:' + align + '"><strong>' + _lgEscape(sec.header) + '</strong></td>' +
-            '<td style="text-align:' + align + '"><ul class="lg-instr">' +
+            '<td rowspan="' + span + '" style="text-align:' + align + '; vertical-align:middle"><ul class="lg-instr">' +
             sec.instructions.map(function (i) { return '<li>' + _lgEscape(i) + '</li>'; }).join('') +
             '</ul></td></tr>';
 
         if (sec.groupItems) {
             html += '<tr><td style="text-align:' + align + '">' +
                 sec.items.map(function (i) { return _lgEscape(i); }).join('<br/>') +
-                '</td><td></td></tr>';
+                '</td></tr>';
         } else {
             sec.items.forEach(function (item) {
-                html += '<tr><td style="text-align:' + align + '">' + _lgEscape(item) + '</td><td></td></tr>';
+                html += '<tr><td style="text-align:' + align + '">' + _lgEscape(item) + '</td></tr>';
             });
         }
     });

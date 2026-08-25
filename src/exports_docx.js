@@ -1201,7 +1201,7 @@ async function exportToDocx() {
            guides and nothing about docx. */
         const _buildLearningGuideDocx = (model) => {
             if (!model || !model.sections || !model.sections.length) return null;
-            const { Table, TableRow, TableCell, WidthType, BorderStyle } = mbDocxLib();
+            const { Table, TableRow, TableCell, WidthType, BorderStyle, VerticalMergeType } = mbDocxLib();
 
             const bdr = {
                 top:    { style: BorderStyle.SINGLE, size: 1, color: '000000' },
@@ -1226,44 +1226,56 @@ async function exportToDocx() {
                 bidirectional: _mbRtl(),
                 spacing: { after: 60 }
             });
-            const cell = (children, width) => new TableCell({
+            const cellA = (children) => new TableCell({
                 children: children.length ? children : [new Paragraph({ text: '' })],
-                width: { size: width, type: WidthType.DXA },
+                width: { size: COL_A, type: WidthType.DXA },
                 margins: mgn
             });
 
             const rows = [];
 
-            // Column headers
+            // Column headers — a plain two-cell row, nothing to merge yet.
             rows.push(new TableRow({ children: [
-                cell([para(model.colActivities,   { bold: true, size: 26, color: '1F4788' })], COL_A),
-                cell([para(model.colInstructions, { bold: true, size: 26, color: '1F4788' })], COL_B)
+                cellA([para(model.colActivities, { bold: true, size: 26, color: '1F4788' })]),
+                new TableCell({
+                    children: [para(model.colInstructions, { bold: true, size: 26, color: '1F4788' })],
+                    width: { size: COL_B, type: WidthType.DXA }, margins: mgn
+                })
             ] }));
 
             model.sections.forEach((sec) => {
-                /* Heading beside its instructions, and the sheet titles
-                   underneath with an empty right-hand cell. The
-                   instructions belong to the KIND of activity, not to any
-                   one sheet, so repeating them on every row would be
-                   three identical bullet lists down the page. */
+                /* ONE instructions cell per section, spanning from the
+                   header row down through every sheet-item row below it —
+                   a vertical merge, not a cell repeated or left blank.
+                   The instructions describe the KIND of activity, not any
+                   one sheet, so they belong beside the section once, not
+                   copied next to every title in it. RESTART carries the
+                   real content; every CONTINUE cell below it must still be
+                   present in the row (docx tables are a strict grid) but
+                   carries none — Word discards a continued cell's own
+                   content and renders the RESTART cell's instead. */
+                const instrChildren = sec.instructions.map(t => para('•  ' + t));
                 rows.push(new TableRow({ children: [
-                    cell([para(sec.header, { bold: true })], COL_A),
-                    cell(sec.instructions.map(t => para('•  ' + t)), COL_B)
+                    cellA([para(sec.header, { bold: true })]),
+                    new TableCell({
+                        verticalMerge: VerticalMergeType.RESTART,
+                        children: instrChildren.length ? instrChildren : [new Paragraph({ text: '' })],
+                        width: { size: COL_B, type: WidthType.DXA }, margins: mgn,
+                        verticalAlign: 'center'
+                    })
                 ] }));
 
-                if (sec.groupItems) {
+                const itemRows = sec.groupItems ? [sec.items] : sec.items.map(t => [t]);
+                itemRows.forEach((group) => {
                     rows.push(new TableRow({ children: [
-                        cell(sec.items.map(t => para(t)), COL_A),
-                        cell([], COL_B)
+                        cellA(group.map(t => para(t))),
+                        new TableCell({
+                            verticalMerge: VerticalMergeType.CONTINUE,
+                            children: [],
+                            width: { size: COL_B, type: WidthType.DXA }
+                        })
                     ] }));
-                } else {
-                    sec.items.forEach((t) => {
-                        rows.push(new TableRow({ children: [
-                            cell([para(t)], COL_A),
-                            cell([], COL_B)
-                        ] }));
-                    });
-                }
+                });
             });
 
             return [
@@ -1483,25 +1495,8 @@ async function exportToDocx() {
             const loHdCh = [new Paragraph({ children: [new TextRun({ text: loHdText, size: 28, bold: true, color: '0070C0', rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 400, before: 200 } })];
             sections.push({ properties: { bidi: _mbRtl() }, children: loHdCh });
 
-            /* ── Learning Guide ──────────────────────────────────────
-               Its own section, so it lands on its own page and the next
-               page is this outcome's first information sheet — which is
-               the whole point of the guide: the trainee reads what they
-               are about to be asked to do, then turns the page and
-               starts doing it.
-
-               Built from `lo` AFTER the flatten, so its cells are plain
-               strings in the export language, like everything else here.
-               Returns null when there is nothing to list, and a null
-               guide emits no page at all — the same "presence is not
-               content" rule that governs the heading above it. */
             if (mbState.includeLearningGuide) {
                 if (typeof mbBuildLearningGuideModel !== 'function') {
-                    /* The flag is on, so the author asked for the guide,
-                       and the page it should occupy is about to be
-                       skipped in silence. That is the worst kind of
-                       missing file: the document looks finished. Say so
-                       — in the console and on the status line. */
                     console.warn('Learning Guide is enabled but src/learning_guide.js is not loaded — no guide will be exported.');
                     if (typeof showStatus === 'function') showStatus('learning_guide.js not loaded — Learning Guide skipped', 'error');
                 } else {

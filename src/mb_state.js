@@ -151,20 +151,20 @@ var mbState = {
     tvqfBasic: {},
     tvqfExtended: {},
 
+    /* Author-added introduction sections:
+           [{ uid, title: { en, ar }, body: { en, ar } }]
+       Not in MB_PROJECT_TEXT below — those four are one textarea each
+       with a fixed id; this is a variable-length list rendered by
+       blocks.js, which binds each box straight to its pair. */
+    introBlocks: [],
+
     /* ── Learning Guide ─────────────────────────────────────────
        One boolean, and deliberately nothing else. The guide table
        itself is DERIVED from each outcome's sheets every time it is
        rendered (see learning_guide.js), so there is no copy of the
        sheet titles here to fall out of date when a sheet is renamed.
        Default off: it is an editorial choice, not a default layout. */
-    includeLearningGuide: false,
-
-    /* Author-added introduction sections:
-           [{ uid, title: { en, ar }, body: { en, ar } }]
-       Not in MB_PROJECT_TEXT below — those four are one textarea each
-       with a fixed id; this is a variable-length list rendered by
-       blocks.js, which binds each box straight to its pair. */
-    introBlocks: []
+    includeLearningGuide: false
 };
 
 /* Map of textarea id → mbState key, for the four fields above. */

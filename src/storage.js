@@ -114,9 +114,6 @@ function saveWork() {
             teamMemberIdCounter: mbState.teamMemberIdCounter,
             introAdditionalDetails: mbState.introAdditionalDetails,
             introBlocks: mbState.introBlocks,
-            /* One boolean. The guide table itself is derived from the
-               outcomes at render time, so there is nothing else to
-               save — and nothing that can come back stale. */
             includeLearningGuide: !!mbState.includeLearningGuide,
             modules: mbState.modulesData,
             currentModuleId: mbState.currentModuleId,
@@ -215,8 +212,6 @@ function handleLoadFile() {
                    being absent — every file saved before this feature. */
                 mbState.introBlocks = mbNormalizeBlocks(data.introBlocks);
                 mbRenderBlocks('intro');
-                /* Absent in every file saved before this feature, and
-                   absent means off — the guide is opt-in. */
                 mbState.includeLearningGuide = !!data.includeLearningGuide;
                 if (typeof mbRenderLearningGuideToggle === 'function') mbRenderLearningGuideToggle();
                 
@@ -329,8 +324,6 @@ function handleLoadFile() {
                    being absent — every file saved before this feature. */
                 mbState.introBlocks = mbNormalizeBlocks(data.introBlocks);
                 mbRenderBlocks('intro');
-                /* Absent in every file saved before this feature, and
-                   absent means off — the guide is opt-in. */
                 mbState.includeLearningGuide = !!data.includeLearningGuide;
                 if (typeof mbRenderLearningGuideToggle === 'function') mbRenderLearningGuideToggle();
                 
