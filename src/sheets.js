@@ -11,6 +11,43 @@
 const INFO_BI     = ['title', 'objective', 'selfCheckContent', 'answersKeyContent'];
 const ACTIVITY_BI = ['title', 'objective', 'criteriaTitle', 'criteriaInstruction', 'criteriaFooter'];
 
+/** Text on ANY side of a bilingual pair (or a bare pre-v4 string). */
+function _mbBiHasAny(v) {
+    if (!v) return false;
+    if (typeof v === 'string') return !!v.trim();
+    return BILANG_CODES.some(function (c) {
+        return typeof v[c] === 'string' && v[c].trim() !== '';
+    });
+}
+
+function _mbFilled(s) { return typeof s === 'string' && s.trim() !== ''; }
+
+function _mbInfoSheetHasContent(d) {
+    if (!d) return false;
+    return _mbBiHasAny(d.title) ||
+           _mbBiHasAny(d.objective) ||
+           _mbBiHasAny(d.selfCheckContent) ||
+           _mbBiHasAny(d.answersKeyContent) ||
+           !!(d.contentSections && d.contentSections.length) ||
+           _mbFilled(d.linkSubject) ||
+           _mbFilled(d.linkUrl) ||
+           !!d.qrImage;
+}
+
+function _mbActivitySheetHasContent(d) {
+    if (!d) return false;
+    return _mbBiHasAny(d.title) ||
+           _mbBiHasAny(d.objective) ||
+           !!(d.steps     && d.steps.length) ||
+           !!(d.resources && d.resources.length) ||
+           !!(d.criteria  && d.criteria.length) ||
+           _mbFilled(d.linkSubject) ||
+           _mbFilled(d.linkUrl) ||
+           !!d.qrImage ||
+           /* '0' is the default the duration box loads with. */
+           (_mbFilled(String(d.duration || '')) && String(d.duration).trim() !== '0');
+}
+
 function saveCurrentSheetToLO() {
     if (!mbState.currentLOId) return;
 
@@ -59,12 +96,31 @@ function saveCurrentSheetToLO() {
     });
     infoData.contentSections = biMergeArrayById(storedInfo.contentSections, incomingSections, ['text', 'heading']);
 
-    /* Saved when the ACTIVE side has content. The v2 test was
-       `title.trim() || objective.trim()` on a bare string; on a pair it
-       has to ask about the side being edited, or an Arabic-only sheet
-       would never persist while the interface sat on English. */
-    if (biHasActive(infoData.title) || biHasActive(infoData.objective) ||
-        biHasActive(storedInfo.title) || biHasActive(storedInfo.objective)) {
+    /* ── When is a sheet worth storing? ─────────────────────────
+       The v2 test was `title.trim() || objective.trim()`, carried
+       forward onto the pair as "does the active side of the title or
+       objective have text". That question is not the same as "did the
+       user put any work into this sheet", and the gap between them is
+       silent data loss: fill five content sections, a self-check and an
+       answers key, leave the title box empty, and the whole sheet is
+       discarded at save time without a word. The export is then
+       correctly empty, so nothing looks broken until the file is
+       reopened and the work is simply gone.
+
+       So the test now asks about the WHOLE sheet. Two deliberate
+       exclusions:
+
+       - sheetNumber, which loadInfoSheetAtIndex auto-fills, so
+         including it would make every untouched sheet look occupied.
+       - the criteria title/instruction/footer on the activity sheet,
+         which mbSeedCriteriaPlaceholders() writes for the same reason.
+
+       Everything else is something only a person can put there.
+
+       `infoData` already carries the stored sheet merged underneath
+       (Object.assign above) and contentSections already merged across
+       languages, so testing it alone covers the other side too. */
+    if (_mbInfoSheetHasContent(infoData)) {
         if (!lo.infoSheets || lo.infoSheets.length === 0) {
             lo.infoSheets = [infoData];
             mbState.currentInfoSheetIndex = 0;
@@ -123,8 +179,7 @@ function saveCurrentSheetToLO() {
     });
     activityData.criteria = biMergeStringsById(storedAct.criteria, incomingCriteria);
 
-    if (biHasActive(activityData.title) || biHasActive(activityData.objective) ||
-        biHasActive(storedAct.title) || biHasActive(storedAct.objective)) {
+    if (_mbActivitySheetHasContent(activityData)) {
         if (!lo.activitySheets || lo.activitySheets.length === 0) {
             lo.activitySheets = [activityData];
             mbState.currentActivitySheetIndex = 0;
