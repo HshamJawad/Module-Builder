@@ -73,6 +73,75 @@ var _mbSawArabic = false;
    the Latin count and force every Arabic module to LTR. */
 var _MB_NON_PROSE = /^(id|uid|.*IdCounter|image|images|.*Image|qrImage|mime|mimeType|fileName|url|linkUrl|href|src|data|schemaVersion|duration|quantity|sheetNumber|level|version|seedKey)$/i;
 
+/**
+ * Which SIDE did the author write on?
+ *
+ * The character count below cannot answer this, and for any real project
+ * it answers it wrongly. A module's cover table carries seventeen rows
+ * whose labels the dictionary fills in all three languages at once —
+ * { en: "Qualification Title:", ar: "اسم المؤهل:", fr: "Intitulé…" }.
+ * That is roughly 690 Latin characters of the tool's OWN wording, before
+ * the author has typed a single word. Measured against a module with a
+ * few hundred Arabic characters in it, Latin wins, and an entirely
+ * Arabic module exports with English headings and left-to-right layout.
+ *
+ * So: count SIDES, not letters, and only count a field as evidence when
+ * exactly ONE side of it is filled. A seeded label is filled on all
+ * three and casts no vote — it is the tool talking, not the author. A
+ * title the author typed in Arabic is filled on `ar` alone, and votes.
+ *
+ * Counting fields rather than characters also removes a bias the letter
+ * count could not avoid: "Qualification Title:" is longer than
+ * "اسم المؤهل:", so any length-weighted comparison tilts Latin even
+ * where the two sides say exactly the same thing.
+ */
+function _mbVoteSides(value, votes, legacy, key) {
+    if (value === null || value === undefined) return;
+
+    if (typeof value === 'string') {
+        /* A bare string outside any pair: a pre-v4 file, where every
+           field is one string in whichever language it was authored in.
+           Nothing to vote with, so these feed the old letter count,
+           which is still the right tool for that one case. */
+        if (key && _MB_NON_PROSE.test(key)) return;
+        if (/^data:/.test(value)) return;
+        if (value.length > 400 && !/\s/.test(value)) return;
+        var ar  = value.match(_MB_ARABIC_RE_G);
+        var lat = value.match(/[A-Za-z]/g);
+        if (ar)  legacy.ar    += ar.length;
+        if (lat) legacy.latin += lat.length;
+        return;
+    }
+
+    if (typeof value !== 'object') return;
+
+    if (Array.isArray(value)) {
+        for (var i = 0; i < value.length; i++) _mbVoteSides(value[i], votes, legacy, key);
+        return;
+    }
+
+    /* A bilingual pair. Do NOT descend into it — its sides are the
+       evidence, and walking them as loose strings is exactly the mistake
+       that let the dictionary outvote the author. */
+    if (typeof biIs === 'function' && biIs(value)) {
+        if (key && _MB_NON_PROSE.test(key)) return;
+        var filled = [];
+        for (var c = 0; c < BILANG_CODES.length; c++) {
+            var s = value[BILANG_CODES[c]];
+            if (typeof s === 'string' && s.trim() !== '' && !/^data:/.test(s)) {
+                filled.push(BILANG_CODES[c]);
+            }
+        }
+        if (filled.length === 1) votes[filled[0]]++;
+        return;
+    }
+
+    Object.keys(value).forEach(function (k) {
+        if (_MB_NON_PROSE.test(k)) return;
+        _mbVoteSides(value[k], votes, legacy, k);
+    });
+}
+
 function _mbCountScripts(value, acc, key) {
     if (value === null || value === undefined) return;
     if (typeof value === 'string') {
@@ -122,23 +191,49 @@ function _mbBeginExport(rawState) {
         return _MB_DOC_LANG;
     }
 
-    /* Script detection, for a project whose export language was never
-       chosen. It can only answer "Arabic or Latin" — French and English
-       share an alphabet and no amount of letter counting separates them.
-       So a Latin-majority project falls to contentLang() when that is a
-       Latin language, and to English otherwise: the side the author is
-       editing is a far better guess than a coin flip between the two. */
+    /* No explicit choice: work out which side the author wrote on.
+       See _mbVoteSides above for why letters cannot answer this. */
+    var cl = (typeof contentLang === 'function') ? contentLang() : 'en';
+
+    if (typeof BILANG_CODES !== 'undefined' && typeof biIs === 'function') {
+        var votes = {}, legacy = { ar: 0, latin: 0 }, any = false;
+        BILANG_CODES.forEach(function (c) { votes[c] = 0; });
+        _mbVoteSides(rawState, votes, legacy);
+
+        var best = null;
+        BILANG_CODES.forEach(function (c) {
+            if (votes[c] > 0) any = true;
+            if (best === null || votes[c] > votes[best]) best = c;
+        });
+        /* A tie goes to the side being edited rather than to whichever
+           language happens to sort first — on a project with nothing but
+           seeded fields, every vote is zero and the editor's own choice
+           is the only signal there is. */
+        if (any && votes[cl] === votes[best]) best = cl;
+
+        if (any) {
+            _MB_DOC_LANG = best;
+            return _MB_DOC_LANG;
+        }
+
+        /* No pairs voted — a pre-v4 file of bare strings. Fall back to
+           the letter count, which is what that format needs. */
+        if (legacy.ar || legacy.latin) {
+            _MB_DOC_LANG = (legacy.ar > legacy.latin) ? 'ar' : ((cl === 'ar') ? 'en' : cl);
+            return _MB_DOC_LANG;
+        }
+
+        _MB_DOC_LANG = cl;
+        return _MB_DOC_LANG;
+    }
+
+    /* bilang.js unavailable: the original letter count, unchanged. */
     var acc = { ar: 0, latin: 0 };
     _mbCountScripts(rawState, acc);
     if (acc.ar || acc.latin) {
-        if (acc.ar > acc.latin) {
-            _MB_DOC_LANG = 'ar';
-        } else {
-            var cl = (typeof contentLang === 'function') ? contentLang() : 'en';
-            _MB_DOC_LANG = (cl === 'ar') ? 'en' : cl;
-        }
+        _MB_DOC_LANG = (acc.ar > acc.latin) ? 'ar' : ((cl === 'ar') ? 'en' : cl);
     } else {
-        _MB_DOC_LANG = (typeof contentLang === 'function') ? contentLang() : 'en';
+        _MB_DOC_LANG = cl;
     }
     return _MB_DOC_LANG;
 }
