@@ -2870,9 +2870,13 @@ button#lg-preview-btn:disabled {
     font-weight: 700; font-size: .92em; text-align: center;
 }
 .ws-foot {
-    display: flex; justify-content: space-between; gap: 10px;
+    display: flex; align-items: center; gap: 10px;
     padding: 14px 20px; border-top: 1px solid #e5e7eb;
 }
+.ws-foot-right { display: flex; gap: 10px; margin-inline-start: auto; }
+.ws-msg { font-size: .84em; line-height: 1.35; flex: 1 1 auto; min-width: 0; }
+.ws-msg-ok   { color: #2F6B57; font-weight: 600; }
+.ws-msg-warn { color: #8A5A20; }
 /* Same override problem, same fix — the footer buttons and the close
    × would otherwise all come out silver. */
 .ws-modal .ws-foot button.ws-btn {
@@ -2888,10 +2892,17 @@ button#lg-preview-btn:disabled {
     background: #e5e7eb !important; background-color: #e5e7eb !important;
 }
 .ws-modal .ws-foot button.ws-btn-primary {
-    background: #2563eb !important; background-color: #2563eb !important;
-    color: #fff !important; border-color: #2563eb !important;
+    background: #4A7C6A !important; background-color: #4A7C6A !important;
+    color: #fff !important; border-color: #4A7C6A !important;
 }
 .ws-modal .ws-foot button.ws-btn-primary:hover {
-    background: #1d4ed8 !important; background-color: #1d4ed8 !important;
-    border-color: #1d4ed8 !important;
+    background: #3E6A5A !important; background-color: #3E6A5A !important;
+    border-color: #3E6A5A !important;
+}
+/* Disabled means "nothing to save" — the resting state of a dialog the
+   user has only looked at. */
+.ws-modal .ws-foot button.ws-btn-primary:disabled {
+    background: #DCE5E1 !important; background-color: #DCE5E1 !important;
+    color: #7C8B85 !important; border-color: #DCE5E1 !important;
+    cursor: default;
 }
