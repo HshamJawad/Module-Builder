@@ -25,6 +25,13 @@ async function exportToDocx() {
        script in the project decides, rather than contentLang() — which
        is about which side is being EDITED and says nothing about which
        script the author actually typed. */
+    /* Word appearance settings are re-read HERE, once per export, and
+       not at page load. That is what lets a change made in the dialog
+       reach the very next export without a reload — and it is a single
+       storage read, not one per run, because the accessors below share
+       the snapshot this call installs. */
+    if (typeof _wsBeginExport === 'function') _wsBeginExport();
+
     const _exportLang = _mbBeginExport(window.mbState);
     const mbState = biFlattenDeep(window.mbState, _exportLang);
 
@@ -135,9 +142,9 @@ async function exportToDocx() {
                 children: [
                     new TextRun({
                         text: titleText,
-                        size: 24,
+                        size: _wsBody(),
                         bold: true,
-                        color: '0070C0', // Blue color
+                        color: _wsHeadColor(), // Blue color
                         rightToLeft: _mbRtl(),
                     }),
                 ],
@@ -151,9 +158,9 @@ async function exportToDocx() {
                 children: [
                     new TextRun({
                         text: _mbTf('expActivitySheetUntitled', { v0: title }),
-                        size: 24,
+                        size: _wsBody(),
                         bold: true,
-                        color: '0070C0', // Blue color
+                        color: _wsHeadColor(), // Blue color
                         rightToLeft: _mbRtl(),
                     }),
                 ],
@@ -170,8 +177,8 @@ async function exportToDocx() {
                     new TextRun({
                         text: _mbT('expObjective'),
                         bold: true,
-                        size: 24,
-                        color: '0070C0', // Blue color
+                        size: _wsBody(),
+                        color: _wsHeadColor(), // Blue color
                         rightToLeft: _mbRtl(),
                     }),
                 ],
@@ -188,7 +195,7 @@ async function exportToDocx() {
                         children: [
                             new TextRun({
                                 text: line,
-                                size: 24,
+                                size: _wsBody(),
                                 rightToLeft: _mbRtl(),
                             }),
                         ],
@@ -201,7 +208,7 @@ async function exportToDocx() {
             
             // Add extra spacing after objective section
             children.push(new Paragraph({
-                children: [new TextRun({ text: '', size: 24 })],
+                children: [new TextRun({ text: '', size: _wsBody() })],
                 spacing: { after: 150 },
             }));
         }
@@ -213,13 +220,13 @@ async function exportToDocx() {
                     new TextRun({
                         text: _mbT('expDuration'),
                         bold: true,
-                        size: 24,
-                        color: '0070C0', // Blue color
+                        size: _wsBody(),
+                        color: _wsHeadColor(), // Blue color
                         rightToLeft: _mbRtl(),
                     }),
                     new TextRun({
                         text: _mbTf('expMinutes', { v0: duration }),
-                        size: 24,
+                        size: _wsBody(),
                         rightToLeft: _mbRtl(),
                     }),
                 ],
@@ -243,23 +250,23 @@ async function exportToDocx() {
                 tableRows.push(new TableRow({
                     children: [
                         new TableCell({
-                            children: [new Paragraph({ children: [new TextRun({ text: _mbT('expMaterialEquipment'), bold: true, size: 28, color: 'FFFFFF', rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })],
-                            shading: { fill: '0070C0', type: 'clear' },
+                            children: [new Paragraph({ children: [new TextRun({ text: _mbT('expMaterialEquipment'), bold: true, size: 28, color: _wsTblText(), rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })],
+                            shading: { fill: _wsTblFill(), type: 'clear' },
                             width: { size: 37, type: WidthType.PERCENTAGE },
                         }),
                         new TableCell({
-                            children: [new Paragraph({ children: [new TextRun({ text: _mbT('expQuantityNumber'), bold: true, size: 28, color: 'FFFFFF', rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })],
-                            shading: { fill: '0070C0', type: 'clear' },
+                            children: [new Paragraph({ children: [new TextRun({ text: _mbT('expQuantityNumber'), bold: true, size: 28, color: _wsTblText(), rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })],
+                            shading: { fill: _wsTblFill(), type: 'clear' },
                             width: { size: 13, type: WidthType.PERCENTAGE },
                         }),
                         new TableCell({
-                            children: [new Paragraph({ children: [new TextRun({ text: _mbT('expMaterialEquipment'), bold: true, size: 28, color: 'FFFFFF', rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })],
-                            shading: { fill: '0070C0', type: 'clear' },
+                            children: [new Paragraph({ children: [new TextRun({ text: _mbT('expMaterialEquipment'), bold: true, size: 28, color: _wsTblText(), rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })],
+                            shading: { fill: _wsTblFill(), type: 'clear' },
                             width: { size: 37, type: WidthType.PERCENTAGE },
                         }),
                         new TableCell({
-                            children: [new Paragraph({ children: [new TextRun({ text: _mbT('expQuantityNumber'), bold: true, size: 28, color: 'FFFFFF', rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })],
-                            shading: { fill: '0070C0', type: 'clear' },
+                            children: [new Paragraph({ children: [new TextRun({ text: _mbT('expQuantityNumber'), bold: true, size: 28, color: _wsTblText(), rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })],
+                            shading: { fill: _wsTblFill(), type: 'clear' },
                             width: { size: 13, type: WidthType.PERCENTAGE },
                         }),
                     ],
@@ -325,8 +332,8 @@ async function exportToDocx() {
                     new TextRun({
                         text: _mbT('expActivitySteps'),
                         bold: true,
-                        size: 24,
-                        color: '0070C0', // Blue color
+                        size: _wsBody(),
+                        color: _wsHeadColor(), // Blue color
                         rightToLeft: _mbRtl(),
                     }),
                 ],
@@ -351,8 +358,8 @@ async function exportToDocx() {
                             new TextRun({
                                 text: _mbTf('expStepN', { v0: index + 1 }),
                                 bold: true,
-                                size: 24,
-                                color: '0070C0', // Blue color
+                                size: _wsBody(),
+                                color: _wsHeadColor(), // Blue color
                                 rightToLeft: _mbRtl(),
                             }),
                         ],
@@ -369,7 +376,7 @@ async function exportToDocx() {
                         children: [new Paragraph({
                             children: [new TextRun({
                                 text: processedText,
-                                size: 24,
+                                size: _wsBody(),
                                 rightToLeft: _mbRtl(),
                             })],
                             alignment: _mbStart(AlignmentType),
@@ -463,7 +470,7 @@ async function exportToDocx() {
 
                     // Add spacing after each table
                     children.push(new Paragraph({
-                        children: [new TextRun({ text: '', size: 24 })],
+                        children: [new TextRun({ text: '', size: _wsBody() })],
                         spacing: { after: 200 },
                     }));
                 }
@@ -529,7 +536,7 @@ async function exportToDocx() {
                         children: [
                             new TextRun({
                                 text: linkText,
-                                size: 24,
+                                size: _wsBody(),
                                 rightToLeft: _mbRtl(),
                             }),
                         ],
@@ -540,7 +547,7 @@ async function exportToDocx() {
                         children: [
                             new TextRun({
                                 text: activityLinkUrl || '',
-                                size: 24,
+                                size: _wsBody(),
                                 color: '0563C1',
                                 underline: {},
                                 rightToLeft: _mbRtl(),
@@ -573,13 +580,13 @@ async function exportToDocx() {
             
             // Add spacing before table to prevent overlap with floating images
             children.push(new Paragraph({
-                children: [new TextRun({ text: '', size: 24 })],
+                children: [new TextRun({ text: '', size: _wsBody() })],
                 spacing: { before: 600, after: 300 },
             }));
             
             children.push(qrTable);
             children.push(new Paragraph({
-                children: [new TextRun({ text: '', size: 24 })],
+                children: [new TextRun({ text: '', size: _wsBody() })],
                 spacing: { after: 300 },
             }));
         }
@@ -649,7 +656,7 @@ async function exportToDocx() {
                             children: [
                                 new TextRun({
                                     text: line,
-                                    size: 24,
+                                    size: _wsBody(),
                                     rightToLeft: _mbRtl(),
                                 }),
                             ],
@@ -662,7 +669,7 @@ async function exportToDocx() {
                 
                 // Add spacing after additional info
                 coversChildren.push(new Paragraph({
-                    children: [new TextRun({ text: '', size: 24 })],
+                    children: [new TextRun({ text: '', size: _wsBody() })],
                     spacing: { after: 400 },
                 }));
             }
@@ -750,7 +757,7 @@ async function exportToDocx() {
                             children: [
                                 new TextRun({
                                     text: line,
-                                    size: 24,
+                                    size: _wsBody(),
                                     rightToLeft: _mbRtl(),
                                 }),
                             ],
@@ -797,7 +804,7 @@ async function exportToDocx() {
                     children: [
                         new TextRun({
                             text: _mbT('expWorkTeam'),
-                            size: 24, // 12pt
+                            size: _wsBody(), // 12pt
                             bold: true,
                             rightToLeft: _mbRtl(),
                         }),
@@ -817,7 +824,7 @@ async function exportToDocx() {
                         children: [new TextRun({
                             text: _mbT('expName'),
                             bold: true,
-                            size: 24, // 12pt
+                            size: _wsBody(), // 12pt
                             rightToLeft: _mbRtl(),
                         })],
                         alignment: _mbStart(AlignmentType),
@@ -832,7 +839,7 @@ async function exportToDocx() {
                         children: [new TextRun({
                             text: _mbT('expTask'),
                             bold: true,
-                            size: 24, // 12pt
+                            size: _wsBody(), // 12pt
                             rightToLeft: _mbRtl(),
                         })],
                         alignment: _mbStart(AlignmentType),
@@ -847,7 +854,7 @@ async function exportToDocx() {
                         children: [new TextRun({
                             text: _mbT('expWorkLocation'),
                             bold: true,
-                            size: 24, // 12pt
+                            size: _wsBody(), // 12pt
                             rightToLeft: _mbRtl(),
                         })],
                         alignment: _mbStart(AlignmentType),
@@ -868,7 +875,7 @@ async function exportToDocx() {
                             children: [new Paragraph({
                                 children: [new TextRun({
                                     text: member.name,
-                                    size: 24, // 12pt
+                                    size: _wsBody(), // 12pt
                                     rightToLeft: _mbRtl(),
                                 })],
                                 alignment: _mbStart(AlignmentType),
@@ -881,7 +888,7 @@ async function exportToDocx() {
                             children: [new Paragraph({
                                 children: [new TextRun({
                                     text: member.task,
-                                    size: 24, // 12pt
+                                    size: _wsBody(), // 12pt
                                     rightToLeft: _mbRtl(),
                                 })],
                                 alignment: _mbStart(AlignmentType),
@@ -894,7 +901,7 @@ async function exportToDocx() {
                             children: [new Paragraph({
                                 children: [new TextRun({
                                     text: member.workLocation,
-                                    size: 24, // 12pt
+                                    size: _wsBody(), // 12pt
                                     rightToLeft: _mbRtl(),
                                 })],
                                 alignment: _mbStart(AlignmentType),
@@ -939,7 +946,7 @@ async function exportToDocx() {
                             children: [
                                 new TextRun({
                                     text: line,
-                                    size: 24,
+                                    size: _wsBody(),
                                     rightToLeft: _mbRtl(),
                                 }),
                             ],
@@ -968,9 +975,9 @@ async function exportToDocx() {
                     introChildren.push(new Paragraph({
                         children: [new TextRun({
                             text: blockTitle,
-                            size: 28,            // 14pt — a page heading
+                            size: _wsSection(),            // 14pt — a page heading
                             bold: true,
-                            color: '0070C0',
+                            color: _wsHeadColor(),
                             rightToLeft: _mbRtl(),
                         })],
                         alignment: _mbStart(AlignmentType),
@@ -982,7 +989,7 @@ async function exportToDocx() {
                 (block.body || '').split('\n').forEach(line => {
                     if (!line.trim()) return;
                     introChildren.push(new Paragraph({
-                        children: [new TextRun({ text: line, size: 24, rightToLeft: _mbRtl() })],
+                        children: [new TextRun({ text: line, size: _wsBody(), rightToLeft: _mbRtl() })],
                         alignment: _mbStart(AlignmentType),
                         bidirectional: _mbRtl(),
                         spacing: { after: 150 },
@@ -1012,9 +1019,9 @@ async function exportToDocx() {
                     children: [
                         new TextRun({
                             text: currentModule.title,
-                            size: 32, // 16pt - Large heading
+                            size: _wsTitle(), // module title
                             bold: true,
-                            color: '0070C0', // Blue color
+                            color: _wsHeadColor(), // Blue color
                             rightToLeft: _mbRtl(),
                         }),
                     ],
@@ -1048,7 +1055,7 @@ async function exportToDocx() {
                     children: [
                         new TextRun({
                             text: loHeadingText,
-                            size: 26, // 13pt
+                            size: _wsSub(), // 13pt
                             bold: true,
                             color: '1F4E78', // Darker blue
                             rightToLeft: _mbRtl(),
@@ -1067,7 +1074,7 @@ async function exportToDocx() {
                             children: [
                                 new TextRun({
                                     text: line,
-                                    size: 24, // 12pt
+                                    size: _wsBody(), // 12pt
                                     rightToLeft: _mbRtl(),
                                 }),
                             ],
@@ -1089,7 +1096,7 @@ async function exportToDocx() {
                         overviewChildren.push(new Paragraph({
                             children: [new TextRun({
                                 text: blockTitle,
-                                size: 24,        // 12pt — matches expPerformanceCriteria
+                                size: _wsBody(),        // 12pt — matches expPerformanceCriteria
                                 bold: true,
                                 rightToLeft: _mbRtl(),
                             })],
@@ -1101,7 +1108,7 @@ async function exportToDocx() {
                     (block.body || '').split('\n').forEach(line => {
                         if (!line.trim()) return;
                         overviewChildren.push(new Paragraph({
-                            children: [new TextRun({ text: line, size: 24, rightToLeft: _mbRtl() })],
+                            children: [new TextRun({ text: line, size: _wsBody(), rightToLeft: _mbRtl() })],
                             alignment: _mbStart(AlignmentType),
                             bidirectional: _mbRtl(),
                             spacing: { after: 150 },
@@ -1116,7 +1123,7 @@ async function exportToDocx() {
                         children: [
                             new TextRun({
                                 text: _mbT('expPerformanceCriteria'),
-                                size: 24, // 12pt
+                                size: _wsBody(), // 12pt
                                 bold: true,
                                 rightToLeft: _mbRtl(),
                             }),
@@ -1133,7 +1140,7 @@ async function exportToDocx() {
                             children: [
                                 new TextRun({
                                     text: `${pcIndex + 1}. ${criteriaText}`,
-                                    size: 24, // 12pt
+                                    size: _wsBody(), // 12pt
                                     rightToLeft: _mbRtl(),
                                 }),
                             ],
@@ -1145,7 +1152,7 @@ async function exportToDocx() {
                     
                     // Add extra spacing after performance criteria section
                     overviewChildren.push(new Paragraph({
-                        children: [new TextRun({ text: '', size: 24 })],
+                        children: [new TextRun({ text: '', size: _wsBody() })],
                         spacing: { after: 300 },
                     }));
                 }
@@ -1219,7 +1226,7 @@ async function exportToDocx() {
 
             const para = (text, opts) => new Paragraph({
                 children: [new TextRun(Object.assign(
-                    { text: text, size: 24, rightToLeft: _mbRtl() },
+                    { text: text, size: _wsBody(), rightToLeft: _mbRtl() },
                     opts || {}
                 ))],
                 alignment: _mbStart(AlignmentType),
@@ -1236,9 +1243,9 @@ async function exportToDocx() {
 
             // Column headers — a plain two-cell row, nothing to merge yet.
             rows.push(new TableRow({ children: [
-                cellA([para(model.colActivities, { bold: true, size: 26, color: '1F4788' })]),
+                cellA([para(model.colActivities, { bold: true, size: _wsSub(), color: '1F4788' })]),
                 new TableCell({
-                    children: [para(model.colInstructions, { bold: true, size: 26, color: '1F4788' })],
+                    children: [para(model.colInstructions, { bold: true, size: _wsSub(), color: '1F4788' })],
                     width: { size: COL_B, type: WidthType.DXA }, margins: mgn
                 })
             ] }));
@@ -1280,7 +1287,7 @@ async function exportToDocx() {
 
             return [
                 new Paragraph({
-                    children: [new TextRun({ text: model.title, size: 28, bold: true, color: '0070C0', rightToLeft: _mbRtl() })],
+                    children: [new TextRun({ text: model.title, size: _wsSection(), bold: true, color: _wsHeadColor(), rightToLeft: _mbRtl() })],
                     alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 300, before: 200 }
                 }),
                 new Table({ rows, width: { size: 9072, type: WidthType.DXA }, layout: 'fixed', columnWidths: [COL_A, COL_B], borders: bdr })
@@ -1293,18 +1300,18 @@ async function exportToDocx() {
             const ch = [];
             const num = info.sheetNumber || getAutoSheetNumber(loIndex, sheetIndex);
             if (info.title && info.title.trim()) {
-                ch.push(new Paragraph({ children: [new TextRun({ text: _mbTf('expInfoSheetTitled', { v0: num, v1: info.title }), size: 24, bold: true, color: '0070C0', rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 400 } }));
+                ch.push(new Paragraph({ children: [new TextRun({ text: _mbTf('expInfoSheetTitled', { v0: num, v1: info.title }), size: _wsBody(), bold: true, color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 400 } }));
             }
             if (info.objective && info.objective.trim()) {
-                ch.push(new Paragraph({ children: [new TextRun({ text: _mbT('expObjective'), bold: true, size: 24, color: '0070C0', rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 200 } }));
+                ch.push(new Paragraph({ children: [new TextRun({ text: _mbT('expObjective'), bold: true, size: _wsBody(), color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 200 } }));
                 /* Same blue bold heading style as «Objective:» itself, by
                    request: it reads as part of the heading block, not as
                    the first item of the list. Skipped when empty — a user
                    who deleted the line meant to delete it. */
                 if (info.objectiveLead && info.objectiveLead.trim()) {
-                    ch.push(new Paragraph({ children: [new TextRun({ text: info.objectiveLead, bold: true, size: 24, color: '0070C0', rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 200 } }));
+                    ch.push(new Paragraph({ children: [new TextRun({ text: info.objectiveLead, bold: true, size: _wsBody(), color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 200 } }));
                 }
-                info.objective.split('\n').forEach(line => { if (line.trim()) ch.push(new Paragraph({ children: [new TextRun({ text: line, size: 24, rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 150 } })); });
+                info.objective.split('\n').forEach(line => { if (line.trim()) ch.push(new Paragraph({ children: [new TextRun({ text: line, size: _wsBody(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 150 } })); });
             }
             if (info.contentSections) {
                 /* The card's name, when the author gave it one. Printed in
@@ -1316,7 +1323,7 @@ async function exportToDocx() {
                     const h = (cs.heading || '').trim();
                     if (!h) return;
                     ch.push(new Paragraph({
-                        children: [new TextRun({ text: h, bold: true, size: 24, color: '0070C0', rightToLeft: _mbRtl() })],
+                        children: [new TextRun({ text: h, bold: true, size: _wsBody(), color: _wsHeadColor(), rightToLeft: _mbRtl() })],
                         alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 150 }
                     }));
                 };
@@ -1337,7 +1344,7 @@ async function exportToDocx() {
                     const csid = cs.contentId;
                     let imgs = (info.contentSectionImages && info.contentSectionImages[csid]) || [];
                     if (!Array.isArray(imgs)) imgs = [imgs];
-                    const row1 = [new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: pt, size: 24, rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl() })], width: { size: 4536, type: WidthType.DXA }, margins: { top: 150, bottom: 150, left: 150, right: 150 }, verticalAlign: 'center' })];
+                    const row1 = [new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: pt, size: _wsBody(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl() })], width: { size: 4536, type: WidthType.DXA }, margins: { top: 150, bottom: 150, left: 150, right: 150 }, verticalAlign: 'center' })];
                     if (imgs.length > 0) { try { row1.push(new TableCell({ children: [new Paragraph({ children: [_mkImgRun(imgs[0])], alignment: AlignmentType.CENTER })], width: { size: 4536, type: WidthType.DXA }, margins: { top: 150, bottom: 150, left: 150, right: 150 }, verticalAlign: 'center' })); } catch(e) { row1.push(new TableCell({ children: [new Paragraph({ text: '' })], width: { size: 4536, type: WidthType.DXA } })); } }
                     else { row1.push(new TableCell({ children: [new Paragraph({ text: '' })], width: { size: 4536, type: WidthType.DXA } })); }
                     const tRows = [new TableRow({ children: row1 })];
@@ -1358,15 +1365,15 @@ async function exportToDocx() {
             if (info.selfCheckContent && info.selfCheckContent.trim()) {
                 const scNum = info.selfCheckNumber || num;
                 const scCh = [];
-                scCh.push(new Paragraph({ children: [new TextRun({ text: _mbTf('expSelfCheck', { v0: scNum }), bold: true, size: 24, color: '0070C0', rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 400 } }));
-                info.selfCheckContent.split('\n').forEach(line => { if (line.trim()) scCh.push(new Paragraph({ children: [new TextRun({ text: line, size: 24, rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 150 } })); });
+                scCh.push(new Paragraph({ children: [new TextRun({ text: _mbTf('expSelfCheck', { v0: scNum }), bold: true, size: _wsBody(), color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 400 } }));
+                info.selfCheckContent.split('\n').forEach(line => { if (line.trim()) scCh.push(new Paragraph({ children: [new TextRun({ text: line, size: _wsBody(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 150 } })); });
                 ch.__selfCheckSection = scCh;
             }
             if (info.answersKeyContent && info.answersKeyContent.trim()) {
                 const akNum = info.answersKeyNumber || num;
                 const akCh = [];
-                akCh.push(new Paragraph({ children: [new TextRun({ text: _mbTf('expAnswersKey', { v0: akNum }), bold: true, size: 24, color: '0070C0', rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 400 } }));
-                info.answersKeyContent.split('\n').forEach(line => { if (line.trim()) akCh.push(new Paragraph({ children: [new TextRun({ text: line, size: 24, rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 150 } })); });
+                akCh.push(new Paragraph({ children: [new TextRun({ text: _mbTf('expAnswersKey', { v0: akNum }), bold: true, size: _wsBody(), color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 400 } }));
+                info.answersKeyContent.split('\n').forEach(line => { if (line.trim()) akCh.push(new Paragraph({ children: [new TextRun({ text: line, size: _wsBody(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 150 } })); });
                 ch.__answersKeySection = akCh;
             }
             return ch;
@@ -1378,25 +1385,25 @@ async function exportToDocx() {
             const ch = [];
             const num = activity.sheetNumber || getAutoSheetNumber(loIndex, sheetIndex);
             if (activity.title && activity.title.trim()) {
-                ch.push(new Paragraph({ children: [new TextRun({ text: _mbTf('expActivitySheetTitled', { v0: num, v1: activity.title }), size: 24, bold: true, color: '0070C0', rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 400 } }));
+                ch.push(new Paragraph({ children: [new TextRun({ text: _mbTf('expActivitySheetTitled', { v0: num, v1: activity.title }), size: _wsBody(), bold: true, color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 400 } }));
             }
             if (activity.objective && activity.objective.trim()) {
-                ch.push(new Paragraph({ children: [new TextRun({ text: _mbT('expObjective'), bold: true, size: 24, color: '0070C0', rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 200 } }));
+                ch.push(new Paragraph({ children: [new TextRun({ text: _mbT('expObjective'), bold: true, size: _wsBody(), color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 200 } }));
                 /* Same blue bold heading style as «Objective:» itself, by
                    request: it reads as part of the heading block, not as
                    the first item of the list. Skipped when empty — a user
                    who deleted the line meant to delete it. */
                 if (activity.objectiveLead && activity.objectiveLead.trim()) {
-                    ch.push(new Paragraph({ children: [new TextRun({ text: activity.objectiveLead, bold: true, size: 24, color: '0070C0', rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 200 } }));
+                    ch.push(new Paragraph({ children: [new TextRun({ text: activity.objectiveLead, bold: true, size: _wsBody(), color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 200 } }));
                 }
-                activity.objective.split('\n').forEach(line => { if (line.trim()) ch.push(new Paragraph({ children: [new TextRun({ text: line, size: 24, rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 150 } })); });
+                activity.objective.split('\n').forEach(line => { if (line.trim()) ch.push(new Paragraph({ children: [new TextRun({ text: line, size: _wsBody(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 150 } })); });
             }
             if (activity.duration && parseInt(activity.duration) > 0) {
-                ch.push(new Paragraph({ children: [new TextRun({ text: _mbT('expDuration'), bold: true, size: 24, color: '0070C0', rightToLeft: _mbRtl() }), new TextRun({ text: _mbTf('expMinutes', { v0: activity.duration }), size: 24, rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 300 } }));
+                ch.push(new Paragraph({ children: [new TextRun({ text: _mbT('expDuration'), bold: true, size: _wsBody(), color: _wsHeadColor(), rightToLeft: _mbRtl() }), new TextRun({ text: _mbTf('expMinutes', { v0: activity.duration }), size: _wsBody(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 300 } }));
             }
             const validRes = (activity.resources || []).filter(r => r.name && r.name.trim());
             if (validRes.length > 0) {
-                ch.push(new Paragraph({ children: [new TextRun({ text: _mbT('expTrainingResources'), bold: true, size: 24, color: '0070C0', rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 200, before: 200 } }));
+                ch.push(new Paragraph({ children: [new TextRun({ text: _mbT('expTrainingResources'), bold: true, size: _wsBody(), color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 200, before: 200 } }));
                 const bdr = { top:{style:BorderStyle.SINGLE,size:1,color:'000000'}, bottom:{style:BorderStyle.SINGLE,size:1,color:'000000'}, left:{style:BorderStyle.SINGLE,size:1,color:'000000'}, right:{style:BorderStyle.SINGLE,size:1,color:'000000'}, insideHorizontal:{style:BorderStyle.SINGLE,size:1,color:'000000'}, insideVertical:{style:BorderStyle.SINGLE,size:1,color:'000000'} };
                 /* `wide` replaces the old `t.includes('Mat')` check, which
                    sized the column by testing for the English substring
@@ -1404,7 +1411,7 @@ async function exportToDocx() {
                    the header is translated, since the Arabic word for
                    "Material" doesn't contain "Mat". The width is now the
                    caller's decision, not a guess from the label text. */
-                const mkHdr = (t, wide) => new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: t, bold: true, size: 28, color: 'FFFFFF', rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })], shading: { fill: '0070C0', type: 'clear' }, width: { size: wide ? 37 : 13, type: WidthType.PERCENTAGE } });
+                const mkHdr = (t, wide) => new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: t, bold: true, size: 28, color: _wsTblText(), rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })], shading: { fill: _wsTblFill(), type: 'clear' }, width: { size: wide ? 37 : 13, type: WidthType.PERCENTAGE } });
                 const hdrMat = _mbT('expMaterialEquipment'), hdrQty = _mbT('expQuantityNumber');
                 const resRows = [new TableRow({ children: [mkHdr(hdrMat, true), mkHdr(hdrQty, false), mkHdr(hdrMat, true), mkHdr(hdrQty, false)] })];
                 for (let ri = 0; ri < validRes.length; ri += 2) {
@@ -1417,13 +1424,13 @@ async function exportToDocx() {
             }
             const validSteps = (activity.steps || []).filter(s => s.text && s.text.trim());
             if (validSteps.length > 0) {
-                ch.push(new Paragraph({ children: [new TextRun({ text: _mbT('expActivitySteps'), bold: true, size: 24, color: '0070C0', rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 200 } }));
+                ch.push(new Paragraph({ children: [new TextRun({ text: _mbT('expActivitySteps'), bold: true, size: _wsBody(), color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 200 } }));
                 validSteps.forEach((step, si) => {
-                    ch.push(new Paragraph({ children: [new TextRun({ text: _mbTf('expStepN', { v0: si + 1 }), bold: true, size: 24, color: '0070C0', rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 100 } }));
+                    ch.push(new Paragraph({ children: [new TextRun({ text: _mbTf('expStepN', { v0: si + 1 }), bold: true, size: _wsBody(), color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 100 } }));
                     const pt = processTextForWordExport(step.text);
                     let sImgs = (activity.images && activity.images[step.stepId]) || [];
                     if (!Array.isArray(sImgs)) sImgs = [sImgs];
-                    const sr1 = [new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: pt, size: 24, rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl() })], width: { size: 4536, type: WidthType.DXA }, margins: { top: 150, bottom: 150, left: 150, right: 150 }, verticalAlign: 'center' })];
+                    const sr1 = [new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: pt, size: _wsBody(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl() })], width: { size: 4536, type: WidthType.DXA }, margins: { top: 150, bottom: 150, left: 150, right: 150 }, verticalAlign: 'center' })];
                     if (sImgs.length > 0) { try { sr1.push(new TableCell({ children: [new Paragraph({ children: [_mkImgRun(sImgs[0])], alignment: AlignmentType.CENTER })], width: { size: 4536, type: WidthType.DXA }, margins: { top: 150, bottom: 150, left: 150, right: 150 }, verticalAlign: 'center' })); } catch(e) { sr1.push(new TableCell({ children: [new Paragraph({ text: '' })], width: { size: 4536, type: WidthType.DXA } })); } }
                     else { sr1.push(new TableCell({ children: [new Paragraph({ text: '' })], width: { size: 4536, type: WidthType.DXA } })); }
                     const sRows = [new TableRow({ children: sr1 })];
@@ -1453,9 +1460,9 @@ async function exportToDocx() {
                 // Title row
                 ctRows.push(new TableRow({ children: [new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: ctTitle, bold: true, size: 28, color: '1F4788', rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })], columnSpan: 4, margins: cellMgn })] }));
                 // Instruction row
-                if (ctInstr.trim()) ctRows.push(new TableRow({ children: [new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: ctInstr, bold: true, size: 24, rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })], columnSpan: 4, margins: cellMgn })] }));
+                if (ctInstr.trim()) ctRows.push(new TableRow({ children: [new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: ctInstr, bold: true, size: _wsBody(), rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })], columnSpan: 4, margins: cellMgn })] }));
                 // Header row
-                const mkH = (t, w) => new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: t, bold: true, size: 28, color: '0070C0', rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })], width: { size: w, type: WidthType.PERCENTAGE }, margins: cellMgn });
+                const mkH = (t, w) => new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: t, bold: true, size: 28, color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })], width: { size: w, type: WidthType.PERCENTAGE }, margins: cellMgn });
                 ctRows.push(new TableRow({ children: [mkH('#',8), mkH(_mbT('expDidYou'),62), mkH(_mbT('expYes'),15), mkH(_mbT('expNo'),15)] }));
                 // Criteria rows
                 validCriteria.forEach((c, i) => {
@@ -1463,7 +1470,7 @@ async function exportToDocx() {
                     ctRows.push(new TableRow({ children: [mkD(String(i+1), AlignmentType.CENTER), mkD(c, _mbStart(AlignmentType)), mkD(' ', AlignmentType.CENTER), mkD(' ', AlignmentType.CENTER)] }));
                 });
                 // Footer row
-                if (ctFooter.trim()) ctRows.push(new TableRow({ children: [new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: ctFooter, size: 24, rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl() })], columnSpan: 4, margins: cellMgn })] }));
+                if (ctFooter.trim()) ctRows.push(new TableRow({ children: [new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: ctFooter, size: _wsBody(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl() })], columnSpan: 4, margins: cellMgn })] }));
                 const ctTable = new Table({ rows: ctRows, width: { size: 9072, type: WidthType.DXA }, borders: ctBdr });
                 // Store as separate section (new page — same as self-check)
                 ch.__criteriaSection = [ctTable];
@@ -1492,7 +1499,7 @@ async function exportToDocx() {
             const loHdText = _mbTitledAlready(loHdTitle, 'expLearningOutcomeN')
                 ? loHdTitle
                 : _mbTf('expLearningOutcomeN', { v0: loIndex + 1, v1: loHdTitle });
-            const loHdCh = [new Paragraph({ children: [new TextRun({ text: loHdText, size: 28, bold: true, color: '0070C0', rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 400, before: 200 } })];
+            const loHdCh = [new Paragraph({ children: [new TextRun({ text: loHdText, size: _wsSection(), bold: true, color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 400, before: 200 } })];
             sections.push({ properties: { bidi: _mbRtl() }, children: loHdCh });
 
             if (mbState.includeLearningGuide) {
@@ -1552,9 +1559,9 @@ async function exportToDocx() {
                 children: [
                     new TextRun({
                         text: _mbT('expAssessmentUnitCaps'),
-                        size: 28,
+                        size: _wsSection(),
                         bold: true,
-                        color: '0070C0',
+                        color: _wsHeadColor(),
                         rightToLeft: _mbRtl(),
                     }),
                 ],
@@ -1571,7 +1578,7 @@ async function exportToDocx() {
                         children: [
                             new TextRun({
                                 text: line,
-                                size: 24,
+                                size: _wsBody(),
                                 rightToLeft: _mbRtl(),
                             }),
                         ],
@@ -1607,9 +1614,9 @@ async function exportToDocx() {
                         children: [
                             new TextRun({
                                 text: _mbT('expAssessmentUnit'),
-                                size: 28,
+                                size: _wsSection(),
                                 bold: true,
-                                color: '0070C0',
+                                color: _wsHeadColor(),
                                 rightToLeft: _mbRtl(),
                             }),
                         ],
@@ -1632,7 +1639,7 @@ async function exportToDocx() {
                         children: [
                             new TextRun({
                                 text: loTitleText,
-                                size: 26,
+                                size: _wsSub(),
                                 bold: true,
                                 rightToLeft: _mbRtl(),
                             }),
@@ -1647,7 +1654,7 @@ async function exportToDocx() {
                         children: [
                             new TextRun({
                                 text: _mbT('expPortfolioOfEvidence'),
-                                size: 24,
+                                size: _wsBody(),
                                 bold: true,
                                 rightToLeft: _mbRtl(),
                             }),
@@ -1679,7 +1686,7 @@ async function exportToDocx() {
                             children: [new TextRun({
                                 text: headerText,
                                 bold: true,
-                                size: 24,
+                                size: _wsBody(),
                                 rightToLeft: _mbRtl(),
                             })],
                             alignment: AlignmentType.CENTER,
@@ -1704,7 +1711,7 @@ async function exportToDocx() {
                                 children: [new Paragraph({
                                     children: [new TextRun({
                                         text: cellText,
-                                        size: 24,
+                                        size: _wsBody(),
                                         rightToLeft: _mbRtl(),
                                     })],
                                     alignment: _mbStart(AlignmentType),
@@ -1734,7 +1741,7 @@ async function exportToDocx() {
                     
                     // Result Section
                     formChildren.push(new Paragraph({
-                        children: [new TextRun({ text: '', size: 24 })],
+                        children: [new TextRun({ text: '', size: _wsBody() })],
                         spacing: { after: 300 },
                     }));
                     
@@ -1743,7 +1750,7 @@ async function exportToDocx() {
                             new TextRun({
                                 text: _mbT('expResult'),
                                 bold: true,
-                                size: 24,
+                                size: _wsBody(),
                                 rightToLeft: _mbRtl(),
                             }),
                         ],
@@ -1760,7 +1767,7 @@ async function exportToDocx() {
                         children: [
                             new TextRun({
                                 text: `${competentSymbol} ` + _mbT('expCompetent'),
-                                size: 24,
+                                size: _wsBody(),
                                 rightToLeft: _mbRtl(),
                             }),
                         ],
@@ -1773,7 +1780,7 @@ async function exportToDocx() {
                         children: [
                             new TextRun({
                                 text: `${notCompetentSymbol} ` + _mbT('expNotYetCompetent'),
-                                size: 24,
+                                size: _wsBody(),
                                 rightToLeft: _mbRtl(),
                             }),
                         ],
@@ -1798,7 +1805,7 @@ async function exportToDocx() {
                         children: [
                             new TextRun({
                                 text: teacherLine,
-                                size: 24,
+                                size: _wsBody(),
                                 rightToLeft: _mbRtl(),
                             }),
                         ],
@@ -1811,7 +1818,7 @@ async function exportToDocx() {
                         children: [
                             new TextRun({
                                 text: learnerLine,
-                                size: 24,
+                                size: _wsBody(),
                                 rightToLeft: _mbRtl(),
                             }),
                         ],
@@ -1842,9 +1849,9 @@ async function exportToDocx() {
                 children: [
                     new TextRun({
                         text: mbState.referencesTitle,
-                        size: 28,
+                        size: _wsSection(),
                         bold: true,
-                        color: '0070C0',
+                        color: _wsHeadColor(),
                         rightToLeft: _mbRtl(),
                     }),
                 ],
@@ -1860,7 +1867,7 @@ async function exportToDocx() {
                     children: [
                         new TextRun({
                             text: `${idx + 1}. ${ref.value}`,
-                            size: 24,
+                            size: _wsBody(),
                             rightToLeft: _mbRtl(),
                         }),
                     ],

@@ -45,6 +45,11 @@ var MB_KEYS = {
     contentLang: 'mb_content_lang',
     exportLang:  'mb_export_lang',
     i18nDebug:   'mb_i18n_debug',
+    /* Word export appearance: sizes and colours of the .docx only.
+       One key for the whole tool — not per project and not per
+       language, because a team's documents should look alike whichever
+       side they were written on. Owned by word_settings.js. */
+    wordExport:  'mb_word_export_settings',
     /* Cross-tool. Not prefixed on purpose — see header. */
     uiLang:      'dacum_lang',
     dacumImport: 'dacum_modules_export'
