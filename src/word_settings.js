@@ -85,7 +85,10 @@ var _WS_STRINGS = {
         wsSectionSize:   'Section heading size',
         wsSubSize:       'Sub-heading size',
         wsBodySize:      'Body and content size',
-        wsFixedNote:     'Cover, resources, checklist and mark-box tables keep their own fixed sizes.',
+        wsCoverSize:     'Cover table size',
+        wsTableSize:     'Resources and checklist table size',
+        wsUserTableSize: 'Content-card table size',
+        wsFixedNote:     'Mark boxes keep their own size and theme colours.',
         wsPreview:       'Preview',
         wsPvTitle:       'Module Title',
         wsPvSection:     'Introduction',
@@ -93,6 +96,8 @@ var _WS_STRINGS = {
         wsPvHeading:     'Objective:',
         wsPvBody:        'By the end of this outcome the trainee will be able to…',
         wsPvTable:       'Material / Equipment',
+        wsPvUserCell:    'Table cell',
+        wsPvTableCell:   'Screwdriver set',
         wsReset:         'Reset to default',
         wsClose:         'Close',
         wsSaved:         'Saved',
@@ -111,7 +116,10 @@ var _WS_STRINGS = {
         wsSectionSize:   'Taille des titres de section',
         wsSubSize:       'Taille des sous-titres',
         wsBodySize:      'Taille du texte et du contenu',
-        wsFixedNote:     'Les tableaux de couverture, de ressources, de checklist et les encadrés gardent leurs tailles fixes.',
+        wsCoverSize:     'Taille du tableau de couverture',
+        wsTableSize:     'Taille des tableaux de ressources et de checklist',
+        wsUserTableSize: 'Taille des tableaux dans les cartes de contenu',
+        wsFixedNote:     'Les encadrés gardent leur taille et leurs couleurs de thème.',
         wsPreview:       'Aperçu',
         wsPvTitle:       'Titre du module',
         wsPvSection:     'Introduction',
@@ -119,6 +127,8 @@ var _WS_STRINGS = {
         wsPvHeading:     'Objectif :',
         wsPvBody:        'À la fin de ce résultat, l\u2019apprenant sera capable de…',
         wsPvTable:       'Matériel / Équipement',
+        wsPvUserCell:    'Cellule de tableau',
+        wsPvTableCell:   'Jeu de tournevis',
         wsReset:         'Réinitialiser',
         wsClose:         'Fermer',
         wsSaved:         'Enregistré',
@@ -137,7 +147,10 @@ var _WS_STRINGS = {
         wsSectionSize:   'حجم عناوين الأقسام',
         wsSubSize:       'حجم العناوين الفرعية',
         wsBodySize:      'حجم النص والمحتوى',
-        wsFixedNote:     'جداول الغلاف والموارد وقائمة التحقق وصناديق الملاحظات تحتفظ بأحجامها الثابتة.',
+        wsCoverSize:     'حجم جدول الغلاف',
+        wsTableSize:     'حجم جداول الموارد وقائمة التحقق',
+        wsUserTableSize: 'حجم جداول بطاقات المحتوى',
+        wsFixedNote:     'صناديق الملاحظات تحتفظ بحجمها وألوان ثيمتها.',
         wsPreview:       'المعاينة',
         wsPvTitle:       'عنوان الوحدة',
         wsPvSection:     'المقدمة',
@@ -145,6 +158,8 @@ var _WS_STRINGS = {
         wsPvHeading:     'الهدف:',
         wsPvBody:        'في نهاية هذا الناتج سيكون المتدرّب قادراً على…',
         wsPvTable:       'المادة / التجهيزات',
+        wsPvUserCell:    'خلية جدول',
+        wsPvTableCell:   'طقم مفكات',
         wsReset:         'إعادة للوضع الافتراضي',
         wsClose:         'إغلاق',
         wsSaved:         'تم الحفظ',
@@ -189,9 +204,19 @@ var WS_DEFAULTS = {
     sectionSize:      14,        /* exports_docx.js size: 28 */
     subSize:          13,        /* exports_docx.js size: 26 */
     bodySize:         12,        /* exports_docx.js size: 24 */
+    coverSize:        18,        /* exports_docx.js size: 36 */
+    tableSize:        14,        /* exports_docx.js size: 28 (tables) */
+    userTableSize:    11,        /* exports_docx.js size: 22 */
     headingColor:     '0070C0',
     tableHeaderColor: '0070C0'
 };
+
+/* Field order in the dialog. Kept in one place so the dialog, the
+   reset and the read path can never drift apart. */
+var WS_SIZE_FIELDS = [
+    'titleSize', 'sectionSize', 'subSize', 'bodySize',
+    'coverSize', 'tableSize', 'userTableSize'
+];
 
 var WS_MIN_PT = 11;
 var WS_MAX_PT = 18;
@@ -231,14 +256,14 @@ function wsReadSettings() {
     }
     if (typeof o !== 'object' || o === null) o = {};
 
-    return {
-        titleSize:        _wsValidSize(o.titleSize,   WS_DEFAULTS.titleSize),
-        sectionSize:      _wsValidSize(o.sectionSize, WS_DEFAULTS.sectionSize),
-        subSize:          _wsValidSize(o.subSize,     WS_DEFAULTS.subSize),
-        bodySize:         _wsValidSize(o.bodySize,    WS_DEFAULTS.bodySize),
+    var out = {
         headingColor:     _wsValidColor(o.headingColor,     WS_DEFAULTS.headingColor),
         tableHeaderColor: _wsValidColor(o.tableHeaderColor, WS_DEFAULTS.tableHeaderColor)
     };
+    WS_SIZE_FIELDS.forEach(function (f) {
+        out[f] = _wsValidSize(o[f], WS_DEFAULTS[f]);
+    });
+    return out;
 }
 
 function wsWriteSettings(s) {
@@ -290,6 +315,9 @@ function _wsGet() {
 function _wsBeginExport() { _WS_CACHE = wsReadSettings(); return _WS_CACHE; }
 
 function _wsTitle()     { return _wsGet().titleSize   * 2; }
+function _wsCover()     { return _wsGet().coverSize     * 2; }
+function _wsTable()     { return _wsGet().tableSize     * 2; }
+function _wsUserTable() { return _wsGet().userTableSize * 2; }
 function _wsSection()   { return _wsGet().sectionSize * 2; }
 function _wsSub()       { return _wsGet().subSize     * 2; }
 function _wsBody()      { return _wsGet().bodySize    * 2; }
@@ -317,9 +345,12 @@ function _wsSizeSelect(field, value) {
 
 function _wsSwatches(field, value) {
     return WS_PALETTE.map(function (sw) {
-        return '<button type="button" class="ws-swatch' + (sw.hex === value ? ' is-on' : '') +
+        /* The colour rides on a class, not an inline style: the global
+           `button:not(...)` rule in mb-styles.css carries !important,
+           which outranks any inline background. See the matching block
+           of .ws-c-XXXXXX rules in that file. */
+        return '<button type="button" class="ws-swatch ws-c-' + sw.hex + (sw.hex === value ? ' is-on' : '') +
                '" data-ws-color="' + field + '" data-ws-hex="' + sw.hex + '"' +
-               ' style="background:#' + sw.hex + '"' +
                ' title="' + _wsSwatchName(sw) + '" aria-label="' + _wsSwatchName(sw) + '"></button>';
     }).join('');
 }
@@ -337,7 +368,9 @@ function _wsPreviewHTML(s) {
         '<div class="ws-pv-line" style="font-size:' + s.subSize     + 'pt;font-weight:700;color:#1F4E78">' + _wsT('wsPvSub') + '</div>' +
         '<div class="ws-pv-line" style="font-size:' + s.bodySize    + 'pt;font-weight:700;color:' + head + '">' + _wsT('wsPvHeading') + '</div>' +
         '<div class="ws-pv-line" style="font-size:' + s.bodySize    + 'pt">' + _wsT('wsPvBody') + '</div>' +
-        '<div class="ws-pv-th" style="background:' + fill + ';color:' + onFill + '">' + _wsT('wsPvTable') + '</div>';
+        '<div class="ws-pv-th" style="background:' + fill + ';color:' + onFill + '">' + _wsT('wsPvTable') + '</div>' +
+        '<div class="ws-pv-line" style="font-size:' + s.tableSize     + 'pt;margin-top:6px">' + _wsT('wsPvTableCell') + '</div>' +
+        '<div class="ws-pv-line" style="font-size:' + s.userTableSize + 'pt">' + _wsT('wsPvUserCell') + '</div>';
 }
 
 function _wsRepaintPreview() {
@@ -381,6 +414,9 @@ function openWordSettings() {
             '<div class="ws-row"><label>' + _wsT('wsSectionSize') + '</label>' + _wsSizeSelect('sectionSize', _wsDraft.sectionSize) + '</div>' +
             '<div class="ws-row"><label>' + _wsT('wsSubSize')     + '</label>' + _wsSizeSelect('subSize',     _wsDraft.subSize)     + '</div>' +
             '<div class="ws-row"><label>' + _wsT('wsBodySize')    + '</label>' + _wsSizeSelect('bodySize',    _wsDraft.bodySize)    + '</div>' +
+            '<div class="ws-row"><label>' + _wsT('wsCoverSize')     + '</label>' + _wsSizeSelect('coverSize',     _wsDraft.coverSize)     + '</div>' +
+            '<div class="ws-row"><label>' + _wsT('wsTableSize')     + '</label>' + _wsSizeSelect('tableSize',     _wsDraft.tableSize)     + '</div>' +
+            '<div class="ws-row"><label>' + _wsT('wsUserTableSize') + '</label>' + _wsSizeSelect('userTableSize', _wsDraft.userTableSize) + '</div>' +
             '<p class="ws-note ws-note-sm">\u2139\uFE0F ' + _wsT('wsFixedNote') + '</p>' +
 
             '<h4 class="ws-group">\uD83D\uDC41\uFE0F ' + _wsT('wsPreview') + '</h4>' +

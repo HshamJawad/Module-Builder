@@ -250,22 +250,22 @@ async function exportToDocx() {
                 tableRows.push(new TableRow({
                     children: [
                         new TableCell({
-                            children: [new Paragraph({ children: [new TextRun({ text: _mbT('expMaterialEquipment'), bold: true, size: 28, color: _wsTblText(), rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })],
+                            children: [new Paragraph({ children: [new TextRun({ text: _mbT('expMaterialEquipment'), bold: true, size: _wsTable(), color: _wsTblText(), rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })],
                             shading: { fill: _wsTblFill(), type: 'clear' },
                             width: { size: 37, type: WidthType.PERCENTAGE },
                         }),
                         new TableCell({
-                            children: [new Paragraph({ children: [new TextRun({ text: _mbT('expQuantityNumber'), bold: true, size: 28, color: _wsTblText(), rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })],
+                            children: [new Paragraph({ children: [new TextRun({ text: _mbT('expQuantityNumber'), bold: true, size: _wsTable(), color: _wsTblText(), rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })],
                             shading: { fill: _wsTblFill(), type: 'clear' },
                             width: { size: 13, type: WidthType.PERCENTAGE },
                         }),
                         new TableCell({
-                            children: [new Paragraph({ children: [new TextRun({ text: _mbT('expMaterialEquipment'), bold: true, size: 28, color: _wsTblText(), rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })],
+                            children: [new Paragraph({ children: [new TextRun({ text: _mbT('expMaterialEquipment'), bold: true, size: _wsTable(), color: _wsTblText(), rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })],
                             shading: { fill: _wsTblFill(), type: 'clear' },
                             width: { size: 37, type: WidthType.PERCENTAGE },
                         }),
                         new TableCell({
-                            children: [new Paragraph({ children: [new TextRun({ text: _mbT('expQuantityNumber'), bold: true, size: 28, color: _wsTblText(), rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })],
+                            children: [new Paragraph({ children: [new TextRun({ text: _mbT('expQuantityNumber'), bold: true, size: _wsTable(), color: _wsTblText(), rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })],
                             shading: { fill: _wsTblFill(), type: 'clear' },
                             width: { size: 13, type: WidthType.PERCENTAGE },
                         }),
@@ -279,22 +279,22 @@ async function exportToDocx() {
                     tableRows.push(new TableRow({
                         children: [
                             new TableCell({
-                                children: [new Paragraph({ children: [new TextRun({ text: leftItem.name, size: 28, rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl() })],
+                                children: [new Paragraph({ children: [new TextRun({ text: leftItem.name, size: _wsTable(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl() })],
                                 width: { size: 37, type: WidthType.PERCENTAGE },
                                 margins: { top: 100, bottom: 100, left: 100, right: 100 },
                             }),
                             new TableCell({
-                                children: [new Paragraph({ children: [new TextRun({ text: leftItem.quantity, size: 28, rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })],
+                                children: [new Paragraph({ children: [new TextRun({ text: leftItem.quantity, size: _wsTable(), rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })],
                                 width: { size: 13, type: WidthType.PERCENTAGE },
                                 margins: { top: 100, bottom: 100, left: 100, right: 100 },
                             }),
                             new TableCell({
-                                children: [new Paragraph({ children: [new TextRun({ text: rightItem ? rightItem.name : '', size: 28, rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl() })],
+                                children: [new Paragraph({ children: [new TextRun({ text: rightItem ? rightItem.name : '', size: _wsTable(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl() })],
                                 width: { size: 37, type: WidthType.PERCENTAGE },
                                 margins: { top: 100, bottom: 100, left: 100, right: 100 },
                             }),
                             new TableCell({
-                                children: [new Paragraph({ children: [new TextRun({ text: rightItem ? rightItem.quantity : '', size: 28, rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })],
+                                children: [new Paragraph({ children: [new TextRun({ text: rightItem ? rightItem.quantity : '', size: _wsTable(), rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })],
                                 width: { size: 13, type: WidthType.PERCENTAGE },
                                 margins: { top: 100, bottom: 100, left: 100, right: 100 },
                             }),
@@ -687,7 +687,7 @@ async function exportToDocx() {
                             children: [new TextRun({
                                 text: row.label,
                                 bold: true,
-                                size: 36, // 18pt
+                                size: _wsCover(),
                                 rightToLeft: _mbRtl(),
                             })],
                             alignment: _mbStart(AlignmentType),
@@ -714,7 +714,7 @@ async function exportToDocx() {
                                 children: [new TextRun({
                                     text: line,
                                     bold: true,
-                                    size: 36, // 18pt
+                                    size: _wsCover(),
                                     rightToLeft: _mbRtl(),
                                 })],
                                 alignment: _mbStart(AlignmentType),
@@ -1193,7 +1193,7 @@ async function exportToDocx() {
                 const cells = [];
                 for (let c = 0; c < t.cols; c++) {
                     const txt = (t.cells[r] && t.cells[r][c]) ? t.cells[r][c] : '';
-                    cells.push(new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: txt, size: 22, rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl() })], width: { size: colW, type: WidthType.DXA }, margins: { top: 80, bottom: 80, left: 100, right: 100 } }));
+                    cells.push(new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: txt, size: _wsUserTable(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl() })], width: { size: colW, type: WidthType.DXA }, margins: { top: 80, bottom: 80, left: 100, right: 100 } }));
                 }
                 rows.push(new TableRow({ children: cells }));
             }
@@ -1411,12 +1411,12 @@ async function exportToDocx() {
                    the header is translated, since the Arabic word for
                    "Material" doesn't contain "Mat". The width is now the
                    caller's decision, not a guess from the label text. */
-                const mkHdr = (t, wide) => new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: t, bold: true, size: 28, color: _wsTblText(), rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })], shading: { fill: _wsTblFill(), type: 'clear' }, width: { size: wide ? 37 : 13, type: WidthType.PERCENTAGE } });
+                const mkHdr = (t, wide) => new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: t, bold: true, size: _wsTable(), color: _wsTblText(), rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })], shading: { fill: _wsTblFill(), type: 'clear' }, width: { size: wide ? 37 : 13, type: WidthType.PERCENTAGE } });
                 const hdrMat = _mbT('expMaterialEquipment'), hdrQty = _mbT('expQuantityNumber');
                 const resRows = [new TableRow({ children: [mkHdr(hdrMat, true), mkHdr(hdrQty, false), mkHdr(hdrMat, true), mkHdr(hdrQty, false)] })];
                 for (let ri = 0; ri < validRes.length; ri += 2) {
                     const l = validRes[ri], r2 = validRes[ri+1];
-                    const mkC = (txt, pct, align) => new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: txt||'', size: 28, rightToLeft: _mbRtl() })], alignment: align, bidirectional: _mbRtl() })], width: { size: pct, type: WidthType.PERCENTAGE }, margins: { top: 100, bottom: 100, left: 100, right: 100 } });
+                    const mkC = (txt, pct, align) => new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: txt||'', size: _wsTable(), rightToLeft: _mbRtl() })], alignment: align, bidirectional: _mbRtl() })], width: { size: pct, type: WidthType.PERCENTAGE }, margins: { top: 100, bottom: 100, left: 100, right: 100 } });
                     resRows.push(new TableRow({ children: [mkC(l.name,37,_mbStart(AlignmentType)), mkC(l.quantity||'1',13,AlignmentType.CENTER), mkC(r2?r2.name:'',37,_mbStart(AlignmentType)), mkC(r2?r2.quantity:'',13,AlignmentType.CENTER)] }));
                 }
                 ch.push(new Table({ rows: resRows, width: { size: 9072, type: WidthType.DXA }, layout: 'fixed', borders: bdr, columnWidths: [3356,1178,3356,1178] }));
@@ -1458,15 +1458,15 @@ async function exportToDocx() {
                 const cellMgn = { top: 120, bottom: 120, left: 150, right: 150 };
                 const ctRows = [];
                 // Title row
-                ctRows.push(new TableRow({ children: [new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: ctTitle, bold: true, size: 28, color: '1F4788', rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })], columnSpan: 4, margins: cellMgn })] }));
+                ctRows.push(new TableRow({ children: [new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: ctTitle, bold: true, size: _wsTable(), color: '1F4788', rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })], columnSpan: 4, margins: cellMgn })] }));
                 // Instruction row
                 if (ctInstr.trim()) ctRows.push(new TableRow({ children: [new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: ctInstr, bold: true, size: _wsBody(), rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })], columnSpan: 4, margins: cellMgn })] }));
                 // Header row
-                const mkH = (t, w) => new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: t, bold: true, size: 28, color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })], width: { size: w, type: WidthType.PERCENTAGE }, margins: cellMgn });
+                const mkH = (t, w) => new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: t, bold: true, size: _wsTable(), color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })], width: { size: w, type: WidthType.PERCENTAGE }, margins: cellMgn });
                 ctRows.push(new TableRow({ children: [mkH('#',8), mkH(_mbT('expDidYou'),62), mkH(_mbT('expYes'),15), mkH(_mbT('expNo'),15)] }));
                 // Criteria rows
                 validCriteria.forEach((c, i) => {
-                    const mkD = (t, align) => new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: t, size: 28, rightToLeft: _mbRtl() })], alignment: align, bidirectional: _mbRtl() })], margins: cellMgn });
+                    const mkD = (t, align) => new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: t, size: _wsTable(), rightToLeft: _mbRtl() })], alignment: align, bidirectional: _mbRtl() })], margins: cellMgn });
                     ctRows.push(new TableRow({ children: [mkD(String(i+1), AlignmentType.CENTER), mkD(c, _mbStart(AlignmentType)), mkD(' ', AlignmentType.CENTER), mkD(' ', AlignmentType.CENTER)] }));
                 });
                 // Footer row
