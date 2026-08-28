@@ -238,8 +238,20 @@ function saveCurrentSheetToLO() {
 
     // Collect criteria
     const incomingCriteria = [];
-    document.querySelectorAll('.criteria-text').forEach(item => {
-        if (item.value.trim()) incomingCriteria.push({ text: item.value, uid: mbRowUid(item) });
+    /* `input.criteria-text` and not `.criteria-text`. Two different files
+       render that class: criteria.js builds the EDITABLE input rows of the
+       activity sheet's checklist, and outcomes.js:232 builds a read-only
+       <div class="criteria-text"> for each performance criterion of a
+       learning outcome. A div has no .value, so the moment a project had
+       any performance criteria on screen this line threw TypeError — and
+       it threw inside saveCurrentSheetToLO, which runs on every module
+       switch, every outcome switch and every new module. Restricting the
+       selector to inputs collects exactly the rows this function was
+       always meant to read. */
+    document.querySelectorAll('input.criteria-text').forEach(item => {
+        if (typeof item.value === 'string' && item.value.trim()) {
+            incomingCriteria.push({ text: item.value, uid: mbRowUid(item) });
+        }
     });
     activityData.criteria = biMergeStringsById(storedAct.criteria, incomingCriteria);
 
@@ -556,7 +568,19 @@ function getAutoSheetNumber(loIndex, sheetIndex) {
 
 function getModuleTitleSlug() {
     const mod = mbState.modulesData.find(m => m.id === mbState.currentModuleId);
-    const title = (mod && mod.title) ? mod.title.trim() : 'module';
+    /* `mod.title` is a bilingual { en, ar, fr } object in every project
+       created since the bilingual migration — calling .trim() on it threw
+       TypeError, and it threw AFTER the docx blob had been built, so the
+       file was generated and the download never fired. Same crash on the
+       save path, which calls getExportFilename too.
+       biGet() unwraps the active side and falls back to whichever side
+       the author actually wrote; a legacy plain string passes straight
+       through, so old projects are unaffected. */
+    const raw = (mod && mod.title !== undefined && mod.title !== null)
+        ? (typeof biGet === 'function' ? biGet(mod.title, typeof _mbLang === 'function' ? _mbLang() : 'en')
+                                       : String(mod.title))
+        : '';
+    const title = String(raw).trim() || 'module';
     return title.replace(/[^a-z0-9\u0600-\u06FF]/gi, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
 }
 

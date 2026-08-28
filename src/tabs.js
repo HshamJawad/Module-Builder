@@ -25,12 +25,26 @@ async function switchTab(tabName) {
         });
     }
     
-    // Activate the corresponding tab button by matching onclick attribute
+    /* Activate the corresponding tab button.
+       This used to match on the button's `onclick` attribute. events.js
+       replaced every inline handler with `data-act` / `data-args`, so
+       getAttribute('onclick') has returned null for every button since
+       that conversion and NO tab has been highlighted at all — the panel
+       switched correctly, the highlight simply never moved. Matched on
+       data-args now, which is what the markup actually carries. The
+       fallback keeps any legacy inline handler working. */
     allTabButtons.forEach(tab => {
-        const onclickAttr = tab.getAttribute('onclick');
-        if (onclickAttr && onclickAttr.includes(`'${tabName}'`)) {
-            tab.classList.add('active');
+        let matches = false;
+        const args = tab.getAttribute('data-args');
+        if (args) {
+            try { matches = JSON.parse(args)[0] === tabName; }
+            catch (e) { matches = args.includes(`"${tabName}"`); }
         }
+        if (!matches) {
+            const onclickAttr = tab.getAttribute('onclick');
+            matches = !!(onclickAttr && onclickAttr.includes(`'${tabName}'`));
+        }
+        if (matches) tab.classList.add('active');
     });
     
     // Check learning outcome selection for info and activity tabs

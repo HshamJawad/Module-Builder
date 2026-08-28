@@ -55,7 +55,8 @@
 // defaults land exactly on the current output.
 //
 // ── STORAGE ─────────────────────────────────────────────────
-// One key, one JSON object, global to the tool. It is NOT per language
+// One key, one JSON object, global to the tool. Written only when the
+// user presses Save. It is NOT per language
 // and NOT per project: the same settings apply to an English, French or
 // Arabic export of any module. Read through mbGetSetting/mbSetSetting,
 // never through localStorage directly — persistence.js is the only file
@@ -100,7 +101,9 @@ var _WS_STRINGS = {
         wsPvTableCell:   'Screwdriver set',
         wsReset:         'Reset to default',
         wsClose:         'Close',
+        wsSave:          'Save',
         wsSaved:         'Saved',
+        wsUnsaved:       'You have unsaved changes. Press Close again to discard them.',
         wsPt:            'pt'
     },
     fr: {
@@ -131,7 +134,9 @@ var _WS_STRINGS = {
         wsPvTableCell:   'Jeu de tournevis',
         wsReset:         'Réinitialiser',
         wsClose:         'Fermer',
+        wsSave:          'Enregistrer',
         wsSaved:         'Enregistré',
+        wsUnsaved:       'Modifications non enregistrées. Appuyez de nouveau sur Fermer pour les abandonner.',
         wsPt:            'pt'
     },
     ar: {
@@ -162,7 +167,9 @@ var _WS_STRINGS = {
         wsPvTableCell:   'طقم مفكات',
         wsReset:         'إعادة للوضع الافتراضي',
         wsClose:         'إغلاق',
+        wsSave:          'حفظ',
         wsSaved:         'تم الحفظ',
+        wsUnsaved:       'لديك تغييرات غير محفوظة. اضغط «إغلاق» مرة أخرى لتجاهلها.',
         wsPt:            'نقطة'
     }
 };
@@ -331,8 +338,15 @@ function _wsTblText()   { return wsContrastText(_wsGet().tableHeaderColor); }
    button wearing that class would blank whichever tab the user was on.
    It lives in the toolbar with its own action name and its own class. */
 
-var _wsDraft  = null;   /* live edits, committed on every change */
+/* The dialog edits a DRAFT. Nothing reaches storage until Save is
+   pressed, so a user who opens the settings to look around, drags a few
+   sizes, and closes gets the file they had — which is what a Close
+   button next to a Save button promises. The preview follows the draft
+   live so the choice is visible before it is committed. */
+var _wsDraft  = null;
+var _wsSaved  = null;   /* the last committed state, for the dirty check */
 var _wsEscHnd = null;
+var _wsArmed  = false;  /* Close pressed once while dirty */
 
 function _wsSizeSelect(field, value) {
     var out = '';
@@ -378,14 +392,43 @@ function _wsRepaintPreview() {
     if (pv) pv.innerHTML = _wsPreviewHTML(_wsDraft);
 }
 
-function _wsCommit() {
-    wsWriteSettings(_wsDraft);
+function _wsIsDirty() {
+    return JSON.stringify(_wsDraft) !== JSON.stringify(_wsSaved);
+}
+
+/* Footer message line. Doubles as the save confirmation and the
+   unsaved-changes warning, so the dialog never has to open a nested
+   confirm — mbConfirm sits at z-index 10000 and this overlay at 10050,
+   so a nested dialog would render BEHIND the settings modal. */
+function _wsSetMsg(text, kind) {
+    var el = document.getElementById('ws-msg');
+    if (!el) return;
+    el.textContent = text || '';
+    el.className = 'ws-msg' + (kind ? ' ws-msg-' + kind : '');
+}
+
+function _wsTouch() {
+    _wsArmed = false;
     _wsRepaintPreview();
+    var save = document.getElementById('ws-save');
+    if (save) save.disabled = !_wsIsDirty();
+    _wsSetMsg('');
+}
+
+function _wsSave() {
+    wsWriteSettings(_wsDraft);
+    _wsSaved = Object.assign({}, _wsDraft);
+    _wsArmed = false;
+    var save = document.getElementById('ws-save');
+    if (save) save.disabled = true;
+    _wsSetMsg('\u2713 ' + _wsT('wsSaved'), 'ok');
 }
 
 function openWordSettings() {
     if (document.getElementById('ws-overlay')) return;
     _wsDraft = wsReadSettings();
+    _wsSaved = Object.assign({}, _wsDraft);
+    _wsArmed = false;
 
     var rtl = !!(window.i18n && window.i18n.isRTL && window.i18n.isRTL());
 
@@ -424,7 +467,11 @@ function openWordSettings() {
           '</div>' +
           '<div class="ws-foot">' +
             '<button type="button" class="ws-btn ws-btn-ghost" id="ws-reset">' + _wsT('wsReset') + '</button>' +
-            '<button type="button" class="ws-btn ws-btn-primary" id="ws-done">' + _wsT('wsClose') + '</button>' +
+            '<span class="ws-msg" id="ws-msg"></span>' +
+            '<span class="ws-foot-right">' +
+              '<button type="button" class="ws-btn ws-btn-ghost" id="ws-done">' + _wsT('wsClose') + '</button>' +
+              '<button type="button" class="ws-btn ws-btn-primary" id="ws-save" disabled>' + _wsT('wsSave') + '</button>' +
+            '</span>' +
           '</div>' +
         '</div>';
 
@@ -435,10 +482,14 @@ function openWordSettings() {
     });
     document.getElementById('ws-close').addEventListener('click', closeWordSettings);
     document.getElementById('ws-done').addEventListener('click', closeWordSettings);
+    document.getElementById('ws-save').addEventListener('click', _wsSave);
 
     document.getElementById('ws-reset').addEventListener('click', function () {
+        /* Reset fills the DRAFT with the defaults. It still needs Save
+           to take effect, so the button means the same thing everywhere
+           in this dialog. */
         _wsDraft = Object.assign({}, WS_DEFAULTS);
-        _wsCommit();
+        _wsTouch();
         /* Repaint the controls from the draft rather than rebuilding the
            dialog: rebuilding would drop focus and scroll position. */
         ov.querySelectorAll('[data-ws-size]').forEach(function (sel) {
@@ -454,7 +505,7 @@ function openWordSettings() {
         var f = e.target && e.target.getAttribute && e.target.getAttribute('data-ws-size');
         if (!f) return;
         _wsDraft[f] = _wsValidSize(e.target.value, WS_DEFAULTS[f]);
-        _wsCommit();
+        _wsTouch();
     });
 
     ov.addEventListener('click', function (e) {
@@ -466,7 +517,7 @@ function openWordSettings() {
             o.classList.remove('is-on');
         });
         b.classList.add('is-on');
-        _wsCommit();
+        _wsTouch();
     });
 
     _wsEscHnd = function (e) { if (e.key === 'Escape') closeWordSettings(); };
@@ -474,9 +525,17 @@ function openWordSettings() {
 }
 
 function closeWordSettings() {
+    /* Two-step close when there is something to lose: the first press
+       warns in the footer, the second discards. */
+    if (_wsIsDirty() && !_wsArmed && document.getElementById('ws-overlay')) {
+        _wsArmed = true;
+        _wsSetMsg(_wsT('wsUnsaved'), 'warn');
+        return;
+    }
     var ov = document.getElementById('ws-overlay');
     if (ov && ov.parentNode) ov.parentNode.removeChild(ov);
     if (_wsEscHnd) { document.removeEventListener('keydown', _wsEscHnd); _wsEscHnd = null; }
+    _wsArmed = false;
 }
 
 /* The toolbar label carries no data-i18n, on purpose and for the same
