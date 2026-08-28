@@ -2742,3 +2742,86 @@ button#lg-preview-btn:disabled {
 .lg-table tr.lg-head-row td { background: #f9fafb; }
 .lg-instr { margin: 0; padding-inline-start: 18px; }
 .lg-instr li { margin-bottom: 4px; }
+
+/* ── Word export settings dialog (word_settings.js) ──────────
+   Scoped under .ws-* so nothing here can reach the rest of the tool.
+   The dialog is direction-aware via a dir attribute on the overlay
+   rather than a language class, because it is opened fresh each time
+   and the interface language is known at that moment. */
+.ws-overlay {
+    position: fixed; inset: 0; z-index: 10050;
+    background: rgba(15, 23, 42, .45);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+}
+.ws-modal {
+    background: #fff; border-radius: 14px;
+    width: min(560px, 100%); max-height: 88vh;
+    display: flex; flex-direction: column;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, .28);
+    font-size: 0.95em;
+}
+.ws-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; padding: 16px 20px;
+    border-bottom: 1px solid #e5e7eb;
+    font-weight: 700; font-size: 1.05em;
+}
+.ws-x {
+    background: none; border: none; cursor: pointer;
+    font-size: 1.5em; line-height: 1; color: #6b7280; padding: 0 4px;
+}
+.ws-x:hover { color: #111827; }
+.ws-body { padding: 18px 20px; overflow-y: auto; }
+.ws-note {
+    background: #f0f9ff; border: 1px solid #bae6fd; color: #075985;
+    border-radius: 8px; padding: 10px 12px; margin: 0 0 16px;
+    font-size: .88em; line-height: 1.55;
+}
+.ws-note-sm { margin: 8px 0 18px; font-size: .84em; }
+.ws-group {
+    margin: 18px 0 10px; font-size: .95em; font-weight: 700; color: #374151;
+    border-bottom: 1px solid #f1f5f9; padding-bottom: 6px;
+}
+.ws-group:first-of-type { margin-top: 4px; }
+.ws-row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 14px; margin-bottom: 10px; flex-wrap: wrap;
+}
+.ws-row > label { color: #374151; font-weight: 600; font-size: .92em; }
+.ws-select {
+    border: 1px solid #d1d5db; border-radius: 7px;
+    padding: 6px 10px; font-size: .92em; background: #fff; cursor: pointer;
+    min-width: 96px;
+}
+.ws-swatches { display: flex; gap: 6px; flex-wrap: wrap; }
+.ws-swatch {
+    width: 26px; height: 26px; border-radius: 6px; cursor: pointer;
+    border: 2px solid transparent; box-shadow: 0 0 0 1px #d1d5db inset;
+    padding: 0;
+}
+.ws-swatch.is-on {
+    border-color: #111827;
+    box-shadow: 0 0 0 2px #fff inset, 0 0 0 3px #111827;
+}
+.ws-preview {
+    border: 1px solid #e5e7eb; border-radius: 10px;
+    padding: 16px; background: #fff;
+}
+.ws-pv-line { margin-bottom: 8px; line-height: 1.4; }
+.ws-pv-th {
+    margin-top: 10px; padding: 7px 12px; border-radius: 4px;
+    font-weight: 700; font-size: .92em; text-align: center;
+}
+.ws-foot {
+    display: flex; justify-content: space-between; gap: 10px;
+    padding: 14px 20px; border-top: 1px solid #e5e7eb;
+}
+.ws-btn {
+    border: none; border-radius: 8px; padding: 9px 18px;
+    font-weight: 600; font-size: .92em; cursor: pointer;
+}
+.ws-btn-ghost { background: #f3f4f6; color: #374151; }
+.ws-btn-ghost:hover { background: #e5e7eb; }
+.ws-btn-primary { background: #2563eb; color: #fff; }
+.ws-btn-primary:hover { background: #1d4ed8; }

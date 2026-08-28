@@ -142,6 +142,14 @@
 <div class="figma-divider"></div>
 <button class="figma-btn" data-act="exportToDocx" id="export-btn">
 <span class="figma-btn-icon purple">📄</span><span data-i18n="txExportToWord">Export to Word</span></button>
+<!-- Word export settings. A toolbar button, NOT a `.tab`: switchTab()
+     strips `.active` from every `.tab` on the page and rebuilds it from
+     data-args, so a settings button wearing that class would blank
+     whichever section the user was working in. No data-i18n either —
+     word_settings.js owns these strings and repaints this label on
+     mb:langchange, the same arrangement content.js uses. -->
+<button class="figma-btn" data-act="openWordSettings" id="word-settings-btn">
+<span class="figma-btn-icon silver">⚙️</span><span>Settings</span></button>
 <div class="figma-divider"></div>
 <button class="figma-btn" data-act="clearAll" style="color:#dc2626;">
 <span class="figma-btn-icon red"><svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg></span><span data-i18n="txClearAll">Clear All</span></button>
@@ -974,6 +982,7 @@
 <script src="src/marks.js"></script>
 <script src="src/steps.js"></script>
 <script src="src/storage.js"></script>
+<script src="src/word_settings.js"></script>
 <script src="src/export_ui.js"></script>
 <script src="src/exports_docx.js"></script>
 <script src="src/contentlang_ui.js"></script>
