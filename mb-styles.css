@@ -2767,11 +2767,12 @@ button#lg-preview-btn:disabled {
     border-bottom: 1px solid #e5e7eb;
     font-weight: 700; font-size: 1.05em;
 }
-.ws-x {
-    background: none; border: none; cursor: pointer;
-    font-size: 1.5em; line-height: 1; color: #6b7280; padding: 0 4px;
+.ws-modal .ws-head button.ws-x {
+    background: none !important; background-color: transparent !important;
+    border: none !important; box-shadow: none !important; cursor: pointer;
+    font-size: 1.5em; line-height: 1; color: #6b7280 !important; padding: 0 4px !important;
 }
-.ws-x:hover { color: #111827; }
+.ws-modal .ws-head button.ws-x:hover { color: #111827 !important; background: none !important; }
 .ws-body { padding: 18px 20px; overflow-y: auto; }
 .ws-note {
     background: #f0f9ff; border: 1px solid #bae6fd; color: #075985;
@@ -2795,14 +2796,69 @@ button#lg-preview-btn:disabled {
     min-width: 96px;
 }
 .ws-swatches { display: flex; gap: 6px; flex-wrap: wrap; }
-.ws-swatch {
-    width: 26px; height: 26px; border-radius: 6px; cursor: pointer;
-    border: 2px solid transparent; box-shadow: 0 0 0 1px #d1d5db inset;
-    padding: 0;
+
+/* ── Why these selectors are this long ──────────────────────
+   `button:not(.tab):not(.figma-btn):not(.mark-dropdown-item)` above
+   paints every remaining button silver with !important. Two things
+   beat it, and BOTH are needed:
+
+     1. !important — an inline `style="background:#0070C0"` loses to an
+        !important declaration, which is why the first build rendered
+        eight empty grey boxes.
+     2. Specificity — that rule scores (0,3,1). A bare `.ws-swatch` is
+        (0,1,0) and still loses even with !important on both sides.
+        `.ws-modal .ws-swatches button.ws-swatch.ws-c-XXXXXX` is
+        (0,4,1) and wins outright.
+
+   The colour is a literal per-swatch class rather than a custom
+   property, so it survives anywhere var() does not and can be asserted
+   against a real computed style in the test suite.
+
+   These eight rules mirror WS_PALETTE in word_settings.js. Changing one
+   list means changing the other. */
+.ws-modal .ws-swatches button.ws-swatch {
+    width: 26px !important; height: 26px !important;
+    border-radius: 6px !important; cursor: pointer;
+    border: 2px solid transparent !important;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, .18) inset !important;
+    padding: 0 !important; min-width: 0 !important; margin: 0 !important;
 }
-.ws-swatch.is-on {
-    border-color: #111827;
-    box-shadow: 0 0 0 2px #fff inset, 0 0 0 3px #111827;
+.ws-modal .ws-swatches button.ws-swatch.ws-c-0070C0,
+.ws-modal .ws-swatches button.ws-swatch.ws-c-0070C0:hover {
+    background: #0070C0 !important; background-color: #0070C0 !important;
+}
+.ws-modal .ws-swatches button.ws-swatch.ws-c-1F3864,
+.ws-modal .ws-swatches button.ws-swatch.ws-c-1F3864:hover {
+    background: #1F3864 !important; background-color: #1F3864 !important;
+}
+.ws-modal .ws-swatches button.ws-swatch.ws-c-375623,
+.ws-modal .ws-swatches button.ws-swatch.ws-c-375623:hover {
+    background: #375623 !important; background-color: #375623 !important;
+}
+.ws-modal .ws-swatches button.ws-swatch.ws-c-7B241C,
+.ws-modal .ws-swatches button.ws-swatch.ws-c-7B241C:hover {
+    background: #7B241C !important; background-color: #7B241C !important;
+}
+.ws-modal .ws-swatches button.ws-swatch.ws-c-5B2C6F,
+.ws-modal .ws-swatches button.ws-swatch.ws-c-5B2C6F:hover {
+    background: #5B2C6F !important; background-color: #5B2C6F !important;
+}
+.ws-modal .ws-swatches button.ws-swatch.ws-c-3F464D,
+.ws-modal .ws-swatches button.ws-swatch.ws-c-3F464D:hover {
+    background: #3F464D !important; background-color: #3F464D !important;
+}
+.ws-modal .ws-swatches button.ws-swatch.ws-c-0F6674,
+.ws-modal .ws-swatches button.ws-swatch.ws-c-0F6674:hover {
+    background: #0F6674 !important; background-color: #0F6674 !important;
+}
+.ws-modal .ws-swatches button.ws-swatch.ws-c-000000,
+.ws-modal .ws-swatches button.ws-swatch.ws-c-000000:hover {
+    background: #000000 !important; background-color: #000000 !important;
+}
+.ws-modal .ws-swatches button.ws-swatch.is-on,
+.ws-modal .ws-swatches button.ws-swatch.is-on:hover {
+    border-color: #111827 !important;
+    box-shadow: 0 0 0 2px #fff inset, 0 0 0 3px #111827 !important;
 }
 .ws-preview {
     border: 1px solid #e5e7eb; border-radius: 10px;
@@ -2817,11 +2873,25 @@ button#lg-preview-btn:disabled {
     display: flex; justify-content: space-between; gap: 10px;
     padding: 14px 20px; border-top: 1px solid #e5e7eb;
 }
-.ws-btn {
-    border: none; border-radius: 8px; padding: 9px 18px;
-    font-weight: 600; font-size: .92em; cursor: pointer;
+/* Same override problem, same fix — the footer buttons and the close
+   × would otherwise all come out silver. */
+.ws-modal .ws-foot button.ws-btn {
+    border: 1px solid transparent !important; border-radius: 8px !important;
+    padding: 9px 18px !important; font-weight: 600; font-size: .92em;
+    cursor: pointer; box-shadow: none !important;
 }
-.ws-btn-ghost { background: #f3f4f6; color: #374151; }
-.ws-btn-ghost:hover { background: #e5e7eb; }
-.ws-btn-primary { background: #2563eb; color: #fff; }
-.ws-btn-primary:hover { background: #1d4ed8; }
+.ws-modal .ws-foot button.ws-btn-ghost {
+    background: #f3f4f6 !important; background-color: #f3f4f6 !important;
+    color: #374151 !important; border-color: #e5e7eb !important;
+}
+.ws-modal .ws-foot button.ws-btn-ghost:hover {
+    background: #e5e7eb !important; background-color: #e5e7eb !important;
+}
+.ws-modal .ws-foot button.ws-btn-primary {
+    background: #2563eb !important; background-color: #2563eb !important;
+    color: #fff !important; border-color: #2563eb !important;
+}
+.ws-modal .ws-foot button.ws-btn-primary:hover {
+    background: #1d4ed8 !important; background-color: #1d4ed8 !important;
+    border-color: #1d4ed8 !important;
+}
