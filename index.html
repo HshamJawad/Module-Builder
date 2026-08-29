@@ -991,10 +991,22 @@
 <script>
 (function () {
     'use strict';
-    var KEY = 'mb_nav_collapsed', CLASS = 'mb-nav-collapsed';
+    var CLASS = 'mb-nav-collapsed';
 
-    function read()  { try { return localStorage.getItem(KEY) === '1'; } catch (e) { return false; } }
-    function write(v){ try { localStorage.setItem(KEY, v ? '1' : '0'); } catch (e) {} }
+    /* persistence.js is the register of every key this tool writes, and
+       MB_KEYS is that register. This script runs on DOMContentLoaded,
+       BEFORE src/persistence.js is parsed, so the key is resolved at
+       call time rather than captured once at load — with the literal as
+       the floor. Folding a panel must never depend on another file
+       having loaded first. Same arrangement as error-handler2.js, and
+       for the same reason. */
+    function key() {
+        return (typeof MB_KEYS === 'object' && MB_KEYS && MB_KEYS.navCollapsed)
+            ? MB_KEYS.navCollapsed : 'mb_nav_collapsed';
+    }
+
+    function read()  { try { return localStorage.getItem(key()) === '1'; } catch (e) { return false; } }
+    function write(v){ try { localStorage.setItem(key(), v ? '1' : '0'); } catch (e) {} }
 
     function apply(collapsed, btn) {
         document.body.classList.toggle(CLASS, collapsed);
