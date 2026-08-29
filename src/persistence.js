@@ -55,6 +55,12 @@ var MB_KEYS = {
        before this one and falls back to the literal if MB_KEYS is not
        up yet, because an error report must not depend on load order. */
     lastError:   'app_last_error',
+    /* Sidebar fold state, written by the inline script at the foot of
+       index.html. That script runs on DOMContentLoaded, before this file
+       is parsed, so it resolves the key at call time and falls back to
+       the literal — registered here so MB_KEYS remains a complete list
+       of what the tool writes. */
+    navCollapsed: 'mb_nav_collapsed',
     /* Cross-tool. Not prefixed on purpose — see header. */
     uiLang:      'dacum_lang',
     dacumImport: 'dacum_modules_export'
