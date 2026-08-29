@@ -384,21 +384,26 @@
      mb-styles.css. Local rather than hosted, so the guide keeps
      working with no network exactly like the tool does.
 
-     Several spellings are listed on purpose: GitHub Pages is
-     case-sensitive and the file may have shipped as Cairo.woff2,
-     cairo.woff2 or with a -VF suffix. The browser walks the list and
-     takes the first URL that resolves. If every one 404s, the stack
-     falls through to Segoe UI / Tahoma and the guide still reads
-     correctly — it simply looks plainer.
+     PATHS ARE RELATIVE TO THIS FILE. The guide sits at the repository
+     ROOT beside index.html, so `fonts/...` is correct and is listed
+     first; mb-styles.css uses the same bare prefix for the same reason.
+     The `../fonts/...` spellings follow as a second chance in case the
+     guide is ever moved down into src/ — a wrong URL in this list costs
+     nothing, because the browser simply walks to the next one.
 
-     This assumes the guide sits beside index.html at the repository
-     root, which is where the tool's Help tab links to it. */
+     The several capitalisations are also deliberate: GitHub Pages is
+     case-sensitive and the file may have shipped as Cairo.woff2,
+     cairo.woff2 or with a -VF suffix. If every URL 404s the stack falls
+     through to Segoe UI / Tahoma and the guide still reads correctly —
+     it simply looks plainer. */
   @font-face {
     font-family: 'Cairo';
-    src: url('fonts/Cairo.woff2')         format('woff2'),
-         url('fonts/cairo.woff2')         format('woff2'),
-         url('fonts/Cairo-VF.woff2')      format('woff2'),
-         url('fonts/Cairo-Regular.woff2') format('woff2');
+    src: url('fonts/Cairo.woff2')            format('woff2'),
+         url('fonts/cairo.woff2')            format('woff2'),
+         url('fonts/Cairo-VF.woff2')         format('woff2'),
+         url('fonts/Cairo-Regular.woff2')    format('woff2'),
+         url('../fonts/Cairo.woff2')         format('woff2'),
+         url('../fonts/cairo.woff2')         format('woff2');
     font-weight: 200 1000;
     font-style: normal;
     font-display: swap;
@@ -547,9 +552,9 @@ GUIDE.en = {
   langName: 'English',
   hero: {
     badge: '📘 Official Documentation',
-    title: 'Module Builder v3.1',
+    title: 'Module Builder',
     sub: 'A complete guide to designing, building, and exporting competency-based training modules — all in your browser.',
-    meta: ['🗓 Version 3.1 — 2026', '👨‍💻 by Husham Jawad Kadhim', '🌐 Works offline · No install']
+    meta: ['👨\u200d💻 by Husham Jawad Kadhim', '🌐 Works offline · No install']
   },
   footer: {
     line1: '<strong>Module Builder v3.1</strong> — User Guide',
@@ -592,6 +597,29 @@ GUIDE.en = {
           ['<span class="pill pill-red">🗑 Clear All</span>', 'Permanently clears all entered data across every tab. Shows a confirmation dialog first.']
         ]},
         { t: 'callout', k: 'info', txt: 'The <strong>language menu</strong> in the toolbar controls three separate things: the language of the <em>interface</em>, the language you are currently <em>writing</em> in, and the language the document is <em>exported</em> in. Switching the writing language does not erase the other sides — every field keeps all three.' }
+      ]
+    },
+    {
+      id: 'sidebar', nav: '🗂 Sidebar', label: '🗂 Sections Panel', title: 'The Sections Panel',
+      lead: 'The eight tabs live in a panel down the side of the window. It is how you move between the parts of a module, and it can be folded away when you want the room.',
+      blocks: [
+        { t: 'steps', items: [
+          'Click any tab to open that part of the module. The panel highlights where you are, and the working area to the side changes to match.',
+          'Click the <strong>☰</strong> button at the far left of the toolbar to fold the panel down to its icons — useful on a narrow screen, or when you are typing a long content block and want the width.',
+          'Click it again to unfold. <strong>The tool remembers which way you left it</strong> and opens the same way next time.'
+        ]},
+        { t: 'table', head: ['Tab', 'What you do there'], rows: [
+          ['🏠 <strong>Basic Info</strong>', 'Create modules and Learning Outcomes; the starting point'],
+          ['<strong>Covers</strong>', 'Front and back cover images and the module info table'],
+          ['<strong>Introduction Pages</strong>', 'Work team table and introductory text'],
+          ['<strong>Information Sheet</strong>', 'Content, images, tables, self-check and answers key'],
+          ['<strong>Activity / Job Sheet</strong>', 'Resources, steps and the performance criteria checklist'],
+          ['<strong>Assessment Unit</strong>', 'Portfolio of Evidence forms, one per Learning Outcome'],
+          ['📚 <strong>References</strong>', 'Bibliography entries'],
+          ['❓ <strong>Help</strong>', 'This guide, the QR code, and version information']
+        ]},
+        { t: 'callout', k: 'info', txt: 'The tabs follow the order the document is exported in, from the cover through to the references. Working top to bottom is the shortest path through a module.' },
+        { t: 'callout', k: 'tip', txt: 'You do not have to save before switching tabs. Moving between tabs, modules or Learning Outcomes saves whatever you were editing first.' }
       ]
     },
     {
@@ -879,9 +907,9 @@ GUIDE.fr = {
   langName: 'Français',
   hero: {
     badge: '📘 Documentation officielle',
-    title: 'Module Builder v3.1',
+    title: 'Module Builder',
     sub: 'Un guide complet pour concevoir, construire et exporter des modules de formation par compétences — entièrement dans votre navigateur.',
-    meta: ['🗓 Version 3.1 — 2026', '👨‍💻 par Husham Jawad Kadhim', '🌐 Fonctionne hors ligne · Sans installation']
+    meta: ['👨\u200d💻 par Husham Jawad Kadhim', '🌐 Fonctionne hors ligne · Sans installation']
   },
   footer: {
     line1: '<strong>Module Builder v3.1</strong> — Guide de l\u2019utilisateur',
@@ -924,6 +952,29 @@ GUIDE.fr = {
           ['<span class="pill pill-red">🗑 Tout effacer</span>', 'Efface définitivement toutes les données saisies dans tous les onglets. Une confirmation est demandée.']
         ]},
         { t: 'callout', k: 'info', txt: 'Le <strong>menu de langue</strong> de la barre d\u2019outils contrôle trois choses distinctes : la langue de l\u2019<em>interface</em>, la langue dans laquelle vous <em>rédigez</em> actuellement, et la langue d\u2019<em>export</em> du document. Changer la langue de rédaction n\u2019efface pas les autres versions — chaque champ les conserve toutes les trois.' }
+      ]
+    },
+    {
+      id: 'sidebar', nav: '🗂 Panneau', label: '🗂 Panneau des sections', title: 'Le panneau des sections',
+      lead: 'Les huit onglets se trouvent dans un panneau latéral. C\u2019est par lui que vous circulez entre les parties d\u2019un module, et il se replie quand vous avez besoin de place.',
+      blocks: [
+        { t: 'steps', items: [
+          'Cliquez sur un onglet pour ouvrir cette partie du module. Le panneau met en évidence l\u2019endroit où vous êtes, et la zone de travail change en conséquence.',
+          'Cliquez sur le bouton <strong>☰</strong> tout à gauche de la barre d\u2019outils pour replier le panneau sur ses icônes — utile sur un écran étroit, ou lorsque vous rédigez un long bloc de contenu et voulez la largeur.',
+          'Cliquez de nouveau pour le déplier. <strong>L\u2019outil retient l\u2019état dans lequel vous l\u2019avez laissé</strong> et rouvre de la même façon.'
+        ]},
+        { t: 'table', head: ['Onglet', 'Ce que vous y faites'], rows: [
+          ['🏠 <strong>Informations de base</strong>', 'Créer les modules et les résultats d\u2019apprentissage ; le point de départ'],
+          ['<strong>Couvertures</strong>', 'Images de couverture et tableau d\u2019informations du module'],
+          ['<strong>Pages d\u2019introduction</strong>', 'Tableau de l\u2019équipe de travail et texte introductif'],
+          ['<strong>Fiche d\u2019information</strong>', 'Contenu, images, tableaux, auto-évaluation et corrigé'],
+          ['<strong>Fiche d\u2019activité / de travail</strong>', 'Ressources, étapes et liste de vérification des critères'],
+          ['<strong>Unité d\u2019évaluation</strong>', 'Fiches Portfolio de preuves, une par résultat d\u2019apprentissage'],
+          ['📚 <strong>Références</strong>', 'Entrées bibliographiques'],
+          ['❓ <strong>Aide</strong>', 'Ce guide, le code QR et les informations de version']
+        ]},
+        { t: 'callout', k: 'info', txt: 'Les onglets suivent l\u2019ordre d\u2019export du document, de la couverture jusqu\u2019aux références. Travailler de haut en bas est le chemin le plus court à travers un module.' },
+        { t: 'callout', k: 'tip', txt: 'Inutile d\u2019enregistrer avant de changer d\u2019onglet. Passer d\u2019un onglet, d\u2019un module ou d\u2019un résultat à l\u2019autre enregistre d\u2019abord ce que vous étiez en train de modifier.' }
       ]
     },
     {
@@ -1211,9 +1262,9 @@ GUIDE.ar = {
   langName: 'العربية',
   hero: {
     badge: '📘 التوثيق الرسمي',
-    title: 'Module Builder — الإصدار ٣٫١',
+    title: 'Module Builder',
     sub: 'دليل كامل لتصميم وحدات التدريب القائمة على الجدارات وبنائها وتصديرها — كل ذلك داخل المتصفّح.',
-    meta: ['🗓 الإصدار ٣٫١ — ٢٠٢٦', '👨‍💻 إعداد هشام جواد كاظم', '🌐 يعمل دون إنترنت · بلا تثبيت']
+    meta: ['👨\u200d💻 إعداد هشام جواد كاظم', '🌐 يعمل دون إنترنت · بلا تثبيت']
   },
   footer: {
     line1: '<strong>Module Builder — الإصدار ٣٫١</strong> — دليل المستخدم',
@@ -1256,6 +1307,29 @@ GUIDE.ar = {
           ['<span class="pill pill-red">🗑 مسح الكل</span>', 'يمسح نهائياً كل البيانات المُدخلة في جميع التبويبات، بعد رسالة تأكيد.']
         ]},
         { t: 'callout', k: 'info', txt: '<strong>قائمة اللغة</strong> في شريط الأدوات تتحكّم بثلاثة أمور منفصلة: لغة <em>الواجهة</em>، واللغة التي <em>تكتب</em> بها الآن، واللغة التي يُصدَّر بها <em>المستند</em>. تغيير لغة الكتابة لا يمحو الجوانب الأخرى — كل حقل يحتفظ بالثلاثة.' }
+      ]
+    },
+    {
+      id: 'sidebar', nav: '🗂 لوحة الأقسام', label: '🗂 لوحة الأقسام', title: 'لوحة الأقسام الجانبية',
+      lead: 'التبويبات الثمانية تقع في لوحة على جانب النافذة. بها تتنقّل بين أجزاء الوحدة، ويمكن طيّها متى احتجت المساحة.',
+      blocks: [
+        { t: 'steps', items: [
+          'اضغط أي تبويب لتفتح ذلك الجزء من الوحدة. تُبرز اللوحة موضعك الحالي، وتتبدّل مساحة العمل إلى جانبها تبعاً لذلك.',
+          'اضغط زر <strong>☰</strong> في طرف شريط الأدوات لطيّ اللوحة إلى أيقوناتها — يفيد على الشاشات الضيّقة، أو حين تكتب بطاقة محتوى طويلة وتريد العرض.',
+          'اضغطه ثانية لفتحها. <strong>والأداة تتذكّر الحالة التي تركتها عليها</strong> فتفتح على الهيئة نفسها في المرة القادمة.'
+        ]},
+        { t: 'table', head: ['التبويب', 'ما تفعله فيه'], rows: [
+          ['🏠 <strong>المعلومات الأساسية</strong>', 'إنشاء الوحدات ونواتج التعلّم؛ نقطة البداية'],
+          ['<strong>الأغلفة</strong>', 'صور الغلافين وجدول معلومات الوحدة'],
+          ['<strong>صفحات التقديم</strong>', 'جدول فريق العمل والنص التقديمي'],
+          ['<strong>ورقة المعلومات</strong>', 'المحتوى والصور والجداول والتحقّق الذاتي ومفتاح الإجابات'],
+          ['<strong>ورقة النشاط/العمل</strong>', 'الموارد والخطوات وقائمة التحقّق من معايير الأداء'],
+          ['<strong>وحدة التقييم</strong>', 'نماذج حقيبة الأدلة، نموذج لكل ناتج تعلّم'],
+          ['📚 <strong>المراجع</strong>', 'مداخل قائمة المراجع'],
+          ['❓ <strong>المساعدة</strong>', 'هذا الدليل، ورمز QR، ومعلومات الإصدار']
+        ]},
+        { t: 'callout', k: 'info', txt: 'ترتيب التبويبات هو ترتيب تصدير المستند نفسه، من الغلاف حتى المراجع. والعمل من الأعلى إلى الأسفل أقصر طريق خلال الوحدة.' },
+        { t: 'callout', k: 'tip', txt: 'لا حاجة إلى الحفظ قبل تبديل التبويبات. فالانتقال بين تبويب وآخر، أو بين وحدة وأخرى، أو بين ناتج وآخر، يحفظ ما كنت تحرّره أولاً.' }
       ]
     },
     {
