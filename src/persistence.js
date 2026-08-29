@@ -50,6 +50,11 @@ var MB_KEYS = {
        language, because a team's documents should look alike whichever
        side they were written on. Owned by word_settings.js. */
     wordExport:  'mb_word_export_settings',
+    /* Last captured error, written by error-handler2.js. Registered here
+       so the key is visible in one place with the rest; that file loads
+       before this one and falls back to the literal if MB_KEYS is not
+       up yet, because an error report must not depend on load order. */
+    lastError:   'app_last_error',
     /* Cross-tool. Not prefixed on purpose — see header. */
     uiLang:      'dacum_lang',
     dacumImport: 'dacum_modules_export'
