@@ -381,8 +381,9 @@
   /* ── Arabic typeface ─────────────────────────────────────
      Cairo, served from the repository's own /fonts folder — the same
      file and the same spellings the tool itself loads in
-     mb-styles.css. Local rather than hosted, so the guide keeps
-     working with no network exactly like the tool does.
+     mb-styles.css. Local rather than hosted, so the font comes from the
+     same origin as the page and does not depend on Google Fonts being
+     reachable.
 
      PATHS ARE RELATIVE TO THIS FILE. The guide sits at the repository
      ROOT beside index.html, so `fonts/...` is correct and is listed
@@ -554,7 +555,7 @@ GUIDE.en = {
     badge: '📘 Official Documentation',
     title: 'Module Builder',
     sub: 'A complete guide to designing, building, and exporting competency-based training modules — all in your browser.',
-    meta: ['👨\u200d💻 by Husham Jawad Kadhim', '🌐 Works offline · No install']
+    meta: ['👨\u200d💻 by Husham Jawad Kadhim']
   },
   footer: {
     line1: '<strong>Module Builder v3.1</strong> — User Guide',
@@ -564,7 +565,7 @@ GUIDE.en = {
   sections: [
     {
       id: 'overview', nav: '🗺 Overview', label: '🗺 Overview', title: 'What is Module Builder?',
-      lead: 'Module Builder is a browser-based tool for TVET curriculum developers to design competency-based training modules and export them as formatted Word (.docx) documents — with no installation, and no internet connection required after loading.',
+      lead: 'Module Builder is a browser-based tool for TVET curriculum developers to design competency-based training modules and export them as formatted Word (.docx) documents. There is nothing to install, and everything runs inside your own browser — your content is never uploaded anywhere.',
       blocks: [
         { t: 'feats', items: [
           { ico: '🏗', h: 'Module-based structure', p: 'Organize content by Modules → Learning Outcomes → Info &amp; Activity Sheets' },
@@ -909,7 +910,7 @@ GUIDE.fr = {
     badge: '📘 Documentation officielle',
     title: 'Module Builder',
     sub: 'Un guide complet pour concevoir, construire et exporter des modules de formation par compétences — entièrement dans votre navigateur.',
-    meta: ['👨\u200d💻 par Husham Jawad Kadhim', '🌐 Fonctionne hors ligne · Sans installation']
+    meta: ['👨\u200d💻 par Husham Jawad Kadhim']
   },
   footer: {
     line1: '<strong>Module Builder v3.1</strong> — Guide de l\u2019utilisateur',
@@ -919,7 +920,7 @@ GUIDE.fr = {
   sections: [
     {
       id: 'overview', nav: '🗺 Aperçu', label: '🗺 Aperçu', title: 'Qu\u2019est-ce que Module Builder ?',
-      lead: 'Module Builder est un outil web destiné aux concepteurs de curricula EFTP pour créer des modules de formation par compétences et les exporter en documents Word (.docx) mis en forme — sans installation, et sans connexion Internet une fois la page chargée.',
+      lead: 'Module Builder est un outil web destiné aux concepteurs de curricula EFTP pour créer des modules de formation par compétences et les exporter en documents Word (.docx) mis en forme. Rien à installer, et tout s\u2019exécute dans votre propre navigateur — votre contenu n\u2019est jamais téléversé nulle part.',
       blocks: [
         { t: 'feats', items: [
           { ico: '🏗', h: 'Structure modulaire', p: 'Organisez le contenu par Modules → Résultats d\u2019apprentissage → Fiches d\u2019information et d\u2019activité' },
@@ -1262,19 +1263,19 @@ GUIDE.ar = {
   langName: 'العربية',
   hero: {
     badge: '📘 التوثيق الرسمي',
-    title: 'Module Builder',
+    title: 'باني الوحدات التدريبية',
     sub: 'دليل كامل لتصميم وحدات التدريب القائمة على الجدارات وبنائها وتصديرها — كل ذلك داخل المتصفّح.',
-    meta: ['👨\u200d💻 إعداد هشام جواد كاظم', '🌐 يعمل دون إنترنت · بلا تثبيت']
+    meta: ['👨\u200d💻 إعداد هشام جواد كاظم']
   },
   footer: {
-    line1: '<strong>Module Builder — الإصدار ٣٫١</strong> — دليل المستخدم',
+    line1: '<strong>باني الوحدات التدريبية — الإصدار ٣٫١</strong> — دليل المستخدم',
     line2: 'إعداد <strong>هشام جواد كاظم</strong> · مطوّر مناهج التعليم والتدريب المهني والتقني ومبتكر في تقنيات التعليم',
-    disclaimer: 'يُقدَّم Module Builder «كما هو» دون أي ضمان من أي نوع. المستخدم وحده مسؤول عن مراجعة كل المحتوى المُصدَّر والتحقّق منه قبل استعماله.'
+    disclaimer: 'تُقدَّم أداة باني الوحدات التدريبية «كما هي» دون أي ضمان من أي نوع. المستخدم وحده مسؤول عن مراجعة كل المحتوى المُصدَّر والتحقّق منه قبل استعماله.'
   },
   sections: [
     {
-      id: 'overview', nav: '🗺 نظرة عامة', label: '🗺 نظرة عامة', title: 'ما هو Module Builder؟',
-      lead: 'أداة تعمل في المتصفّح، موجّهة لمطوّري مناهج التعليم والتدريب المهني والتقني، لتصميم وحدات تدريبية قائمة على الجدارات وتصديرها مستندات Word‏ (.docx) منسّقة — بلا تثبيت، وبلا حاجة إلى اتصال بالإنترنت بعد تحميل الصفحة.',
+      id: 'overview', nav: '🗺 نظرة عامة', label: '🗺 نظرة عامة', title: 'ما هي أداة باني الوحدات التدريبية؟',
+      lead: 'أداة تعمل في المتصفّح، موجّهة لمطوّري مناهج التعليم والتدريب المهني والتقني، لتصميم وحدات تدريبية قائمة على الجدارات وتصديرها مستندات Word‏ (.docx) منسّقة. لا شيء يُثبَّت، وكل شيء يجري داخل متصفّحك أنت — فمحتواك لا يُرفَع إلى أي مكان.',
       blocks: [
         { t: 'feats', items: [
           { ico: '🏗', h: 'بنية قائمة على الوحدات', p: 'تنظيم المحتوى: وحدات ← نواتج تعلّم ← أوراق معلومات وأوراق نشاط' },
