@@ -12,6 +12,67 @@
 (function (global) {
   'use strict';
 
+  /* ── Language ─────────────────────────────────────────────────────────
+     The tool ships in English, French and Arabic, and this was the one
+     user-facing surface still hard-coded to English: an Arabic user hit
+     an error and got "Something went wrong" in a left-to-right box.
+
+     The table lives here rather than in mb-translations.js for two
+     reasons. This file loads FIRST, before the translation dictionary
+     exists, so it cannot depend on it at parse time. And an error
+     handler that throws while looking up the word for "error" is worse
+     than useless — owning its strings means it can always report.
+     word_settings.js owns its strings for the same reason. */
+  const _STRINGS = {
+    en: {
+      title   : 'Something went wrong',
+      sub     : 'An unexpected error occurred. Your work may have been auto-saved. Please try again or reload the page.',
+      codeLbl : 'Error Code',
+      copy    : 'Copy Error',
+      copied  : 'Copied',
+      close   : 'Close',
+      dismiss : 'Dismiss',
+      toastLbl: 'Code:'
+    },
+    fr: {
+      title   : 'Une erreur est survenue',
+      sub     : 'Une erreur inattendue s\u2019est produite. Votre travail a peut-\u00eatre \u00e9t\u00e9 enregistr\u00e9 automatiquement. R\u00e9essayez ou rechargez la page.',
+      codeLbl : 'Code d\u2019erreur',
+      copy    : 'Copier l\u2019erreur',
+      copied  : 'Copi\u00e9',
+      close   : 'Fermer',
+      dismiss : 'Ignorer',
+      toastLbl: 'Code :'
+    },
+    ar: {
+      title   : '\u062d\u062f\u062b \u062e\u0637\u0623 \u0645\u0627',
+      sub     : '\u0648\u0642\u0639 \u062e\u0637\u0623 \u063a\u064a\u0631 \u0645\u062a\u0648\u0642\u0651\u0639. \u0631\u0628\u0651\u0645\u0627 \u062d\u064f\u0641\u0650\u0638 \u0639\u0645\u0644\u0643 \u062a\u0644\u0642\u0627\u0626\u064a\u0627\u064b. \u062d\u0627\u0648\u0644 \u0645\u0631\u0629 \u0623\u062e\u0631\u0649 \u0623\u0648 \u0623\u0639\u062f \u062a\u062d\u0645\u064a\u0644 \u0627\u0644\u0635\u0641\u062d\u0629.',
+      codeLbl : '\u0631\u0645\u0632 \u0627\u0644\u062e\u0637\u0623',
+      copy    : '\u0646\u0633\u062e \u0627\u0644\u062e\u0637\u0623',
+      copied  : '\u062a\u0645\u0651 \u0627\u0644\u0646\u0633\u062e',
+      close   : '\u0625\u063a\u0644\u0627\u0642',
+      dismiss : '\u062a\u062c\u0627\u0647\u0644',
+      toastLbl: '\u0627\u0644\u0631\u0645\u0632:'
+    }
+  };
+
+  function _lang() {
+    try {
+      if (global.i18n && typeof global.i18n.getLang === 'function') {
+        const l = global.i18n.getLang();
+        if (_STRINGS[l]) return l;
+      }
+    } catch (_) { /* i18n not loaded yet, or broken — English is the floor */ }
+    return 'en';
+  }
+
+  function _t(key) {
+    const table = _STRINGS[_lang()] || _STRINGS.en;
+    return table[key] || _STRINGS.en[key] || key;
+  }
+
+  function _isRTL() { return _lang() === 'ar'; }
+
   /* ── Per-category error counters ─────────────────────────────────────── */
   const _counters = {
     UI      : 0,
@@ -47,7 +108,14 @@
   /* ── Persist last error to localStorage ──────────────────────────────── */
   function _storeError(payload) {
     try {
-      localStorage.setItem('app_last_error', JSON.stringify({
+      /* persistence.js is the only file allowed to name localStorage, and
+         MB_KEYS is its register. This handler loads BEFORE it, so the key
+         is resolved at error time rather than at parse time, with the
+         literal as the floor: an error report must never depend on
+         another module having loaded successfully. */
+      const key = (typeof MB_KEYS === 'object' && MB_KEYS && MB_KEYS.lastError)
+        ? MB_KEYS.lastError : 'app_last_error';
+      localStorage.setItem(key, JSON.stringify({
         code    : payload.code,
         message : payload.message,
         time    : payload.time,
@@ -254,7 +322,7 @@
     const markCopied = function () {
       if (!btn) return;
       const orig = btn.innerHTML;
-      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copied!';
+      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> ' + _esc(_t('copied'));
       btn.classList.add('eh-copied');
       setTimeout(function () {
         btn.innerHTML = orig;
@@ -295,6 +363,9 @@
 
     const overlay = document.createElement('div');
     overlay.id = 'eh-overlay';
+    /* dir on the overlay, not on <html>: the page's own direction is the
+       tool's business, and an error dialog has no right to flip it. */
+    overlay.setAttribute('dir', _isRTL() ? 'rtl' : 'ltr');
     overlay.setAttribute('role', 'dialog');
     overlay.setAttribute('aria-modal', 'true');
     overlay.setAttribute('aria-labelledby', 'eh-modal-title');
@@ -308,10 +379,10 @@
             '<line x1="12" y1="16" x2="12.01" y2="16"/>' +
           '</svg>' +
         '</div>' +
-        '<h2 id="eh-modal-title">Something went wrong</h2>' +
-        '<p class="eh-subtitle">An unexpected error occurred. Your work may have been auto-saved. Please try again or reload the page.</p>' +
+        '<h2 id="eh-modal-title">' + _esc(_t('title')) + '</h2>' +
+        '<p class="eh-subtitle">' + _esc(_t('sub')) + '</p>' +
         '<div class="eh-code-pill">' +
-          '<span class="eh-code-label">Error Code</span>' +
+          '<span class="eh-code-label">' + _esc(_t('codeLbl')) + '</span>' +
           '<span class="eh-code-value">' + _esc(payload.code) + '</span>' +
         '</div>' +
         '<div class="eh-btn-row">' +
@@ -320,9 +391,9 @@
               '<rect x="9" y="9" width="13" height="13" rx="2"/>' +
               '<path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>' +
             '</svg>' +
-            'Copy Error' +
+            _esc(_t('copy')) +
           '</button>' +
-          '<button class="eh-btn eh-btn-close" id="eh-close-btn">Close</button>' +
+          '<button class="eh-btn eh-btn-close" id="eh-close-btn">' + _esc(_t('close')) + '</button>' +
         '</div>' +
       '</div>';
 
@@ -370,6 +441,7 @@
 
     const toast = document.createElement('div');
     toast.id = 'eh-toast';
+    toast.setAttribute('dir', _isRTL() ? 'rtl' : 'ltr');
     toast.setAttribute('role', 'alert');
     toast.innerHTML =
       '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">' +
@@ -377,10 +449,10 @@
         '<line x1="12" y1="8" x2="12" y2="12"/>' +
         '<line x1="12" y1="16" x2="12.01" y2="16"/>' +
       '</svg>' +
-      '<span class="eh-toast-text">Something went wrong</span>' +
-      '<span class="eh-toast-label">Code:</span>' +
+      '<span class="eh-toast-text">' + _esc(_t('title')) + '</span>' +
+      '<span class="eh-toast-label">' + _esc(_t('toastLbl')) + '</span>' +
       '<span class="eh-toast-code">' + _esc(payload.code) + '</span>' +
-      '<button class="eh-toast-x" title="Dismiss">✕</button>';
+      '<button class="eh-toast-x" title="' + _esc(_t('dismiss')) + '">✕</button>';
 
     document.body.appendChild(toast);
 
