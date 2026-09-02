@@ -558,6 +558,14 @@
 <button class="btn-add" data-act="addContentSection" style="padding:6px 14px;font-size:0.85em;">➕ <span data-i18n="dgAddContent">Add Content</span></button>
 </div>
 </div>
+<!-- The QR/link fields moved into a modal (src/link_modal.js) to
+     unclutter the sheet. They stay in the DOM, hidden, with their ids
+     intact: sheets.js reads and writes them by id, and the Word and
+     PDF exporters read what sheets.js stored. Rewriting that chain
+     would have risked both exports for a layout change. The modal
+     simply drives these inputs.
+     A link-type field is added here for the same reason. -->
+<div class="mb-link-store" style="display:none;">
 <div class="form-group">
 <div class="section-header">
 <div class="section-title" data-i18n="mbQrCodeLink">QR Code &amp; Link:</div>
@@ -580,7 +588,9 @@
 <div class="image-preview" id="info-qr-preview" style="max-width: 100px;"></div>
 <input accept="image/*" data-act="handleInfoQRUpload" data-on="change" id="info-qr-input" style="display: none;" type="file"/>
 </div>
+</div><input type="hidden" id="info-link-type" value="">
 </div>
+
 <div class="form-group">
 <div class="objective-wrapper">
 <div class="objective-header">
@@ -707,6 +717,14 @@
 <button class="btn-add" data-act="addStep" style="padding:6px 14px;font-size:0.85em;">➕ <span data-i18n="dgAddStep">Add Step</span></button>
 </div>
 </div>
+<!-- The QR/link fields moved into a modal (src/link_modal.js) to
+     unclutter the sheet. They stay in the DOM, hidden, with their ids
+     intact: sheets.js reads and writes them by id, and the Word and
+     PDF exporters read what sheets.js stored. Rewriting that chain
+     would have risked both exports for a layout change. The modal
+     simply drives these inputs.
+     A link-type field is added here for the same reason. -->
+<div class="mb-link-store" style="display:none;">
 <div class="form-group">
 <div class="section-header">
 <div class="section-title" data-i18n="mbQrCodeLink">QR Code &amp; Link:</div>
@@ -729,7 +747,9 @@
 <div class="image-preview" id="activity-qr-preview" style="max-width: 100px;"></div>
 <input accept="image/*" data-act="handleActivityQRUpload" data-on="change" id="activity-qr-input" style="display: none;" type="file"/>
 </div>
+</div><input type="hidden" id="activity-link-type" value="">
 </div>
+
 <div class="form-group">
 <div class="section-header">
 <div class="section-title" data-i18n="mbPerformanceCriteriaCheckList">Performance Criteria Check List:</div>
@@ -995,6 +1015,7 @@
 <script src="src/arabic-font.js"></script>
 <script src="src/pdf_arabic.js"></script>
 <script src="src/exports_pdf.js"></script>
+<script src="src/link_modal.js"></script>
 <script src="src/word_settings.js"></script>
 <script src="src/export_ui.js"></script>
 <script src="src/exports_docx.js"></script>

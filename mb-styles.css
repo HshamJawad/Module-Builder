@@ -2967,3 +2967,25 @@ button#lg-preview-btn:disabled {
     width: 16px !important; height: 16px !important; flex-shrink: 0;
     accent-color: #4A7C6A; margin: 0 !important;
 }
+
+/* Link / QR modal (link_modal.js). Reuses the export-settings shell. */
+.ws-modal .lm-stack { flex-direction: column; align-items: stretch; gap: 6px; }
+.ws-modal .lm-input {
+    width: 100%; border: 1px solid #d1d5db; border-radius: 8px;
+    padding: 9px 11px; font: inherit; font-size: .92em; background: #fff;
+}
+.ws-modal .lm-radios { display: flex; gap: 16px; flex-wrap: wrap; }
+.ws-modal .lm-radios input[type="radio"] {
+    width: 16px !important; height: 16px !important; margin: 0 !important; accent-color: #7c3aed;
+}
+.lm-note {
+    border-radius: 9px; padding: 10px 13px; margin: 12px 0 4px;
+    font-size: .86em; line-height: 1.6;
+}
+.lm-note-video { background: #f3f0ff; border: 1px solid #ddd6fe; color: #4c1d95; }
+.lm-note-page  { background: #f0f9ff; border: 1px solid #bae6fd; color: #075985; }
+.lm-dim { color: #8b93a8; font-size: .84em; line-height: 1.55; }
+.lm-auto { margin-top: 6px; }
+.lm-qr { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+.lm-qr img { width: 88px; height: 88px; object-fit: contain; border: 1px solid #e5e7eb; border-radius: 8px; }
+.btn-link-modal.has-link { box-shadow: 0 0 0 2px #c4b5fd; }
