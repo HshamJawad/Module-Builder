@@ -46,7 +46,31 @@
             padding-left:  max(24px, env(safe-area-inset-left));
             padding-right: max(24px, env(safe-area-inset-right));
             padding-top: env(safe-area-inset-top, 0px);
+
+            /* The bar grew from five buttons to eight. `justify-content:
+               center` with no overflow rule meant the row simply
+               overflowed its box: the outermost buttons were clipped by
+               the viewport at BOTH ends, and neither could be scrolled
+               to.
+
+               Scrolling horizontally fixes it, but only if the content
+               is allowed to start at the edge rather than being centred
+               — a centred flex row overflows symmetrically and the
+               scroll container cannot reach either end. So: centre
+               while it fits, scroll when it does not. */
+            overflow-x: auto;
+            overflow-y: hidden;
+            justify-content: safe center;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
         }
+        .figma-toolbar::-webkit-scrollbar { display: none; }
+
+        /* Buttons must not be squeezed narrower than their labels; that
+           is what turns "تصدير إلى Word" into a clipped stub. */
+        .figma-toolbar > * { flex: 0 0 auto; }
+
+        .figma-btn { white-space: nowrap; }
 
         .figma-btn {
             display: inline-flex;
@@ -2905,4 +2929,15 @@ button#lg-preview-btn:disabled {
     background: #DCE5E1 !important; background-color: #DCE5E1 !important;
     color: #7C8B85 !important; border-color: #DCE5E1 !important;
     cursor: default;
+}
+
+/* HTML-section checkboxes in the export settings dialog. */
+.ws-checks { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 4px 14px; }
+.ws-modal .ws-checks label.ws-check {
+    display: flex; align-items: center; gap: 8px; cursor: pointer;
+    font-size: .89em; color: #374151; padding: 3px 0;
+}
+.ws-modal .ws-checks input[type="checkbox"] {
+    width: 16px !important; height: 16px !important; flex-shrink: 0;
+    accent-color: #4A7C6A; margin: 0 !important;
 }
