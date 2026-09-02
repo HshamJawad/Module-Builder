@@ -33,6 +33,56 @@ async function exportToDocx() {
     if (typeof _wsBeginExport === 'function') _wsBeginExport();
 
     const _exportLang = _mbBeginExport(window.mbState);
+
+    /* Refuse to produce an empty document. This runs AFTER the DOM syncs
+       above so it judges what the author has actually typed, and BEFORE
+       any building, so nothing here can affect a document that does have
+       content — the readiness check either passes and changes nothing,
+       or stops and produces no file at all. */
+    {
+        /* Not `if (typeof … === 'function')`. That form skipped the check
+           SILENTLY whenever module_model.js failed to load, which is the
+           precise failure this check exists to prevent — and it did so
+           invisibly, so an empty document still downloaded and nothing
+           said why. The floor below runs when the module is absent, and
+           the console says so. */
+        let _ready;
+        if (typeof mbCheckExportReadiness === 'function') {
+            _ready = mbCheckExportReadiness(_exportLang);
+        } else {
+            console.error(
+                '[Module Builder] src/module_model.js did not load. Export checks are ' +
+                'running in fallback mode. Check that the file exists in src/ and that ' +
+                'index.html has <script src="src/module_model.js"></script>.'
+            );
+            const _pick = function (v) {
+                if (!v) return '';
+                if (typeof v === 'string') return v;
+                if (typeof v === 'object') return (v.en || '') + (v.fr || '') + (v.ar || '');
+                return String(v);
+            };
+            const _raw = window.mbState || {};
+            const _anySheet = (_raw.learningOutcomesData || []).some(function (lo) {
+                return ((lo && lo.infoSheets) || []).concat((lo && lo.activitySheets) || [])
+                    .some(function (sh) { return sh && _pick(sh.title).trim(); });
+            });
+            const _anyCover = (_raw.coverRows || []).some(function (r) { return r && _pick(r.value).trim(); });
+            const _anyRefs  = (_raw.referencesData || []).some(function (r) { return r && _pick(r.value).trim(); });
+            _ready = (_anySheet || _anyCover || _anyRefs)
+                ? { ok: true, title: '', message: '' }
+                : { ok: false,
+                    title: 'Nothing to export yet',
+                    message: 'This module has no content yet. Add a Learning Outcome, then add an Information Sheet or an Activity Sheet to it.' };
+        }
+        if (!_ready.ok) {
+            const _msg = _ready.title + '\n\n' + _ready.message;
+            if (typeof mbAlert === 'function') await mbAlert(_msg); else alert(_msg);
+            if (typeof showStatus === 'function') showStatus(_ready.title, 'error');
+            if (typeof setExportButtonState === 'function') setExportButtonState(false);
+            if (typeof hideExportInfo === 'function') hideExportInfo();
+            return;
+        }
+    }
     const mbState = biFlattenDeep(window.mbState, _exportLang);
 
     console.log('Export function started');
