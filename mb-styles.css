@@ -78,7 +78,17 @@
             max-width: 100%;
             overflow-x: auto;
             overflow-y: visible;
-            justify-content: safe center;
+            /* NOT `justify-content: center`, and not `safe center`
+               either. A centred flex row that overflows spills equally
+               past BOTH ends of its scroll box, and neither end can be
+               scrolled to — which is why the French labels, being the
+               longest, were cut off at both edges.
+
+               Auto margins on two empty pseudo-elements do what centring
+               was meant to do: they absorb the spare room when the row
+               fits, and collapse to nothing when it does not, leaving a
+               plain start-aligned row that scrolls properly. */
+            justify-content: flex-start;
             scrollbar-width: none;
             -webkit-overflow-scrolling: touch;
             /* Room for the dropdown to hang out of the track without the
@@ -86,6 +96,12 @@
             padding-bottom: 2px;
         }
         .figma-toolbar .figma-toolbar-scroll::-webkit-scrollbar { display: none; }
+        .figma-toolbar .figma-toolbar-scroll::before,
+        .figma-toolbar .figma-toolbar-scroll::after {
+            content: '';
+            margin: auto;
+            flex: 0 0 0;
+        }
 
         /* The language menu must not live inside the scroll track, for
            the same clipping reason — it stays a direct child of the bar. */
