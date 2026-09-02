@@ -178,8 +178,14 @@ function _hxSection(id, kicker, title, inner) {
 
 /* ── The document ──────────────────────────────────────────── */
 
-function mbBuildModuleHtml(model) {
+function mbBuildModuleHtml(model, opts) {
     if (!model) return '';
+    /* opts.print: the same document, tuned for paper. The reading
+       package and the printable one must come from ONE renderer — two
+       renderers would drift, and a PDF that disagrees with the HTML is
+       the same failure as an HTML that disagrees with the Word file. */
+    opts = opts || {};
+    var forPrint = !!opts.print;
     var L = model.lang;
     var t = function (k) { return _hxT(k, L); };
     var toc = [];
@@ -270,8 +276,8 @@ function mbBuildModuleHtml(model) {
                 h += '<div class="mx-selfcheck"><div class="mx-sub">' + t('selfCheck') + ' ' + _hxEsc(sh.selfCheck.number) + '</div>' +
                      '<p>' + _hxText(sh.selfCheck.content) + '</p>';
                 if (sh.answersKey) {
-                    h += '<button type="button" class="mx-reveal" data-reveal="' + sid + '-ans">' + t('showAnswers') + '</button>' +
-                         '<div class="mx-answers" id="' + sid + '-ans" hidden>' +
+                    h += (forPrint ? '' : '<button type="button" class="mx-reveal" data-reveal="' + sid + '-ans">' + t('showAnswers') + '</button>') +
+                         '<div class="mx-answers" id="' + sid + '-ans"' + (forPrint ? '' : ' hidden') + '>' +
                          '<div class="mx-sub">' + t('answersKey') + ' ' + _hxEsc(sh.answersKey.number) + '</div>' +
                          '<p>' + _hxText(sh.answersKey.content) + '</p></div>';
                 }
@@ -373,13 +379,25 @@ function mbBuildModuleHtml(model) {
     var backHtml = model.cover.backImage
         ? '<img class="mx-cover" src="' + _hxEsc(model.cover.backImage) + '" alt="">' : '';
 
-    return '<!DOCTYPE html>\n<html lang="' + _hxEsc(L) + '" dir="' + (model.rtl ? 'rtl' : 'ltr') + '">\n' +
+    var head = '<!DOCTYPE html>\n<html lang="' + _hxEsc(L) + '" dir="' + (model.rtl ? 'rtl' : 'ltr') + '">\n' +
       '<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n' +
-      '<title>' + _hxEsc(model.title) + '</title>\n<style>\n' + _hxCss() + '\n</style>\n</head>\n<body>\n' +
-      '<header class="mx-hero">' + coverHtml +
+      '<title>' + _hxEsc(model.title) + '</title>\n<style>\n' + _hxCss() +
+      (forPrint ? '\n' + _hxPrintCss() : '') + '\n</style>\n</head>\n<body' + (forPrint ? ' class="mx-forprint"' : '') + '>\n';
+
+    var hero = '<header class="mx-hero">' + coverHtml +
         '<h1>' + _hxEsc(model.title) + '</h1>' +
         '<div class="mx-hero-meta">' + t('generated') + ' ' + _hxEsc(model.generatedAt.slice(0, 10)) + '</div>' +
-      '</header>\n' +
+      '</header>\n';
+
+    /* On paper there is no navigation, no search box and no back-to-top
+       button — and no script at all, because nothing in it can be
+       clicked. Answers are printed rather than hidden: a trainer's copy
+       needs the key, and a hidden div in a PDF is simply lost. */
+    if (forPrint) {
+        return head + hero + '<main class="mx-main">' + body + backHtml + '</main>\n</body>\n</html>';
+    }
+
+    return head + hero +
       '<div class="mx-shell">\n' +
         '<nav class="mx-nav" id="mx-nav">' +
           '<div class="mx-nav-h">' + t('contents') + '</div>' +
@@ -705,5 +723,36 @@ function _hxJs() {
 '    window.scrollTo({ top: 0, behavior: "smooth" });',
 '  });',
 '})();'
+    ].join('\n');
+}
+
+/* ── Paper ──────────────────────────────────────────────────
+   Layered ON TOP of _hxCss() rather than replacing it, so the printed
+   document and the on-screen one cannot drift apart: they are the same
+   stylesheet with paper rules added. */
+function _hxPrintCss() {
+    return [
+'@page{size:A4;margin:18mm 16mm}',
+'body.mx-forprint{background:#fff;font-size:11.5pt;line-height:1.7}',
+'body.mx-forprint .mx-main{max-width:none}',
+'body.mx-forprint .mx-hero{background:#fff;color:#1f2430;padding:0 0 18px;border-bottom:2px solid #5b6ee1;margin-bottom:22px}',
+'body.mx-forprint .mx-hero h1{font-size:22pt}',
+'body.mx-forprint .mx-hero-meta{color:#6b7280}',
+'body.mx-forprint .mx-cover{max-width:100%;box-shadow:none;border-radius:0;break-after:page}',
+/* Each section starts a page: a training package is read sheet by
+   sheet, and a self-check that begins halfway down the previous page
+   is a self-check the trainee reads the answers to by accident. */
+'body.mx-forprint .mx-sec{border:none;border-radius:0;padding:0;margin:0 0 16px;break-inside:auto;break-before:page}',
+'body.mx-forprint .mx-sec:first-child{break-before:auto}',
+'body.mx-forprint .mx-sec h2{border-bottom:1.5px solid #dfe3ee;padding-bottom:7px}',
+'body.mx-forprint h2,body.mx-forprint .mx-sub{break-after:avoid}',
+'body.mx-forprint .mx-step,body.mx-forprint .mx-mark,body.mx-forprint tr{break-inside:avoid}',
+'body.mx-forprint table{break-inside:auto}',
+'body.mx-forprint thead{display:table-header-group}',
+'body.mx-forprint .mx-imgs img{max-width:250px}',
+'body.mx-forprint .mx-answers{border-top:1px dashed #cdd3e6}',
+'body.mx-forprint .mx-selfcheck,body.mx-forprint .mx-check{background:#fff;border:1px solid #dfe3ee}',
+'body.mx-forprint .mx-checklist input{-webkit-appearance:none;appearance:none;border:1.4px solid #6b7280;border-radius:3px}',
+'@media print{body.mx-forprint .mx-sec{break-before:page}}'
     ].join('\n');
 }
