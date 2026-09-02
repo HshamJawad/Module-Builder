@@ -237,6 +237,7 @@ function saveCurrentSheetToLO() {
         if (step.value.trim()) {
             const sid = step.dataset.stepId;
             incomingSteps.push({ text: step.value, stepId: sid, marks: collectMarks(`step-marks-${sid}`),
+                tables: collectContentTables(`step-${sid}`),
                                  uid: mbRowUid(step) });
         }
     });
@@ -483,6 +484,9 @@ function loadActivitySheetAtIndex(lo, index) {
                 // Restore marks for this step
                 if (stepData.marks && stepData.marks.length) {
                     restoreMarks(`step-marks-${mbState.stepCount}`, stepData.marks);
+                }
+                if (stepData.tables && stepData.tables.length) {
+                    restoreContentTables(`step-${mbState.stepCount}`, stepData.tables);
                 }
             });
         } else {

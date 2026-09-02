@@ -72,10 +72,18 @@ function addStep() {
             <button class="btn-add-image" data-act="addImage" data-args='[${sc}]'>🖼️ ${window.i18n.t('dgAddImages')}</button>
             <button class="btn-add-image btn-paste-image" data-act="pasteStepImage" data-args='[${sc}]' title="${_mbStepLabelT('rxPasteImageTip')}">📋 <span>${_mbStepLabelT('rxPasteImage')}</span></button>
             <button data-act="addStep" style="background:#667eea;color:white;border:none;padding:6px 14px;border-radius:5px;font-size:0.85em;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;">➕ <span data-i18n="dgAddStep">${window.i18n.t('dgAddStep')}</span></button>
+            <!-- The Activity tab had no table and no link button; both
+                 existed only on the Information Sheet. addContentTable
+                 is reused unchanged: it looks up a container whose id is
+                 content-tables- plus the id it is given, so the step
+                 simply passes step-N. -->
+            <button class="btn-add-mark" data-act="addContentTable" data-args='["step-${sc}"]' style="background:#0ea5e9;" title="${window.i18n.t('dgAddTable')}">📋 <span>${window.i18n.t('dgAddTableBtn')}</span></button>
+            <button class="btn-add-mark btn-link-modal" data-act="mbOpenLinkModal" data-args='["activity"]' style="background:#7c3aed;" title="${(typeof _lmT === 'function') ? _lmT('btn') : 'Link / QR'}">🔗 <span>${(typeof _lmT === 'function') ? _lmT('btn') : 'Link / QR'}</span></button>
             ${addMarkBtnHtml(`step-marks-${sc}`)}
         </div>
         <input type="file" id="image-input-${sc}" accept="image/*" multiple style="display:none;" data-act="handleStepImageUpload" data-on="change" data-args='[${sc}]'>
         <div id="step-image-gallery-${sc}" class="content-image-gallery"></div>
+        <div id="content-tables-step-${sc}"></div>
         <div id="step-marks-${sc}" class="marks-container"></div>
     `;
     container.appendChild(stepDiv);

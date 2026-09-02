@@ -351,7 +351,7 @@ function mbBuildModuleHtml(model, opts) {
                      sh.steps.map(function (s) {
                          return '<div class="mx-step"><div class="mx-step-n">' + s.index + '</div><div class="mx-step-b">' +
                                 (s.text ? '<p>' + _hxText(s.text) + '</p>' : '') +
-                                _hxImages(s.images) + _hxMarks(s.marks) + '</div></div>';
+                                _hxImages(s.images) + _hxTables(s.tables) + _hxMarks(s.marks) + '</div></div>';
                      }).join('') + '</div>';
             }
 

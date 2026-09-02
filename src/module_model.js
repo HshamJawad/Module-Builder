@@ -300,9 +300,10 @@ function mbBuildModuleModel(lang, state) {
                         index: idx + 1,
                         text: _mmStr(stp && stp.text),
                         images: _mmImages(sh.stepImages, stp && stp.stepId),
-                        marks: _mmMarks(stp && stp.marks)
+                        marks: _mmMarks(stp && stp.marks),
+                        tables: _mmTables(stp && stp.tables)
                     };
-                }).filter(function (s) { return s.text.trim() || s.images.length || s.marks.length; }),
+                }).filter(function (s) { return s.text.trim() || s.images.length || s.marks.length || s.tables.length; }),
                 criteria: {
                     title: _mmStr(sh.criteriaTitle),
                     instruction: _mmStr(sh.criteriaInstruction),

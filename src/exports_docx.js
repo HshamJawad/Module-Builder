@@ -1362,7 +1362,7 @@ async function exportToDocx() {
             /* 2.5 cm at 96 DPI, matching the button's own promise. */
             let qrCell = new TableCell({
                 children: [new Paragraph({ text: '' })],
-                width: { size: 1417, type: WidthType.DXA },
+                width: { size: 4536, type: WidthType.DXA },
                 verticalAlign: 'center',
                 margins: { top: 100, bottom: 100, left: 100, right: 100 }
             });
@@ -1377,7 +1377,12 @@ async function exportToDocx() {
                             })],
                             alignment: AlignmentType.CENTER
                         })],
-                        width: { size: 1417, type: WidthType.DXA },
+                        /* Half the 16 cm row, matching the layout this
+                           table had before it was lost. A 2.5 cm cell
+                           cannot hold a 2.5 cm image once cell margins
+                           are subtracted — the QR spilled into the text
+                           cell beside it. */
+                        width: { size: 4536, type: WidthType.DXA },
                         verticalAlign: 'center',
                         margins: { top: 100, bottom: 100, left: 100, right: 100 }
                     });
@@ -1401,7 +1406,7 @@ async function exportToDocx() {
                         alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), wordWrap: true
                     })
                 ],
-                width: { size: 7655, type: WidthType.DXA },
+                width: { size: 4536, type: WidthType.DXA },
                 verticalAlign: 'center',
                 margins: { top: 100, bottom: 100, left: 200, right: 200 }
             });
@@ -1572,6 +1577,14 @@ async function exportToDocx() {
                     ch.push(new Table({ rows: sRows, width: { size: 9072, type: WidthType.DXA }, borders: bdr2 }));
                     ch.push(new Paragraph({ children: [new TextRun({ text: '' })], spacing: { after: 200 } }));
                     if (step.marks) { step.marks.forEach(m => { if (m.text && m.text.trim()) { const mt = MARK_TYPES.find(x => x.key === m.key); if (mt) { ch.push(buildMarkDocxTable(mt, m.text)); } } }); }
+                    /* Steps can carry tables now, the same as content
+                       cards, and through the same builder. */
+                    if (step.tables && step.tables.length) {
+                        step.tables.forEach(t => {
+                            const tbl = _buildUserTable(t, Table, TableRow, TableCell, WidthType, BorderStyle);
+                            if (tbl) { ch.push(tbl); ch.push(new Paragraph({ children: [new TextRun({ text: '' })], spacing: { after: 200 } })); }
+                        });
+                    }
                 });
             }
 

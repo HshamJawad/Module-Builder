@@ -511,6 +511,13 @@ function _pdfBuild(pdf, model, lang) {
                 sh.steps.forEach(function (s) {
                     w.text(s.index + '. ' + s.text, { indent: 4 });
                     s.images.forEach(function (im) { w.image(im); });
+                    (s.tables || []).forEach(function (tb) {
+                        if (!tb.cells.length) return;
+                        var cols = tb.cells[0].length || 1;
+                        var cw = [];
+                        for (var i = 0; i < cols; i++) cw.push(w.CW / cols);
+                        w.table(tb.cells[0], tb.cells.slice(1), cw, { size: S.utable });
+                    });
                     s.marks.forEach(function (m) { w.mark(m); });
                 });
             }
@@ -584,8 +591,10 @@ function _pdfQR(w, qr) {
     const pdf = w.pdf, S = w.style;
     const size = S.body;
     const lh = w.lineH(size);
-    const qrW = 28;                       /* 2.5 cm plus cell padding */
-    const textW = w.CW - qrW;
+    /* Two EQUAL cells, as the Word table has. The QR cell was 2.5 cm
+       wide holding a 2.5 cm image, so once cell padding was subtracted
+       the code spilled across the divider into the text. */
+    const half = w.CW / 2;
     const padX = 3, padY = 2.5;
 
     const watch = _pdfT('watch', w.lang);
@@ -594,10 +603,13 @@ function _pdfQR(w, qr) {
         : ((qr.url || '').trim() ? watch : '');
 
     pdf.setFontSize(size);
-    const capLines = caption ? pdf.splitTextToSize(caption, textW - padX * 2) : [];
-    const urlLines = qr.url ? pdf.splitTextToSize(qr.url, textW - padX * 2) : [];
+    const capLines = caption ? pdf.splitTextToSize(caption, half - padX * 2) : [];
+    const urlLines = qr.url ? pdf.splitTextToSize(qr.url, half - padX * 2) : [];
     const textH = (capLines.length + urlLines.length) * lh + padY * 2;
-    const rowH = Math.max(textH, qr.image ? qrW : 0, lh * 2);
+    /* The image drives the row height when it is the taller of the two,
+       so it always fits inside its own cell. */
+    const qrSide = qr.image ? Math.min(25, half - padX * 2) : 0;
+    const rowH = Math.max(textH, qrSide + padY * 2, lh * 2);
 
     w.need(rowH + 6);
     w.gap(3);
@@ -605,8 +617,8 @@ function _pdfQR(w, qr) {
 
     pdf.setDrawColor(120, 128, 145);
     pdf.setLineWidth(0.25);
-    pdf.rect(w.M, top, textW, rowH, 'S');
-    pdf.rect(w.M + textW, top, qrW, rowH, 'S');
+    pdf.rect(w.M, top, half, rowH, 'S');
+    pdf.rect(w.M + half, top, half, rowH, 'S');
 
     let ty = top + padY;
     pdf.setFont(undefined, 'normal');
@@ -619,8 +631,10 @@ function _pdfQR(w, qr) {
 
     if (qr.image) {
         try {
-            const side = Math.min(qrW - 4, rowH - 4);
-            pdf.addImage(qr.image, w.M + textW + (qrW - side) / 2, top + (rowH - side) / 2, side, side);
+            pdf.addImage(qr.image,
+                w.M + half + (half - qrSide) / 2,
+                top + (rowH - qrSide) / 2,
+                qrSide, qrSide);
         } catch (e) { console.warn('[PDF] QR skipped:', e && e.message); }
     }
 
