@@ -3012,3 +3012,21 @@ button#lg-preview-btn:disabled {
 .lm-qr { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
 .lm-qr img { width: 88px; height: 88px; object-fit: contain; border: 1px solid #e5e7eb; border-radius: 8px; }
 .btn-link-modal.has-link { box-shadow: 0 0 0 2px #c4b5fd; }
+
+/* Performance-criteria title bar.
+   The inline `background:#667eea; color:white` was repainted grey by the
+   theme layer while the text stayed white — a white label on a mid-grey
+   bar, and the placeholder fainter still. Owning both colours in one
+   rule is the only way to keep them in step. */
+.mb-criteria-title-bar {
+    background: linear-gradient(180deg, #4A5568 0%, #3C4655 100%) !important;
+    box-shadow: none !important;
+}
+.mb-criteria-title,
+.criteria-table-container input.mb-criteria-title {
+    background: transparent !important;
+    border: none !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff;
+}
+.mb-criteria-title::placeholder { color: rgba(255,255,255,.72) !important; opacity: 1; }
