@@ -53,10 +53,20 @@ const FONT_FAMILIES = {
     },
     Arial: {
         label: 'Arial',
+        /* Arial is 1.3 MB and Calibri 2.1 MB as base64 — too heavy to
+           load on every page view for a face most sessions never use.
+           Injected on demand instead; Cairo, the default, stays inline
+           so the common path needs no extra request. */
+        lazy: { global: 'MB_ARIAL_TTF_B64', file: 'src/font_arial.js' },
         paths: ['./fonts/arial.ttf', './fonts/Arial.ttf', './fonts/ArialMT.ttf', './arial.ttf']
     },
     Calibri: {
         label: 'Calibri',
+        /* Arial is 1.3 MB and Calibri 2.1 MB as base64 — too heavy to
+           load on every page view for a face most sessions never use.
+           Injected on demand instead; Cairo, the default, stays inline
+           so the common path needs no extra request. */
+        lazy: { global: 'MB_CALIBRI_TTF_B64', file: 'src/font_calibri.js' },
         paths: ['./fonts/calibri.ttf', './fonts/Calibri.ttf', './calibri.ttf']
     }
 };
@@ -67,6 +77,8 @@ let _preferred = 'Cairo';
 
 /** Set from the Word-export settings before an export begins. */
 function setPreferredArabicFont(name) {
+    /* 'Auto' is a Word-side concept — the PDF has to embed a real file,
+       and Cairo is the one that ships with the tool. */
     _preferred = FONT_FAMILIES[name] ? name : 'Cairo';
     /* A different family means the cached face is the wrong one. */
     if (_cachedFont && _cachedFont.name !== _preferred) {
@@ -106,8 +118,12 @@ async function loadArabicFont(pdf) {
     _lastAttempts = [];
 
     for (const family of order) {
-        /* Embedded first: no network, no path, no 404. */
-        const emb = FONT_FAMILIES[family].embedded && FONT_FAMILIES[family].embedded();
+        /* Embedded first: no path guessing, no 404. */
+        const lazy = FONT_FAMILIES[family].lazy;
+        if (lazy) { try { await _loadScriptOnce(lazy.file, lazy.global); } catch (e) { /* falls through */ } }
+        const emb = (lazy && typeof window[lazy.global] === 'string' && window[lazy.global].length > 1000)
+            ? window[lazy.global]
+            : (FONT_FAMILIES[family].embedded && FONT_FAMILIES[family].embedded());
         if (emb) {
             try {
                 let coverage = null;
@@ -150,6 +166,37 @@ function getArabicFontName()  { return _cachedFont ? _cachedFont.name : null; }
  * @param {Set<number>|null} set
  */
 function setFontCoverage(set) { _coverage = set || null; }
+
+/* Injects a script once and resolves when its global appears. Rejects
+   rather than hanging if the file 404s, so the loader moves on to the
+   next family instead of stalling the export. */
+const _scriptPromises = {};
+function _loadScriptOnce(src, globalName) {
+    if (typeof window[globalName] === 'string') return Promise.resolve();
+    if (_scriptPromises[src]) return _scriptPromises[src];
+    _scriptPromises[src] = new Promise((resolve, reject) => {
+        /* A script tag that fires NEITHER onload nor onerror leaves this
+           promise pending forever, and the export hangs with no message.
+           That is not hypothetical: a blocked or stalled request does
+           exactly this. The timeout turns a hang into a fallback. */
+        let settled = false;
+        const done = (fn, arg) => { if (!settled) { settled = true; fn(arg); } };
+        const timer = setTimeout(
+            () => done(reject, new Error('timed out loading ' + src)), 15000);
+
+        const el = document.createElement('script');
+        el.src = src;
+        el.onload = () => {
+            clearTimeout(timer);
+            (typeof window[globalName] === 'string')
+                ? done(resolve)
+                : done(reject, new Error(src + ' loaded but ' + globalName + ' is missing'));
+        };
+        el.onerror = () => { clearTimeout(timer); done(reject, new Error('could not load ' + src)); };
+        document.head.appendChild(el);
+    });
+    return _scriptPromises[src];
+}
 
 /* base64 → ArrayBuffer, so the embedded font can go through the same
    cmap reader as a fetched one. */

@@ -90,8 +90,17 @@ var _WS_STRINGS = {
         wsTableSize:     'Resources and checklist table size',
         wsUserTableSize: 'Content-card table size',
         wsFixedNote:     'Mark boxes keep their own size and theme colours.',
-        wsPdfFont:       'Arabic PDF font',
-        wsPdfFontNote:   'The file must exist in the site\u2019s fonts/ folder — a browser cannot read a font installed on Windows.',
+        wsPdfFont:       'Export font',
+        wsPdfFontNote:   'Auto keeps the current behaviour: Arial for Arabic and Calibri for Latin in Word, Cairo in PDF. Choosing a family applies it to both. Arial and Calibri are downloaded only when selected.',
+        wsHtmlGroup:     'HTML export sections',
+        wsHtmlNote:      'Choose which parts of the module the HTML file contains. Covers are not included in the HTML package.',
+        wsSec_overview: 'Module Overview',
+        wsSec_intro: 'Introduction &amp; Work Team',
+        wsSec_outcomes: 'Learning Outcomes',
+        wsSec_infoSheets: 'Information Sheets',
+        wsSec_activitySheets: 'Activity / Job Sheets',
+        wsSec_assessment: 'Assessment Unit',
+        wsSec_references: 'References',
         wsPreview:       'Preview',
         wsPvTitle:       'Module Title',
         wsPvSection:     'Introduction',
@@ -125,8 +134,17 @@ var _WS_STRINGS = {
         wsTableSize:     'Taille des tableaux de ressources et de checklist',
         wsUserTableSize: 'Taille des tableaux dans les cartes de contenu',
         wsFixedNote:     'Les encadrés gardent leur taille et leurs couleurs de thème.',
-        wsPdfFont:       'Police PDF arabe',
-        wsPdfFontNote:   'Le fichier doit se trouver dans le dossier fonts/ du site — un navigateur ne peut pas lire une police install\u00e9e sur Windows.',
+        wsPdfFont:       'Police d\u2019export',
+        wsPdfFontNote:   'Auto conserve le comportement actuel : Arial pour l\u2019arabe et Calibri pour le latin dans Word, Cairo en PDF. Choisir une police l\u2019applique aux deux. Arial et Calibri ne sont t\u00e9l\u00e9charg\u00e9s que si vous les s\u00e9lectionnez.',
+        wsHtmlGroup:     'Sections de l\u2019export HTML',
+        wsHtmlNote:      'Choisissez les parties du module que contient le fichier HTML. Les couvertures ne sont pas incluses.',
+        wsSec_overview: 'Aper\u00e7u du module',
+        wsSec_intro: 'Introduction et \u00e9quipe',
+        wsSec_outcomes: 'R\u00e9sultats d\u2019apprentissage',
+        wsSec_infoSheets: 'Fiches d\u2019information',
+        wsSec_activitySheets: 'Fiches d\u2019activit\u00e9',
+        wsSec_assessment: 'Unit\u00e9 d\u2019\u00e9valuation',
+        wsSec_references: 'R\u00e9f\u00e9rences',
         wsPreview:       'Aperçu',
         wsPvTitle:       'Titre du module',
         wsPvSection:     'Introduction',
@@ -160,8 +178,17 @@ var _WS_STRINGS = {
         wsTableSize:     'حجم جداول الموارد وقائمة التحقق',
         wsUserTableSize: 'حجم جداول بطاقات المحتوى',
         wsFixedNote:     'صناديق الملاحظات تحتفظ بحجمها وألوان ثيمتها.',
-        wsPdfFont:       'خط PDF العربي',
-        wsPdfFontNote:   'يجب أن يكون الملف داخل مجلّد fonts/ في الموقع — فالمتصفّح لا يستطيع قراءة خط مثبَّت على ويندوز.',
+        wsPdfFont:       'خط التصدير',
+        wsPdfFontNote:   '«Auto» يُبقي السلوك الحالي: Arial للعربية وCalibri للاتينية في Word، وCairo في PDF. واختيار خط يطبّقه على الاثنين. وArial وCalibri لا يُنزَّلان إلا عند اختيارهما.',
+        wsHtmlGroup:     'أقسام تصدير HTML',
+        wsHtmlNote:      'اختر الأجزاء التي يحويها ملف HTML. الأغلفة غير مضمَّنة في حزمة HTML.',
+        wsSec_overview: 'نظرة عامة على الوحدة',
+        wsSec_intro: 'التقديم وفريق العمل',
+        wsSec_outcomes: 'نواتج التعلّم',
+        wsSec_infoSheets: 'أوراق المعلومات',
+        wsSec_activitySheets: 'أوراق النشاط',
+        wsSec_assessment: 'وحدة التقييم',
+        wsSec_references: 'المراجع',
         wsPreview:       'المعاينة',
         wsPvTitle:       'عنوان الوحدة',
         wsPvSection:     'المقدمة',
@@ -226,10 +253,23 @@ var WS_DEFAULTS = {
        uses whatever the reader has — but the dialog is where the user
        already goes to control how exports look, and a second dialog for
        one field would be worse. */
-    pdfFont:          'Cairo'
+    /* 'Auto' = the tool's historic behaviour: Arial for Arabic, Calibri
+       for Latin in Word, and Cairo for the PDF. It is the default so an
+       untouched install keeps producing exactly the document it always
+       did — picking a real family here changes BOTH exports. */
+    pdfFont:          'Auto',
+    /* Which parts of the module the HTML export includes. All on by
+       default, so an untouched install exports everything exactly as
+       before. Covers are deliberately absent: a full-bleed cover image
+       is a print artefact, and the HTML package opens straight into the
+       content. */
+    htmlSections:     null   /* null = everything; otherwise an array of ids */
 };
 
-var WS_PDF_FONTS = ['Cairo', 'Arial', 'Calibri'];
+var WS_HTML_SECTIONS = ['overview', 'intro', 'outcomes', 'infoSheets',
+                        'activitySheets', 'assessment', 'references'];
+
+var WS_PDF_FONTS = ['Auto', 'Cairo', 'Arial', 'Calibri'];
 
 /* Field order in the dialog. Kept in one place so the dialog, the
    reset and the read path can never drift apart. */
@@ -279,7 +319,13 @@ function wsReadSettings() {
     var out = {
         headingColor:     _wsValidColor(o.headingColor,     WS_DEFAULTS.headingColor),
         tableHeaderColor: _wsValidColor(o.tableHeaderColor, WS_DEFAULTS.tableHeaderColor),
-        pdfFont: (WS_PDF_FONTS.indexOf(o.pdfFont) !== -1) ? o.pdfFont : WS_DEFAULTS.pdfFont
+        pdfFont: (WS_PDF_FONTS.indexOf(o.pdfFont) !== -1) ? o.pdfFont : WS_DEFAULTS.pdfFont,
+        /* A corrupted list falls back to "everything" rather than to
+           "nothing" — the failure mode has to be a complete document,
+           never a silently empty one. */
+        htmlSections: Array.isArray(o.htmlSections)
+            ? o.htmlSections.filter(function (x) { return WS_HTML_SECTIONS.indexOf(x) !== -1; })
+            : null
     };
     WS_SIZE_FIELDS.forEach(function (f) {
         out[f] = _wsValidSize(o[f], WS_DEFAULTS[f]);
@@ -346,6 +392,13 @@ function _wsHeadColor() { return _wsGet().headingColor; }
 function _wsTblFill()   { return _wsGet().tableHeaderColor; }
 function _wsTblText()   { return wsContrastText(_wsGet().tableHeaderColor); }
 function _wsPdfFont()   { return _wsGet().pdfFont; }
+
+/** True when the HTML export should include this section. */
+function wsHtmlIncludes(id) {
+    var list = _wsGet().htmlSections;
+    if (!Array.isArray(list)) return true;      /* null = everything */
+    return list.indexOf(id) !== -1;
+}
 
 /* ── The dialog ─────────────────────────────────────────────
    Deliberately NOT a `.tab`. switchTab() clears `.active` from every
@@ -485,6 +538,16 @@ function openWordSettings() {
               '</select></div>' +
             '<p class="ws-note ws-note-sm">\u2139\uFE0F ' + _wsT('wsPdfFontNote') + '</p>' +
 
+            '<h4 class="ws-group">\uD83D\uDDA5\uFE0F ' + _wsT('wsHtmlGroup') + '</h4>' +
+            '<div class="ws-checks">' +
+              WS_HTML_SECTIONS.map(function (id) {
+                  var on = !Array.isArray(_wsDraft.htmlSections) || _wsDraft.htmlSections.indexOf(id) !== -1;
+                  return '<label class="ws-check"><input type="checkbox" data-ws-sec="' + id + '"' +
+                         (on ? ' checked' : '') + '><span>' + _wsT('wsSec_' + id) + '</span></label>';
+              }).join('') +
+            '</div>' +
+            '<p class="ws-note ws-note-sm">\u2139\uFE0F ' + _wsT('wsHtmlNote') + '</p>' +
+
             '<h4 class="ws-group">\uD83D\uDC41\uFE0F ' + _wsT('wsPreview') + '</h4>' +
             '<div class="ws-preview" id="ws-preview">' + _wsPreviewHTML(_wsDraft) + '</div>' +
           '</div>' +
@@ -520,6 +583,7 @@ function openWordSettings() {
         });
         var fsel = ov.querySelector('[data-ws-font]');
         if (fsel) fsel.value = _wsDraft.pdfFont;
+        ov.querySelectorAll('[data-ws-sec]').forEach(function (cb) { cb.checked = true; });
         ov.querySelectorAll('[data-ws-color]').forEach(function (b) {
             var f = b.getAttribute('data-ws-color');
             b.classList.toggle('is-on', b.getAttribute('data-ws-hex') === _wsDraft[f]);
@@ -531,6 +595,20 @@ function openWordSettings() {
         if (fontField) {
             _wsDraft.pdfFont = (WS_PDF_FONTS.indexOf(e.target.value) !== -1)
                 ? e.target.value : WS_DEFAULTS.pdfFont;
+            _wsTouch();
+            return;
+        }
+        var secField = e.target && e.target.getAttribute && e.target.getAttribute('data-ws-sec');
+        if (secField) {
+            var cur = Array.isArray(_wsDraft.htmlSections)
+                ? _wsDraft.htmlSections.slice() : WS_HTML_SECTIONS.slice();
+            var i = cur.indexOf(secField);
+            if (e.target.checked) { if (i === -1) cur.push(secField); }
+            else if (i !== -1) { cur.splice(i, 1); }
+            /* Stored as an explicit list once touched, so a section
+               added to the tool in future is NOT silently switched on
+               for someone who had made a deliberate selection. */
+            _wsDraft.htmlSections = cur;
             _wsTouch();
             return;
         }

@@ -284,7 +284,22 @@ function _mbStart(A) {
    of boxes on a machine without the original font. Arial ships
    everywhere and has full Arabic coverage, so it is the safe default
    rather than the pretty one. */
-function _mbFont() { return _mbRtl() ? 'Arial' : 'Calibri'; }
+function _mbFont() {
+    /* The export-settings font applies to Word as well as PDF: a user
+       who picks a face expects the whole export to use it, not just one
+       format. Word embeds nothing, so any installed family is valid
+       here — unlike the PDF path, which needs the actual file. */
+    try {
+        if (typeof _wsPdfFont === 'function') {
+            var f = _wsPdfFont();
+            /* 'Auto' means "leave Word as it was" — Arial for Arabic,
+               Calibri for Latin. Anything else is a deliberate choice
+               and overrides both. */
+            if (f && f !== 'Auto') return f;
+        }
+    } catch (e) { /* settings not loaded — keep the historic default */ }
+    return _mbRtl() ? 'Arial' : 'Calibri';
+}
 
 /* The library exposes no class for <w:lang>, but its serializer passes
    any non-XmlComponent child straight through to the XML writer, so a

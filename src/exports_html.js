@@ -193,9 +193,15 @@ function mbBuildModuleHtml(model, opts) {
 
     function add(id, navLabel, html) { toc.push({ id: id, label: navLabel }); body += html; }
 
+    /* Section filter from the export settings. Unset means everything,
+       so an install that never opens the dialog is unaffected. */
+    var inc = function (id) {
+        return (typeof wsHtmlIncludes === 'function') ? wsHtmlIncludes(id) : true;
+    };
+
     /* Overview — outcomes and their criteria. Generated, exactly as the
        Word export generates it; the author never types this page. */
-    if (model.outcomes.length) {
+    if (model.outcomes.length && inc('overview')) {
         var ov = '<div class="mx-ov">' + model.outcomes.map(function (o) {
             return '<div class="mx-ov-item"><h4>' + t('outcome') + ' ' + o.index + ': ' + _hxEsc(o.title) + '</h4>' +
                    (o.description ? '<p>' + _hxText(o.description) + '</p>' : '') +
@@ -208,7 +214,7 @@ function mbBuildModuleHtml(model, opts) {
     }
 
     /* Cover information and introduction, when the author supplied any. */
-    if (model.cover.rows.length || model.cover.notesAbove || model.cover.notesBelow) {
+    if (inc('overview') && (model.cover.rows.length || model.cover.notesAbove || model.cover.notesBelow)) {
         var cv = '';
         if (model.cover.notesAbove) cv += '<p>' + _hxText(model.cover.notesAbove) + '</p>';
         if (model.cover.rows.length) {
@@ -221,7 +227,7 @@ function mbBuildModuleHtml(model, opts) {
         toc.pop(); toc.push({ id: 'module-info', label: model.title || t('overview') });
     }
 
-    if (model.intro.team.length || model.intro.blocks.length || model.intro.additional) {
+    if (inc('intro') && (model.intro.team.length || model.intro.blocks.length || model.intro.additional)) {
         var it = '';
         if (model.intro.team.length) {
             it += '<div class="mx-sub">' + t('team') + '</div>' +
@@ -242,6 +248,7 @@ function mbBuildModuleHtml(model, opts) {
 
     /* Outcomes, each with its sheets in document order. */
     model.outcomes.forEach(function (o) {
+        if (!inc('outcomes') && !inc('infoSheets') && !inc('activitySheets')) return;
         var oid = 'lo-' + o.index;
         var inner = '';
         if (o.description) inner += '<p>' + _hxText(o.description) + '</p>';
@@ -253,9 +260,11 @@ function mbBuildModuleHtml(model, opts) {
             if (b.title) inner += '<div class="mx-sub">' + _hxEsc(b.title) + '</div>';
             if (b.body) inner += '<p>' + _hxText(b.body) + '</p>';
         });
-        add(oid, t('outcome') + ' ' + o.index, _hxSection(oid, t('outcome') + ' ' + o.index, o.title, inner));
+        if (inc('outcomes')) {
+            add(oid, t('outcome') + ' ' + o.index, _hxSection(oid, t('outcome') + ' ' + o.index, o.title, inner));
+        }
 
-        o.infoSheets.forEach(function (sh, i) {
+        (inc('infoSheets') ? o.infoSheets : []).forEach(function (sh, i) {
             var sid = oid + '-info-' + (i + 1);
             var h = '';
             if (sh.objectiveLead) h += '<p class="mx-lead">' + _hxText(sh.objectiveLead) + '</p>';
@@ -291,7 +300,7 @@ function mbBuildModuleHtml(model, opts) {
                 _hxSection(sid, t('infoSheet') + ' ' + sh.number, sh.title, h));
         });
 
-        o.activitySheets.forEach(function (sh, i) {
+        (inc('activitySheets') ? o.activitySheets : []).forEach(function (sh, i) {
             var aid = oid + '-act-' + (i + 1);
             var h = '';
             var meta = [];
@@ -338,7 +347,7 @@ function mbBuildModuleHtml(model, opts) {
         });
     });
 
-    if (model.assessment.length) {
+    if (model.assessment.length && inc('assessment')) {
         var as = model.assessment.map(function (f) {
             var h = '<div class="mx-block"><div class="mx-sub">' + t('outcome') + ' ' + f.outcomeIndex + ': ' + _hxEsc(f.outcomeTitle) + '</div>';
             if (f.rows.length) {
@@ -362,7 +371,7 @@ function mbBuildModuleHtml(model, opts) {
         add('assessment', t('assessment'), _hxSection('assessment', t('portfolio'), t('assessment'), as));
     }
 
-    if (model.references.items.length) {
+    if (model.references.items.length && inc('references')) {
         var rf = '<ol class="mx-refs">' + model.references.items.map(function (r) {
             return '<li>' + _hxText(r) + '</li>';
         }).join('') + '</ol>';
