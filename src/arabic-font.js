@@ -42,6 +42,13 @@
 const FONT_FAMILIES = {
     Cairo: {
         label: 'Cairo',
+        /* Cairo ships EMBEDDED in font_cairo.js and needs no fetch at
+           all — see the note there. The paths remain as a fallback for
+           anyone who removes that file. */
+        embedded: function () {
+            return (typeof MB_CAIRO_TTF_B64 === 'string' && MB_CAIRO_TTF_B64.length > 1000)
+                ? MB_CAIRO_TTF_B64 : null;
+        },
         paths: ['./fonts/Cairo-Regular.ttf', './fonts/Cairo.ttf', './Cairo-Regular.ttf']
     },
     Arial: {
@@ -99,6 +106,22 @@ async function loadArabicFont(pdf) {
     _lastAttempts = [];
 
     for (const family of order) {
+        /* Embedded first: no network, no path, no 404. */
+        const emb = FONT_FAMILIES[family].embedded && FONT_FAMILIES[family].embedded();
+        if (emb) {
+            try {
+                let coverage = null;
+                try { coverage = parseFontCoverage(_b64ToBuffer(emb)); }
+                catch (e) { console.warn('[ArabicFont] embedded cmap unreadable', e); }
+                _cachedFont = { name: family, b64: emb, coverage: coverage };
+                _coverage = coverage;
+                _registerFont(pdf, family, emb);
+                console.info('[ArabicFont] Using embedded font → family "' + family + '"');
+                return family;
+            } catch (e) {
+                _lastAttempts.push('embedded ' + family + ' — ' + (e && e.message ? e.message : e));
+            }
+        }
         for (const file of FONT_FAMILIES[family].paths) {
             try {
                 const { b64, coverage } = await _fetchFont(file);
@@ -127,6 +150,15 @@ function getArabicFontName()  { return _cachedFont ? _cachedFont.name : null; }
  * @param {Set<number>|null} set
  */
 function setFontCoverage(set) { _coverage = set || null; }
+
+/* base64 → ArrayBuffer, so the embedded font can go through the same
+   cmap reader as a fetched one. */
+function _b64ToBuffer(b64) {
+    const bin = atob(b64);
+    const out = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out.buffer;
+}
 
 // ── Private: register font with jsPDF ────────────────────────
 function _registerFont(pdf, name, b64) {
