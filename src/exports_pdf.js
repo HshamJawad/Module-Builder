@@ -46,6 +46,8 @@ var _PDF_STRINGS = {
         btn: 'Export to PDF', working: 'Building PDF…', done: 'PDF exported',
         preparingFont: 'Preparing Arabic font…',
         fontMissing: 'The Arabic font could not be loaded, and without it an Arabic PDF prints as empty boxes.\n\nAdd fonts/Cairo-Regular.ttf to the site. It must be an uncompressed .ttf — the Cairo.woff2 already there cannot be embedded in a PDF.\n\nIn the meantime, Export to Word and Export to HTML both handle Arabic correctly.',
+        modulesMissing: 'Arabic PDF support is not installed. Upload src/arabic-font.js and src/pdf_arabic.js to the site, then reload with Ctrl+Shift+R.',
+        tried: 'Paths tried:',
         failed: 'PDF export failed',
         overview: 'Module Overview', outcome: 'Learning Outcome', criteria: 'Performance Criteria',
         infoSheet: 'Information Sheet', activitySheet: 'Activity / Job Sheet',
@@ -65,6 +67,8 @@ var _PDF_STRINGS = {
         btn: 'Exporter en PDF', working: 'Création du PDF…', done: 'PDF exporté',
         preparingFont: 'Préparation de la police arabe…',
         fontMissing: 'La police arabe n\u2019a pas pu être chargée, et sans elle un PDF arabe s\u2019imprime en carrés vides.\n\nAjoutez fonts/Cairo-Regular.ttf au site. Ce doit être un .ttf non compressé — le Cairo.woff2 déjà présent ne peut pas être intégré dans un PDF.\n\nEn attendant, Exporter vers Word et Exporter en HTML gèrent tous deux l\u2019arabe correctement.',
+        modulesMissing: 'La prise en charge de l\u2019arabe pour le PDF n\u2019est pas install\u00e9e. Envoyez src/arabic-font.js et src/pdf_arabic.js sur le site, puis rechargez avec Ctrl+Maj+R.',
+        tried: 'Chemins essay\u00e9s :',
         failed: 'Échec de l\u2019export PDF',
         overview: 'Aperçu du module', outcome: 'Résultat d\u2019apprentissage', criteria: 'Critères de performance',
         infoSheet: 'Fiche d\u2019information', activitySheet: 'Fiche d\u2019activité',
@@ -84,6 +88,8 @@ var _PDF_STRINGS = {
         btn: 'تصدير PDF', working: 'جارٍ إنشاء ملف PDF…', done: 'تم تصدير PDF',
         preparingFont: 'جارٍ تجهيز الخط العربي…',
         fontMissing: 'تعذّر تحميل الخط العربي، وبدونه يخرج ملف PDF العربي مربّعات فارغة.\n\nأضف الملف fonts/Cairo-Regular.ttf إلى الموقع، بصيغة ‎.ttf‎ غير مضغوطة — فملف Cairo.woff2 الموجود لا يمكن تضمينه في PDF.\n\nوإلى حين ذلك، «تصدير إلى Word» و«تصدير HTML» كلاهما يعالج العربية بشكل صحيح.',
+        modulesMissing: 'دعم العربية في PDF غير مثبَّت. ارفع الملفّين src/arabic-font.js و src/pdf_arabic.js إلى الموقع، ثم أعد التحميل بـ Ctrl+Shift+R.',
+        tried: 'المسارات التي جُرِّبت:',
         failed: 'فشل تصدير PDF',
         overview: 'نظرة عامة على الوحدة', outcome: 'ناتج التعلّم', criteria: 'معايير الأداء',
         infoSheet: 'ورقة المعلومات', activitySheet: 'ورقة النشاط/العمل',
@@ -622,16 +628,25 @@ async function mbExportToPdf() {
 
         var isArabic = (lang === 'ar');
 
+        /* The chosen face, from the Word-export settings dialog. */
+        if (isArabic && typeof setPreferredArabicFont === 'function' && typeof _wsPdfFont === 'function') {
+            setPreferredArabicFont(_wsPdfFont());
+        }
+
         /* The font is a fetch, and it must be in the cache BEFORE the
            document is built — installArabicRTL registers it on the
            instance from the module-level cache. Awaiting here rather
            than inside the layout keeps the drawing code synchronous. */
         if (isArabic) {
             if (typeof showStatus === 'function') showStatus(_pdfT('preparingFont', lang), 'info');
-            var fontName = null;
+            var fontName = null, loadErr = null;
             try {
+                if (typeof ensureArabicFont !== 'function') {
+                    throw new Error('src/arabic-font.js and src/pdf_arabic.js are not loaded.');
+                }
                 fontName = await ensureArabicFont(jsPDF);
             } catch (e) {
+                loadErr = e;
                 console.error('[PDF] Arabic font load failed:', e);
             }
             if (!fontName) {
@@ -639,7 +654,18 @@ async function mbExportToPdf() {
                    jsPDF drops unmapped characters silently, so without
                    this the export would "succeed" and the file would be
                    blank — the worst possible outcome. */
+                /* Say WHAT failed, not just THAT it failed. The first
+                   version reported a missing font file even when the
+                   real cause was that the Arabic modules themselves had
+                   not been uploaded — sending the user to look in the
+                   wrong place. */
                 var fmsg = _pdfT('fontMissing', lang);
+                if (loadErr && /not loaded/.test(String(loadErr.message))) {
+                    fmsg = _pdfT('modulesMissing', lang);
+                } else if (typeof getArabicFontAttempts === 'function') {
+                    var tried = getArabicFontAttempts();
+                    if (tried.length) fmsg += '\n\n' + _pdfT('tried', lang) + '\n• ' + tried.join('\n• ');
+                }
                 if (typeof mbAlert === 'function') await mbAlert(fmsg); else alert(fmsg);
                 if (typeof showStatus === 'function') showStatus(_pdfT('failed', lang), 'error');
                 return;

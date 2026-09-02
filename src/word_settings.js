@@ -90,6 +90,8 @@ var _WS_STRINGS = {
         wsTableSize:     'Resources and checklist table size',
         wsUserTableSize: 'Content-card table size',
         wsFixedNote:     'Mark boxes keep their own size and theme colours.',
+        wsPdfFont:       'Arabic PDF font',
+        wsPdfFontNote:   'The file must exist in the site\u2019s fonts/ folder — a browser cannot read a font installed on Windows.',
         wsPreview:       'Preview',
         wsPvTitle:       'Module Title',
         wsPvSection:     'Introduction',
@@ -123,6 +125,8 @@ var _WS_STRINGS = {
         wsTableSize:     'Taille des tableaux de ressources et de checklist',
         wsUserTableSize: 'Taille des tableaux dans les cartes de contenu',
         wsFixedNote:     'Les encadrés gardent leur taille et leurs couleurs de thème.',
+        wsPdfFont:       'Police PDF arabe',
+        wsPdfFontNote:   'Le fichier doit se trouver dans le dossier fonts/ du site — un navigateur ne peut pas lire une police install\u00e9e sur Windows.',
         wsPreview:       'Aperçu',
         wsPvTitle:       'Titre du module',
         wsPvSection:     'Introduction',
@@ -156,6 +160,8 @@ var _WS_STRINGS = {
         wsTableSize:     'حجم جداول الموارد وقائمة التحقق',
         wsUserTableSize: 'حجم جداول بطاقات المحتوى',
         wsFixedNote:     'صناديق الملاحظات تحتفظ بحجمها وألوان ثيمتها.',
+        wsPdfFont:       'خط PDF العربي',
+        wsPdfFontNote:   'يجب أن يكون الملف داخل مجلّد fonts/ في الموقع — فالمتصفّح لا يستطيع قراءة خط مثبَّت على ويندوز.',
         wsPreview:       'المعاينة',
         wsPvTitle:       'عنوان الوحدة',
         wsPvSection:     'المقدمة',
@@ -215,8 +221,15 @@ var WS_DEFAULTS = {
     tableSize:        14,        /* exports_docx.js size: 28 (tables) */
     userTableSize:    11,        /* exports_docx.js size: 22 */
     headingColor:     '0070C0',
-    tableHeaderColor: '0070C0'
+    tableHeaderColor: '0070C0',
+    /* Arabic PDF face. Not a Word setting — Word embeds nothing and
+       uses whatever the reader has — but the dialog is where the user
+       already goes to control how exports look, and a second dialog for
+       one field would be worse. */
+    pdfFont:          'Cairo'
 };
+
+var WS_PDF_FONTS = ['Cairo', 'Arial', 'Calibri'];
 
 /* Field order in the dialog. Kept in one place so the dialog, the
    reset and the read path can never drift apart. */
@@ -265,7 +278,8 @@ function wsReadSettings() {
 
     var out = {
         headingColor:     _wsValidColor(o.headingColor,     WS_DEFAULTS.headingColor),
-        tableHeaderColor: _wsValidColor(o.tableHeaderColor, WS_DEFAULTS.tableHeaderColor)
+        tableHeaderColor: _wsValidColor(o.tableHeaderColor, WS_DEFAULTS.tableHeaderColor),
+        pdfFont: (WS_PDF_FONTS.indexOf(o.pdfFont) !== -1) ? o.pdfFont : WS_DEFAULTS.pdfFont
     };
     WS_SIZE_FIELDS.forEach(function (f) {
         out[f] = _wsValidSize(o[f], WS_DEFAULTS[f]);
@@ -331,6 +345,7 @@ function _wsBody()      { return _wsGet().bodySize    * 2; }
 function _wsHeadColor() { return _wsGet().headingColor; }
 function _wsTblFill()   { return _wsGet().tableHeaderColor; }
 function _wsTblText()   { return wsContrastText(_wsGet().tableHeaderColor); }
+function _wsPdfFont()   { return _wsGet().pdfFont; }
 
 /* ── The dialog ─────────────────────────────────────────────
    Deliberately NOT a `.tab`. switchTab() clears `.active` from every
@@ -462,6 +477,14 @@ function openWordSettings() {
             '<div class="ws-row"><label>' + _wsT('wsUserTableSize') + '</label>' + _wsSizeSelect('userTableSize', _wsDraft.userTableSize) + '</div>' +
             '<p class="ws-note ws-note-sm">\u2139\uFE0F ' + _wsT('wsFixedNote') + '</p>' +
 
+            '<div class="ws-row"><label>' + _wsT('wsPdfFont') + '</label>' +
+              '<select class="ws-select" data-ws-font="pdfFont">' +
+                WS_PDF_FONTS.map(function (f) {
+                    return '<option value="' + f + '"' + (f === _wsDraft.pdfFont ? ' selected' : '') + '>' + f + '</option>';
+                }).join('') +
+              '</select></div>' +
+            '<p class="ws-note ws-note-sm">\u2139\uFE0F ' + _wsT('wsPdfFontNote') + '</p>' +
+
             '<h4 class="ws-group">\uD83D\uDC41\uFE0F ' + _wsT('wsPreview') + '</h4>' +
             '<div class="ws-preview" id="ws-preview">' + _wsPreviewHTML(_wsDraft) + '</div>' +
           '</div>' +
@@ -495,6 +518,8 @@ function openWordSettings() {
         ov.querySelectorAll('[data-ws-size]').forEach(function (sel) {
             sel.value = String(_wsDraft[sel.getAttribute('data-ws-size')]);
         });
+        var fsel = ov.querySelector('[data-ws-font]');
+        if (fsel) fsel.value = _wsDraft.pdfFont;
         ov.querySelectorAll('[data-ws-color]').forEach(function (b) {
             var f = b.getAttribute('data-ws-color');
             b.classList.toggle('is-on', b.getAttribute('data-ws-hex') === _wsDraft[f]);
@@ -502,6 +527,13 @@ function openWordSettings() {
     });
 
     ov.addEventListener('change', function (e) {
+        var fontField = e.target && e.target.getAttribute && e.target.getAttribute('data-ws-font');
+        if (fontField) {
+            _wsDraft.pdfFont = (WS_PDF_FONTS.indexOf(e.target.value) !== -1)
+                ? e.target.value : WS_DEFAULTS.pdfFont;
+            _wsTouch();
+            return;
+        }
         var f = e.target && e.target.getAttribute && e.target.getAttribute('data-ws-size');
         if (!f) return;
         _wsDraft[f] = _wsValidSize(e.target.value, WS_DEFAULTS[f]);

@@ -30,15 +30,52 @@
 // real TTF wins.
 // ============================================================
 
-// ── Font candidates (tried in order) ─────────────────────────
-const FONT_CANDIDATES = [
-    { file: './fonts/Cairo-Regular.ttf',   name: 'Cairo'   },
-    { file: './Cairo-Regular.ttf',         name: 'Cairo'   },
-    { file: './fonts/Amiri-Regular.ttf',   name: 'Amiri'   },
-    { file: './Amiri-Regular.ttf',         name: 'Amiri'   },
-    { file: './fonts/Tajawal-Regular.ttf', name: 'Tajawal' },
-    { file: './Tajawal-Regular.ttf',       name: 'Tajawal' },
-];
+// ── Font families and candidate paths ────────────────────────
+// The user picks a family in the Word-export settings dialog; the
+// loader tries that family's paths first, then the others, so a missing
+// file degrades to a working font instead of to an error.
+//
+// Every path is a file that must EXIST IN THE REPOSITORY. A browser
+// cannot read a font installed on Windows — there is no API for it, by
+// design. "Use Arial" therefore means "use fonts/arial.ttf", which you
+// can copy from C:\Windows\Fonts and commit. Calibri is the same.
+const FONT_FAMILIES = {
+    Cairo: {
+        label: 'Cairo',
+        paths: ['./fonts/Cairo-Regular.ttf', './fonts/Cairo.ttf', './Cairo-Regular.ttf']
+    },
+    Arial: {
+        label: 'Arial',
+        paths: ['./fonts/arial.ttf', './fonts/Arial.ttf', './fonts/ArialMT.ttf', './arial.ttf']
+    },
+    Calibri: {
+        label: 'Calibri',
+        paths: ['./fonts/calibri.ttf', './fonts/Calibri.ttf', './calibri.ttf']
+    }
+};
+
+const FONT_ORDER = ['Cairo', 'Arial', 'Calibri'];
+
+let _preferred = 'Cairo';
+
+/** Set from the Word-export settings before an export begins. */
+function setPreferredArabicFont(name) {
+    _preferred = FONT_FAMILIES[name] ? name : 'Cairo';
+    /* A different family means the cached face is the wrong one. */
+    if (_cachedFont && _cachedFont.name !== _preferred) {
+        _cachedFont = null;
+        _coverage = null;
+    }
+}
+
+function getPreferredArabicFont() { return _preferred; }
+function getArabicFontFamilies() { return FONT_ORDER.slice(); }
+
+/* Why the last attempt failed, for the error message. Without this the
+   user is told "the font could not be loaded" and has to guess whether
+   the file is missing, in the wrong place, or the wrong format. */
+let _lastAttempts = [];
+function getArabicFontAttempts() { return _lastAttempts.slice(); }
 
 // ── Module-level cache ────────────────────────────────────────
 let _cachedFont = null;  // { name, b64, coverage } | null
@@ -56,23 +93,28 @@ async function loadArabicFont(pdf) {
         return _cachedFont.name;
     }
 
-    for (const candidate of FONT_CANDIDATES) {
-        try {
-            const { b64, coverage } = await _fetchFont(candidate.file);
-            _cachedFont = { name: candidate.name, b64, coverage };
-            _coverage   = coverage;
-            _registerFont(pdf, candidate.name, b64);
-            console.info(`[ArabicFont] Loaded "${candidate.file}" → family "${candidate.name}"`);
-            return candidate.name;
-        } catch {
-            /* try the next path */
+    /* Preferred family first, then the rest in order. A user who asked
+       for Arial and never added arial.ttf still gets a working PDF. */
+    const order = [_preferred].concat(FONT_ORDER.filter(f => f !== _preferred));
+    _lastAttempts = [];
+
+    for (const family of order) {
+        for (const file of FONT_FAMILIES[family].paths) {
+            try {
+                const { b64, coverage } = await _fetchFont(file);
+                _cachedFont = { name: family, b64, coverage };
+                _coverage   = coverage;
+                _registerFont(pdf, family, b64);
+                console.info(`[ArabicFont] Loaded "${file}" → family "${family}"`);
+                return family;
+            } catch (e) {
+                _lastAttempts.push(file + ' — ' + (e && e.message ? e.message : e));
+            }
         }
     }
 
-    console.error(
-        '[ArabicFont] No Arabic TTF found. Place one of:\n' +
-        FONT_CANDIDATES.map(c => '  • ' + c.file).join('\n')
-    );
+    console.error('[ArabicFont] No usable Arabic TTF found. Tried:\n  ' +
+                  _lastAttempts.join('\n  '));
     return null;
 }
 
