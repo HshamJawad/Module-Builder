@@ -109,8 +109,14 @@
 
         /* Buttons must not be squeezed narrower than their labels; that
            is what turns "تصدير إلى Word" into a clipped stub. */
+        /* Children must not be squeezed narrower than their labels —
+           EXCEPT the scroll track itself, which has to shrink to the
+           bar's width or it never scrolls and simply overflows past both
+           ends. That single missing exception is why the French labels,
+           the longest set, stayed clipped after the first fix. */
         .figma-toolbar > *,
         .figma-toolbar-scroll > * { flex: 0 0 auto; }
+        .figma-toolbar > .figma-toolbar-scroll { flex: 0 1 auto; min-width: 0; }
 
         .figma-btn { white-space: nowrap; }
 
@@ -2990,7 +2996,8 @@ button#lg-preview-btn:disabled {
     width: 100%; border: 1px solid #d1d5db; border-radius: 8px;
     padding: 9px 11px; font: inherit; font-size: .92em; background: #fff;
 }
-.ws-modal .lm-radios { display: flex; gap: 16px; flex-wrap: wrap; }
+.ws-modal .lm-radios { display: flex; gap: 22px; flex-wrap: wrap; }
+.ws-modal .lm-radios .ws-check { gap: 9px; }
 .ws-modal .lm-radios input[type="radio"] {
     width: 16px !important; height: 16px !important; margin: 0 !important; accent-color: #7c3aed;
 }
