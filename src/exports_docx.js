@@ -1362,7 +1362,7 @@ async function exportToDocx() {
             /* 2.5 cm at 96 DPI, matching the button's own promise. */
             let qrCell = new TableCell({
                 children: [new Paragraph({ text: '' })],
-                width: { size: 4536, type: WidthType.DXA },
+                width: { size: 2268, type: WidthType.DXA },
                 verticalAlign: 'center',
                 margins: { top: 100, bottom: 100, left: 100, right: 100 }
             });
@@ -1377,12 +1377,14 @@ async function exportToDocx() {
                             })],
                             alignment: AlignmentType.CENTER
                         })],
-                        /* Half the 16 cm row, matching the layout this
-                           table had before it was lost. A 2.5 cm cell
-                           cannot hold a 2.5 cm image once cell margins
-                           are subtracted — the QR spilled into the text
-                           cell beside it. */
-                        width: { size: 4536, type: WidthType.DXA },
+                        /* 4 cm: wide enough for a 2.5 cm code plus cell
+                           margins, and no wider. The first attempt gave
+                           it 2.5 cm exactly and the code spilled into the
+                           text; the second split the row in half and left
+                           a long URL wrapping in a needlessly narrow
+                           cell. The address is the long content here, so
+                           it gets the 12 cm. */
+                        width: { size: 2268, type: WidthType.DXA },
                         verticalAlign: 'center',
                         margins: { top: 100, bottom: 100, left: 100, right: 100 }
                     });
@@ -1406,7 +1408,7 @@ async function exportToDocx() {
                         alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), wordWrap: true
                     })
                 ],
-                width: { size: 4536, type: WidthType.DXA },
+                width: { size: 6804, type: WidthType.DXA },
                 verticalAlign: 'center',
                 margins: { top: 100, bottom: 100, left: 200, right: 200 }
             });

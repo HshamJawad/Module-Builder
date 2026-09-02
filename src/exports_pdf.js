@@ -154,6 +154,18 @@ function _pdfStyle() {
     };
 }
 
+/* pdf_arabic.js mirrors addImage with the signature
+   (img, FORMAT, x, y, w, h). Calling it with five arguments — no format
+   — shifted every coordinate one place along, which is why the QR
+   landed on top of the text in Arabic exports. Always pass the format. */
+function _pdfImgFormat(dataUrl) {
+    var m = /^data:image\/([a-z0-9+]+)/i.exec(String(dataUrl || ''));
+    var f = m ? m[1].toUpperCase() : 'PNG';
+    if (f === 'JPG') f = 'JPEG';
+    if (f === 'SVG+XML') f = 'PNG';
+    return f;
+}
+
 function _pdfRgb(hex) {
     var h = String(hex || '000000').replace('#', '');
     return [parseInt(h.substr(0, 2), 16) || 0,
@@ -331,7 +343,7 @@ function _pdfWriter(pdf, style, lang) {
             var hh = props.height * (ww / props.width);
             if (hh > maxH) { hh = maxH; ww = props.width * (hh / props.height); }
             w.need(hh + 2);
-            pdf.addImage(dataUrl, M, w.y, ww, hh);
+            pdf.addImage(dataUrl, _pdfImgFormat(dataUrl), M, w.y, ww, hh);
             w.y += hh + 3;
         } catch (e) {
             /* One unreadable image must not take the whole export down. */
@@ -394,7 +406,7 @@ function _pdfBuild(pdf, model, lang) {
             var cw = w.CW, ch = p.height * (cw / p.width);
             var maxH = w.BOTTOM - w.M;
             if (ch > maxH) { ch = maxH; cw = p.width * (ch / p.height); }
-            pdf.addImage(model.cover.frontImage, w.M, w.M, cw, ch);
+            pdf.addImage(model.cover.frontImage, _pdfImgFormat(model.cover.frontImage), w.M, w.M, cw, ch);
             w.newPage();
         } catch (e) { console.warn('[PDF] front cover skipped:', e && e.message); }
     }
@@ -576,7 +588,7 @@ function _pdfBuild(pdf, model, lang) {
             var bw = w.CW, bh = p2.height * (bw / p2.width);
             var mh = w.BOTTOM - w.M;
             if (bh > mh) { bh = mh; bw = p2.width * (bh / p2.height); }
-            pdf.addImage(model.cover.backImage, w.M, w.M, bw, bh);
+            pdf.addImage(model.cover.backImage, _pdfImgFormat(model.cover.backImage), w.M, w.M, bw, bh);
         } catch (e) { console.warn('[PDF] back cover skipped:', e && e.message); }
     }
 
@@ -594,7 +606,10 @@ function _pdfQR(w, qr) {
     /* Two EQUAL cells, as the Word table has. The QR cell was 2.5 cm
        wide holding a 2.5 cm image, so once cell padding was subtracted
        the code spilled across the divider into the text. */
-    const half = w.CW / 2;
+    /* Matches the Word table: a narrow cell for the code, the rest for
+       the address, which is the long content. */
+    const qrCellW = 32;
+    const textW = w.CW - qrCellW;
     const padX = 3, padY = 2.5;
 
     const watch = _pdfT('watch', w.lang);
@@ -603,12 +618,12 @@ function _pdfQR(w, qr) {
         : ((qr.url || '').trim() ? watch : '');
 
     pdf.setFontSize(size);
-    const capLines = caption ? pdf.splitTextToSize(caption, half - padX * 2) : [];
-    const urlLines = qr.url ? pdf.splitTextToSize(qr.url, half - padX * 2) : [];
+    const capLines = caption ? pdf.splitTextToSize(caption, textW - padX * 2) : [];
+    const urlLines = qr.url ? pdf.splitTextToSize(qr.url, textW - padX * 2) : [];
     const textH = (capLines.length + urlLines.length) * lh + padY * 2;
     /* The image drives the row height when it is the taller of the two,
        so it always fits inside its own cell. */
-    const qrSide = qr.image ? Math.min(25, half - padX * 2) : 0;
+    const qrSide = qr.image ? Math.min(25, qrCellW - padX * 2) : 0;
     const rowH = Math.max(textH, qrSide + padY * 2, lh * 2);
 
     w.need(rowH + 6);
@@ -617,8 +632,8 @@ function _pdfQR(w, qr) {
 
     pdf.setDrawColor(120, 128, 145);
     pdf.setLineWidth(0.25);
-    pdf.rect(w.M, top, half, rowH, 'S');
-    pdf.rect(w.M + half, top, half, rowH, 'S');
+    pdf.rect(w.M, top, textW, rowH, 'S');
+    pdf.rect(w.M + textW, top, qrCellW, rowH, 'S');
 
     let ty = top + padY;
     pdf.setFont(undefined, 'normal');
@@ -631,8 +646,8 @@ function _pdfQR(w, qr) {
 
     if (qr.image) {
         try {
-            pdf.addImage(qr.image,
-                w.M + half + (half - qrSide) / 2,
+            pdf.addImage(qr.image, _pdfImgFormat(qr.image),
+                w.M + textW + (qrCellW - qrSide) / 2,
                 top + (rowH - qrSide) / 2,
                 qrSide, qrSide);
         } catch (e) { console.warn('[PDF] QR skipped:', e && e.message); }
