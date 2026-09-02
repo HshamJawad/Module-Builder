@@ -119,6 +119,9 @@ function saveCurrentSheetToLO() {
         sheetNumber: document.getElementById('info-sheet-number').value,
         linkSubject: document.getElementById('info-link-subject').value,
         linkUrl: document.getElementById('info-link-url').value,
+        /* '' means "decide from the URL"; 'video' or 'page' is an
+           explicit override by the author. */
+        linkType: (document.getElementById('info-link-type') || {}).value || '',
         qrImage: mbState.infoQRImage,
         selfCheckNumber: document.getElementById('self-check-number').value,
         answersKeyNumber: document.getElementById('answers-key-number').value,
@@ -198,6 +201,9 @@ function saveCurrentSheetToLO() {
         duration: document.getElementById('duration').value,
         linkSubject: document.getElementById('activity-link-subject').value,
         linkUrl: document.getElementById('activity-link-url').value,
+        /* '' means "decide from the URL"; 'video' or 'page' is an
+           explicit override by the author. */
+        linkType: (document.getElementById('activity-link-type') || {}).value || '',
         qrImage: mbState.activityQRImage,
         images: { ...mbState.stepImages },
         includeCriteria: true
@@ -327,6 +333,8 @@ function loadInfoSheetAtIndex(lo, index) {
         document.getElementById('info-objective-lead').value = biGetStrict(info.objectiveLead, contentLang());
         document.getElementById('info-objective').value = biGetStrict(info.objective, contentLang());
         document.getElementById('info-link-subject').value = info.linkSubject || '';
+        var _ltinfo = document.getElementById('info-link-type');
+        if (_ltinfo) _ltinfo.value = info.linkType || '';
         document.getElementById('info-link-url').value = info.linkUrl || '';
         document.getElementById('self-check-number').value = info.selfCheckNumber || info.sheetNumber || '';
         document.getElementById('self-check-content').value = biGetStrict(info.selfCheckContent, contentLang());
@@ -429,6 +437,8 @@ function loadActivitySheetAtIndex(lo, index) {
         document.getElementById('objective').value = biGetStrict(activity.objective, contentLang());
         document.getElementById('duration').value = activity.duration || '0';
         document.getElementById('activity-link-subject').value = activity.linkSubject || '';
+        var _ltactivity = document.getElementById('activity-link-type');
+        if (_ltactivity) _ltactivity.value = activity.linkType || '';
         document.getElementById('activity-link-url').value = activity.linkUrl || '';
         
         if (activity.qrImage) {

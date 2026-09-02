@@ -161,6 +161,35 @@ function _hxTables(tables) {
 
 function _hxQR(qr, L) {
     if (!qr) return '';
+
+    /* A video link becomes a PLAYER, not a hyperlink. This is the one
+       thing the HTML package can do that paper cannot: the trainee
+       watches the demonstration where the step is described instead of
+       copying a URL into another tab.
+
+       Detection is shared with link_modal.js so the dialog's promise
+       and the exported file cannot disagree. */
+    var embed = (typeof mbLinkIsVideo === 'function' && mbLinkIsVideo(qr.url, qr.linkType))
+        ? (typeof mbVideoEmbed === 'function' ? mbVideoEmbed(qr.url) : null)
+        : null;
+
+    if (embed) {
+        var player = (embed.kind === 'video')
+            ? '<video class="mx-video" controls preload="metadata" src="' + _hxEsc(embed.src) + '"></video>'
+            : '<div class="mx-video-frame"><iframe src="' + _hxEsc(embed.src) + '" title="' +
+              _hxEsc(qr.subject || 'video') + '" frameborder="0" loading="lazy" ' +
+              'allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" ' +
+              'allowfullscreen></iframe></div>';
+        return '<div class="mx-media">' +
+                 (qr.subject ? '<div class="mx-sub">' + _hxEsc(qr.subject) + '</div>' : '') +
+                 player +
+                 '<div class="mx-media-foot">' +
+                   (qr.image ? '<img class="mx-qr-img sm" src="' + _hxEsc(qr.image) + '" alt="QR">' : '') +
+                   '<a class="mx-qr-url" href="' + _hxEsc(qr.url) + '" target="_blank" rel="noopener">' + _hxEsc(qr.url) + '</a>' +
+                 '</div>' +
+               '</div>';
+    }
+
     var body = '';
     if (qr.image) body += '<img class="mx-qr-img" src="' + _hxEsc(qr.image) + '" alt="QR">';
     var txt = '';
@@ -628,6 +657,13 @@ function _hxCss() {
 '.mx-qr{display:flex;gap:14px;align-items:center;background:#fafbff;border:1px dashed #cdd3e6;',
 '  border-radius:12px;padding:14px;margin-top:16px}',
 '.mx-qr-img{width:110px;height:110px;object-fit:contain}',
+'.mx-qr-img.sm{width:64px;height:64px}',
+'.mx-media{margin:16px 0;border:1px solid #e3e6ef;border-radius:12px;padding:14px;background:#fafbff}',
+/* 16:9 without a fixed height, so the player scales on a phone. */
+'.mx-video-frame{position:relative;width:100%;padding-top:56.25%;border-radius:10px;overflow:hidden;background:#000}',
+'.mx-video-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}',
+'.mx-video{width:100%;border-radius:10px;background:#000;display:block}',
+'.mx-media-foot{display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap}',
 '.mx-qr-sub{font-weight:700;margin-bottom:4px}',
 '.mx-qr-url{color:#4c5fd7;font-size:.88em;word-break:break-all}',
 '.mx-result{background:#f4f6fc;border-radius:9px;padding:9px 14px}',
@@ -643,6 +679,8 @@ function _hxCss() {
 '@media print{',
 '  body{background:#fff}',
 '  .mx-nav,.mx-top,.mx-reveal{display:none!important}',
+/* A player cannot be printed. The address under it can. */
+'  .mx-video-frame,.mx-video{display:none!important}',
 '  .mx-answers[hidden]{display:block!important}',
 '  .mx-sec{break-inside:avoid;border:none;padding:0;margin-bottom:26px}',
 '  .mx-hero{background:none;color:#000}',

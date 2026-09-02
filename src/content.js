@@ -24,6 +24,18 @@ var _MB_PASTE_LABELS = {
     en: { rxPasteImage: 'Paste Image', rxPasteImageTip: 'Paste an image copied from the clipboard or a web page' },
     fr: { rxPasteImage: 'Coller une image', rxPasteImageTip: 'Coller une image copiée depuis le presse-papiers ou une page web' }
 };
+/* Which sheet the content card belongs to. The Information Sheet and
+   the Activity Sheet render through the same content component, so the
+   scope has to come from the visible tab rather than be hard-coded. */
+function _mbLinkScope() {
+    var t = document.querySelector('.tab-content.active');
+    return (t && /activity/.test(t.id)) ? 'activity' : 'info';
+}
+
+function _mbLinkLabel() {
+    return (typeof _lmT === 'function') ? _lmT('btn') : 'Link / QR';
+}
+
 function _mbContentLabelT(key) {
     var lang = (window.i18n && window.i18n.getLang) ? window.i18n.getLang() : 'en';
     var table = _MB_PASTE_LABELS[lang] || _MB_PASTE_LABELS.en;
@@ -345,6 +357,11 @@ function addContentSection(heading) {
             <button data-act="addContentSection" style="background:#667eea;color:white;border:none;padding:6px 14px;border-radius:5px;font-size:0.85em;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;">➕ <span data-i18n="dgAddContent">${window.i18n.t('dgAddContent')}</span></button>
             ${addMarkBtnHtml(`content-marks-${csc}`)}
             <button class="btn-add-mark" data-act="addContentTable" data-args='[${csc}]' style="background:#0ea5e9;" title="${window.i18n.t('dgAddTable')}" data-i18n-title="dgAddTable">📋 <span data-i18n="dgAddTableBtn">${window.i18n.t('dgAddTableBtn')}</span></button>
+            <!-- The QR/link fields used to be a card of their own on every
+                 sheet. One button here replaces it; the fields live in a
+                 modal. Scope is the SHEET, not this content block — the
+                 link belongs to the sheet, and there is one per sheet. -->
+            <button class="btn-add-mark btn-link-modal" data-act="mbOpenLinkModal" data-args='["${_mbLinkScope()}"]' style="background:#7c3aed;" title="${_mbLinkLabel()}">🔗 <span>${_mbLinkLabel()}</span></button>
         </div>
         <input type="file" id="content-image-input-${csc}" accept="image/*" multiple style="display:none;" data-act="handleContentImageUpload" data-on="change" data-args='[${csc}]'>
         <div id="content-image-gallery-${csc}" class="content-image-gallery"></div>

@@ -277,7 +277,8 @@ function mbBuildModuleModel(lang, state) {
                 qr: (st.infoQRImage || _mmStr(sh.linkSubject).trim() || _mmStr(sh.linkUrl).trim())
                     ? { image: st.infoQRImage || null,
                         url: _mmStr(sh.linkUrl),
-                        subject: _mmStr(sh.linkSubject) }
+                        subject: _mmStr(sh.linkSubject),
+                        linkType: _mmStr(sh.linkType) }
                     : null
             });
         });
@@ -313,7 +314,8 @@ function mbBuildModuleModel(lang, state) {
                 qr: (st.activityQRImage || _mmStr(sh.linkSubject).trim() || _mmStr(sh.linkUrl).trim())
                     ? { image: st.activityQRImage || null,
                         url: _mmStr(sh.linkUrl),
-                        subject: _mmStr(sh.linkSubject) }
+                        subject: _mmStr(sh.linkSubject),
+                        linkType: _mmStr(sh.linkType) }
                     : null
             });
         });
