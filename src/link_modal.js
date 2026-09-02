@@ -31,6 +31,7 @@ var _LM_STRINGS = {
         typeAuto: 'Detected automatically — change it if this is wrong.',
         videoNote: 'In the HTML export this plays inside the page, with its own play, pause and volume controls. YouTube, Vimeo, Dailymotion and direct .mp4/.webm links are supported.',
         pageNote: 'In the HTML export this appears as a clickable link that opens in a new tab.',
+        fileNote: 'If the exported file is opened directly from disk, YouTube may refuse to play it (error 153) — that is a YouTube rule about unknown origins, not a fault in the file. Put the file on a site or a shared drive and it plays. The link below the player always works.',
         blockedNote: 'Some sites refuse to be embedded. If a page will not display, it still works as a link.',
         exportNote: 'Word and PDF are unaffected: they print the QR code and the address exactly as before.',
         qr: 'QR code image',
@@ -51,6 +52,7 @@ var _LM_STRINGS = {
         typeAuto: 'Détecté automatiquement — corrigez-le si besoin.',
         videoNote: 'Dans l\u2019export HTML, la vidéo se lit dans la page, avec ses propres commandes de lecture, pause et volume. YouTube, Vimeo, Dailymotion et les liens .mp4/.webm directs sont pris en charge.',
         pageNote: 'Dans l\u2019export HTML, ceci apparaît comme un lien cliquable qui s\u2019ouvre dans un nouvel onglet.',
+        fileNote: 'Si le fichier export\u00e9 est ouvert directement depuis le disque, YouTube peut refuser de le lire (erreur 153) : c\u2019est une r\u00e8gle de YouTube sur les origines inconnues, pas un d\u00e9faut du fichier. Placez-le sur un site ou un lecteur partag\u00e9 et il se lit. Le lien sous le lecteur fonctionne toujours.',
         blockedNote: 'Certains sites refusent d\u2019être intégrés. Si une page ne s\u2019affiche pas, elle reste utilisable comme lien.',
         exportNote: 'Word et PDF ne changent pas : ils impriment le code QR et l\u2019adresse comme avant.',
         qr: 'Image du code QR',
@@ -71,6 +73,7 @@ var _LM_STRINGS = {
         typeAuto: 'يُحدَّد تلقائياً — غيّره إن كان الاستنتاج خاطئاً.',
         videoNote: 'في تصدير HTML يعمل الفيديو داخل الصفحة نفسها، بأزرار التشغيل والإيقاف والصوت الخاصة به. المدعوم: يوتيوب وVimeo وDailymotion والروابط المباشرة ‎.mp4‎ و‎.webm‎.',
         pageNote: 'في تصدير HTML يظهر هذا رابطاً قابلاً للنقر يُفتح في تبويب جديد.',
+        fileNote: 'إن فُتح الملف المُصدَّر من القرص مباشرة فقد يرفض يوتيوب تشغيله (الخطأ 153) — وهي قاعدة من يوتيوب بشأن المصادر المجهولة لا خلل في الملف. ضع الملف على موقع أو قرص مشترك فيعمل. والرابط أسفل المشغّل يعمل دائماً.',
         blockedNote: 'بعض المواقع ترفض التضمين. وإن تعذّر عرض الصفحة يبقى الرابط عاملاً.',
         exportNote: 'Word وPDF لا يتأثّران: يطبعان رمز الاستجابة والعنوان كما كانا تماماً.',
         qr: 'صورة رمز الاستجابة',
@@ -105,8 +108,17 @@ function mbVideoEmbed(url) {
     m = u.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/i);
     if (m) {
         var start = (u.match(/[?&]t=(\d+)/) || [])[1];
+        /* youtube-nocookie, and `playsinline` so a phone does not hijack
+           the whole screen. Error 153 — the black "player settings"
+           panel — is YouTube refusing an embed whose referrer it cannot
+           verify, which is what happens when the exported file is opened
+           straight from disk (file://, no origin). Serving the file over
+           http(s), or opening it from a shared drive by URL, resolves
+           it; nothing in the markup can. The link under the player is
+           the way out when it does not, so it is always rendered. */
         return { kind: 'iframe',
-                 src: 'https://www.youtube.com/embed/' + m[1] + (start ? '?start=' + start : '') };
+                 src: 'https://www.youtube-nocookie.com/embed/' + m[1] +
+                      '?rel=0&playsinline=1' + (start ? '&start=' + start : '') };
     }
 
     m = u.match(/vimeo\.com\/(?:video\/)?(\d+)/i);
@@ -177,7 +189,8 @@ function _lmPaintNotes() {
     note.innerHTML =
         '<div class="lm-note ' + (isVid ? 'lm-note-video' : 'lm-note-page') + '">' +
           (isVid ? '▶ ' : '🔗 ') + (isVid ? _lmT('videoNote') : _lmT('pageNote')) +
-          (isVid ? '' : '<br><span class="lm-dim">' + _lmT('blockedNote') + '</span>') +
+          (isVid ? '<br><span class="lm-dim">' + _lmT('fileNote') + '</span>'
+                 : '<br><span class="lm-dim">' + _lmT('blockedNote') + '</span>') +
         '</div>' +
         (auto && _lmDraft.url ? '<div class="lm-dim lm-auto">' + _lmT('typeAuto') + '</div>' : '') +
         '<div class="lm-dim lm-auto">' + _lmT('exportNote') + '</div>';

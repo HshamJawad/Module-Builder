@@ -48,6 +48,7 @@ var _PDF_STRINGS = {
         fontMissing: 'The Arabic font could not be loaded, and without it an Arabic PDF prints as empty boxes.\n\nAdd fonts/Cairo-Regular.ttf to the site. It must be an uncompressed .ttf — the Cairo.woff2 already there cannot be embedded in a PDF.\n\nIn the meantime, Export to Word and Export to HTML both handle Arabic correctly.',
         modulesMissing: 'Arabic PDF support is not installed. Upload src/arabic-font.js and src/pdf_arabic.js to the site, then reload with Ctrl+Shift+R.',
         tried: 'Paths tried:',
+        watch: 'Watch:',
         failed: 'PDF export failed',
         overview: 'Module Overview', outcome: 'Learning Outcome', criteria: 'Performance Criteria',
         infoSheet: 'Information Sheet', activitySheet: 'Activity / Job Sheet',
@@ -69,6 +70,7 @@ var _PDF_STRINGS = {
         fontMissing: 'La police arabe n\u2019a pas pu être chargée, et sans elle un PDF arabe s\u2019imprime en carrés vides.\n\nAjoutez fonts/Cairo-Regular.ttf au site. Ce doit être un .ttf non compressé — le Cairo.woff2 déjà présent ne peut pas être intégré dans un PDF.\n\nEn attendant, Exporter vers Word et Exporter en HTML gèrent tous deux l\u2019arabe correctement.',
         modulesMissing: 'La prise en charge de l\u2019arabe pour le PDF n\u2019est pas install\u00e9e. Envoyez src/arabic-font.js et src/pdf_arabic.js sur le site, puis rechargez avec Ctrl+Maj+R.',
         tried: 'Chemins essay\u00e9s :',
+        watch: 'Regarder :',
         failed: 'Échec de l\u2019export PDF',
         overview: 'Aperçu du module', outcome: 'Résultat d\u2019apprentissage', criteria: 'Critères de performance',
         infoSheet: 'Fiche d\u2019information', activitySheet: 'Fiche d\u2019activité',
@@ -90,6 +92,7 @@ var _PDF_STRINGS = {
         fontMissing: 'تعذّر تحميل الخط العربي، وبدونه يخرج ملف PDF العربي مربّعات فارغة.\n\nأضف الملف fonts/Cairo-Regular.ttf إلى الموقع، بصيغة ‎.ttf‎ غير مضغوطة — فملف Cairo.woff2 الموجود لا يمكن تضمينه في PDF.\n\nوإلى حين ذلك، «تصدير إلى Word» و«تصدير HTML» كلاهما يعالج العربية بشكل صحيح.',
         modulesMissing: 'دعم العربية في PDF غير مثبَّت. ارفع الملفّين src/arabic-font.js و src/pdf_arabic.js إلى الموقع، ثم أعد التحميل بـ Ctrl+Shift+R.',
         tried: 'المسارات التي جُرِّبت:',
+        watch: 'شاهد:',
         failed: 'فشل تصدير PDF',
         overview: 'نظرة عامة على الوحدة', outcome: 'ناتج التعلّم', criteria: 'معايير الأداء',
         infoSheet: 'ورقة المعلومات', activitySheet: 'ورقة النشاط/العمل',
@@ -573,10 +576,55 @@ function _pdfBuild(pdf, model, lang) {
     return w;
 }
 
+/* One bordered row, full content width: the caption and address in a
+   wide cell, the QR in a narrow one beside it — the same shape the Word
+   export produces, so the two documents match. It was a vertical stack,
+   which matched nothing. */
 function _pdfQR(w, qr) {
-    if (qr.image) w.image(qr.image, 32);
-    if (qr.subject) w.text(qr.subject, { bold: true });
-    if (qr.url) w.text(qr.url, { size: w.style.body * 0.85, color: '0563C1' });
+    const pdf = w.pdf, S = w.style;
+    const size = S.body;
+    const lh = w.lineH(size);
+    const qrW = 28;                       /* 2.5 cm plus cell padding */
+    const textW = w.CW - qrW;
+    const padX = 3, padY = 2.5;
+
+    const watch = _pdfT('watch', w.lang);
+    const caption = (qr.subject || '').trim()
+        ? watch + ' ' + qr.subject
+        : ((qr.url || '').trim() ? watch : '');
+
+    pdf.setFontSize(size);
+    const capLines = caption ? pdf.splitTextToSize(caption, textW - padX * 2) : [];
+    const urlLines = qr.url ? pdf.splitTextToSize(qr.url, textW - padX * 2) : [];
+    const textH = (capLines.length + urlLines.length) * lh + padY * 2;
+    const rowH = Math.max(textH, qr.image ? qrW : 0, lh * 2);
+
+    w.need(rowH + 6);
+    w.gap(3);
+    const top = w.y;
+
+    pdf.setDrawColor(120, 128, 145);
+    pdf.setLineWidth(0.25);
+    pdf.rect(w.M, top, textW, rowH, 'S');
+    pdf.rect(w.M + textW, top, qrW, rowH, 'S');
+
+    let ty = top + padY;
+    pdf.setFont(undefined, 'normal');
+    pdf.setTextColor(31, 36, 48);
+    capLines.forEach(function (l) { pdf.text(l, w.M + padX, ty + lh * 0.72); ty += lh; });
+    const link = _pdfRgb('0563C1');
+    pdf.setTextColor(link[0], link[1], link[2]);
+    urlLines.forEach(function (l) { pdf.text(l, w.M + padX, ty + lh * 0.72); ty += lh; });
+    pdf.setTextColor(31, 36, 48);
+
+    if (qr.image) {
+        try {
+            const side = Math.min(qrW - 4, rowH - 4);
+            pdf.addImage(qr.image, w.M + textW + (qrW - side) / 2, top + (rowH - side) / 2, side, side);
+        } catch (e) { console.warn('[PDF] QR skipped:', e && e.message); }
+    }
+
+    w.y = top + rowH + 4;
 }
 
 /* Page numbers last, when the total is finally known. Drawn OUTSIDE the

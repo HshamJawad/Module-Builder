@@ -1345,6 +1345,81 @@ async function exportToDocx() {
         };
 
         // Helper: build info sheet children from stored data
+        /* ── QR / link table ────────────────────────────────────
+           Two cells in one 16 cm row: the QR image on one side, the
+           subject and address on the other. This existed only in a
+           legacy single-sheet path, so neither the Information Sheet nor
+           the Activity Sheet has been exporting it since those builders
+           took over — the card was filled in and nothing came out. */
+        const buildQrTable = (subject, url, qrImage) => {
+            const subj = (subject || '').trim();
+            const link = (url || '').trim();
+            if (!qrImage && !subj && !link) return null;
+
+            const { Table, TableRow, TableCell, WidthType, BorderStyle, ImageRun } = mbDocxLib();
+            const cells = [];
+
+            /* 2.5 cm at 96 DPI, matching the button's own promise. */
+            let qrCell = new TableCell({
+                children: [new Paragraph({ text: '' })],
+                width: { size: 1417, type: WidthType.DXA },
+                verticalAlign: 'center',
+                margins: { top: 100, bottom: 100, left: 100, right: 100 }
+            });
+            if (qrImage) {
+                try {
+                    const b64 = String(qrImage).split(',')[1];
+                    qrCell = new TableCell({
+                        children: [new Paragraph({
+                            children: [new ImageRun({
+                                data: Uint8Array.from(atob(b64), c => c.charCodeAt(0)),
+                                transformation: { width: 94, height: 94 }
+                            })],
+                            alignment: AlignmentType.CENTER
+                        })],
+                        width: { size: 1417, type: WidthType.DXA },
+                        verticalAlign: 'center',
+                        margins: { top: 100, bottom: 100, left: 100, right: 100 }
+                    });
+                } catch (e) {
+                    /* A corrupt QR must not lose the address beside it. */
+                    console.error('QR image skipped:', e);
+                }
+            }
+
+            const watch = _mbT('expWatchVideo');
+            const caption = subj ? (watch + ' ' + subj) : (link ? watch : '');
+            const textCell = new TableCell({
+                children: [
+                    new Paragraph({
+                        children: [new TextRun({ text: caption, size: _wsBody(), rightToLeft: _mbRtl() })],
+                        alignment: _mbStart(AlignmentType), bidirectional: _mbRtl()
+                    }),
+                    new Paragraph({
+                        children: [new TextRun({ text: link, size: _wsBody(), color: '0563C1',
+                                                underline: {}, rightToLeft: _mbRtl() })],
+                        alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), wordWrap: true
+                    })
+                ],
+                width: { size: 7655, type: WidthType.DXA },
+                verticalAlign: 'center',
+                margins: { top: 100, bottom: 100, left: 200, right: 200 }
+            });
+
+            /* Text first, QR second. docx_bidi mirrors the row for
+               Arabic, so this order puts the QR on the outer edge in
+               both directions. */
+            cells.push(textCell, qrCell);
+
+            const border = { style: BorderStyle.SINGLE, size: 1, color: '000000' };
+            return new Table({
+                rows: [new TableRow({ children: cells })],
+                width: { size: 9072, type: WidthType.DXA },
+                borders: { top: border, bottom: border, left: border, right: border,
+                           insideHorizontal: border, insideVertical: border }
+            });
+        };
+
         const buildInfoCh = (info, loIndex, sheetIndex) => {
             const { Table, TableRow, TableCell, WidthType, BorderStyle } = mbDocxLib();
             const ch = [];
@@ -1411,6 +1486,14 @@ async function exportToDocx() {
                         });
                     }
                 });
+            }
+            {
+                const qrT = buildQrTable(info.linkSubject, info.linkUrl, mbState.infoQRImage);
+                if (qrT) {
+                    ch.push(new Paragraph({ children: [new TextRun({ text: '', size: _wsBody() })], spacing: { before: 300, after: 200 } }));
+                    ch.push(qrT);
+                    ch.push(new Paragraph({ children: [new TextRun({ text: '', size: _wsBody() })], spacing: { after: 200 } }));
+                }
             }
             if (info.selfCheckContent && info.selfCheckContent.trim()) {
                 const scNum = info.selfCheckNumber || num;
@@ -1524,6 +1607,15 @@ async function exportToDocx() {
                 const ctTable = new Table({ rows: ctRows, width: { size: 9072, type: WidthType.DXA }, borders: ctBdr });
                 // Store as separate section (new page — same as self-check)
                 ch.__criteriaSection = [ctTable];
+            }
+
+            {
+                const qrT = buildQrTable(activity.linkSubject, activity.linkUrl, mbState.activityQRImage);
+                if (qrT) {
+                    ch.push(new Paragraph({ children: [new TextRun({ text: '', size: _wsBody() })], spacing: { before: 300, after: 200 } }));
+                    ch.push(qrT);
+                    ch.push(new Paragraph({ children: [new TextRun({ text: '', size: _wsBody() })], spacing: { after: 200 } }));
+                }
             }
 
             return ch;
