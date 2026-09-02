@@ -355,3 +355,112 @@ function mbBuildModuleModel(lang, state) {
 
     return model;
 }
+
+/* ── Export readiness ───────────────────────────────────────
+   Pressing Export on an empty module used to download an empty file.
+   Worse than useless: it looks like the tool worked and the module is
+   the problem.
+
+   The interesting case is not "nothing typed" — that one is obvious to
+   the user. It is the SECOND one below: an author who created outcomes
+   and sheets and typed content into them, but never gave the sheets a
+   TITLE. Every gate in this file then drops them, the export is empty,
+   and nothing on screen explains why. That is the message worth
+   writing.
+
+   Returns data, not UI. The caller decides how to show it. */
+
+var _MM_READY = {
+    en: {
+        emptyTitle: 'Nothing to export yet',
+        empty: 'This module has no content yet. Add a Learning Outcome in Basic Info, then add an Information Sheet or an Activity Sheet to it.',
+        untitledTitle: 'Your sheets need titles',
+        untitled: 'This module has {n} sheet(s) with content, but none of them has a title — and sheets without a title are left out of every export. Open the Information Sheet or Activity Sheet tab and fill in the Title field.',
+        noSheetsTitle: 'Your outcomes have no sheets',
+        noSheets: 'This module has {n} Learning Outcome(s), but none of them has an Information Sheet or an Activity Sheet yet. An outcome on its own has nothing to export.'
+    },
+    fr: {
+        emptyTitle: 'Rien à exporter pour l\u2019instant',
+        empty: 'Ce module n\u2019a pas encore de contenu. Ajoutez un résultat d\u2019apprentissage dans Informations de base, puis une fiche d\u2019information ou une fiche d\u2019activité.',
+        untitledTitle: 'Vos fiches ont besoin d\u2019un titre',
+        untitled: 'Ce module contient {n} fiche(s) avec du contenu, mais aucune n\u2019a de titre — et les fiches sans titre sont exclues de tous les exports. Ouvrez l\u2019onglet Fiche d\u2019information ou Fiche d\u2019activité et remplissez le champ Titre.',
+        noSheetsTitle: 'Vos résultats n\u2019ont aucune fiche',
+        noSheets: 'Ce module compte {n} résultat(s) d\u2019apprentissage, mais aucun n\u2019a encore de fiche d\u2019information ou d\u2019activité. Un résultat seul n\u2019a rien à exporter.'
+    },
+    ar: {
+        emptyTitle: 'لا يوجد ما يُصدَّر بعد',
+        empty: 'هذه الوحدة بلا محتوى حتى الآن. أضف ناتج تعلّم من تبويب المعلومات الأساسية، ثم أضف إليه ورقة معلومات أو ورقة نشاط.',
+        untitledTitle: 'أوراقك تحتاج عناوين',
+        untitled: 'في هذه الوحدة {n} ورقة تحتوي محتوى، لكن لا عنوان لأيٍّ منها — والأوراق بلا عناوين تُستبعَد من كل تصدير. افتح تبويب ورقة المعلومات أو ورقة النشاط واملأ حقل العنوان.',
+        noSheetsTitle: 'نواتج التعلّم بلا أوراق',
+        noSheets: 'في هذه الوحدة {n} ناتج تعلّم، لكن لا يحمل أيٌّ منها ورقة معلومات أو ورقة نشاط بعد. والناتج وحده لا يحمل ما يُصدَّر.'
+    }
+};
+
+function _mmReady(key, lang) {
+    var table = _MM_READY[lang] || _MM_READY.en;
+    return table[key] || _MM_READY.en[key] || key;
+}
+
+/**
+ * @returns {{ok:boolean, code:string, title:string, message:string}}
+ *   ok:true  — there is something worth exporting.
+ *   ok:false — code says why, and message says what to do about it.
+ */
+function mbCheckExportReadiness(lang, state) {
+    lang = _MM_READY[lang] ? lang : 'en';
+    var raw = state || (typeof window !== 'undefined' ? window.mbState : null);
+    var model = mbBuildModuleModel(lang, raw);
+
+    var has = model && (
+        model.outcomes.length ||
+        model.cover.rows.length ||
+        model.intro.team.length ||
+        model.intro.blocks.length ||
+        _mmStr(model.intro.additional).trim() ||
+        model.references.items.length
+    );
+    if (has) return { ok: true, code: 'ok', title: '', message: '' };
+
+    /* Nothing survived. Look at the RAW state to work out which of the
+       three situations the author is actually in, so the message names
+       their next step instead of stating the obvious. */
+    var st = raw ? ((typeof biFlattenDeep === 'function') ? biFlattenDeep(raw, lang) : raw) : {};
+    var los = _mmArr(st.learningOutcomesData);
+
+    var sheets = 0, withContent = 0;
+    los.forEach(function (lo) {
+        _mmArr(lo.infoSheets).concat(_mmArr(lo.activitySheets)).forEach(function (sh) {
+            if (!sh) return;
+            sheets++;
+            var any = _mmStr(sh.objective).trim() ||
+                      _mmArr(sh.contentSections).some(function (cs) {
+                          return cs && (_mmStr(cs.heading).trim() || _mmStr(cs.text).trim());
+                      }) ||
+                      _mmArr(sh.steps).some(function (s) { return s && _mmStr(s.text).trim(); }) ||
+                      _mmArr(sh.resources).some(function (r) { return r && _mmStr(r.name).trim(); }) ||
+                      _mmStr(sh.selfCheckContent).trim();
+            if (any) withContent++;
+        });
+    });
+
+    if (withContent > 0) {
+        return {
+            ok: false, code: 'untitled',
+            title: _mmReady('untitledTitle', lang),
+            message: _mmReady('untitled', lang).replace('{n}', String(withContent))
+        };
+    }
+    if (los.length > 0 && sheets === 0) {
+        return {
+            ok: false, code: 'no-sheets',
+            title: _mmReady('noSheetsTitle', lang),
+            message: _mmReady('noSheets', lang).replace('{n}', String(los.length))
+        };
+    }
+    return {
+        ok: false, code: 'empty',
+        title: _mmReady('emptyTitle', lang),
+        message: _mmReady('empty', lang)
+    };
+}

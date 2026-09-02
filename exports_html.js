@@ -395,9 +395,28 @@ async function mbExportToHtml() {
         if (typeof showStatus === 'function') showStatus(_hxT('exporting', _hxLang()), 'info');
 
         var lang = _hxLang();
+
+        /* Checked BEFORE building anything. Downloading an empty file
+           looks like the export worked and the module is at fault; the
+           readiness check names which of the three situations the author
+           is actually in and what to do next. */
+        if (typeof mbCheckExportReadiness === 'function') {
+            var ready = mbCheckExportReadiness(lang);
+            if (!ready.ok) {
+                /* mbAlert takes a message and nothing else — a second
+                   argument would be silently dropped, so the title is
+                   folded into the text rather than lost. */
+                var msg = ready.title + '\n\n' + ready.message;
+                if (typeof mbAlert === 'function') await mbAlert(msg);
+                else alert(msg);
+                if (typeof showStatus === 'function') showStatus(ready.title, 'error');
+                return;
+            }
+        }
+
         var model = mbBuildModuleModel(lang);
         if (!model) {
-            if (typeof mbAlert === 'function') mbAlert('No module to export.');
+            if (typeof mbAlert === 'function') await mbAlert(_hxT('empty', lang) || 'No module to export.');
             return;
         }
         var html = mbBuildModuleHtml(model);
