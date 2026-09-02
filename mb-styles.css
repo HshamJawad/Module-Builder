@@ -58,17 +58,43 @@
                — a centred flex row overflows symmetrically and the
                scroll container cannot reach either end. So: centre
                while it fits, scroll when it does not. */
+            /* NOT overflow-x on the bar itself. That was the first fix
+               and it broke the language menu: its dropdown is
+               position:absolute inside this element, and a scroll
+               container clips absolutely positioned children — the panel
+               opened and was immediately cut off at the bar's edge, so
+               the button looked dead.
+
+               The scrolling moves to an inner track instead, and the bar
+               keeps `overflow: visible` so the dropdown can escape. */
+            overflow: visible;
+        }
+
+        .figma-toolbar .figma-toolbar-scroll {
+            display: flex;
+            align-items: center;
+            gap: inherit;
+            min-width: 0;
+            max-width: 100%;
             overflow-x: auto;
-            overflow-y: hidden;
+            overflow-y: visible;
             justify-content: safe center;
             scrollbar-width: none;
             -webkit-overflow-scrolling: touch;
+            /* Room for the dropdown to hang out of the track without the
+               scrollbar area clipping it. */
+            padding-bottom: 2px;
         }
-        .figma-toolbar::-webkit-scrollbar { display: none; }
+        .figma-toolbar .figma-toolbar-scroll::-webkit-scrollbar { display: none; }
+
+        /* The language menu must not live inside the scroll track, for
+           the same clipping reason — it stays a direct child of the bar. */
+        .figma-toolbar > .mb-lang-menu { flex: 0 0 auto; }
 
         /* Buttons must not be squeezed narrower than their labels; that
            is what turns "تصدير إلى Word" into a clipped stub. */
-        .figma-toolbar > * { flex: 0 0 auto; }
+        .figma-toolbar > *,
+        .figma-toolbar-scroll > * { flex: 0 0 auto; }
 
         .figma-btn { white-space: nowrap; }
 

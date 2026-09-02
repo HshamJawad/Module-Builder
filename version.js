@@ -189,6 +189,16 @@
        an update the user postponed is to reopen the tool — so the
        badge turns into the button that brings the bar back. */
     function paintBadge() {
+        /* The idle badge — a disabled chip reading "v3.1.0" — is gone.
+           It occupied a full button's width in a toolbar that had run
+           out of room, and it told the user nothing they could act on;
+           the version is in the Help tab and in the footer.
+
+           The badge is still built the moment an update IS available,
+           because then it is the only way back to a banner the user
+           dismissed with "Later". */
+        if (!updateReady && !badge) return;
+
         if (!badge) {
             var bar = document.querySelector('.figma-toolbar');
             if (!bar) return;
@@ -213,6 +223,13 @@
             badge.style.opacity = '1';
             badge.style.fontWeight = '700';
             badge.style.color = '#4f46e5';
+        } else if (badge) {
+            /* An update that was applied, or a banner shown then
+               cancelled: remove the chip rather than parking a dead
+               button in the bar. */
+            if (badge.parentNode) badge.parentNode.removeChild(badge);
+            badge = null;
+            return;
         } else {
             badge.disabled = true;
             badge.textContent = loaded ? 'v' + loaded : '';

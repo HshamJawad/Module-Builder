@@ -133,6 +133,10 @@
 <body>
 <!-- ── Fixed Figma-style Toolbar ─────────────────────────────────── -->
 <div class="figma-toolbar">
+<!-- Everything except the language menu scrolls horizontally when the
+     bar runs out of room. The menu stays OUTSIDE this track because a
+     scroll container clips its absolutely positioned dropdown. -->
+<div class="figma-toolbar-scroll">
 <button aria-controls="mb-sidenav" aria-expanded="true" aria-label="Toggle sections panel" class="figma-btn mb-nav-toggle" id="mb-nav-toggle" title="Toggle sections panel">
 <span class="figma-btn-icon silver">☰</span></button>
 <div class="figma-divider"></div>
@@ -159,6 +163,7 @@
 <button class="figma-btn" data-act="clearAll" style="color:#dc2626;">
 <span class="figma-btn-icon red"><svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg></span><span data-i18n="txClearAll">Clear All</span></button>
 <div class="figma-divider"></div>
+</div>
 <!-- ── Language menu ──────────────────────────────────────────────
      ONE choice, not three. The tool used to expose interface, content
      and export language separately — a distinction that made sense
