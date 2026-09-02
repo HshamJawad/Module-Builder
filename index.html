@@ -11,6 +11,7 @@
 <meta content="#667eea" name="theme-color"/>
 <title>Module Builder V 2.0</title>
 <script src="https://cdn.jsdelivr.net/npm/docx@7.8.2/build/index.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <!-- Error handler must load before any app script -->
 <script src="error-handler2.js"></script>
 <script defer src="version.js"></script>
@@ -150,6 +151,8 @@
      mb:langchange, the same arrangement content.js uses. -->
 <button class="figma-btn" data-act="mbExportToHtml" id="export-html-btn">
 <span class="figma-btn-icon blue">🖥️</span><span>Export to HTML</span></button>
+<button class="figma-btn" data-act="mbExportToPdf" id="export-pdf-btn">
+<span class="figma-btn-icon red">📕</span><span>Export to PDF</span></button>
 <button class="figma-btn" data-act="openWordSettings" id="word-settings-btn">
 <span class="figma-btn-icon silver">⚙️</span><span>Settings</span></button>
 <div class="figma-divider"></div>
@@ -983,6 +986,9 @@
 <script src="src/storage.js"></script>
 <script src="src/module_model.js"></script>
 <script src="src/exports_html.js"></script>
+<script src="src/arabic-font.js"></script>
+<script src="src/pdf_arabic.js"></script>
+<script src="src/exports_pdf.js"></script>
 <script src="src/word_settings.js"></script>
 <script src="src/export_ui.js"></script>
 <script src="src/exports_docx.js"></script>
