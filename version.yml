@@ -34,11 +34,12 @@ jobs:
           # 2.1.<run>. Raised to 3.1 with the Word export settings
           # release so the workflow and the file agree.
           #
-          # Raised again to 3.2 with the link/QR dialog control layout
-          # release: version.json now reads 3.2.0, and leaving this at
-          # 3.1 would make the next push write 3.1.<run> — the same
-          # backwards roll, one minor later.
-          MAJOR_MINOR: "3.2"
+          # Raised again with every release that moves the minor: 3.2
+          # for the link/QR dialog control layout, 3.3 for the adaptive
+          # toolbar. version.json now reads 3.3.0, and any value left
+          # behind here would make the next push roll the number
+          # backwards to <old>.<run> — the same failure, one minor later.
+          MAJOR_MINOR: "3.3"
         run: |
           VERSION="${MAJOR_MINOR}.${GITHUB_RUN_NUMBER}"
           BUILD="$(date -u +%Y-%m-%d)"
