@@ -9,7 +9,12 @@
 <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
 <meta content="Module Builder" name="apple-mobile-web-app-title"/>
 <meta content="#667eea" name="theme-color"/>
-<title>Module Builder V 2.0</title>
+<!-- No version number here. version.json is the single machine-writable
+     source and version.js paints every place the build is shown; a
+     number typed into the <title> is one the GitHub Action cannot
+     reach, which is how this line came to read V 2.0 while the tool was
+     running 3.x. -->
+<title>Module Builder</title>
 <script src="https://cdn.jsdelivr.net/npm/docx@7.8.2/build/index.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <!-- Error handler must load before any app script -->
@@ -1021,6 +1026,10 @@
 <script src="src/exports_docx.js"></script>
 <script src="src/contentlang_ui.js"></script>
 <script src="src/events.js"></script>
+<!-- Toolbar fit. Loaded after events.js so the bar's data-act handlers
+     are bound before anything measures it, and it binds nothing of its
+     own on those buttons — it reads widths and sets one class. -->
+<script src="src/toolbar_fit.js"></script>
 <!-- Side-rail toggle. Inlined rather than shipped as src/sidenav.js so
      the feature has no second file to deploy: it is 30 lines, it binds
      one listener to one button, and it touches nothing the dispatch
