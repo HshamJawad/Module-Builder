@@ -583,7 +583,12 @@ function mbBuildPptxDeck(model, cfg, PptxGen) {
                             fontSize: 30, bold: true, color: th.title, valign: 'middle'
                         }));
                         if (lines.length) s.addNotes(lines.join('\n'));
-                        if (img) s.addImage({ data: img, x: 3.5, y: 2.0, w: 6.3, h: 4.4, sizing: { type: 'contain', w: 6.3, h: 4.4 } });
+                        if (img) /* `sizing` alone, with no w/h beside it. Given both, the
+                               plain w/h win and the picture is STRETCHED to
+                               the box — a photograph of a dented panel
+                               becomes a wide smear. `contain` fits it inside
+                               the same rectangle and keeps its proportions. */
+                            s.addImage({ data: img, x: 3.5, y: 2.0, sizing: { type: 'contain', w: 6.3, h: 4.4 } });
                     } else if (cfg.cardMode === 'title') {
                         s.addText(head, base({
                             x: 0.8, y: 2.9, w: 11.7, h: 1.1,
@@ -612,8 +617,7 @@ function mbBuildPptxDeck(model, cfg, PptxGen) {
                         }
                         if (img) {
                             s.addImage({
-                                data: img,
-                                x: rtl ? 0.7 : 6.9, y: 1.75, w: 5.7, h: 4.6,
+                                data: img, x: rtl ? 0.7 : 6.9, y: 1.75,
                                 sizing: { type: 'contain', w: 5.7, h: 4.6 }
                             });
                         }
@@ -658,7 +662,7 @@ function mbBuildPptxDeck(model, cfg, PptxGen) {
                         }
                         if (img) {
                             s.addImage({
-                                data: img, x: rtl ? 0.7 : 6.9, y: 1.75, w: 5.7, h: 4.6,
+                                data: img, x: rtl ? 0.7 : 6.9, y: 1.75,
                                 sizing: { type: 'contain', w: 5.7, h: 4.6 }
                             });
                         }

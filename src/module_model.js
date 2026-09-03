@@ -299,7 +299,22 @@ function mbBuildModuleModel(lang, state) {
                     return {
                         index: idx + 1,
                         text: _mmStr(stp && stp.text),
-                        images: _mmImages(sh.stepImages, stp && stp.stepId),
+                        /* `sh.images`, not `sh.stepImages`. The activity
+                           sheet stores its picture bag under `images`
+                           (sheets.js: `images: { ...mbState.stepImages }`)
+                           — the state object and the SAVED sheet use
+                           different names for the same thing. This model
+                           read the state's name off the sheet, found
+                           undefined every time, and reported that no step
+                           had a picture. Silent: an empty array is a
+                           perfectly ordinary answer, so nothing threw and
+                           nothing warned; the pictures simply were not in
+                           the file. exports_docx.js was unaffected because
+                           it reads `activity.images` directly, which is why
+                           Word kept showing them while HTML and PPTX did
+                           not. The fallback covers any sheet written by a
+                           future path that uses the state's name. */
+                        images: _mmImages(sh.images || sh.stepImages, stp && stp.stepId),
                         marks: _mmMarks(stp && stp.marks),
                         tables: _mmTables(stp && stp.tables)
                     };
