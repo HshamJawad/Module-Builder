@@ -95,6 +95,12 @@
                state in the screenshot. Held at their natural width, the
                overflow becomes measurable, and only then fixable. */
             '.figma-toolbar-scroll > *{flex:0 0 auto;}',
+            /* The dropdown panels are absolutely positioned, so they are
+               already out of flow and cannot widen the bar. Stated here
+               so a later change that gives one of them a static
+               position fails visibly rather than by making the bar
+               measure a closed menu's width. */
+            '.figma-toolbar .mb-exp-panel,.figma-toolbar .mb-lang-panel{position:absolute;}',
 
             /* The track already scrolls; this only makes its scrollbar
                thin and quiet, so the bar does not grow a permanent grey
@@ -202,14 +208,29 @@
         });
     }
 
+    /* THE SHAKE, and why disconnect/re-observe caused it.
+       ------------------------------------------------------------
+       This function used to disconnect the ResizeObserver for the
+       duration of a pass and re-observe at the end. That looks like the
+       careful thing to do and is in fact the bug: ResizeObserver fires
+       an INITIAL callback for every element the moment it is observed,
+       whether or not the size changed. So each pass ended by scheduling
+       the next one — fit → observe → callback → fit — a loop with
+       nothing to stop it, running once per animation frame forever. At
+       a width where the level flips between two values the loop is
+       visible as the buttons twitching; at other widths it is invisible
+       and merely burns a frame's work forever.
+
+       The guard is a flag instead. The observer stays connected, and
+       the callbacks a pass provokes are dropped while it runs. Once it
+       settles, the level is a pure function of the space available, so
+       a callback that arrives afterwards computes the same answer,
+       writes nothing, and the chain ends by itself. */
+    var busy = false;
+
     function fit() {
         if (!bar || !bar.isConnected) return;
-
-        /* The observer watches the elements this function resizes. Left
-           connected, every write below would schedule another pass, and
-           since each pass restarts at level 0 the bar would visibly
-           flash through its four states on every resize. */
-        if (ro) ro.disconnect();
+        busy = true;
 
         var i = 0;
         for (; i < LEVELS.length; i++) {
@@ -220,10 +241,15 @@
         if (atFloor) applyLevel(LEVELS.length - 1);
         track.classList.toggle('tb-scroll', atFloor && overflows());
 
-        if (ro) { ro.observe(bar); if (track !== bar) ro.observe(track); }
+        /* Cleared after the frame, not on this line: the writes above
+           have not been laid out yet, and the observations they cause
+           arrive at the end of the frame — inside the window this flag
+           exists to cover. */
+        requestAnimationFrame(function () { busy = false; });
     }
 
     function schedule() {
+        if (busy) return;
         cancelAnimationFrame(raf);
         raf = requestAnimationFrame(fit);
     }
@@ -269,6 +295,7 @@
         });
 
         new MutationObserver(function () {
+            if (busy) return;
             keepLabelsReadable();
             schedule();
         }).observe(bar, { childList: true, subtree: true });
