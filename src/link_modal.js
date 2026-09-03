@@ -142,6 +142,84 @@ function mbLinkIsVideo(url, type) {
     return !!mbVideoEmbed(url);
 }
 
+/* ── The dialog's own stylesheet ─────────────────────────────
+   WHY IT LIVES HERE AND NOT IN index.html
+   The page's .ws-check rule was written for the column of checkboxes
+   in the export-settings dialog, where a stacked list needs no
+   horizontal rhythm. Reused for two radios on ONE line it left the
+   control glued to its text and sitting a couple of pixels below it —
+   the label and the dot were not on the same optical line, which is
+   what the user sees first and trusts least.
+
+   Fixing it in the page stylesheet would have changed the export
+   settings dialog at the same time. Scoping every rule under
+   #lm-overlay keeps the repair inside this dialog: nothing else in the
+   tool can move because of it, in any language.
+
+   Injected once, on first open, so a user who never opens the dialog
+   never pays for the rules. */
+function _lmEnsureStyle() {
+    if (document.getElementById('lm-style')) return;
+    var s = document.createElement('style');
+    s.id = 'lm-style';
+    s.textContent = [
+        /* The label and its controls share one baseline. `align-items:
+           center` is what puts the dot, the word and the field label on
+           the same optical line; the old rule inherited `baseline`,
+           which aligns text to text and leaves a form control hanging. */
+        '#lm-overlay .ws-row.lm-row-type{display:flex;align-items:center;',
+        'flex-wrap:wrap;gap:10px 16px;}',
+        '#lm-overlay .ws-row.lm-row-type > label:first-child{margin:0;',
+        'line-height:1.35;flex:0 0 auto;}',
+
+        /* The two choices: a row of pills, never touching. */
+        '#lm-overlay .lm-radios{display:flex;align-items:center;',
+        'flex-wrap:wrap;gap:8px;}',
+        '#lm-overlay .lm-radios .ws-check{display:inline-flex;',
+        'align-items:center;gap:9px;margin:0;padding:7px 13px;',
+        'min-height:38px;border:1px solid #e2e8f0;border-radius:10px;',
+        'background:#fff;font-size:.93em;line-height:1;cursor:pointer;',
+        '-webkit-user-select:none;user-select:none;',
+        'transition:border-color .15s,background .15s,box-shadow .15s;}',
+        '#lm-overlay .lm-radios .ws-check:hover{border-color:#c7d2fe;',
+        'background:#f8faff;}',
+
+        /* margin:0 on the input is the second half of the alignment
+           fix — a browser's default radio carries 3px of its own on
+           three sides, which is where the "stuck to the text" look
+           came from. The gap above replaces it, and unlike a margin it
+           mirrors correctly in Arabic. */
+        '#lm-overlay .lm-radios .ws-check > input[type="radio"]{',
+        'width:17px;height:17px;margin:0;flex:0 0 auto;',
+        'accent-color:#6366f1;cursor:pointer;}',
+        '#lm-overlay .lm-radios .ws-check > span{display:block;',
+        'line-height:1.15;white-space:nowrap;}',
+
+        /* Selected state. Two selectors for one job: :has() where the
+           browser has it, and the .is-on class the dialog sets itself
+           where it does not — the checked pill must be obvious on an
+           older browser too, not merely on a new one. */
+        '#lm-overlay .lm-radios .ws-check.is-on,',
+        '#lm-overlay .lm-radios .ws-check:has(input:checked){',
+        'border-color:#6366f1;background:#eef2ff;color:#3730a3;',
+        'font-weight:600;box-shadow:inset 0 0 0 1px #6366f1;}',
+
+        /* Keyboard users get the ring the pill would otherwise hide. */
+        '#lm-overlay .lm-radios .ws-check:focus-within{',
+        'outline:3px solid rgba(99,102,241,.35);outline-offset:2px;}',
+
+        /* A narrow phone: the label above its pills rather than a
+           cramped two-column squeeze. */
+        '@media (max-width:520px){',
+        '#lm-overlay .ws-row.lm-row-type{align-items:flex-start;',
+        'flex-direction:column;gap:8px;}',
+        '#lm-overlay .lm-radios{width:100%;}',
+        '#lm-overlay .lm-radios .ws-check{flex:1 1 auto;',
+        'justify-content:center;}}'
+    ].join('');
+    document.head.appendChild(s);
+}
+
 /* ── The dialog ─────────────────────────────────────────────
    It edits a DRAFT and writes to the hidden inputs only on Save, so
    opening it to look costs nothing — the same contract as the export
@@ -197,7 +275,16 @@ function _lmPaintNotes() {
 
     var eff = isVid ? 'video' : 'page';
     var radios = document.querySelectorAll('[name="lm-type"]');
-    for (var i = 0; i < radios.length; i++) radios[i].checked = (radios[i].value === eff);
+    for (var i = 0; i < radios.length; i++) {
+        var on = (radios[i].value === eff);
+        radios[i].checked = on;
+        /* The pill's highlight, for browsers without :has(). Set from
+           the same line that sets `checked`, so the two cannot drift
+           apart — including when the type is inferred from a pasted
+           URL rather than clicked. */
+        var pill = radios[i].closest ? radios[i].closest('.ws-check') : radios[i].parentNode;
+        if (pill && pill.classList) pill.classList.toggle('is-on', on);
+    }
 }
 
 function _lmPaintQr() {
@@ -216,6 +303,7 @@ function mbOpenLinkModal(scope) {
     _lmDraft = _lmRead();
     _lmSaved = Object.assign({}, _lmDraft);
     _lmArmed = false;
+    _lmEnsureStyle();
 
     var rtl = !!(window.i18n && window.i18n.isRTL && window.i18n.isRTL());
     var ov = document.createElement('div');
@@ -231,8 +319,11 @@ function mbOpenLinkModal(scope) {
             '<input type="text" class="lm-input" id="lm-subject" placeholder="' + _lmT('subjectPh') + '"></div>' +
           '<div class="ws-row lm-stack"><label>' + _lmT('url') + '</label>' +
             '<input type="text" class="lm-input" id="lm-url" placeholder="https://..." dir="ltr"></div>' +
-          '<div class="ws-row"><label>' + _lmT('type') + '</label>' +
-            '<div class="lm-radios">' +
+          /* role="radiogroup" + aria-label: a screen reader announces
+             "Link type, 1 of 2" instead of two loose radios whose
+             heading it has no way to associate with them. */
+          '<div class="ws-row lm-row-type"><label id="lm-type-label">' + _lmT('type') + '</label>' +
+            '<div class="lm-radios" role="radiogroup" aria-labelledby="lm-type-label">' +
               '<label class="ws-check"><input type="radio" name="lm-type" value="video"><span>' + _lmT('typeVideo') + '</span></label>' +
               '<label class="ws-check"><input type="radio" name="lm-type" value="page"><span>' + _lmT('typePage') + '</span></label>' +
             '</div></div>' +
