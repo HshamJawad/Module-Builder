@@ -36,10 +36,11 @@ jobs:
           #
           # Raised again with every release that moves the minor: 3.2
           # for the link/QR dialog control layout, 3.3 for the adaptive
-          # toolbar. version.json now reads 3.3.0, and any value left
-          # behind here would make the next push roll the number
-          # backwards to <old>.<run> — the same failure, one minor later.
-          MAJOR_MINOR: "3.3"
+          # toolbar, 3.4 for the PPTX export and the export centre.
+          # version.json now reads 3.4.0, and any value left behind here
+          # would roll the number backwards to <old>.<run> on the next
+          # push — the same failure, one minor later.
+          MAJOR_MINOR: "3.4"
         run: |
           VERSION="${MAJOR_MINOR}.${GITHUB_RUN_NUMBER}"
           BUILD="$(date -u +%Y-%m-%d)"
