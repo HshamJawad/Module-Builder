@@ -1266,6 +1266,22 @@ async function exportToDocx() {
            names the table. */
         const _pushUserTable = (t, ch) => {
             if (!t) return;
+            /* The classes are fetched HERE, not closed over.
+               ------------------------------------------------------------
+               _buildUserTable takes Table, TableRow, TableCell, WidthType
+               and BorderStyle as PARAMETERS, and every call site
+               destructures its own copy from mbDocxLib() first — which is
+               why this helper, written beside it but called from three
+               different scopes, threw `Table is not defined` on the first
+               table it met. It was reading names that exist at each call
+               site and nowhere near its own definition.
+
+               mbDocxLib() is the same source those call sites use, so the
+               classes are identical; asking for them here makes the
+               helper independent of whatever happens to be in scope
+               wherever it is called from, which is the property it needed
+               and did not have. */
+            const { Table, TableRow, TableCell, WidthType, BorderStyle } = mbDocxLib();
             if (t.title && t.title.trim()) {
                 ch.push(new Paragraph({
                     children: [new TextRun({ text: t.title, bold: true, size: _wsBody(),
