@@ -50,6 +50,11 @@ var MB_KEYS = {
        language, because a team's documents should look alike whichever
        side they were written on. Owned by word_settings.js. */
     wordExport:  'mb_word_export_settings',
+    /* Slide-deck export settings. A SEPARATE key from wordExport, not a
+       few more fields inside it: the two objects are validated against
+       different tables, and one corrupt slide field must not be able to
+       take the Word export down with it. Owned by exports_pptx.js. */
+    pptxExport:  'mb_pptx_export_settings',
     /* Last captured error, written by error-handler2.js. Registered here
        so the key is visible in one place with the rest; that file loads
        before this one and falls back to the literal if MB_KEYS is not

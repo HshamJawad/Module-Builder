@@ -207,6 +207,48 @@ var _WS_STRINGS = {
     }
 };
 
+/* ── Export-centre strings ──────────────────────────────────
+   Appended rather than woven into the three tables above: this is a
+   later feature, and keeping its keys together means the day the dialog
+   changes again the diff is one block per language rather than thirty
+   scattered lines. */
+Object.assign(_WS_STRINGS.en, {
+    wsCenterTitle: 'Export Settings',
+    navDoc:  'Word & PDF',
+    navHtml: 'HTML',
+    navPptx: 'PowerPoint',
+    navLang: 'Language',
+    navKeys: 'Shortcuts',
+    wsLangTitle: 'Interface and export language',
+    wsLangNote:  'This changes the tool, the exported document and this dialog at once. Your unsaved settings below are kept.',
+    wsKeysTitle: 'Keyboard shortcuts',
+    wsKeysNote:  'Every shortcut needs Ctrl (⌘ on a Mac), so none of them can fire while you are typing. Ctrl + S works inside a field too.'
+});
+Object.assign(_WS_STRINGS.fr, {
+    wsCenterTitle: 'Réglages d\u2019export',
+    navDoc:  'Word et PDF',
+    navHtml: 'HTML',
+    navPptx: 'PowerPoint',
+    navLang: 'Langue',
+    navKeys: 'Raccourcis',
+    wsLangTitle: 'Langue de l\u2019interface et des exports',
+    wsLangNote:  'Ceci change l\u2019outil, le document exporté et cette fenêtre en même temps. Vos réglages non enregistrés sont conservés.',
+    wsKeysTitle: 'Raccourcis clavier',
+    wsKeysNote:  'Chaque raccourci exige Ctrl (⌘ sur Mac) : aucun ne peut se déclencher pendant la saisie. Ctrl + S fonctionne aussi dans un champ.'
+});
+Object.assign(_WS_STRINGS.ar, {
+    wsCenterTitle: 'إعدادات التصدير',
+    navDoc:  'Word و PDF',
+    navHtml: 'HTML',
+    navPptx: 'باوربوينت',
+    navLang: 'اللغة',
+    navKeys: 'الاختصارات',
+    wsLangTitle: 'لغة الواجهة والتصدير',
+    wsLangNote:  'هذا يغيّر الأداة والمستند المُصدَّر وهذه النافذة معاً. وإعداداتك غير المحفوظة تبقى كما هي.',
+    wsKeysTitle: 'اختصارات لوحة المفاتيح',
+    wsKeysNote:  'كل اختصار يتطلّب Ctrl (أو ⌘ على ماك)، فلا يمكن أن ينطلق أثناء الكتابة. وCtrl + S يعمل داخل الحقول أيضاً.'
+});
+
 function _wsT(key) {
     var lang = (window.i18n && window.i18n.getLang) ? window.i18n.getLang() : 'en';
     var table = _WS_STRINGS[lang] || _WS_STRINGS.en;
@@ -416,6 +458,25 @@ var _wsSaved  = null;   /* the last committed state, for the dirty check */
 var _wsEscHnd = null;
 var _wsArmed  = false;  /* Close pressed once while dirty */
 
+/* The PPTX pane edits its own draft, stored in its own key, because the
+   two settings objects are validated against different tables and a
+   corrupt slide field must not be able to take the Word export with it.
+   They are nonetheless SAVED TOGETHER by the one button in the footer:
+   the alternative — a Save per pane — means a user who changed
+   something in two panes and pressed one of the buttons loses the other
+   change without ever being told. */
+var _pxDraft  = null;
+var _pxSaved  = null;
+
+/* Which pane is open, and whether the next open() should keep the
+   current drafts. Set by the language pane, which has to rebuild the
+   whole dialog to retranslate it and must not throw away work to do
+   so. Not a parameter: events.js appends the element and the event to
+   every action's arguments, so a positional flag on openWordSettings
+   would arrive truthy on an ordinary toolbar click. */
+var _wsPane   = 'doc';
+var _wsKeep   = false;
+
 function _wsSizeSelect(field, value) {
     var out = '';
     for (var pt = WS_MIN_PT; pt <= WS_MAX_PT; pt++) {
@@ -461,7 +522,8 @@ function _wsRepaintPreview() {
 }
 
 function _wsIsDirty() {
-    return JSON.stringify(_wsDraft) !== JSON.stringify(_wsSaved);
+    return JSON.stringify(_wsDraft) !== JSON.stringify(_wsSaved) ||
+           JSON.stringify(_pxDraft) !== JSON.stringify(_pxSaved);
 }
 
 /* Footer message line. Doubles as the save confirmation and the
@@ -485,18 +547,275 @@ function _wsTouch() {
 
 function _wsSave() {
     wsWriteSettings(_wsDraft);
+    if (typeof pxWriteSettings === 'function') pxWriteSettings(_pxDraft);
     _wsSaved = Object.assign({}, _wsDraft);
+    _pxSaved = JSON.parse(JSON.stringify(_pxDraft));
     _wsArmed = false;
     var save = document.getElementById('ws-save');
     if (save) save.disabled = true;
     _wsSetMsg('\u2713 ' + _wsT('wsSaved'), 'ok');
 }
 
+/* ── The shell's own stylesheet ─────────────────────────────
+   mb-styles.css already dresses .ws-modal, .ws-row, .ws-check and the
+   rest; what it has never had is a two-column dialog. Those rules are
+   injected here rather than added there for the same reason link_modal
+   injects its own: a layout that exists in one dialog should not be
+   able to move anything else in the tool, and the file that owns the
+   dialog should own its geometry.
+
+   Scoped to #ws-overlay throughout, and only classes this file
+   introduces are styled — the panes inside keep whatever mb-styles.css
+   already gives them. */
+function _wsEnsureStyle() {
+    if (document.getElementById('ws-shell-style')) return;
+    var s = document.createElement('style');
+    s.id = 'ws-shell-style';
+    s.textContent = [
+        /* The modal grows: a sidebar plus a pane needs the width, and a
+           fixed height keeps the footer still while panes of very
+           different lengths are switched under it. Without the fixed
+           height the Save button jumps up and down as the user moves
+           between Language (six lines) and Word (a preview and twelve
+           rows). */
+        '#ws-overlay .ws-modal{max-width:900px;width:min(94vw,900px);',
+        'height:min(86vh,720px);display:flex;flex-direction:column;}',
+
+        '#ws-overlay .ws-shell{display:flex;flex:1;min-height:0;}',
+
+        /* The rail. Logical border so it lands on the inner edge in both
+           directions without a second rule. */
+        '#ws-overlay .ws-nav{flex:0 0 210px;display:flex;flex-direction:column;',
+        'gap:2px;padding:14px 10px;overflow-y:auto;background:#f8fafc;',
+        'border-inline-end:1px solid #e2e8f0;}',
+        '#ws-overlay .ws-nav-btn{display:flex;align-items:center;gap:10px;',
+        'width:100%;padding:9px 12px;border:none;border-radius:9px;',
+        'background:transparent;color:#334155;font:inherit;font-size:.95em;',
+        'text-align:start;cursor:pointer;transition:background .12s,color .12s;}',
+        '#ws-overlay .ws-nav-btn:hover{background:#eef2ff;}',
+        '#ws-overlay .ws-nav-btn.is-on{background:#e0e7ff;color:#3730a3;font-weight:600;}',
+        '#ws-overlay .ws-nav-ico{flex:0 0 auto;font-size:1.05em;line-height:1;}',
+
+        /* Only the pane scrolls. The head and the foot stay put, so the
+           Save button is reachable without scrolling to the bottom of a
+           long pane — which is exactly the complaint the old one-column
+           dialog earned. */
+        '#ws-overlay .ws-panes{flex:1;min-width:0;overflow-y:auto;padding:18px 22px;}',
+        '#ws-overlay .ws-pane{display:none;}',
+        '#ws-overlay .ws-pane.is-on{display:block;}',
+
+        /* Controls that the panes introduce. */
+        '#ws-overlay .ws-unit{color:#64748b;font-size:.9em;margin-inline-start:8px;}',
+        '#ws-overlay .px-themes{display:flex;flex-wrap:wrap;gap:8px;}',
+        '#ws-overlay .px-theme{display:inline-flex;align-items:center;gap:8px;',
+        'padding:7px 12px;border:1px solid #e2e8f0;border-radius:10px;',
+        'background:#fff;font:inherit;font-size:.9em;cursor:pointer;}',
+        '#ws-overlay .px-theme:hover{border-color:#c7d2fe;}',
+        '#ws-overlay .px-theme.is-on{border-color:#6366f1;background:#eef2ff;',
+        'color:#3730a3;font-weight:600;box-shadow:inset 0 0 0 1px #6366f1;}',
+        '#ws-overlay .px-theme-dot{width:14px;height:14px;border-radius:50%;',
+        'flex:0 0 auto;}',
+
+        /* The radio pills borrowed from link_modal.js, so the two
+           dialogs do not disagree about what a radio looks like. */
+        '#ws-overlay .ws-row.lm-row-type{display:flex;align-items:center;',
+        'flex-wrap:wrap;gap:10px 16px;}',
+        '#ws-overlay .lm-radios{display:flex;align-items:center;flex-wrap:wrap;gap:8px;}',
+        '#ws-overlay .lm-radios .ws-check{display:inline-flex;align-items:center;',
+        'gap:9px;margin:0;padding:7px 13px;min-height:38px;border:1px solid #e2e8f0;',
+        'border-radius:10px;background:#fff;font-size:.93em;line-height:1;cursor:pointer;}',
+        '#ws-overlay .lm-radios .ws-check:hover{border-color:#c7d2fe;background:#f8faff;}',
+        '#ws-overlay .lm-radios .ws-check > input[type="radio"]{width:17px;height:17px;',
+        'margin:0;flex:0 0 auto;accent-color:#6366f1;cursor:pointer;}',
+        '#ws-overlay .lm-radios .ws-check:has(input:checked){border-color:#6366f1;',
+        'background:#eef2ff;color:#3730a3;font-weight:600;box-shadow:inset 0 0 0 1px #6366f1;}',
+
+        /* Language pane. */
+        '#ws-overlay .ws-langs{display:flex;flex-wrap:wrap;gap:10px;}',
+        '#ws-overlay .ws-lang{display:flex;flex-direction:column;gap:2px;',
+        'padding:12px 18px;border:1px solid #e2e8f0;border-radius:12px;',
+        'background:#fff;font:inherit;cursor:pointer;text-align:start;min-width:150px;}',
+        '#ws-overlay .ws-lang:hover{border-color:#c7d2fe;}',
+        '#ws-overlay .ws-lang.is-on{border-color:#6366f1;background:#eef2ff;',
+        'color:#3730a3;box-shadow:inset 0 0 0 1px #6366f1;}',
+        '#ws-overlay .ws-lang-name{font-weight:600;}',
+        '#ws-overlay .ws-lang-code{font-size:.82em;opacity:.7;letter-spacing:.04em;}',
+
+        /* Shortcuts pane. */
+        '#ws-overlay .ws-keys{display:flex;flex-direction:column;gap:6px;}',
+        '#ws-overlay .ws-key-row{display:flex;align-items:center;gap:14px;',
+        'padding:9px 12px;border-radius:9px;background:#f8fafc;}',
+        '#ws-overlay .ws-key-combo{flex:0 0 auto;min-width:120px;font-family:',
+        'ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;',
+        'color:#3730a3;background:#e0e7ff;border-radius:7px;padding:4px 9px;',
+        'text-align:center;direction:ltr;}',
+
+        /* Below ~700px the rail becomes a strip of chips above the pane;
+           a 210px sidebar on a phone leaves nothing for the settings. */
+        '@media (max-width:700px){',
+        '#ws-overlay .ws-shell{flex-direction:column;}',
+        '#ws-overlay .ws-nav{flex:0 0 auto;flex-direction:row;overflow-x:auto;',
+        'border-inline-end:none;border-bottom:1px solid #e2e8f0;padding:10px;}',
+        '#ws-overlay .ws-nav-btn{width:auto;white-space:nowrap;}',
+        '#ws-overlay .ws-nav-btn span:not(.ws-nav-ico){display:none;}',
+        '#ws-overlay .ws-nav-btn.is-on span:not(.ws-nav-ico){display:inline;}}'
+    ].join('');
+    document.head.appendChild(s);
+}
+
+/* The rail. One array, so a pane cannot exist without a button or a
+   button without a pane. */
+var WS_PANES = [
+    { id: 'doc',  icon: '\uD83D\uDCC4', key: 'navDoc'  },
+    { id: 'html', icon: '\uD83D\uDDA5\uFE0F', key: 'navHtml' },
+    { id: 'pptx', icon: '\uD83D\uDCCA', key: 'navPptx' },
+    { id: 'lang', icon: '\uD83C\uDF10', key: 'navLang' },
+    { id: 'keys', icon: '\u2328\uFE0F', key: 'navKeys' }
+];
+
+/* ── Panes ──────────────────────────────────────────────────
+   Each returns markup and nothing else. The document and HTML panes are
+   the old one-column body, cut in two along the seam it already had. */
+
+function _wsPaneDoc() {
+    return '' +
+        '<p class="ws-note">\u2139\uFE0F ' + _wsT('wsIntro') + '</p>' +
+
+        '<h4 class="ws-group">\uD83C\uDFA8 ' + _wsT('wsColors') + '</h4>' +
+        '<div class="ws-row"><label>' + _wsT('wsHeadingColor') + '</label>' +
+          '<div class="ws-swatches" id="ws-sw-heading">' + _wsSwatches('headingColor', _wsDraft.headingColor) + '</div></div>' +
+        '<div class="ws-row"><label>' + _wsT('wsTableColor') + '</label>' +
+          '<div class="ws-swatches" id="ws-sw-table">' + _wsSwatches('tableHeaderColor', _wsDraft.tableHeaderColor) + '</div></div>' +
+        '<p class="ws-note ws-note-sm">\u2139\uFE0F ' + _wsT('wsContrastNote') + '</p>' +
+
+        '<h4 class="ws-group">\uD83D\uDD24 ' + _wsT('wsSizes') + '</h4>' +
+        '<div class="ws-row"><label>' + _wsT('wsTitleSize')   + '</label>' + _wsSizeSelect('titleSize',   _wsDraft.titleSize)   + '</div>' +
+        '<div class="ws-row"><label>' + _wsT('wsSectionSize') + '</label>' + _wsSizeSelect('sectionSize', _wsDraft.sectionSize) + '</div>' +
+        '<div class="ws-row"><label>' + _wsT('wsSubSize')     + '</label>' + _wsSizeSelect('subSize',     _wsDraft.subSize)     + '</div>' +
+        '<div class="ws-row"><label>' + _wsT('wsBodySize')    + '</label>' + _wsSizeSelect('bodySize',    _wsDraft.bodySize)    + '</div>' +
+        '<div class="ws-row"><label>' + _wsT('wsCoverSize')     + '</label>' + _wsSizeSelect('coverSize',     _wsDraft.coverSize)     + '</div>' +
+        '<div class="ws-row"><label>' + _wsT('wsTableSize')     + '</label>' + _wsSizeSelect('tableSize',     _wsDraft.tableSize)     + '</div>' +
+        '<div class="ws-row"><label>' + _wsT('wsUserTableSize') + '</label>' + _wsSizeSelect('userTableSize', _wsDraft.userTableSize) + '</div>' +
+        '<p class="ws-note ws-note-sm">\u2139\uFE0F ' + _wsT('wsFixedNote') + '</p>' +
+
+        '<div class="ws-row"><label>' + _wsT('wsPdfFont') + '</label>' +
+          '<select class="ws-select" data-ws-font="pdfFont">' +
+            WS_PDF_FONTS.map(function (f) {
+                return '<option value="' + f + '"' + (f === _wsDraft.pdfFont ? ' selected' : '') + '>' + f + '</option>';
+            }).join('') +
+          '</select></div>' +
+        '<p class="ws-note ws-note-sm">\u2139\uFE0F ' + _wsT('wsPdfFontNote') + '</p>' +
+
+        '<h4 class="ws-group">\uD83D\uDC41\uFE0F ' + _wsT('wsPreview') + '</h4>' +
+        '<div class="ws-preview" id="ws-preview">' + _wsPreviewHTML(_wsDraft) + '</div>';
+}
+
+function _wsPaneHtml() {
+    return '' +
+        '<h4 class="ws-group">\uD83D\uDDA5\uFE0F ' + _wsT('wsHtmlGroup') + '</h4>' +
+        '<div class="ws-checks">' +
+          WS_HTML_SECTIONS.map(function (id) {
+              var on = !Array.isArray(_wsDraft.htmlSections) || _wsDraft.htmlSections.indexOf(id) !== -1;
+              return '<label class="ws-check"><input type="checkbox" data-ws-sec="' + id + '"' +
+                     (on ? ' checked' : '') + '><span>' + _wsT('wsSec_' + id) + '</span></label>';
+          }).join('') +
+        '</div>' +
+        '<p class="ws-note ws-note-sm">\u2139\uFE0F ' + _wsT('wsHtmlNote') + '</p>';
+}
+
+/* The PPTX pane's markup and strings belong to exports_pptx.js. If that
+   file is not loaded the pane says nothing rather than throwing —
+   the dialog has to open even when one exporter is missing. */
+function _wsPanePptx() {
+    if (typeof mbPptxPaneHTML !== 'function' || !_pxDraft) return '';
+    return mbPptxPaneHTML(_pxDraft);
+}
+
+/* The language pane DRIVES the existing menu rather than reimplementing
+   it: it clicks .mb-lang-opt, which is the same path a click on the
+   toolbar menu takes. One language mechanism, two ways in. */
+function _wsPaneLang() {
+    var cur = 'en';
+    try { if (window.i18n && window.i18n.getLang) cur = window.i18n.getLang(); } catch (e) {}
+    var names = { en: 'English', fr: 'Fran\u00e7ais', ar: '\u0627\u0644\u0639\u0631\u0628\u064a\u0629' };
+    var btns = ['en', 'fr', 'ar'].map(function (code) {
+        return '<button type="button" class="ws-lang' + (code === cur ? ' is-on' : '') +
+               '" data-ws-lang="' + code + '">' +
+               '<span class="ws-lang-name">' + names[code] + '</span>' +
+               '<span class="ws-lang-code">' + code.toUpperCase() + '</span></button>';
+    }).join('');
+    return '<h4 class="ws-group">\uD83C\uDF10 ' + _wsT('wsLangTitle') + '</h4>' +
+           '<div class="ws-langs">' + btns + '</div>' +
+           '<p class="ws-note ws-note-sm">\u2139\uFE0F ' + _wsT('wsLangNote') + '</p>';
+}
+
+/* Built from MB_SHORTCUTS — the same array the listener reads, so a
+   printed shortcut cannot outlive the binding behind it. */
+function _wsPaneKeys() {
+    if (typeof MB_SHORTCUTS === 'undefined') return '';
+    var lang = 'en';
+    try { if (window.i18n && window.i18n.getLang) lang = window.i18n.getLang(); } catch (e) {}
+    var rows = MB_SHORTCUTS.map(function (sc) {
+        return '<div class="ws-key-row"><span class="ws-key-combo">' +
+               mbShortcutText(sc) + '</span><span>' + mbShortcutLabel(sc, lang) + '</span></div>';
+    }).join('');
+    return '<h4 class="ws-group">\u2328\uFE0F ' + _wsT('wsKeysTitle') + '</h4>' +
+           '<div class="ws-keys">' + rows + '</div>' +
+           '<p class="ws-note ws-note-sm">\u2139\uFE0F ' + _wsT('wsKeysNote') + '</p>';
+}
+
+function _wsPaneHTMLFor(id) {
+    if (id === 'doc')  return _wsPaneDoc();
+    if (id === 'html') return _wsPaneHtml();
+    if (id === 'pptx') return _wsPanePptx();
+    if (id === 'lang') return _wsPaneLang();
+    if (id === 'keys') return _wsPaneKeys();
+    return '';
+}
+
+function _wsShowPane(id) {
+    _wsPane = id;
+    var ov = document.getElementById('ws-overlay');
+    if (!ov) return;
+    ov.querySelectorAll('.ws-pane').forEach(function (p) {
+        p.classList.toggle('is-on', p.getAttribute('data-pane') === id);
+    });
+    ov.querySelectorAll('.ws-nav-btn').forEach(function (b) {
+        var on = b.getAttribute('data-ws-pane') === id;
+        b.classList.toggle('is-on', on);
+        b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    var panes = ov.querySelector('.ws-panes');
+    if (panes) panes.scrollTop = 0;
+}
+
+/* Reopen in the new language, keeping both drafts and the open pane.
+   The alternative — translating in place — would mean every label in
+   every pane needing an id, and one missed id showing the old language
+   until the dialog is closed. */
+function _wsReopen(pane) {
+    _wsKeep = true;
+    _wsPane = pane || _wsPane;
+    closeWordSettings();          /* _wsKeep also suppresses the guard */
+    openWordSettings();
+}
+
 function openWordSettings() {
     if (document.getElementById('ws-overlay')) return;
-    _wsDraft = wsReadSettings();
-    _wsSaved = Object.assign({}, _wsDraft);
+
+    /* A reopen carries the drafts across; an ordinary open reads them
+       fresh from storage. */
+    if (!_wsKeep || !_wsDraft) {
+        _wsDraft = wsReadSettings();
+        _wsSaved = Object.assign({}, _wsDraft);
+        _pxDraft = (typeof pxReadSettings === 'function') ? pxReadSettings() : null;
+        _pxSaved = _pxDraft ? JSON.parse(JSON.stringify(_pxDraft)) : null;
+        _wsPane  = _wsKeep ? _wsPane : 'doc';
+    }
+    _wsKeep = false;
     _wsArmed = false;
+
+    _wsEnsureStyle();
 
     var rtl = !!(window.i18n && window.i18n.isRTL && window.i18n.isRTL());
 
@@ -504,52 +823,29 @@ function openWordSettings() {
     ov.id = 'ws-overlay';
     ov.className = 'ws-overlay';
     ov.setAttribute('dir', rtl ? 'rtl' : 'ltr');
+
+    var nav = WS_PANES.map(function (p) {
+        return '<button type="button" class="ws-nav-btn' + (p.id === _wsPane ? ' is-on' : '') +
+               '" data-ws-pane="' + p.id + '" role="tab" aria-selected="' +
+               (p.id === _wsPane ? 'true' : 'false') + '">' +
+               '<span class="ws-nav-ico" aria-hidden="true">' + p.icon + '</span>' +
+               '<span>' + _wsT(p.key) + '</span></button>';
+    }).join('');
+
+    var panes = WS_PANES.map(function (p) {
+        return '<section class="ws-pane' + (p.id === _wsPane ? ' is-on' : '') +
+               '" data-pane="' + p.id + '" role="tabpanel">' + _wsPaneHTMLFor(p.id) + '</section>';
+    }).join('');
+
     ov.innerHTML =
         '<div class="ws-modal" role="dialog" aria-modal="true" aria-labelledby="ws-head">' +
           '<div class="ws-head">' +
-            '<span id="ws-head">\u2699\uFE0F ' + _wsT('wsTitle') + '</span>' +
+            '<span id="ws-head">\u2699\uFE0F ' + _wsT('wsCenterTitle') + '</span>' +
             '<button type="button" class="ws-x" id="ws-close" aria-label="' + _wsT('wsClose') + '">\u00D7</button>' +
           '</div>' +
-          '<div class="ws-body">' +
-            '<p class="ws-note">\u2139\uFE0F ' + _wsT('wsIntro') + '</p>' +
-
-            '<h4 class="ws-group">\uD83C\uDFA8 ' + _wsT('wsColors') + '</h4>' +
-            '<div class="ws-row"><label>' + _wsT('wsHeadingColor') + '</label>' +
-              '<div class="ws-swatches" id="ws-sw-heading">' + _wsSwatches('headingColor', _wsDraft.headingColor) + '</div></div>' +
-            '<div class="ws-row"><label>' + _wsT('wsTableColor') + '</label>' +
-              '<div class="ws-swatches" id="ws-sw-table">' + _wsSwatches('tableHeaderColor', _wsDraft.tableHeaderColor) + '</div></div>' +
-            '<p class="ws-note ws-note-sm">\u2139\uFE0F ' + _wsT('wsContrastNote') + '</p>' +
-
-            '<h4 class="ws-group">\uD83D\uDD24 ' + _wsT('wsSizes') + '</h4>' +
-            '<div class="ws-row"><label>' + _wsT('wsTitleSize')   + '</label>' + _wsSizeSelect('titleSize',   _wsDraft.titleSize)   + '</div>' +
-            '<div class="ws-row"><label>' + _wsT('wsSectionSize') + '</label>' + _wsSizeSelect('sectionSize', _wsDraft.sectionSize) + '</div>' +
-            '<div class="ws-row"><label>' + _wsT('wsSubSize')     + '</label>' + _wsSizeSelect('subSize',     _wsDraft.subSize)     + '</div>' +
-            '<div class="ws-row"><label>' + _wsT('wsBodySize')    + '</label>' + _wsSizeSelect('bodySize',    _wsDraft.bodySize)    + '</div>' +
-            '<div class="ws-row"><label>' + _wsT('wsCoverSize')     + '</label>' + _wsSizeSelect('coverSize',     _wsDraft.coverSize)     + '</div>' +
-            '<div class="ws-row"><label>' + _wsT('wsTableSize')     + '</label>' + _wsSizeSelect('tableSize',     _wsDraft.tableSize)     + '</div>' +
-            '<div class="ws-row"><label>' + _wsT('wsUserTableSize') + '</label>' + _wsSizeSelect('userTableSize', _wsDraft.userTableSize) + '</div>' +
-            '<p class="ws-note ws-note-sm">\u2139\uFE0F ' + _wsT('wsFixedNote') + '</p>' +
-
-            '<div class="ws-row"><label>' + _wsT('wsPdfFont') + '</label>' +
-              '<select class="ws-select" data-ws-font="pdfFont">' +
-                WS_PDF_FONTS.map(function (f) {
-                    return '<option value="' + f + '"' + (f === _wsDraft.pdfFont ? ' selected' : '') + '>' + f + '</option>';
-                }).join('') +
-              '</select></div>' +
-            '<p class="ws-note ws-note-sm">\u2139\uFE0F ' + _wsT('wsPdfFontNote') + '</p>' +
-
-            '<h4 class="ws-group">\uD83D\uDDA5\uFE0F ' + _wsT('wsHtmlGroup') + '</h4>' +
-            '<div class="ws-checks">' +
-              WS_HTML_SECTIONS.map(function (id) {
-                  var on = !Array.isArray(_wsDraft.htmlSections) || _wsDraft.htmlSections.indexOf(id) !== -1;
-                  return '<label class="ws-check"><input type="checkbox" data-ws-sec="' + id + '"' +
-                         (on ? ' checked' : '') + '><span>' + _wsT('wsSec_' + id) + '</span></label>';
-              }).join('') +
-            '</div>' +
-            '<p class="ws-note ws-note-sm">\u2139\uFE0F ' + _wsT('wsHtmlNote') + '</p>' +
-
-            '<h4 class="ws-group">\uD83D\uDC41\uFE0F ' + _wsT('wsPreview') + '</h4>' +
-            '<div class="ws-preview" id="ws-preview">' + _wsPreviewHTML(_wsDraft) + '</div>' +
+          '<div class="ws-shell">' +
+            '<nav class="ws-nav" role="tablist" aria-label="' + _wsT('wsCenterTitle') + '">' + nav + '</nav>' +
+            '<div class="ws-panes">' + panes + '</div>' +
           '</div>' +
           '<div class="ws-foot">' +
             '<button type="button" class="ws-btn ws-btn-ghost" id="ws-reset">' + _wsT('wsReset') + '</button>' +
@@ -563,6 +859,12 @@ function openWordSettings() {
 
     document.body.appendChild(ov);
 
+    /* A reopen after a language change lands with drafts that differ
+       from what is stored, so the footer has to reflect that at once
+       rather than waiting for the next keystroke. */
+    var save = document.getElementById('ws-save');
+    if (save) save.disabled = !_wsIsDirty();
+
     ov.addEventListener('click', function (e) {
         if (e.target === ov) closeWordSettings();
     });
@@ -571,13 +873,15 @@ function openWordSettings() {
     document.getElementById('ws-save').addEventListener('click', _wsSave);
 
     document.getElementById('ws-reset').addEventListener('click', function () {
-        /* Reset fills the DRAFT with the defaults. It still needs Save
-           to take effect, so the button means the same thing everywhere
-           in this dialog. */
+        /* Reset fills the DRAFTS with the defaults — both of them, since
+           one button in the footer means one meaning of Reset. It still
+           needs Save to take effect, so the button says the same thing
+           everywhere in this dialog. */
         _wsDraft = Object.assign({}, WS_DEFAULTS);
+        if (typeof PX_DEFAULTS === 'object') _pxDraft = JSON.parse(JSON.stringify(PX_DEFAULTS));
         _wsTouch();
-        /* Repaint the controls from the draft rather than rebuilding the
-           dialog: rebuilding would drop focus and scroll position. */
+        /* Repaint the controls from the drafts rather than rebuilding
+           the dialog: rebuilding would drop focus and scroll position. */
         ov.querySelectorAll('[data-ws-size]').forEach(function (sel) {
             sel.value = String(_wsDraft[sel.getAttribute('data-ws-size')]);
         });
@@ -588,9 +892,21 @@ function openWordSettings() {
             var f = b.getAttribute('data-ws-color');
             b.classList.toggle('is-on', b.getAttribute('data-ws-hex') === _wsDraft[f]);
         });
+        /* The PPTX pane has enough controls that setting each one by
+           hand here would be a second place to forget a field. It is
+           rebuilt from the draft instead — it holds no focus worth
+           preserving, unlike the pane the user is standing on. */
+        var pp = ov.querySelector('[data-pane="pptx"]');
+        if (pp) pp.innerHTML = _wsPanePptx();
     });
 
     ov.addEventListener('change', function (e) {
+        /* PPTX first: its fields carry their own attributes and the
+           function reports whether the event was one of its own. */
+        if (_pxDraft && typeof mbPptxPaneChange === 'function' && mbPptxPaneChange(e, _pxDraft)) {
+            _wsTouch();
+            return;
+        }
         var fontField = e.target && e.target.getAttribute && e.target.getAttribute('data-ws-font');
         if (fontField) {
             _wsDraft.pdfFont = (WS_PDF_FONTS.indexOf(e.target.value) !== -1)
@@ -619,10 +935,34 @@ function openWordSettings() {
     });
 
     ov.addEventListener('click', function (e) {
+        /* Rail. */
+        var navBtn = e.target && e.target.closest ? e.target.closest('[data-ws-pane]') : null;
+        if (navBtn) { _wsShowPane(navBtn.getAttribute('data-ws-pane')); return; }
+
+        /* Language. The menu in the toolbar is the one implementation;
+           this clicks it, then rebuilds the dialog in the new language
+           with both drafts intact. */
+        var langBtn = e.target && e.target.closest ? e.target.closest('[data-ws-lang]') : null;
+        if (langBtn) {
+            var code = langBtn.getAttribute('data-ws-lang');
+            var opt = document.querySelector('.mb-lang-opt[data-lang="' + code + '"]');
+            if (opt) opt.click();
+            /* One frame for the i18n pass and every listener on
+               mb:langchange to finish writing before the dialog is
+               rebuilt from the new strings. */
+            requestAnimationFrame(function () { _wsReopen('lang'); });
+            return;
+        }
+
+        if (_pxDraft && typeof mbPptxPaneClick === 'function' && mbPptxPaneClick(e, _pxDraft)) {
+            _wsTouch();
+            return;
+        }
+
         var b = e.target && e.target.closest ? e.target.closest('[data-ws-color]') : null;
         if (!b) return;
-        var f = b.getAttribute('data-ws-color');
-        _wsDraft[f] = _wsValidColor(b.getAttribute('data-ws-hex'), WS_DEFAULTS[f]);
+        var cf = b.getAttribute('data-ws-color');
+        _wsDraft[cf] = _wsValidColor(b.getAttribute('data-ws-hex'), WS_DEFAULTS[cf]);
         b.parentNode.querySelectorAll('[data-ws-color]').forEach(function (o) {
             o.classList.remove('is-on');
         });
@@ -636,8 +976,10 @@ function openWordSettings() {
 
 function closeWordSettings() {
     /* Two-step close when there is something to lose: the first press
-       warns in the footer, the second discards. */
-    if (_wsIsDirty() && !_wsArmed && document.getElementById('ws-overlay')) {
+       warns in the footer, the second discards. _wsKeep means this is a
+       rebuild, not a close — the drafts are carried straight into the
+       next open, so warning about them would be a lie. */
+    if (!_wsKeep && _wsIsDirty() && !_wsArmed && document.getElementById('ws-overlay')) {
         _wsArmed = true;
         _wsSetMsg(_wsT('wsUnsaved'), 'warn');
         return;
