@@ -215,8 +215,13 @@ function mbBuildModuleModel(lang, state) {
                 })
                 .filter(function (m) { return m.name.trim() || m.task.trim() || m.location.trim(); }),
             blocks: _mmArr(st.introBlocks)
-                .map(function (b) { return { title: _mmStr(b && b.title), body: _mmStr(b && b.body) }; })
-                .filter(function (b) { return b.title.trim() || b.body.trim(); }),
+                .map(function (b) {
+                    return { title: _mmStr(b && b.title), body: _mmStr(b && b.body),
+                             tables: _mmTables(b && b.tables) };
+                })
+                /* A section whose only content is a table survives: for
+                   «training conditions» the table often IS the section. */
+                .filter(function (b) { return b.title.trim() || b.body.trim() || b.tables.length; }),
             additional: _mmStr(st.introAdditionalDetails)
         },
 
@@ -245,8 +250,11 @@ function mbBuildModuleModel(lang, state) {
                 .map(function (c) { return _mmStr(c && (c.text !== undefined ? c.text : c)); })
                 .filter(function (t) { return t.trim(); }),
             blocks: _mmArr(lo.blocks)
-                .map(function (b) { return { title: _mmStr(b && b.title), body: _mmStr(b && b.body) }; })
-                .filter(function (b) { return b.title.trim() || b.body.trim(); }),
+                .map(function (b) {
+                    return { title: _mmStr(b && b.title), body: _mmStr(b && b.body),
+                             tables: _mmTables(b && b.tables) };
+                })
+                .filter(function (b) { return b.title.trim() || b.body.trim() || b.tables.length; }),
             infoSheets: [],
             activitySheets: []
         };

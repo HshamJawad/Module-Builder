@@ -1045,6 +1045,11 @@ async function exportToDocx() {
                         spacing: { after: 150 },
                     }));
                 });
+
+                /* Tables come after the prose, in the order the card
+                   shows them on screen. A section with a table and no
+                   prose reaches here too — mbBlocksFilled keeps it. */
+                (block.tables || []).forEach(t => _pushUserTable(t, introChildren));
             });
 
             sections.push({
@@ -1164,6 +1169,7 @@ async function exportToDocx() {
                             spacing: { after: 150 },
                         }));
                     });
+                    (block.tables || []).forEach(t => _pushUserTable(t, overviewChildren));
                 });
 
                 // Performance Criteria (if available)
@@ -1234,7 +1240,19 @@ async function exportToDocx() {
         };
 
         // Helper: build a user-created table from saved data
-        const _buildUserTable = (t, Table, TableRow, TableCell, WidthType, BorderStyle) => {
+        /* Function declarations, not const arrows.
+           ------------------------------------------------------------
+           The author-defined sections of the introduction and of each
+           learning outcome are rendered EARLIER in this function than
+           this line, and they now push tables too. A `const` arrow is in
+           its temporal dead zone until execution reaches it, so those
+           earlier calls would throw «Cannot access before
+           initialization» — the same class of mistake as the
+           `Table is not defined` this helper caused when it was first
+           written, and invisible until a user happens to put a table in
+           an early section. A declaration is hoisted to the top of the
+           enclosing function and has neither problem. */
+        function _buildUserTable(t, Table, TableRow, TableCell, WidthType, BorderStyle) {
             if (!t || !t.cells || !t.rows || !t.cols) return null;
             const colW = Math.floor(9072 / t.cols);
             const borders = { top:{style:BorderStyle.SINGLE,size:1,color:'000000'}, bottom:{style:BorderStyle.SINGLE,size:1,color:'000000'}, left:{style:BorderStyle.SINGLE,size:1,color:'000000'}, right:{style:BorderStyle.SINGLE,size:1,color:'000000'}, insideHorizontal:{style:BorderStyle.SINGLE,size:1,color:'000000'}, insideVertical:{style:BorderStyle.SINGLE,size:1,color:'000000'} };
@@ -1248,7 +1266,7 @@ async function exportToDocx() {
                 rows.push(new TableRow({ children: cells }));
             }
             return new Table({ rows, width: { size: 9072, type: WidthType.DXA }, borders });
-        };
+        }
 
         /* Table with its captions, pushed into a children array.
            ------------------------------------------------------------
@@ -1264,7 +1282,7 @@ async function exportToDocx() {
            sub-title is body weight: a second line at heading weight
            competes with the first and the reader cannot tell which one
            names the table. */
-        const _pushUserTable = (t, ch) => {
+        function _pushUserTable(t, ch) {
             if (!t) return;
             /* The classes are fetched HERE, not closed over.
                ------------------------------------------------------------
@@ -1302,7 +1320,7 @@ async function exportToDocx() {
                 ch.push(tbl);
                 ch.push(new Paragraph({ children: [new TextRun({ text: '' })], spacing: { after: 200 } }));
             }
-        };
+        }
 
         /* Helper: render a Learning Guide MODEL as docx children.
            The model comes from learning_guide.js and is the same object

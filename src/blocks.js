@@ -32,6 +32,22 @@
 // the other language's export, putting an Arabic heading in an English
 // module.
 //
+// TABLES ARE NOT BILINGUAL, AND ARE NOT WRITTEN ON EVERY KEYSTROKE
+// A block can now carry tables, the same widget the information sheet
+// uses — training conditions are often a table, not a paragraph. They
+// are stored on the block as a plain array, NOT as a { en, fr, ar }
+// pair: a table's cells are the same numbers and part names whichever
+// language the module is written in, and the content sections' tables
+// have never been bilingual either.
+//
+// They also cannot bind live the way the title and body do, because the
+// widget's cells are built and rebuilt by content.js and carry no
+// data-act of their own. So they are COLLECTED — before any rebuild of
+// the rows, and again in mbSyncBlocksFromDOM() before every save and
+// every export. The rule that follows from that: mbRenderBlocks() must
+// collect before it wipes, or a content-language switch would throw
+// away every table on screen.
+//
 // STATE IS WRITTEN ON EVERY KEYSTROKE
 // Not collected from the DOM at save time, which is how the older fields
 // work. A collector has to run before the content language switches, and
@@ -102,6 +118,10 @@ function mbNormalizeBlocks(list) {
         var out = (b && typeof b === 'object') ? b : {};
         out.title = biUpgrade(out.title);
         out.body  = biUpgrade(out.body);
+        /* Not biUpgrade: tables are not a bilingual pair. A file written
+           before this feature has no key at all, which is why the array
+           is created here rather than assumed anywhere downstream. */
+        if (!Array.isArray(out.tables)) out.tables = [];
         if (!out.uid) out.uid = mbUid();
         return out;
     });
@@ -119,10 +139,17 @@ function mbBlockText(v) {
     return (typeof biGet === 'function') ? biGet(v, exportLang()) : '';
 }
 
-/** The sections that will actually be exported: body non-empty. */
+/** The sections that will actually be exported.
+    Body non-empty OR at least one table — «training conditions» is
+    often a table and no prose at all, and dropping such a section for
+    having an empty body would delete the only thing in it. The rule the
+    header states is unchanged for prose: an empty body still keeps the
+    section out of the file. */
 function mbBlocksFilled(list) {
     return (Array.isArray(list) ? list : []).filter(function (b) {
-        return b && mbBlockText(b.body).trim();
+        if (!b) return false;
+        if (mbBlockText(b.body).trim()) return true;
+        return Array.isArray(b.tables) && b.tables.length > 0;
     });
 }
 
@@ -159,6 +186,14 @@ function _mbBlockRowHtml(host, block, lang) {
                ' data-args=\'' + _mbBlockEscape(JSON.stringify([host, block.uid, 'title'])) + '\'' +
                ' data-i18n="mbSectionTitlePlaceholder" data-i18n-attr="placeholder"' +
                ' placeholder="' + _mbBlockEscape(window.i18n.t('mbSectionTitlePlaceholder')) + '"/>' +
+        /* The same widget the information sheet uses, reached the same
+           way: addContentTable renders into #content-tables-<id>, so the
+           id given here is all that connects them. No second table
+           implementation, and no copy of ctAddRow to keep in step. */
+        '<button type="button" class="mb-block-table mb-icon-btn"' +
+               ' data-act="addContentTable" data-args=\'' + _mbBlockEscape(JSON.stringify(['block-' + block.uid])) + '\'' +
+               ' data-i18n="dgAddTable" data-i18n-attr="title"' +
+               ' title="' + _mbBlockEscape(window.i18n.t('dgAddTable')) + '">\uD83D\uDCCB</button>' +
         '<button type="button" class="btn-remove mb-block-remove mb-icon-btn danger"' +
                ' data-act="' + cfg.remove + '" data-args=\'' + args + '\'' +
                ' data-i18n="mbRemoveSection" data-i18n-attr="title"' +
@@ -171,7 +206,34 @@ function _mbBlockRowHtml(host, block, lang) {
                ' data-i18n="mbSectionBodyPlaceholder" data-i18n-attr="placeholder"' +
                ' placeholder="' + _mbBlockEscape(window.i18n.t('mbSectionBodyPlaceholder')) + '"' +
                '>' + _mbBlockEscape(body) + '</textarea>' +
+      '<div class="mb-block-tables" id="content-tables-block-' + _mbBlockEscape(block.uid) + '"></div>' +
     '</div>';
+}
+
+/** Read every table widget in a host's rows back onto its block.
+    Called before any rebuild and from mbSyncBlocksFromDOM. Silent when
+    content.js is absent — blocks must keep working without it. */
+function mbCollectBlockTables(host) {
+    if (typeof collectContentTables !== 'function') return;
+    var cfg = MB_BLOCK_HOSTS[host];
+    var box = cfg && document.getElementById(cfg.container);
+    var list = mbBlockList(host);
+    if (!box || !list) return;
+
+    box.querySelectorAll('.mb-block').forEach(function (row) {
+        var uid = row.dataset ? row.dataset.uid : null;
+        if (!uid) return;
+        /* Only rows that actually carry the widget host are read. A row
+           rendered by an older build has no such div, and reading it
+           would replace a saved array with an empty one. */
+        if (!row.querySelector('#content-tables-block-' + uid)) return;
+        for (var i = 0; i < list.length; i++) {
+            if (list[i].uid === uid) {
+                list[i].tables = collectContentTables('block-' + uid);
+                break;
+            }
+        }
+    });
 }
 
 function mbRenderBlocks(host) {
@@ -193,15 +255,95 @@ function mbRenderBlocks(host) {
     }
     if (section) section.style.display = '';
 
+    /* Collect BEFORE the wipe. innerHTML below destroys every widget on
+       screen, and a content-language switch calls this function — so
+       without this line, changing the editing language would silently
+       delete every table the author had just built. */
+    mbCollectBlockTables(host);
+
     var lang = contentLang();
     box.innerHTML = list.map(function (b) {
         return _mbBlockRowHtml(host, b, lang);
     }).join('');
+
+    /* Rebuild the widgets from the blocks. restoreContentTables appends,
+       so it must run against the freshly emptied hosts above and never
+       twice for one render. */
+    if (typeof restoreContentTables === 'function') {
+        list.forEach(function (b) {
+            if (Array.isArray(b.tables) && b.tables.length) {
+                restoreContentTables('block-' + b.uid, b.tables);
+            }
+        });
+    }
 }
 
 function mbRenderAllBlocks() {
     mbRenderBlocks('intro');
     mbRenderBlocks('lo');
+}
+
+/* ── Live capture for the table widget ───────────────────────
+   The title and body write themselves into state on every keystroke.
+   The table cells cannot: they are built by content.js and carry no
+   data-act, so nothing tells this file that anything changed.
+
+   Collecting only at save time is not enough, and the case that proves
+   it is ordinary use: build a table under an outcome, then select a
+   DIFFERENT outcome. mbRenderBlocks() collects first, but by then
+   mbBlockList('lo') already answers with the new outcome's blocks —
+   whose uids do not match the rows on screen, so nothing matches,
+   nothing is written, and the table is gone with no error and no
+   warning.
+
+   So the widget is watched where it lives. One delegated listener,
+   debounced for typing and immediate for the buttons that add or delete
+   rows, columns and whole tables. */
+var _mbBlockTableTimer = null;
+
+function _mbBlockHostOf(el) {
+    var box = el.closest ? el.closest('#intro-blocks-container, #lo-blocks-container') : null;
+    if (!box) return null;
+    return (box.id === MB_BLOCK_HOSTS.intro.container) ? 'intro' : 'lo';
+}
+
+function _mbBlockTablesTouched(el, immediate) {
+    var host = _mbBlockHostOf(el);
+    if (!host) return;
+    var run = function () {
+        mbCollectBlockTables(host);
+        if (host === 'lo' && typeof saveCurrentModuleLOData === 'function') {
+            saveCurrentModuleLOData();
+        }
+        if (typeof mbTouch === 'function') { try { mbTouch(); } catch (e) { /* autosave absent */ } }
+    };
+    /* A click is collected on the NEXT task, not on this one. Both this
+       listener and the dispatcher in events.js are on the document, and
+       index.html loads blocks.js before events.js — so this handler
+       runs FIRST and would read the grid as it was before ctAddRow or
+       ctRemove touched it. A zero timeout puts the read after every
+       handler for this click has finished, whatever their order. */
+    if (immediate) { clearTimeout(_mbBlockTableTimer); setTimeout(run, 0); return; }
+    clearTimeout(_mbBlockTableTimer);
+    _mbBlockTableTimer = setTimeout(run, 400);
+}
+
+if (typeof document !== 'undefined') {
+    document.addEventListener('input', function (e) {
+        if (!e.target.closest) return;
+        if (!e.target.closest('.mb-block-tables')) return;
+        _mbBlockTablesTouched(e.target, false);
+    });
+    /* addContentTable sits on the row's header, outside the widget
+       host, so it is matched by its own class rather than by
+       containment. */
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest) return;
+        var inWidget = e.target.closest('.mb-block-tables');
+        var addBtn   = e.target.closest('.mb-block-table');
+        if (!inWidget && !addBtn) return;
+        _mbBlockTablesTouched(e.target, true);
+    });
 }
 
 /* ── Editing ─────────────────────────────────────────────────
@@ -268,6 +410,11 @@ function mbSyncBlocksFromDOM() {
             if (t && t.value !== biGetStrict(block.title, lang)) biPut(block, 'title', t.value);
             if (b && b.value !== biGetStrict(block.body,  lang)) biPut(block, 'body',  b.value);
         });
+
+        /* Tables are not bound live — see the header — so for them this
+           is not belt-and-braces at all: it is the only collection that
+           happens before a save or an export. */
+        mbCollectBlockTables(host);
     });
 }
 
@@ -281,7 +428,7 @@ function _mbAddBlock(host) {
     var list = mbBlockList(host);
     if (!list) return null;
 
-    var block = { uid: mbUid(), title: biNew(), body: biNew() };
+    var block = { uid: mbUid(), title: biNew(), body: biNew(), tables: [] };
 
     /* Seeded in both languages, once, at creation — see the header note
        on titles being data. Only the FIRST intro section is seeded: the

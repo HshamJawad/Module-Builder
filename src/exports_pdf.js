@@ -433,6 +433,7 @@ function _pdfBuild(pdf, model, lang) {
         model.intro.blocks.forEach(function (b) {
             if (b.title) w.label(b.title);
             if (b.body) w.text(b.body);
+            _pdfBlockTables(w, b, S);
         });
         if (model.intro.additional) w.text(model.intro.additional);
     }
@@ -465,6 +466,7 @@ function _pdfBuild(pdf, model, lang) {
         o.blocks.forEach(function (b) {
             if (b.title) w.label(b.title);
             if (b.body) w.text(b.body);
+            _pdfBlockTables(w, b, S);
         });
 
         o.infoSheets.forEach(function (sh) {
@@ -607,6 +609,21 @@ function _pdfBuild(pdf, model, lang) {
    wide cell, the QR in a narrow one beside it — the same shape the Word
    export produces, so the two documents match. It was a vertical stack,
    which matched nothing. */
+/* A block's tables, printed exactly as a content card's are. Written
+   once because the introduction sections and the outcome sections are
+   the same object, and two copies of this loop would drift. */
+function _pdfBlockTables(w, b, S) {
+    (b.tables || []).forEach(function (tb) {
+        if (tb.title) w.label(tb.title);
+        if (tb.subtitle) w.text(tb.subtitle);
+        if (!tb.cells.length) return;
+        var cols = tb.cells[0].length || 1;
+        var cw = [];
+        for (var i = 0; i < cols; i++) cw.push(w.CW / cols);
+        w.table(tb.cells[0], tb.cells.slice(1), cw, { size: S.utable });
+    });
+}
+
 function _pdfQR(w, qr) {
     const pdf = w.pdf, S = w.style;
     const size = S.body;

@@ -277,6 +277,7 @@ function mbBuildModuleHtml(model, opts) {
         model.intro.blocks.forEach(function (b) {
             if (b.title) it += '<div class="mx-sub">' + _hxEsc(b.title) + '</div>';
             if (b.body) it += '<p>' + _hxText(b.body) + '</p>';
+            it += _hxTables(b.tables);
         });
         if (model.intro.additional) it += '<p>' + _hxText(model.intro.additional) + '</p>';
         add('intro', t('intro'), _hxSection('intro', '', t('intro'), it));
@@ -295,6 +296,7 @@ function mbBuildModuleHtml(model, opts) {
         o.blocks.forEach(function (b) {
             if (b.title) inner += '<div class="mx-sub">' + _hxEsc(b.title) + '</div>';
             if (b.body) inner += '<p>' + _hxText(b.body) + '</p>';
+            inner += _hxTables(b.tables);
         });
         if (inc('outcomes')) {
             add(oid, t('outcome') + ' ' + o.index, _hxSection(oid, t('outcome') + ' ' + o.index, o.title, inner));
