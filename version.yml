@@ -33,7 +33,12 @@ jobs:
           # push to main would have rolled the number BACKWARDS to
           # 2.1.<run>. Raised to 3.1 with the Word export settings
           # release so the workflow and the file agree.
-          MAJOR_MINOR: "3.1"
+          #
+          # Raised again to 3.2 with the link/QR dialog control layout
+          # release: version.json now reads 3.2.0, and leaving this at
+          # 3.1 would make the next push write 3.1.<run> — the same
+          # backwards roll, one minor later.
+          MAJOR_MINOR: "3.2"
         run: |
           VERSION="${MAJOR_MINOR}.${GITHUB_RUN_NUMBER}"
           BUILD="$(date -u +%Y-%m-%d)"
