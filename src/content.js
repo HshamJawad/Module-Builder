@@ -136,6 +136,59 @@ function clearAnswersKeySection() {
 // ── Content Table Widget ───────────────────────────────────────
 let contentTableCount = 0;
 
+/* ── Table caption strings ──────────────────────────────────
+   Local, for the same reason the paste labels above are local: these
+   three keys are not in the main dictionary, and a caption that came
+   out untranslated would be visible on every exported table. */
+var _MB_CT_LABELS = {
+    en: { title: 'Table title (optional)', sub: 'Sub-title (optional)',
+          add: 'Add a sub-title', del: 'Remove the sub-title' },
+    fr: { title: 'Titre du tableau (facultatif)', sub: 'Sous-titre (facultatif)',
+          add: 'Ajouter un sous-titre', del: 'Supprimer le sous-titre' },
+    ar: { title: 'عنوان الجدول (اختياري)', sub: 'عنوان فرعي (اختياري)',
+          add: 'إضافة عنوان فرعي', del: 'حذف العنوان الفرعي' }
+};
+
+function _mbCtT(key) {
+    var lang = 'en';
+    try {
+        if (window.i18n && typeof window.i18n.getLang === 'function') {
+            var l = window.i18n.getLang();
+            if (_MB_CT_LABELS[l]) lang = l;
+        }
+    } catch (e) { /* dictionary not up */ }
+    return (_MB_CT_LABELS[lang] || _MB_CT_LABELS.en)[key] || _MB_CT_LABELS.en[key] || key;
+}
+
+/* The caption fields' own geometry. Injected rather than added to
+   mb-styles.css so the widget carries its own appearance, and so this
+   feature cannot move anything else in the tool. */
+function _mbCtEnsureStyle() {
+    if (document.getElementById('ct-caption-style')) return;
+    var s = document.createElement('style');
+    s.id = 'ct-caption-style';
+    s.textContent = [
+        '.ct-captions{display:flex;flex-direction:column;gap:6px;padding:10px 12px 4px;}',
+        '.ct-cap-row{display:flex;align-items:center;gap:8px;}',
+        '.ct-cap{flex:1;min-width:0;padding:8px 11px;border:1px solid #e2e8f0;',
+        'border-radius:9px;font:inherit;background:#fff;color:#1e293b;}',
+        '.ct-cap:focus{outline:none;border-color:#6366f1;',
+        'box-shadow:0 0 0 3px rgba(99,102,241,.16);}',
+        /* The main title reads as a title in the field itself, so what
+           the author types looks like what the export will print. */
+        '.ct-cap-main{font-weight:600;}',
+        '.ct-cap-sub{font-size:.93em;color:#475569;}',
+        '.ct-cap-plus{flex:0 0 auto;width:34px;height:34px;display:inline-flex;',
+        'align-items:center;justify-content:center;border:1px solid #e2e8f0;',
+        'border-radius:9px;background:#fff;color:#4f46e5;font-size:1.05em;',
+        'line-height:1;cursor:pointer;}',
+        '.ct-cap-plus:hover{background:#eef2ff;border-color:#c7d2fe;}',
+        '.ct-cap-plus.is-on{background:#eef2ff;border-color:#6366f1;}',
+        '.ct-cap-sub[hidden]{display:none;}'
+    ].join('');
+    document.head.appendChild(s);
+}
+
 function addContentTable(contentId, initialData) {
     contentTableCount++;
     const tid = contentTableCount;
@@ -144,6 +197,11 @@ function addContentTable(contentId, initialData) {
     const cells = (initialData && initialData.cells) || [];
     const container = document.getElementById(`content-tables-${contentId}`);
     if (!container) return;
+
+    const title = (initialData && initialData.title) || '';
+    const subtitle = (initialData && initialData.subtitle) || '';
+
+    _mbCtEnsureStyle();
 
     const wrapper = document.createElement('div');
     wrapper.className = 'content-table-widget';
@@ -161,6 +219,27 @@ function addContentTable(contentId, initialData) {
                 <button class="ctb ctb-del mb-has-ico" data-act="ctDelCol" data-args='[${tid}]' title="${window.i18n.t('dgDeleteLastColumn')}" data-i18n-title="dgDeleteLastColumn"><svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg><span data-i18n="rxCol">${window.i18n.t('rxCol')}</span></button>
                 <button class="ctb ctb-close" data-act="ctRemove" data-args='[${tid}]' title="${window.i18n.t('dgRemoveTable')}" data-i18n-title="dgRemoveTable">✕ <span data-i18n="rxRemove">${window.i18n.t('rxRemove')}</span></button>
             </div>
+        </div>
+        <!-- Captions. Present from the moment the table is created — an
+             optional field the author has to go and find is a field
+             most authors never find. Empty is the normal state and
+             costs nothing: neither caption is exported unless it has
+             text, so a table with no title comes out exactly as tables
+             always have.
+
+             The sub-title starts hidden behind the + rather than being
+             a second empty box: two blank fields above every table
+             would read as work the author owes the tool. -->
+        <div class="ct-captions">
+            <div class="ct-cap-row">
+                <input type="text" class="ct-cap ct-cap-main" id="ctt-${tid}"
+                       placeholder="${_mbCtT('title')}" value="${_mbCtEsc(title)}">
+                <button type="button" class="ct-cap-plus${subtitle ? ' is-on' : ''}"
+                        data-act="ctToggleSubtitle" data-args='[${tid}]'
+                        title="${_mbCtT('add')}" aria-label="${_mbCtT('add')}">+</button>
+            </div>
+            <input type="text" class="ct-cap ct-cap-sub" id="ctst-${tid}"
+                   placeholder="${_mbCtT('sub')}" value="${_mbCtEsc(subtitle)}"${subtitle ? '' : ' hidden'}>
         </div>
         <div class="content-table-grid" id="ctg-${tid}"></div>
     `;
@@ -193,6 +272,57 @@ function ctRender(tid, rows, cols, cells) {
     grid.appendChild(table);
 }
 
+/* Attribute-safe. The captions go into an HTML string with `value="…"`,
+   so a quotation mark in a title would end the attribute and the rest
+   of the title would be parsed as markup. */
+function _mbCtEsc(s) {
+    return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/** The + beside the title. Shows the sub-title and puts the caret in
+    it; pressing it again on an EMPTY sub-title hides it, so the button
+    that opened the field is also the way to change your mind. A
+    sub-title with text is never hidden by a stray press — that would
+    be silent data loss dressed as a toggle. */
+function ctToggleSubtitle(tid) {
+    const sub = document.getElementById(`ctst-${tid}`);
+    if (!sub) return;
+    const btn = document.querySelector(`[data-act="ctToggleSubtitle"][data-args='[${tid}]']`);
+    if (sub.hidden) {
+        sub.hidden = false;
+        if (btn) { btn.classList.add('is-on'); btn.title = _mbCtT('del'); btn.setAttribute('aria-label', _mbCtT('del')); }
+        sub.focus();
+    } else if (!sub.value.trim()) {
+        sub.hidden = true;
+        if (btn) { btn.classList.remove('is-on'); btn.title = _mbCtT('add'); btn.setAttribute('aria-label', _mbCtT('add')); }
+    } else {
+        sub.focus();
+    }
+    if (typeof mbTouch === 'function') { try { mbTouch(); } catch (e) { /* autosave absent */ } }
+}
+
+/* Placeholders live in this file's own table, so applyTranslations()
+   never sees them. Repainted here on a language change, the same
+   arrangement the toolbar labels use — otherwise a table created in
+   Arabic keeps prompting in Arabic after the user switches to French. */
+if (typeof window !== 'undefined') {
+    window.addEventListener('mb:langchange', function () {
+        document.querySelectorAll('.ct-cap-main').forEach(function (el) {
+            el.placeholder = _mbCtT('title');
+        });
+        document.querySelectorAll('.ct-cap-sub').forEach(function (el) {
+            el.placeholder = _mbCtT('sub');
+        });
+        document.querySelectorAll('.ct-cap-plus').forEach(function (b) {
+            var k = b.classList.contains('is-on') ? 'del' : 'add';
+            b.title = _mbCtT(k);
+            b.setAttribute('aria-label', _mbCtT(k));
+        });
+    });
+}
+
 function ctGetData(tid) {
     const grid = document.getElementById(`ctg-${tid}`);
     if (!grid) return null;
@@ -200,7 +330,18 @@ function ctGetData(tid) {
     const cells = rows.map(tr =>
         Array.from(tr.querySelectorAll('textarea')).map(ta => ta.value)
     );
-    return { rows: rows.length, cols: rows[0] ? rows[0].querySelectorAll('textarea').length : 0, cells };
+    const titleEl = document.getElementById(`ctt-${tid}`);
+    const subEl   = document.getElementById(`ctst-${tid}`);
+    /* Trimmed here, once. Every exporter then only has to ask "is this
+       empty" rather than each deciding for itself what whitespace
+       means. */
+    return {
+        rows: rows.length,
+        cols: rows[0] ? rows[0].querySelectorAll('textarea').length : 0,
+        cells: cells,
+        title: titleEl ? titleEl.value.trim() : '',
+        subtitle: (subEl && !subEl.hidden) ? subEl.value.trim() : ''
+    };
 }
 
 function ctAddRow(tid) {

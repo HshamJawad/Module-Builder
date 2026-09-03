@@ -1250,6 +1250,44 @@ async function exportToDocx() {
             return new Table({ rows, width: { size: 9072, type: WidthType.DXA }, borders });
         };
 
+        /* Table with its captions, pushed into a children array.
+           ------------------------------------------------------------
+           The three call sites below used to repeat "build it, push it,
+           push a spacer" verbatim, which is how the first two would
+           have gained captions and the third would have been forgotten.
+           They call this instead.
+
+           The title takes the same blue bold as «Objective:» — the
+           heading style this document already uses for a label that
+           introduces what follows — because that is what the author
+           asked for when they typed it into the field marked title. The
+           sub-title is body weight: a second line at heading weight
+           competes with the first and the reader cannot tell which one
+           names the table. */
+        const _pushUserTable = (t, ch) => {
+            if (!t) return;
+            if (t.title && t.title.trim()) {
+                ch.push(new Paragraph({
+                    children: [new TextRun({ text: t.title, bold: true, size: _wsBody(),
+                                            color: _wsHeadColor(), rightToLeft: _mbRtl() })],
+                    alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(),
+                    spacing: { before: 200, after: t.subtitle ? 40 : 100 }
+                }));
+            }
+            if (t.subtitle && t.subtitle.trim()) {
+                ch.push(new Paragraph({
+                    children: [new TextRun({ text: t.subtitle, size: _wsBody(), rightToLeft: _mbRtl() })],
+                    alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(),
+                    spacing: { after: 100 }
+                }));
+            }
+            const tbl = _buildUserTable(t, Table, TableRow, TableCell, WidthType, BorderStyle);
+            if (tbl) {
+                ch.push(tbl);
+                ch.push(new Paragraph({ children: [new TextRun({ text: '' })], spacing: { after: 200 } }));
+            }
+        };
+
         /* Helper: render a Learning Guide MODEL as docx children.
            The model comes from learning_guide.js and is the same object
            the on-screen preview renders, which is the only way the two
@@ -1464,10 +1502,7 @@ async function exportToDocx() {
                         // still export tables even if text is empty
                         if (cs.tables && cs.tables.length) {
                             _pushCsHeading(cs);
-                            cs.tables.forEach(t => {
-                                const tbl = _buildUserTable(t, Table, TableRow, TableCell, WidthType, BorderStyle);
-                                if (tbl) { ch.push(tbl); ch.push(new Paragraph({ children: [new TextRun({ text: '' })], spacing: { after: 200 } })); }
-                            });
+                            cs.tables.forEach(t => _pushUserTable(t, ch));
                         }
                         return;
                     }
@@ -1487,10 +1522,7 @@ async function exportToDocx() {
                     if (cs.marks) { cs.marks.forEach(m => { if (m.text && m.text.trim()) { const mt = MARK_TYPES.find(x => x.key === m.key); if (mt) { ch.push(buildMarkDocxTable(mt, m.text)); } } }); }
                     // Export user-created tables
                     if (cs.tables && cs.tables.length) {
-                        cs.tables.forEach(t => {
-                            const tbl = _buildUserTable(t, Table, TableRow, TableCell, WidthType, BorderStyle);
-                            if (tbl) { ch.push(tbl); ch.push(new Paragraph({ children: [new TextRun({ text: '' })], spacing: { after: 200 } })); }
-                        });
+                        cs.tables.forEach(t => _pushUserTable(t, ch));
                     }
                 });
             }
@@ -1582,10 +1614,7 @@ async function exportToDocx() {
                     /* Steps can carry tables now, the same as content
                        cards, and through the same builder. */
                     if (step.tables && step.tables.length) {
-                        step.tables.forEach(t => {
-                            const tbl = _buildUserTable(t, Table, TableRow, TableCell, WidthType, BorderStyle);
-                            if (tbl) { ch.push(tbl); ch.push(new Paragraph({ children: [new TextRun({ text: '' })], spacing: { after: 200 } })); }
-                        });
+                        step.tables.forEach(t => _pushUserTable(t, ch));
                     }
                 });
             }

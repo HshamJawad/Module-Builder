@@ -151,7 +151,14 @@ function _hxMarks(marks) {
 function _hxTables(tables) {
     if (!tables || !tables.length) return '';
     return tables.map(function (t) {
-        return '<table class="mx-utable"><tbody>' + t.cells.map(function (row, ri) {
+        /* Captions ride ABOVE the table and outside it, not in a merged
+           first row: a <caption> or a spanning cell would be read as
+           data by anything that later parses the table, and would move
+           with the header when the table scrolls on a phone. */
+        var cap = '';
+        if (t.title)    cap += '<div class="mx-utable-title">' + _hxText(t.title) + '</div>';
+        if (t.subtitle) cap += '<div class="mx-utable-sub">' + _hxText(t.subtitle) + '</div>';
+        return cap + '<table class="mx-utable"><tbody>' + t.cells.map(function (row, ri) {
             return '<tr>' + row.map(function (c) {
                 return ri === 0 ? '<th>' + _hxText(c) + '</th>' : '<td>' + _hxText(c) + '</td>';
             }).join('') + '</tr>';
@@ -632,6 +639,15 @@ function _hxCss() {
 '.mx-sec li{margin-bottom:5px}',
 '.mx-imgs{display:flex;flex-wrap:wrap;gap:12px;margin:12px 0}',
 '.mx-imgs img{max-width:340px;border:1px solid #e3e6ef;border-radius:10px}',
+/* A table's caption sits with its table, not with the paragraph
+   above it: the margin below the title is small and the margin
+   above it is not, so the pairing is visible before the words are
+   read. Its weight matches .mx-sub, the section heading, because
+   that is what the author asked for — a title, not a note. */
+'.mx-utable-title{font-weight:800;color:#39415c;margin:18px 0 2px;font-size:1.02em}',
+'.mx-utable-sub{color:#5c6478;font-size:.92em;margin:0 0 2px}',
+'.mx-utable-title + .mx-utable{margin-top:4px}',
+'.mx-utable-sub + .mx-utable{margin-top:4px}',
 'table{border-collapse:collapse;width:100%;margin:12px 0;font-size:.92em}',
 'th,td{border:1px solid #dfe3ee;padding:9px 12px;text-align:start;vertical-align:top}',
 'th{background:#f4f6fc;font-weight:700}',

@@ -141,11 +141,22 @@ function _mmTables(list) {
         const cells = _mmArr(t && t.cells).map(function (row) {
             return _mmArr(row).map(_mmStr);
         });
-        return { rows: cells.length, cols: cells.length ? cells[0].length : 0, cells: cells };
+        return {
+            rows: cells.length,
+            cols: cells.length ? cells[0].length : 0,
+            cells: cells,
+            /* Optional captions. Absent on every table saved before the
+               fields existed, which is why they are read defensively
+               and default to '' rather than being assumed present. */
+            title: _mmStr(t && t.title).trim(),
+            subtitle: _mmStr(t && t.subtitle).trim()
+        };
     }).filter(function (t) {
         /* A table the author added and never typed into is furniture,
-           not content. */
-        return t.cells.some(function (r) { return r.some(function (c) { return c.trim(); }); });
+           not content — but a table they took the trouble to NAME is
+           not furniture, even while its cells are still empty. */
+        return t.title || t.subtitle ||
+               t.cells.some(function (r) { return r.some(function (c) { return c.trim(); }); });
     });
 }
 

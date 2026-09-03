@@ -478,6 +478,12 @@ function _pdfBuild(pdf, model, lang) {
                 if (cs.text) w.text(cs.text);
                 cs.images.forEach(function (im) { w.image(im); });
                 cs.tables.forEach(function (tb) {
+                    /* The captions print even when the grid is empty —
+                       a named table with nothing in it yet is something
+                       the author put there on purpose, and the model
+                       has already dropped the unnamed empty ones. */
+                    if (tb.title) w.label(tb.title);
+                    if (tb.subtitle) w.text(tb.subtitle);
                     if (!tb.cells.length) return;
                     var cols = tb.cells[0].length || 1;
                     var cw = [];
@@ -524,6 +530,8 @@ function _pdfBuild(pdf, model, lang) {
                     w.text(s.index + '. ' + s.text, { indent: 4 });
                     s.images.forEach(function (im) { w.image(im); });
                     (s.tables || []).forEach(function (tb) {
+                        if (tb.title) w.label(tb.title);
+                        if (tb.subtitle) w.text(tb.subtitle);
                         if (!tb.cells.length) return;
                         var cols = tb.cells[0].length || 1;
                         var cw = [];
