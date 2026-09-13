@@ -226,10 +226,26 @@ function updatePerformanceCriteriaPanel() {
     let html = '<div style="display: flex; flex-direction: column; gap: 12px;">';
     lo.performanceCriteria.forEach((pc, index) => {
         const criteriaText = pc.text || pc.id || pc;
+        // pc.taskId / pc.id ("1-1") arrive from a DACUM Live Pro import
+        // (see modules.js) and are simply absent for a criterion typed
+        // directly here — both cases are handled the same way already.
+        // taskAnalysisSource.taskAnalysis[taskId].taskCode is the
+        // human-readable "TASK B4" label; pc.taskId itself is DACUM's
+        // internal id and is not shown directly.
+        const module = mbState.modulesData.find(m => m.id === mbState.currentModuleId);
+        const taCode = pc && pc.taskId && module && module.taskAnalysisSource &&
+            module.taskAnalysisSource.taskAnalysis[pc.taskId] &&
+            module.taskAnalysisSource.taskAnalysis[pc.taskId].taskCode;
+        const sourceTag = (pc && pc.taskId)
+            ? `<div style="font-size:0.78em;color:#94a3b8;margin-top:3px;">${escapeHtml(pc.id || '')}${taCode ? ' · ' + escapeHtml(taCode) : ''}</div>`
+            : '';
         html += `
             <div style="display: flex; align-items: start; gap: 10px; padding: 10px; background: #f9fafb; border-radius: 6px; border: 1px solid #e5e7eb;">
                 <div style="min-width: 30px; font-weight: 600; color: #667eea;">${index + 1}.</div>
-                <div class="criteria-text" dir="auto" data-dir-auto="1" style="flex: 1; color: #374151; line-height: 1.6; text-align: start;">${criteriaText}</div>
+                <div style="flex: 1;">
+                    <div class="criteria-text" dir="auto" data-dir-auto="1" style="color: #374151; line-height: 1.6; text-align: start;">${criteriaText}</div>
+                    ${sourceTag}
+                </div>
                 <div style="display: flex; gap: 5px;">
                     <button class="mb-icon-btn" data-act="editPerformanceCriterion" data-args='[${index}]'
                         title="${window.i18n.t('rxRename')}" data-i18n-title="rxRename">
