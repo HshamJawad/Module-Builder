@@ -171,9 +171,11 @@ function renderModuleSelector() {
  * with nothing to show — created manually here, or imported before
  * this field existed.
  *
- * Labels are plain English, not window.i18n — this reference panel is
- * new and mb-translations.js (Module Builder's own dictionary file)
- * was not part of this change, so there are no keys for it to resolve.
+ * Field labels come from window.i18n (mbTa* keys in mb-translations.js)
+ * and follow the interface language; the Task Analysis content itself
+ * (ta.requiredKnowledge etc.) is carried over verbatim from DACUM Live
+ * Pro in whatever language it was written there, same as any other
+ * imported text.
  */
 function renderModuleTaskAnalysisPanel() {
     const host = document.getElementById('moduleTaskAnalysisPanel');
@@ -189,15 +191,15 @@ function renderModuleTaskAnalysisPanel() {
     }
 
     const FIELD_MAP = [
-        ['requiredKnowledge',           '📘 Required Knowledge',            'Information Sheet'],
-        ['requiredSkills',              '🧩 Required Skills',               'Activity / Job Sheet'],
-        ['performanceSteps',            '🛠️ Performance Steps',             'Activity / Job Sheet'],
-        ['toolsEquipmentMaterials',     '🧰 Tools, Equipment & Materials',  'Activity / Job Sheet — Resources'],
-        ['safetyOSH',                   '⚠️ Safety / OSH',                  'Activity / Job Sheet'],
-        ['conditionsWorkEnvironment',   '🏗️ Conditions / Work Environment', 'Activity / Job Sheet'],
-        ['decisionsCriticalPoints',     '🧭 Decisions / Critical Points',   'Activity / Job Sheet'],
-        ['performanceStandard',         '🎯 Performance Standard',          'Assessment Unit'],
-        ['commonErrorsTroubleshooting', '🐛 Common Errors / Troubleshooting','Assessment Unit'],
+        ['requiredKnowledge',           window.i18n.t('mbTaReqKnowledge')],
+        ['requiredSkills',              window.i18n.t('mbTaReqSkills')],
+        ['performanceSteps',            window.i18n.t('mbTaPerfSteps')],
+        ['toolsEquipmentMaterials',     window.i18n.t('mbTaTools')],
+        ['safetyOSH',                   window.i18n.t('mbTaSafety')],
+        ['conditionsWorkEnvironment',   window.i18n.t('mbTaConditions')],
+        ['decisionsCriticalPoints',     window.i18n.t('mbTaDecisions')],
+        ['performanceStandard',         window.i18n.t('mbTaStandard')],
+        ['commonErrorsTroubleshooting', window.i18n.t('mbTaErrors')],
     ];
 
     const blocks = taskIds.map(taskId => {
@@ -225,15 +227,12 @@ function renderModuleTaskAnalysisPanel() {
     if (!blocks) { host.innerHTML = ''; return; }
 
     host.innerHTML = `
-        <div style="background:#f0f9ff;border:2px solid #0ea5e9;border-radius:12px;padding:18px 20px;margin:20px 0;">
+        <div style="background:#f0f9ff;border:2px solid #0ea5e9;border-radius:12px;padding:18px 20px;margin:20px 0;" dir="auto">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-                <span style="font-size:1.2em;">📥</span>
-                <strong style="color:#0c4a6e;font-size:1.05em;">Task Analysis Reference (from DACUM Live Pro)</strong>
+                <strong style="color:#0c4a6e;font-size:1.05em;">${window.i18n.t('mbTaskAnalysisReference')}</strong>
             </div>
             <p style="margin:0 0 14px;color:#64748b;font-size:0.85em;">
-                Source detail for this module's task(s) — for your reference only. Nothing here is
-                copied automatically; use it while writing the Information Sheet, Activity/Job Sheet
-                and Assessment Unit below.
+                ${window.i18n.t('mbTaskAnalysisReferenceIntro')}
             </p>
             ${blocks}
         </div>`;
