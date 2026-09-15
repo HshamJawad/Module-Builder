@@ -11,6 +11,14 @@ async function initializeLearningOutcomes() {
         if (dacumExportData) {
             const exportData = JSON.parse(dacumExportData);
             
+            // Diagnostic only — confirms exactly what this side actually
+            // read out of localStorage before anything else touches it, so
+            // "fewer modules than expected" can be checked against this
+            // line to rule the import step in or out. Safe to remove once
+            // transfer reliability is fully confirmed.
+            console.log('[ModuleBuilder←DACUM] read', (exportData.modules || []).length, 'module(s):',
+                (exportData.modules || []).map(m => m.moduleId));
+
             // Clear localStorage after reading (one-time import)
             mbRemoveSetting(MB_KEYS.dacumImport);
             
