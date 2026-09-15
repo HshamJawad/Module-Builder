@@ -139,7 +139,8 @@ function renderModuleSelector() {
     ['current-module-selector',
      'info-module-selector',
      'activity-module-selector',
-     'assessment-module-selector'].forEach(id => {
+     'assessment-module-selector',
+     'mapping-module-selector'].forEach(id => {
         const sel = document.getElementById(id);
         if (!sel) return;
         sel.innerHTML = optionsHtml;
@@ -249,7 +250,8 @@ function switchModuleFromTab(source) {
     ['current-module-selector',
      'info-module-selector',
      'activity-module-selector',
-     'assessment-module-selector'].forEach(id => {
+     'assessment-module-selector',
+     'mapping-module-selector'].forEach(id => {
         const s = document.getElementById(id);
         if (s) s.value = selectedId;
     });
@@ -280,6 +282,11 @@ function switchModuleFromTab(source) {
     renderLOSelector();
     updateModuleSummary();
     renderModuleTaskAnalysisPanel();
+    // A pending Training Structure Mapping proposal belongs to the
+    // module it was built for; switching modules invalidates it rather
+    // than silently approving suggestions onto the wrong module.
+    mbState.structureProposal = null;
+    if (typeof renderStructureProposal === 'function') renderStructureProposal();
     const selText = sel.options[sel.selectedIndex]?.text || selectedId;
     showStatus(window.i18n.tf('dgSwitchedTo', { v0: selText }), 'success');
 }
@@ -329,6 +336,8 @@ function switchModule() {
     renderLOSelector();
     updateModuleSummary();
     renderModuleTaskAnalysisPanel();
+    mbState.structureProposal = null;
+    if (typeof renderStructureProposal === 'function') renderStructureProposal();
     showStatus(window.i18n.tf('dgSwitchedTo2', { v0: selector.options[selector.selectedIndex].text }), 'success');
 }
 
