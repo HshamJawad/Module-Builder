@@ -237,6 +237,7 @@
 <button class="tab" data-act="switchTab" data-args='["info"]' data-i18n="mbInformationSheet">Information Sheet</button>
 <button class="tab" data-act="switchTab" data-args='["activity"]' data-i18n="mbActivityJobSheet">Activity/ Job Sheet</button>
 <button class="tab" data-act="switchTab" data-args='["assessment"]' data-i18n="mbAssessmentUnit">Assessment Unit</button>
+<button class="tab" data-act="switchTab" data-args='["mapping"]' data-i18n="mbTrainingStructureMapping">🧠 Training Structure Mapping</button>
 <button class="tab" data-act="switchTab" data-args='["references"]' data-i18n="mbReferences">📚 References</button>
 <button class="tab" data-act="switchTab" data-args='["help"]' data-i18n="mbHelp">❓ Help</button>
 </div>
@@ -848,6 +849,45 @@
 </div>
 </div>
 </div>
+<!-- Training Structure Mapping Tab -->
+<div class="tab-content" id="mapping-tab">
+<div class="form-group">
+<!-- ── Context Bar: Module only ── -->
+<div style="background:linear-gradient(135deg,#0ea5e9 0%,#0284c7 100%); border-radius:10px; padding:10px 14px; margin-bottom:20px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; box-shadow:0 2px 8px rgba(14,165,233,0.25);">
+<span data-i18n="mbModule" style="font-size:0.82em; font-weight:700; color:#e0f2fe; white-space:nowrap; letter-spacing:0.03em;">📦 Module:</span>
+<select data-act="switchModuleFromTab" data-args='["mapping"]' data-on="change" id="mapping-module-selector" style="padding:6px 10px; border:2px solid rgba(255,255,255,0.5); border-radius:7px; font-size:0.9em; font-weight:600; background:white; color:#0c4a6e; cursor:pointer; min-width:0; flex:1; max-width:340px;">
+<option data-i18n="mbSelectModule" value="">-- Select Module --</option>
+</select>
+</div>
+
+<label style="font-size: 1.2em; font-weight: 600; color: #667eea; margin-bottom: 10px; display:block;">🧠 <span data-i18n="mbTrainingStructureMapping">Training Structure Mapping</span></label>
+<p style="color:#6b7280; font-size:0.9em; margin:0 0 20px;" data-i18n="mbMappingIntro">
+Propose Information Sheets, Activity/Job Sheets, and Assessment content from this module's Learning Outcomes, Performance Criteria and Task Analysis — then review, edit, and approve before anything is built. Nothing is written automatically.
+</p>
+
+<div style="display:flex; gap:10px; margin-bottom:18px;">
+<button data-mapping-mode="ai" data-act="mbSwitchMappingMode" data-args='["ai"]' class="mb-mapping-mode-btn active" data-i18n="mbAiAssistedMapping">🤖 AI-Assisted Mapping</button>
+<button data-mapping-mode="manual" data-act="mbSwitchMappingMode" data-args='["manual"]' class="mb-mapping-mode-btn" data-i18n="mbManualMapping">✍️ Manual Mapping</button>
+</div>
+<style>
+.mb-mapping-mode-btn{background:#f3f4f6;color:#4b5563;border:2px solid transparent;border-radius:8px;padding:9px 18px;font-weight:600;font-size:0.92em;cursor:pointer;}
+.mb-mapping-mode-btn.active{background:#eef2ff;color:#4338ca;border-color:#c7d2fe;}
+</style>
+
+<div id="mb-ai-mode-panel" style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:10px; padding:16px; margin-bottom:20px;">
+<p style="margin:0 0 12px; color:#0c4a6e; font-size:0.88em;" data-i18n="mbAiModeExplain">
+The AI analyzes only this module's own data (Learning Outcomes, Performance Criteria, source Tasks, and whatever Task Analysis fields were actually filled in) and proposes a structure. It never invents missing occupational facts.
+</p>
+<button id="mb-ai-analyze-btn" data-act="mbAnalyzeModuleStructure" style="background:linear-gradient(135deg,#667eea,#5b21b6); color:white; padding:10px 22px; border:none; border-radius:8px; font-weight:600; cursor:pointer;">
+🔍 <span data-i18n="mbAnalyzeAndSuggest">Analyze &amp; Suggest Structure</span>
+</button>
+</div>
+
+<div id="mb-structure-proposal"></div>
+
+</div>
+</div>
+<!-- End Training Structure Mapping Tab -->
 <!-- References Tab -->
 <div class="tab-content" id="references-tab">
 <div class="form-group">
@@ -1028,6 +1068,7 @@
 <script src="src/content.js"></script>
 <script src="src/criteria.js"></script>
 <script src="src/assessment.js"></script>
+<script src="src/module-ai.js"></script>
 <script src="src/references.js"></script>
 <script src="src/resources.js"></script>
 <script src="src/marks.js"></script>
