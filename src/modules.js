@@ -21,6 +21,17 @@ async function initializeLearningOutcomes() {
 
             // Clear localStorage after reading (one-time import)
             mbRemoveSetting(MB_KEYS.dacumImport);
+
+            // autosave.js restores the last IndexedDB snapshot ~1.2s after
+            // load, unconditionally, into the same mbState.modulesData this
+            // import is about to fill. Without this flag that restore wins
+            // the race every time — the fresh DACUM import renders first,
+            // then silently reverts to whatever was open before, which is
+            // exactly the "shows the new modules for a moment, then goes
+            // back to the old session" symptom this fixes. A fresh handoff
+            // from DACUM is a deliberate new session; it should not be
+            // merged with unrelated leftover autosave data at all.
+            mbState._skipAutosaveRestore = true;
             
             // Convert DACUM modules to Module Builder format
             if (exportData.modules && exportData.modules.length > 0) {

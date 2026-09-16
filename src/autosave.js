@@ -473,6 +473,17 @@
                 attachListeners();
                 resetReminderTimer();
 
+                // Set synchronously by modules.js's DACUM import (see
+                // initializeLearningOutcomes) earlier in this same page
+                // load — a fresh handoff from DACUM Live Pro is a
+                // deliberate new session, not a crash to recover from, so
+                // it must never be overwritten by an older IndexedDB
+                // snapshot arriving a moment later.
+                if (typeof mbState !== 'undefined' && mbState._skipAutosaveRestore) {
+                    console.log('[AutoSave] restore skipped — DACUM import is active for this session');
+                    return;
+                }
+
                 tryRestore().then(function (restored) {
                     if (restored) showBanner();
                 });
