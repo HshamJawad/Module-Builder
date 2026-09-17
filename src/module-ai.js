@@ -180,40 +180,158 @@ function mbRemoveProposalItem(kind, tempId) {
     renderStructureProposal();
 }
 
-async function mbEditProposalItemTitle(kind, tempId) {
+// ── Icons (exact SVGs used elsewhere in the app — .mb-icon-btn is built
+// around an <svg class="mb-ico"> child; plain emoji text does not size
+// or color correctly inside it, which is why earlier buttons rendered
+// as empty boxes). Copied verbatim from outcomes.js for visual parity.
+const _MB_ICON_EDIT = '<svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4.5 19.5h4l10-10a2.1 2.1 0 0 0-3-3l-10 10z"/><path d="M14.5 6.5l3 3"/><path d="M4.5 19.5l.6-3.4"/></svg>';
+const _MB_ICON_DELETE = '<svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg>';
+
+// ── Item editor: link a proposal item to its actual source ──────
+// This is what makes Manual Mapping (and editing an AI suggestion)
+// actually connect to Task Analysis instead of being a bare title with
+// no traceability — the gap flagged after the first hands-on test.
+async function _mbOpenItemEditor(kind, tempId) {
     if (!mbState.structureProposal) return;
     const key = kind === 'info' ? 'informationSheets' : kind === 'activity' ? 'activitySheets' : 'assessmentUnits';
     const item = mbState.structureProposal[key].find(it => it.tempId === tempId);
     if (!item) return;
-    const next = await mbPrompt(window.i18n.t('mbEnterTitle'), item.title);
-    if (next === null) return;
-    item.title = next.trim();
-    renderStructureProposal();
+
+    const module = _mbCurrentModule();
+    if (!module) return;
+    syncLearningOutcomesFromCurrentModule();
+    const los = module.learningOutcomes || [];
+    const taskIds = (module.taskAnalysisSource && module.taskAnalysisSource.sourceTaskIds) || [];
+
+    // Union of Task Analysis field names that actually have content on
+    // AT LEAST ONE of the module's source tasks — never offer a field
+    // nothing in this module actually filled in.
+    const availableFields = Object.keys(MB_TA_FIELD_LABELS).filter(field =>
+        taskIds.some(tid => {
+            const ta = module.taskAnalysisSource.taskAnalysis[tid];
+            const val = ta && ta[field];
+            return Array.isArray(val) ? val.filter(Boolean).length : !!(val && String(val).trim());
+        })
+    );
+
+    const existing = document.getElementById('mbItemEditorModal');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'mbItemEditorModal';
+    overlay.className = 'mb-dialog-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+
+    const checklist = (list, selected, name) => list.map(opt => `
+        <label style="display:flex;align-items:flex-start;gap:8px;padding:5px 2px;cursor:pointer;">
+            <input type="checkbox" name="${name}" value="${escapeHtml(opt.value)}" ${selected.includes(opt.value) ? 'checked' : ''} style="margin-top:3px;flex-shrink:0;">
+            <span dir="auto" style="font-size:0.88em;color:#374151;">${escapeHtml(opt.label)}</span>
+        </label>`).join('') || `<p style="color:#9ca3af;font-size:0.85em;font-style:italic;margin:2px 0;">${window.i18n.t('mbNoItemsYet')}</p>`;
+
+    const loOptions = los.map(lo => ({ value: lo.id, label: `${lo.number || lo.id}: ${biGetStrict(lo.statement, contentLang()) || ''}` }));
+    const pcOptions = [];
+    los.forEach(lo => (lo.performanceCriteria || []).forEach(pc =>
+        pcOptions.push({ value: pc.id, label: `${pc.id} — ${pc.text}` })));
+    const taskOptions = taskIds.map(tid => ({ value: tid, label: _mbTaskLabel(tid) }));
+    const fieldOptions = availableFields.map(f => ({ value: f, label: _mbFieldLabel(f) }));
+
+    const box = document.createElement('div');
+    box.className = 'mb-dialog';
+    box.style.maxWidth = '480px';
+    box.style.maxHeight = '85vh';
+    box.style.overflowY = 'auto';
+    box.setAttribute('dir', (window.i18n && window.i18n.isRTL && window.i18n.isRTL()) ? 'rtl' : 'ltr');
+    box.innerHTML = `
+        <div style="font-weight:700;color:#1f2937;margin-bottom:10px;">${window.i18n.t('mbEditLinks')}</div>
+        <label style="display:block;font-size:0.82em;color:#6b7280;margin-bottom:4px;">${window.i18n.t('mbEnterTitle')}</label>
+        <input type="text" id="mbItemEditorTitle" value="${escapeHtml(item.title)}" dir="auto"
+               style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;margin-bottom:14px;font-size:0.92em;">
+
+        <div style="font-size:0.82em;font-weight:600;color:#374151;margin-bottom:4px;">${window.i18n.t('mbLinkLearningOutcomes')}</div>
+        <div style="margin-bottom:12px;">${checklist(loOptions, item.learningOutcomeIds, 'lo')}</div>
+
+        <div style="font-size:0.82em;font-weight:600;color:#374151;margin-bottom:4px;">${window.i18n.t('mbLinkPerformanceCriteria')}</div>
+        <div style="margin-bottom:12px;">${checklist(pcOptions, item.performanceCriteriaIds, 'pc')}</div>
+
+        <div style="font-size:0.82em;font-weight:600;color:#374151;margin-bottom:4px;">${window.i18n.t('mbLinkSourceTasks')}</div>
+        <div style="margin-bottom:12px;">${checklist(taskOptions, item.sourceTaskIds, 'task')}</div>
+
+        <div style="font-size:0.82em;font-weight:600;color:#374151;margin-bottom:4px;">${window.i18n.t('mbLinkTaFields')}</div>
+        <div style="margin-bottom:6px;">${checklist(fieldOptions, item.sourceFields, 'field')}</div>
+
+        <div class="mb-dialog-actions" style="margin-top:14px;">
+            <button type="button" class="mb-dialog-btn mb-dialog-cancel" id="mbItemEditorCancel">${window.i18n.t('dlgCancel') || 'Cancel'}</button>
+            <button type="button" class="mb-dialog-btn mb-dialog-ok" id="mbItemEditorSave">${window.i18n.t('dlgSave') || 'Save'}</button>
+        </div>`;
+
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+
+    const close = () => { document.removeEventListener('keydown', onKey, true); overlay.remove(); };
+    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } }
+    document.addEventListener('keydown', onKey, true);
+    overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+    box.querySelector('#mbItemEditorCancel').addEventListener('click', close);
+    box.querySelector('#mbItemEditorSave').addEventListener('click', () => {
+        const checked = (name) => [...box.querySelectorAll(`input[name="${name}"]:checked`)].map(cb => cb.value);
+        item.title = box.querySelector('#mbItemEditorTitle').value.trim();
+        item.learningOutcomeIds = checked('lo');
+        item.performanceCriteriaIds = checked('pc');
+        item.sourceTaskIds = checked('task');
+        item.sourceFields = checked('field');
+        close();
+        renderStructureProposal();
+    });
 }
 
-// ── Review UI ────────────────────────────────────────────────
 
+
+const MB_TA_FIELD_LABELS = {
+    requiredKnowledge: 'Required Knowledge', requiredSkills: 'Required Skills',
+    performanceSteps: 'Performance Steps', toolsEquipmentMaterials: 'Tools, Equipment & Materials',
+    safetyOSH: 'Safety / OSH', conditionsWorkEnvironment: 'Conditions / Work Environment',
+    decisionsCriticalPoints: 'Decisions / Critical Points', performanceCriteria: 'Performance Criteria (task-level)',
+    performanceStandard: 'Performance Standard', commonErrorsTroubleshooting: 'Common Errors / Troubleshooting'
+};
+
+function _mbCurrentModule() {
+    return mbState.modulesData.find(m => m.id === mbState.currentModuleId);
+}
+
+/** "TASK A1" — resolved from the module's own taskAnalysisSource, same
+ *  source renderModuleTaskAnalysisPanel() reads, so this always matches
+ *  what the reference panel above it already shows. Falls back to the
+ *  raw id only for a task DACUM never sent Task Analysis for. */
 function _mbTaskLabel(taskId) {
-    return taskId ? String(taskId) : '';
+    if (!taskId) return '';
+    const module = _mbCurrentModule();
+    const ta = module && module.taskAnalysisSource && module.taskAnalysisSource.taskAnalysis[taskId];
+    return (ta && ta.taskCode) || String(taskId);
+}
+
+function _mbFieldLabel(field) {
+    return MB_TA_FIELD_LABELS[field] || field;
 }
 
 function _mbProposalSection(kind, items, titleKey, addLabelKey) {
     const rows = items.map(it => {
-        const sources = [
+        const sourceParts = [
             ...it.learningOutcomeIds,
             ...it.performanceCriteriaIds,
-            ...it.sourceTaskIds.map(_mbTaskLabel)
+            ...it.sourceTaskIds.map(_mbTaskLabel),
+            ...it.sourceFields.map(_mbFieldLabel)
         ].filter(Boolean).join(' | ');
         return `
             <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:10px 12px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:8px;">
                 <div style="flex:1;min-width:0;">
                     <div dir="auto" style="font-weight:600;color:#1f2937;">${escapeHtml(it.title || window.i18n.t('mbUntitled'))}</div>
-                    ${sources ? `<div style="font-size:0.8em;color:#6b7280;margin-top:3px;">${window.i18n.t('mbSources')}: ${escapeHtml(sources)}</div>` : ''}
+                    ${sourceParts ? `<div style="font-size:0.8em;color:#6b7280;margin-top:3px;">${window.i18n.t('mbSources')}: ${escapeHtml(sourceParts)}</div>` : `<div style="font-size:0.8em;color:#d97706;margin-top:3px;">${window.i18n.t('mbNotLinkedYet')}</div>`}
                     ${it.rationale ? `<div dir="auto" style="font-size:0.82em;color:#9ca3af;margin-top:3px;font-style:italic;">${escapeHtml(it.rationale)}</div>` : ''}
                 </div>
                 <div style="display:flex;gap:6px;flex-shrink:0;">
-                    <button data-act="mbEditProposalItemTitle" data-args='["${kind}","${it.tempId}"]' class="mb-icon-btn" title="${window.i18n.t('rxRename')}">✏️</button>
-                    <button data-act="mbRemoveProposalItem" data-args='["${kind}","${it.tempId}"]' class="mb-icon-btn danger" title="${window.i18n.t('mbDelete')}">🗑️</button>
+                    <button data-act="_mbOpenItemEditor" data-args='["${kind}","${it.tempId}"]' class="mb-icon-btn" title="${window.i18n.t('mbEditLinks')}">${_MB_ICON_EDIT}</button>
+                    <button data-act="mbRemoveProposalItem" data-args='["${kind}","${it.tempId}"]' class="mb-icon-btn danger" title="${window.i18n.t('mbDelete')}">${_MB_ICON_DELETE}</button>
                 </div>
             </div>`;
     }).join('');
@@ -381,7 +499,7 @@ async function mbApproveAndBuild() {
 
 // ── Mode switch (AI-assisted / Manual / Hybrid) ─────────────────
 // "Hybrid" is simply: run AI-assisted, then keep editing manually —
-// mbAddManualProposalItem/mbRemoveProposalItem/mbEditProposalItemTitle
+// mbAddManualProposalItem/mbRemoveProposalItem/_mbOpenItemEditor
 // already operate on whatever proposal is currently loaded, whether it
 // came from the AI or from mbStartManualMapping(). No separate code
 // path is needed for it.
