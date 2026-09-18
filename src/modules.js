@@ -306,6 +306,7 @@ function switchModuleFromTab(source) {
     // than silently approving suggestions onto the wrong module.
     mbState.structureProposal = null;
     if (typeof renderStructureProposal === 'function') renderStructureProposal();
+    if (typeof renderSourceBrowser === 'function') renderSourceBrowser();
     const selText = sel.options[sel.selectedIndex]?.text || selectedId;
     showStatus(window.i18n.tf('dgSwitchedTo', { v0: selText }), 'success');
 }
@@ -357,6 +358,7 @@ function switchModule() {
     renderModuleTaskAnalysisPanel();
     mbState.structureProposal = null;
     if (typeof renderStructureProposal === 'function') renderStructureProposal();
+    if (typeof renderSourceBrowser === 'function') renderSourceBrowser();
     showStatus(window.i18n.tf('dgSwitchedTo2', { v0: selector.options[selector.selectedIndex].text }), 'success');
 }
 
