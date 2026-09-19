@@ -307,6 +307,7 @@ function switchModuleFromTab(source) {
     mbState.structureProposal = null;
     if (typeof renderStructureProposal === 'function') renderStructureProposal();
     if (typeof renderSourceBrowser === 'function') renderSourceBrowser();
+    if (typeof renderAssignedItemsPanel === 'function') renderAssignedItemsPanel();
     const selText = sel.options[sel.selectedIndex]?.text || selectedId;
     showStatus(window.i18n.tf('dgSwitchedTo', { v0: selText }), 'success');
 }
@@ -359,6 +360,7 @@ function switchModule() {
     mbState.structureProposal = null;
     if (typeof renderStructureProposal === 'function') renderStructureProposal();
     if (typeof renderSourceBrowser === 'function') renderSourceBrowser();
+    if (typeof renderAssignedItemsPanel === 'function') renderAssignedItemsPanel();
     showStatus(window.i18n.tf('dgSwitchedTo2', { v0: selector.options[selector.selectedIndex].text }), 'success');
 }
 

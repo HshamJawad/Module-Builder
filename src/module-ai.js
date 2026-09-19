@@ -112,6 +112,7 @@ async function mbAnalyzeModuleStructure() {
 
         mbState.structureProposal = mbNormalizeProposal(data, 'ai');
         renderStructureProposal();
+        renderAssignedItemsPanel();
         showStatus(window.i18n.t('mbAiProposalReady'), 'success');
     } catch (err) {
         console.error('Module mapping AI request failed:', err);
@@ -169,6 +170,7 @@ function mbNormalizeProposal(data, mode) {
 function mbStartManualMapping() {
     mbState.structureProposal = { mode: 'manual', analysisSummary: '', informationSheets: [], activitySheets: [], assessmentUnits: [], missingInformation: [] };
     renderStructureProposal();
+    renderAssignedItemsPanel();
 }
 
 function mbAddManualProposalItem(kind) {
@@ -181,6 +183,7 @@ function mbAddManualProposalItem(kind) {
         sourceSelections: [], mappingType: 'direct'
     });
     renderStructureProposal();
+    renderAssignedItemsPanel();
 }
 
 function mbRemoveProposalItem(kind, tempId) {
@@ -188,6 +191,7 @@ function mbRemoveProposalItem(kind, tempId) {
     const key = kind === 'info' ? 'informationSheets' : kind === 'activity' ? 'activitySheets' : 'assessmentUnits';
     mbState.structureProposal[key] = mbState.structureProposal[key].filter(it => it.tempId !== tempId);
     renderStructureProposal();
+    renderAssignedItemsPanel();
 }
 
 // ── Icons (exact SVGs used elsewhere in the app — .mb-icon-btn is built
@@ -224,6 +228,64 @@ function _mbFieldLabel(field) {
     return MB_TA_FIELD_LABELS[field] || field;
 }
 
+/** Every Learning Outcome/Performance Criterion that already traces back
+ *  to this task, straight from the DACUM import — this is what lets a
+ *  proposal item inherit its LO/PC automatically instead of asking the
+ *  user to re-pick relationships DACUM already established. */
+function _mbLoPcForTask(module, taskId) {
+    const loIds = new Set(); const pcIds = new Set();
+    (module.learningOutcomes || []).forEach(lo => {
+        (lo.performanceCriteria || []).forEach(pc => {
+            if (pc.taskId === taskId) { loIds.add(lo.id); pcIds.add(pc.id); }
+        });
+    });
+    return { loIds: [...loIds], pcIds: [...pcIds] };
+}
+
+/** Inherited links for a whole proposal item — the union of every
+ *  source task's own LO/PC, recomputed fresh from sourceSelections every
+ *  time. This is why learningOutcomeIds/performanceCriteriaIds are
+ *  overwritten on every save rather than left as independently editable
+ *  fields: a stored value could drift from the selections it is
+ *  supposed to describe, and inherited relationships are exactly the
+ *  thing this feature must never require the user to maintain by hand. */
+function _mbInheritedLinksForItem(module, item) {
+    const loIds = new Set(); const pcIds = new Set();
+    (item.sourceSelections || []).forEach(sel => {
+        const derived = _mbLoPcForTask(module, sel.taskId);
+        derived.loIds.forEach(id => loIds.add(id));
+        derived.pcIds.forEach(id => pcIds.add(id));
+    });
+    return { loIds: [...loIds], pcIds: [...pcIds] };
+}
+
+/** { selKey: {kind, tempId, title} } for every source item currently
+ *  assigned to ANY proposal item — the single source of truth for
+ *  "available" vs "assigned", read straight from the proposal itself
+ *  (sourceSelections) rather than a second, separately-maintained list
+ *  that could fall out of sync with it. */
+function _mbAllAssignments() {
+    const map = {};
+    if (!mbState.structureProposal) return map;
+    const groups = [
+        ['informationSheets', 'info'], ['activitySheets', 'activity'], ['assessmentUnits', 'assessment']
+    ];
+    groups.forEach(([listKey, kind]) => {
+        mbState.structureProposal[listKey].forEach(item => {
+            (item.sourceSelections || []).forEach(sel => {
+                map[_mbSelKey(sel)] = { kind, tempId: item.tempId, title: item.title || window.i18n.t('mbUntitled') };
+            });
+        });
+    });
+    return map;
+}
+
+function _mbFindProposalItem(kind, tempId) {
+    if (!mbState.structureProposal) return null;
+    const listKey = kind === 'info' ? 'informationSheets' : kind === 'activity' ? 'activitySheets' : 'assessmentUnits';
+    return mbState.structureProposal[listKey].find(it => it.tempId === tempId) || null;
+}
+
 /** Individual, selectable items for one task's one field. Array fields
  *  (Performance Steps, Required Knowledge, …) yield one entry per item;
  *  a scalar field (Conditions/Work Environment, Performance Standard —
@@ -258,7 +320,21 @@ function _mbParseSelKey(key) {
  *  Shared by the standalone source browser (pick items, THEN create a
  *  sheet from them) and the item editor (refine an existing item's
  *  selections) so the two never drift into different interactions. */
-function _mbBuildSourceChecklistHtml(module, checkedKeys, namePrefix) {
+/** Renders the "browse Task Analysis, check individual items" control —
+ *  grouped by task, then by field, one checkbox per item.
+ *
+ *  excludeKeys hides an item entirely rather than just disabling it:
+ *  once assigned to a proposal item it must read as GONE from the
+ *  available list, not merely greyed out, so it can never be picked
+ *  into a second sheet by accident. checkedKeys pre-checks items that
+ *  belong to the item currently being edited (excludeKeys and
+ *  checkedKeys are always disjoint in practice — the editor excludes
+ *  everything assigned to OTHER items and only ever checks this item's
+ *  own selections). Shared by the standalone browser (excludeKeys = all
+ *  assignments) and the item editor (excludeKeys = assignments minus
+ *  this item's own) so the two never drift into different behaviour. */
+function _mbBuildSourceChecklistHtml(module, checkedKeys, namePrefix, excludeKeys) {
+    excludeKeys = excludeKeys || [];
     const taskIds = (module.taskAnalysisSource && module.taskAnalysisSource.sourceTaskIds) || [];
     const blocks = taskIds.map(taskId => {
         const fieldsHtml = Object.keys(MB_TA_FIELD_LABELS).map(field => {
@@ -266,6 +342,7 @@ function _mbBuildSourceChecklistHtml(module, checkedKeys, namePrefix) {
             if (!items.length) return '';
             const rows = items.map((text, idx) => {
                 const key = _mbSelKey({ taskId, field, itemIndex: idx });
+                if (excludeKeys.includes(key)) return '';
                 const checked = checkedKeys.includes(key);
                 return `
                     <label style="display:flex;align-items:flex-start;gap:8px;padding:3px 2px;cursor:pointer;">
@@ -274,7 +351,8 @@ function _mbBuildSourceChecklistHtml(module, checkedKeys, namePrefix) {
                                style="margin-top:3px;flex-shrink:0;">
                         <span dir="auto" style="font-size:0.87em;color:#374151;">${escapeHtml(text)}</span>
                     </label>`;
-            }).join('');
+            }).filter(Boolean).join('');
+            if (!rows) return '';
             return `
                 <div style="margin-bottom:10px;">
                     <div style="font-size:0.8em;font-weight:600;color:#4b5563;margin-bottom:3px;">${_mbFieldLabel(field)}</div>
@@ -288,7 +366,7 @@ function _mbBuildSourceChecklistHtml(module, checkedKeys, namePrefix) {
                 ${fieldsHtml}
             </div>`;
     }).join('');
-    return blocks || `<p style="color:#9ca3af;font-size:0.85em;font-style:italic;">${window.i18n.t('mbNoItemsYet')}</p>`;
+    return blocks || `<p style="color:#9ca3af;font-size:0.85em;font-style:italic;">${window.i18n.t('mbAllItemsAssigned')}</p>`;
 }
 
 // ── Standalone source browser: pick items, THEN create a sheet ──
@@ -309,7 +387,7 @@ function renderSourceBrowser() {
         <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;margin-bottom:18px;">
             <h4 style="margin:0 0 4px;color:#374151;">${window.i18n.t('mbSourceBrowserTitle')}</h4>
             <p style="margin:0 0 10px;color:#6b7280;font-size:0.85em;">${window.i18n.t('mbSourceBrowserIntro')}</p>
-            <div id="mb-source-browser-list">${_mbBuildSourceChecklistHtml(module, [], 'mbsrc')}</div>
+            <div id="mb-source-browser-list">${_mbBuildSourceChecklistHtml(module, [], 'mbsrc', Object.keys(_mbAllAssignments()))}</div>
             <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
                 <button data-act="mbCreateFromSelection" data-args='["info"]' style="background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;border-radius:6px;padding:7px 14px;font-size:0.85em;font-weight:600;cursor:pointer;">➕ ${window.i18n.t('mbCreateInfoFromSelection')}</button>
                 <button data-act="mbCreateFromSelection" data-args='["activity"]' style="background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;border-radius:6px;padding:7px 14px;font-size:0.85em;font-weight:600;cursor:pointer;">➕ ${window.i18n.t('mbCreateActivityFromSelection')}</button>
@@ -329,6 +407,7 @@ function mbCreateFromSelection(kind) {
     const checked = [...list.querySelectorAll('input[name="mbsrc"]:checked')];
     if (!checked.length) { showStatus(window.i18n.t('mbSelectAtLeastOneItem'), 'error'); return; }
 
+    const module = _mbCurrentModule();
     const sourceSelections = checked.map(cb => ({ ..._mbParseSelKey(cb.value), itemText: cb.dataset.itemText }));
 
     if (!mbState.structureProposal) mbStartManualMapping();
@@ -338,15 +417,149 @@ function mbCreateFromSelection(kind) {
     const firstText = sourceSelections[0].itemText;
     const autoTitle = firstText.length > 60 ? firstText.slice(0, 57) + '…' : firstText;
 
+    // Inherited automatically from whichever task(s) the checked items
+    // belong to — the user never has to re-pick a Learning Outcome or
+    // Performance Criterion DACUM Live Pro already established.
+    const inherited = module ? _mbInheritedLinksForItem(module, { sourceSelections }) : { loIds: [], pcIds: [] };
+
     mbState.structureProposal[key].push({
         tempId: `${prefix}-${Date.now()}-${mbState.structureProposal[key].length}`,
-        title: autoTitle, rationale: '', learningOutcomeIds: [], performanceCriteriaIds: [],
+        title: autoTitle, rationale: '',
+        learningOutcomeIds: inherited.loIds, performanceCriteriaIds: inherited.pcIds,
         sourceSelections, mappingType: 'direct'
     });
 
     checked.forEach(cb => { cb.checked = false; });
     renderStructureProposal();
+    renderSourceBrowser();
+    renderAssignedItemsPanel();
     showStatus(window.i18n.t('mbItemCreatedFromSelection'), 'success');
+}
+
+
+// ── Assigned / Used Items panel ──────────────────────────────
+// The other half of the available/assigned model: every source item
+// currently attached to some proposal item, with a way to see where,
+// unassign it back to the browser above, or move it straight to a
+// different proposal item — mirroring how a Performance Criterion is
+// reassigned between Learning Outcomes in DACUM Live Pro's own
+// modules.js (reassignPCToLO), just applied to Task Analysis items
+// instead of Performance Criteria.
+function renderAssignedItemsPanel() {
+    const host = document.getElementById('mb-assigned-items');
+    if (!host) return;
+    if (!mbState.structureProposal) { host.innerHTML = ''; return; }
+
+    const groups = [
+        ['informationSheets', 'info', 'mbProposalInfoSheets'],
+        ['activitySheets', 'activity', 'mbActivityJobSheets'],
+        ['assessmentUnits', 'assessment', 'mbAssessmentUnitsTitle']
+    ];
+
+    const allTargets = [];
+    const rows = [];
+    groups.forEach(([listKey, kind, labelKey]) => {
+        mbState.structureProposal[listKey].forEach(item => {
+            const title = item.title || window.i18n.t('mbUntitled');
+            allTargets.push({ kind, tempId: item.tempId, title, labelKey });
+            (item.sourceSelections || []).forEach(sel => {
+                rows.push({ sel, kind, tempId: item.tempId, title, labelKey });
+            });
+        });
+    });
+
+    if (!rows.length) { host.innerHTML = ''; return; }
+
+    const rowsHtml = rows.map((r, i) => {
+        const moveOptions = allTargets
+            .filter(t => !(t.kind === r.kind && t.tempId === r.tempId))
+            .map(t => `<option value="${t.kind}|||${t.tempId}">${escapeHtml(window.i18n.t(t.labelKey))}: ${escapeHtml(t.title)}</option>`)
+            .join('');
+        return `
+            <div class="mb-assigned-row" data-row-index="${i}" style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 10px;background:#fff;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:6px;">
+                <div style="flex:1;min-width:0;">
+                    <div dir="auto" style="font-size:0.87em;color:#374151;">${escapeHtml(r.sel.itemText)}</div>
+                    <div style="font-size:0.76em;color:#9ca3af;">${escapeHtml(window.i18n.t(r.labelKey))}: ${escapeHtml(r.title)}</div>
+                </div>
+                <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
+                    <select class="mb-move-select" style="font-size:0.78em;padding:3px 6px;border:1px solid #d1d5db;border-radius:5px;">
+                        <option value="">${window.i18n.t('mbMoveTo')}</option>
+                        ${moveOptions}
+                    </select>
+                    <button type="button" class="mb-icon-btn mb-unassign-btn" title="${window.i18n.t('mbUnassign')}">↩</button>
+                </div>
+            </div>`;
+    }).join('');
+
+    host.innerHTML = `
+        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;margin-bottom:18px;">
+            <h4 style="margin:0 0 4px;color:#374151;">${window.i18n.t('mbAssignedItemsTitle')}</h4>
+            <p style="margin:0 0 10px;color:#6b7280;font-size:0.85em;">${window.i18n.t('mbAssignedItemsIntro')}</p>
+            ${rowsHtml}
+        </div>`;
+
+    // Direct listeners rather than the generic data-act dispatcher: each
+    // row needs its own row's data (which item, which selection) at the
+    // moment of the event, which a static data-args attribute can't carry
+    // for a value the user is choosing right then in a <select>.
+    host.querySelectorAll('.mb-assigned-row').forEach((rowEl, i) => {
+        const r = rows[i];
+        const select = rowEl.querySelector('.mb-move-select');
+        const unassignBtn = rowEl.querySelector('.mb-unassign-btn');
+        select.addEventListener('change', () => {
+            if (!select.value) return;
+            const [toKind, toTempId] = select.value.split('|||');
+            mbMoveAssignedItem(r.kind, r.tempId, r.sel, toKind, toTempId);
+        });
+        unassignBtn.addEventListener('click', () => mbUnassignItem(r.kind, r.tempId, r.sel));
+    });
+}
+
+function _mbRemoveSelection(item, sel) {
+    const key = _mbSelKey(sel);
+    item.sourceSelections = (item.sourceSelections || []).filter(s => _mbSelKey(s) !== key);
+}
+
+/** Returns an item to "Available" — it disappears from the Assigned
+ *  panel and reappears in the source browser above, exactly like
+ *  removing a task from a DACUM cluster returns its criteria to being
+ *  unclaimed rather than deleting them. */
+function mbUnassignItem(kind, tempId, sel) {
+    const item = _mbFindProposalItem(kind, tempId);
+    if (!item) return;
+    _mbRemoveSelection(item, sel);
+    const module = _mbCurrentModule();
+    if (module) {
+        const inherited = _mbInheritedLinksForItem(module, item);
+        item.learningOutcomeIds = inherited.loIds;
+        item.performanceCriteriaIds = inherited.pcIds;
+    }
+    renderStructureProposal();
+    renderSourceBrowser();
+    renderAssignedItemsPanel();
+}
+
+/** Moves one item from its current proposal item to a different one —
+ *  never duplicates it, and never touches Task Analysis itself. */
+function mbMoveAssignedItem(fromKind, fromTempId, sel, toKind, toTempId) {
+    const fromItem = _mbFindProposalItem(fromKind, fromTempId);
+    const toItem = _mbFindProposalItem(toKind, toTempId);
+    if (!fromItem || !toItem) return;
+    _mbRemoveSelection(fromItem, sel);
+    if (!(toItem.sourceSelections || []).some(s => _mbSelKey(s) === _mbSelKey(sel))) {
+        toItem.sourceSelections = [...(toItem.sourceSelections || []), sel];
+    }
+    const module = _mbCurrentModule();
+    [fromItem, toItem].forEach(it => {
+        if (!module) return;
+        const inherited = _mbInheritedLinksForItem(module, it);
+        it.learningOutcomeIds = inherited.loIds;
+        it.performanceCriteriaIds = inherited.pcIds;
+    });
+    renderStructureProposal();
+    renderSourceBrowser();
+    renderAssignedItemsPanel();
+    showStatus(window.i18n.tf('mbItemMovedTo', { v0: toItem.title || window.i18n.t('mbUntitled') }), 'success');
 }
 
 
@@ -355,14 +568,12 @@ function mbCreateFromSelection(kind) {
 // no traceability — the gap flagged after the first hands-on test.
 async function _mbOpenItemEditor(kind, tempId) {
     if (!mbState.structureProposal) return;
-    const key = kind === 'info' ? 'informationSheets' : kind === 'activity' ? 'activitySheets' : 'assessmentUnits';
-    const item = mbState.structureProposal[key].find(it => it.tempId === tempId);
+    const item = _mbFindProposalItem(kind, tempId);
     if (!item) return;
 
     const module = _mbCurrentModule();
     if (!module) return;
     syncLearningOutcomesFromCurrentModule();
-    const los = module.learningOutcomes || [];
 
     const existing = document.getElementById('mbItemEditorModal');
     if (existing) existing.remove();
@@ -373,18 +584,26 @@ async function _mbOpenItemEditor(kind, tempId) {
     overlay.setAttribute('role', 'dialog');
     overlay.setAttribute('aria-modal', 'true');
 
-    const checklist = (list, selected, name) => list.map(opt => `
-        <label style="display:flex;align-items:flex-start;gap:8px;padding:5px 2px;cursor:pointer;">
-            <input type="checkbox" name="${name}" value="${escapeHtml(opt.value)}" ${selected.includes(opt.value) ? 'checked' : ''} style="margin-top:3px;flex-shrink:0;">
-            <span dir="auto" style="font-size:0.88em;color:#374151;">${escapeHtml(opt.label)}</span>
-        </label>`).join('') || `<p style="color:#9ca3af;font-size:0.85em;font-style:italic;margin:2px 0;">${window.i18n.t('mbNoItemsYet')}</p>`;
+    // Items assigned to OTHER proposal items are hidden here — moving an
+    // item between sheets is a deliberate action done from the Assigned
+    // Items panel (mbMoveAssignedItem), not something that can happen by
+    // accident just by opening a different item's editor. This item's
+    // OWN selections stay visible and checked.
+    const allAssignments = _mbAllAssignments();
+    const ownKeys = (item.sourceSelections || []).map(_mbSelKey);
+    const excludeKeys = Object.keys(allAssignments).filter(k => !ownKeys.includes(k));
 
-    const loOptions = los.map(lo => ({ value: lo.id, label: `${lo.number || lo.id}: ${biGetStrict(lo.statement, contentLang()) || ''}` }));
-    const pcOptions = [];
-    los.forEach(lo => (lo.performanceCriteria || []).forEach(pc =>
-        pcOptions.push({ value: pc.id, label: `${pc.id} — ${pc.text}` })));
-
-    const checkedKeys = (item.sourceSelections || []).map(_mbSelKey);
+    const renderInherited = (selections) => {
+        const inherited = _mbInheritedLinksForItem(module, { sourceSelections: selections || item.sourceSelections });
+        const loText = inherited.loIds.length
+            ? inherited.loIds.map(id => {
+                const lo = (module.learningOutcomes || []).find(l => l.id === id);
+                return lo ? (lo.number || lo.id) : id;
+              }).join(', ')
+            : window.i18n.t('mbNoneYet');
+        const pcText = inherited.pcIds.length ? inherited.pcIds.join(', ') : window.i18n.t('mbNoneYet');
+        return `${window.i18n.t('mbLinkLearningOutcomes')}: <strong>${escapeHtml(loText)}</strong> &nbsp;·&nbsp; ${window.i18n.t('mbLinkPerformanceCriteria')}: <strong>${escapeHtml(pcText)}</strong>`;
+    };
 
     const box = document.createElement('div');
     box.className = 'mb-dialog';
@@ -396,17 +615,16 @@ async function _mbOpenItemEditor(kind, tempId) {
         <div style="font-weight:700;color:#1f2937;margin-bottom:10px;">${window.i18n.t('mbEditLinks')}</div>
         <label style="display:block;font-size:0.82em;color:#6b7280;margin-bottom:4px;">${window.i18n.t('mbEnterTitle')}</label>
         <input type="text" id="mbItemEditorTitle" value="${escapeHtml(item.title)}" dir="auto"
-               style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;margin-bottom:14px;font-size:0.92em;">
+               style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;margin-bottom:12px;font-size:0.92em;">
 
-        <div style="font-size:0.82em;font-weight:600;color:#374151;margin-bottom:4px;">${window.i18n.t('mbLinkLearningOutcomes')}</div>
-        <div style="margin-bottom:12px;">${checklist(loOptions, item.learningOutcomeIds, 'lo')}</div>
-
-        <div style="font-size:0.82em;font-weight:600;color:#374151;margin-bottom:4px;">${window.i18n.t('mbLinkPerformanceCriteria')}</div>
-        <div style="margin-bottom:12px;">${checklist(pcOptions, item.performanceCriteriaIds, 'pc')}</div>
+        <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:8px 10px;margin-bottom:14px;font-size:0.82em;color:#0c4a6e;">
+            <div style="font-weight:600;margin-bottom:2px;">${window.i18n.t('mbInheritedLinksTitle')}</div>
+            <div id="mbItemEditorInherited">${renderInherited()}</div>
+        </div>
 
         <div style="font-size:0.82em;font-weight:600;color:#374151;margin-bottom:4px;">${window.i18n.t('mbLinkTaItems')}</div>
         <div id="mbItemEditorTaItems" style="margin-bottom:6px;max-height:260px;overflow-y:auto;border:1px solid #eef0f4;border-radius:8px;padding:8px;">
-            ${_mbBuildSourceChecklistHtml(module, checkedKeys, 'mbedititem')}
+            ${_mbBuildSourceChecklistHtml(module, ownKeys, 'mbedititem', excludeKeys)}
         </div>
 
         <div class="mb-dialog-actions" style="margin-top:14px;">
@@ -417,19 +635,32 @@ async function _mbOpenItemEditor(kind, tempId) {
     overlay.appendChild(box);
     document.body.appendChild(overlay);
 
+    // Recompute the inherited LO/PC display live as the user (un)checks
+    // items — it must never look like a stale value left over from
+    // before the edit.
+    box.querySelector('#mbItemEditorTaItems').addEventListener('change', () => {
+        const checkedNow = [...box.querySelectorAll('input[name="mbedititem"]:checked')]
+            .map(cb => ({ ..._mbParseSelKey(cb.value) }));
+        const inheritedNow = document.getElementById('mbItemEditorInherited');
+        if (inheritedNow) inheritedNow.innerHTML = renderInherited(checkedNow);
+    });
+
     const close = () => { document.removeEventListener('keydown', onKey, true); overlay.remove(); };
     function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } }
     document.addEventListener('keydown', onKey, true);
     overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
     box.querySelector('#mbItemEditorCancel').addEventListener('click', close);
     box.querySelector('#mbItemEditorSave').addEventListener('click', () => {
-        const checked = (name) => [...box.querySelectorAll(`input[name="${name}"]:checked`)];
         item.title = box.querySelector('#mbItemEditorTitle').value.trim();
-        item.learningOutcomeIds = checked('lo').map(cb => cb.value);
-        item.performanceCriteriaIds = checked('pc').map(cb => cb.value);
-        item.sourceSelections = checked('mbedititem').map(cb => ({ ..._mbParseSelKey(cb.value), itemText: cb.dataset.itemText }));
+        item.sourceSelections = [...box.querySelectorAll('input[name="mbedititem"]:checked')]
+            .map(cb => ({ ..._mbParseSelKey(cb.value), itemText: cb.dataset.itemText }));
+        const inherited = _mbInheritedLinksForItem(module, item);
+        item.learningOutcomeIds = inherited.loIds;
+        item.performanceCriteriaIds = inherited.pcIds;
         close();
         renderStructureProposal();
+        renderAssignedItemsPanel();
+        renderSourceBrowser();
     });
 }
 
@@ -521,26 +752,37 @@ function _mbEnsureAiMapping(module) {
     return module.aiMapping;
 }
 
-async function _mbBuildInfoSheet(module, item, aiMapping) {
+async function _mbBuildInfoSheet(module, item, aiMapping, touchedLOs) {
     const lo = (module.learningOutcomes || []).find(l => l.id === item.learningOutcomeIds[0]) || module.learningOutcomes[0];
     if (!lo) return;
     mbState.currentLOId = lo.id;
     await addNewInfoSheet();
-    const newSheet = lo.infoSheets[lo.infoSheets.length - 1];
+    // addNewInfoSheet() already painted the new sheet's (still-empty)
+    // title into the on-screen form before this line runs — that is why
+    // Information Sheet titles were not appearing after approval even
+    // though the underlying data was correct. Setting the title on the
+    // data object here does not, by itself, repaint that already-drawn
+    // form; mbApproveAndBuild() repaints it explicitly afterward using
+    // touchedLOs, once every sheet's title has actually been set.
+    const newIndex = lo.infoSheets.length - 1;
+    const newSheet = lo.infoSheets[newIndex];
     if (newSheet && item.title) biPut(newSheet, 'title', item.title);
     if (newSheet) newSheet._aiSource = { learningOutcomeIds: item.learningOutcomeIds, performanceCriteriaIds: item.performanceCriteriaIds, sourceSelections: item.sourceSelections, mappingType: item.mappingType };
     aiMapping.builtTempIds.push(item.tempId);
+    if (touchedLOs) { if (!touchedLOs[lo.id]) touchedLOs[lo.id] = {}; touchedLOs[lo.id].infoIndex = newIndex; }
 }
 
-async function _mbBuildActivitySheet(module, item, aiMapping) {
+async function _mbBuildActivitySheet(module, item, aiMapping, touchedLOs) {
     const lo = (module.learningOutcomes || []).find(l => l.id === item.learningOutcomeIds[0]) || module.learningOutcomes[0];
     if (!lo) return;
     mbState.currentLOId = lo.id;
     await addNewActivitySheet();
-    const newSheet = lo.activitySheets[lo.activitySheets.length - 1];
+    const newIndex = lo.activitySheets.length - 1;
+    const newSheet = lo.activitySheets[newIndex];
     if (newSheet && item.title) biPut(newSheet, 'title', item.title);
     if (newSheet) newSheet._aiSource = { learningOutcomeIds: item.learningOutcomeIds, performanceCriteriaIds: item.performanceCriteriaIds, sourceSelections: item.sourceSelections, mappingType: item.mappingType };
     aiMapping.builtTempIds.push(item.tempId);
+    if (touchedLOs) { if (!touchedLOs[lo.id]) touchedLOs[lo.id] = {}; touchedLOs[lo.id].activityIndex = newIndex; }
 }
 
 /** Assessment is ONE form per Learning Outcome in this app (see
@@ -598,14 +840,15 @@ async function mbApproveAndBuild() {
     const originalLOId = mbState.currentLOId;
     const aiMapping = _mbEnsureAiMapping(module);
     const already = new Set(aiMapping.builtTempIds);
+    const touchedLOs = {}; // loId -> { infoIndex?, activityIndex? } of the LAST sheet built for it
 
     for (const item of p.informationSheets) {
         if (already.has(item.tempId)) continue;
-        await _mbBuildInfoSheet(module, item, aiMapping);
+        await _mbBuildInfoSheet(module, item, aiMapping, touchedLOs);
     }
     for (const item of p.activitySheets) {
         if (already.has(item.tempId)) continue;
-        await _mbBuildActivitySheet(module, item, aiMapping);
+        await _mbBuildActivitySheet(module, item, aiMapping, touchedLOs);
     }
     let skippedAssessments = 0;
     for (const item of p.assessmentUnits) {
@@ -614,19 +857,36 @@ async function mbApproveAndBuild() {
     }
 
     // The loop above may have briefly switched mbState.currentLOId to
-    // reuse addNewInfoSheet()/addNewActivitySheet() for other outcomes,
-    // each of which repaints the on-screen form for ITS OWN outcome as
-    // a side effect. Put both the selection and the visible form back
-    // to what the user actually had open before approval.
+    // reuse addNewInfoSheet()/addNewActivitySheet() for other outcomes.
+    // Put the selection back to what the user actually had open before
+    // approval, then repaint its forms explicitly: if that LO is one
+    // this approval just added a sheet to, loadCurrentLOSheets() alone
+    // would reset back to sheet index 0 and could show an older sheet
+    // instead of the one just titled — and even at the right index, it
+    // would still show the empty title addNewInfoSheet()/
+    // addNewActivitySheet() drew BEFORE biPut() set it above. Loading
+    // the specific new index directly is what actually fixes the
+    // Information Sheet title not appearing after approval.
     mbState.currentLOId = originalLOId;
     renderLOSelector();
-    if (typeof loadCurrentLOSheets === 'function') loadCurrentLOSheets();
+    const touched = touchedLOs[originalLOId];
+    const lo = module.learningOutcomes.find(l => l.id === originalLOId);
+    if (lo && touched && typeof touched.infoIndex === 'number') {
+        mbState.currentInfoSheetIndex = touched.infoIndex;
+        loadInfoSheetAtIndex(lo, touched.infoIndex);
+    }
+    if (lo && touched && typeof touched.activityIndex === 'number') {
+        mbState.currentActivitySheetIndex = touched.activityIndex;
+        loadActivitySheetAtIndex(lo, touched.activityIndex);
+    }
+    if (!touched && typeof loadCurrentLOSheets === 'function') loadCurrentLOSheets();
 
     saveCurrentModuleLOData();
     updateLOSummary();
     renderAssessmentForms();
     mbState.structureProposal = null;
     renderStructureProposal();
+    renderAssignedItemsPanel();
     if (skippedAssessments > 0) {
         showStatus(window.i18n.tf('mbSomeAssessmentsSkipped', { v0: skippedAssessments }), 'error');
     } else {
@@ -651,6 +911,7 @@ function mbSwitchMappingMode(mode) {
     // inspecting/adding individual Task Analysis items on top of an AI
     // proposal, not just when Manual is selected.
     renderSourceBrowser();
+    renderAssignedItemsPanel();
 }
 
 // ============================================================
