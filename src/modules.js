@@ -50,12 +50,14 @@ async function initializeLearningOutcomes() {
                            continuity between the two tools; nothing here
                            derives module identity from it. */
                         moduleNumber: dacumModule.moduleNumber || '',
-                        /* Read-only source material for the module currently
-                           selected — see renderModuleTaskAnalysisPanel()
-                           below. Absent (undefined) for a module created
-                           manually in Module Builder, or for a DACUM export
-                           built before this field existed; every reader of
-                           this property already treats that as "nothing to
+                        /* Task Analysis detail from DACUM Live Pro for this
+                           module's source tasks — read by the Training
+                           Structure Mapping tab (module-ai.js) to let the
+                           user select, assign and move individual items.
+                           Absent (undefined) for a module created manually
+                           in Module Builder, or for a DACUM export built
+                           before this field existed; every reader of this
+                           property already treats that as "nothing to
                            show" rather than an error. */
                         taskAnalysisSource: {
                             sourceTaskIds: dacumModule.sourceTaskIds || [],
@@ -172,90 +174,6 @@ function renderModuleSelector() {
     });
 
     updateModuleSummary();
-    renderModuleTaskAnalysisPanel();
-}
-
-/**
- * Read-only reference panel: the Task Analysis detail DACUM Live Pro
- * attached to the currently-selected module's source tasks (Knowledge,
- * Performance Steps, Tools/Equipment/Materials, Safety/OSH, Decisions,
- * Performance Standard, Common Errors) — grouped by task so it stays
- * legible when a module draws on more than one.
- *
- * Deliberately read-only and deliberately NOT copied into any sheet
- * automatically: this is source material for the author to consult
- * while writing the Information Sheet, Activity Sheet and Assessment
- * Unit by hand, matching how DACUM Live Pro itself hands the module
- * off ("do not overwhelm the user" — the person stays in control of
- * what actually goes in the document). Hidden entirely for a module
- * with nothing to show — created manually here, or imported before
- * this field existed.
- *
- * Field labels come from window.i18n (mbTa* keys in mb-translations.js)
- * and follow the interface language; the Task Analysis content itself
- * (ta.requiredKnowledge etc.) is carried over verbatim from DACUM Live
- * Pro in whatever language it was written there, same as any other
- * imported text.
- */
-function renderModuleTaskAnalysisPanel() {
-    const host = document.getElementById('moduleTaskAnalysisPanel');
-    if (!host) return;
-
-    const module = mbState.modulesData.find(m => m.id === mbState.currentModuleId);
-    const src = module && module.taskAnalysisSource;
-    const taskIds = src && src.sourceTaskIds || [];
-
-    if (!module || !taskIds.length) {
-        host.innerHTML = '';
-        return;
-    }
-
-    const FIELD_MAP = [
-        ['requiredKnowledge',           window.i18n.t('mbTaReqKnowledge')],
-        ['requiredSkills',              window.i18n.t('mbTaReqSkills')],
-        ['performanceSteps',            window.i18n.t('mbTaPerfSteps')],
-        ['toolsEquipmentMaterials',     window.i18n.t('mbTaTools')],
-        ['safetyOSH',                   window.i18n.t('mbTaSafety')],
-        ['conditionsWorkEnvironment',   window.i18n.t('mbTaConditions')],
-        ['decisionsCriticalPoints',     window.i18n.t('mbTaDecisions')],
-        ['performanceStandard',         window.i18n.t('mbTaStandard')],
-        ['commonErrorsTroubleshooting', window.i18n.t('mbTaErrors')],
-    ];
-
-    const blocks = taskIds.map(taskId => {
-        const ta = src.taskAnalysis[taskId];
-        if (!ta) return '';
-        const sections = FIELD_MAP.map(([key, label]) => {
-            const val = ta[key];
-            const items = Array.isArray(val) ? val.filter(Boolean) : (val && String(val).trim() ? [val] : []);
-            if (!items.length) return '';
-            const body = Array.isArray(val)
-                ? '<ul style="margin:4px 0 0;padding-inline-start:20px;">' +
-                  items.map(i => `<li dir="auto" style="margin-bottom:2px;">${escapeHtml(i)}</li>`).join('') +
-                  '</ul>'
-                : `<div dir="auto" style="margin-top:4px;">${escapeHtml(items[0])}</div>`;
-            return `<div style="margin-bottom:10px;"><strong style="color:#374151;font-size:0.92em;">${label}</strong>${body}</div>`;
-        }).join('');
-        if (!sections) return '';
-        return `
-            <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:14px 16px;margin-bottom:12px;">
-                <div style="font-weight:700;color:#0ea5e9;font-size:0.88em;margin-bottom:8px;">${escapeHtml(ta.taskCode || taskId)}</div>
-                ${sections}
-            </div>`;
-    }).join('');
-
-    if (!blocks) { host.innerHTML = ''; return; }
-
-    host.innerHTML = `
-        <div style="background:#f0f9ff;border:2px solid #0ea5e9;border-radius:12px;padding:18px 20px;margin:20px 0;" dir="auto">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-                <strong style="color:#0c4a6e;font-size:1.05em;">${window.i18n.t('mbTaskAnalysisReference')}</strong>
-            </div>
-            <p style="margin:0 0 14px;color:#64748b;font-size:0.85em;">
-                ${window.i18n.t('mbTaskAnalysisReferenceIntro')}
-            </p>
-            ${blocks}
-        </div>`;
 }
 
 // Called from tab context bars — mirrors switchModule() logic
@@ -300,7 +218,6 @@ function switchModuleFromTab(source) {
     }
     renderLOSelector();
     updateModuleSummary();
-    renderModuleTaskAnalysisPanel();
     // A pending Training Structure Mapping proposal belongs to the
     // module it was built for; switching modules invalidates it rather
     // than silently approving suggestions onto the wrong module.
@@ -356,7 +273,6 @@ function switchModule() {
     
     renderLOSelector();
     updateModuleSummary();
-    renderModuleTaskAnalysisPanel();
     mbState.structureProposal = null;
     if (typeof renderStructureProposal === 'function') renderStructureProposal();
     if (typeof renderSourceBrowser === 'function') renderSourceBrowser();
