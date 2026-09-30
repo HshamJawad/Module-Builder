@@ -669,7 +669,7 @@ function renderAssignedItemsPanel() {
                     <div dir="auto" style="font-size:0.87em;color:#374151;">${escapeHtml(_mbSelText(module, b.sel))}</div>
                     <div style="font-size:0.76em;color:#15803d;">✓ ${escapeHtml(window.i18n.t('mbBuiltTag'))} · ${escapeHtml(window.i18n.t(builtLabelKey[b.kind]))}: <span dir="auto">${escapeHtml(b.title)}</span></div>
                 </div>
-                <button type="button" class="mb-icon-btn mb-built-unassign-btn" title="${escapeHtml(window.i18n.t('mbMappedRemoveItem'))}" style="flex-shrink:0;">↩</button>
+                <button type="button" class="mb-icon-btn danger mb-built-unassign-btn" title="${escapeHtml(window.i18n.t('mbMappedRemoveItem'))}" style="flex-shrink:0;">${_MB_ICON_DELETE}</button>
             </div>`).join('');
 
     const rowsHtml = rows.map((r, i) => {
@@ -688,7 +688,7 @@ function renderAssignedItemsPanel() {
                         <option value="">${window.i18n.t('mbMoveTo')}</option>
                         ${moveOptions}
                     </select>
-                    <button type="button" class="mb-icon-btn mb-unassign-btn" title="${window.i18n.t('mbUnassign')}">↩</button>
+                    <button type="button" class="mb-icon-btn danger mb-unassign-btn" title="${window.i18n.t('mbUnassign')}" aria-label="${window.i18n.t('mbUnassign')}">${_MB_ICON_DELETE}</button>
                 </div>
             </div>`;
     }).join('');
@@ -1161,8 +1161,8 @@ function _mbMappedItemsHtml(module, selections, removeAct, removeArgsFor) {
                 <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:4px 8px;background:#fff;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:4px;">
                     <span dir="auto" style="font-size:0.87em;color:#374151;flex:1;min-width:0;">• ${escapeHtml(_mbSelText(module, sel))}
                         <span style="color:#9ca3af;font-size:0.9em;">(${escapeHtml(_mbTaskLabel(sel.taskId))})</span></span>
-                    ${removeAct ? `<button type="button" class="mb-icon-btn" data-act="${removeAct}" data-args="${escapeHtml(JSON.stringify(removeArgsFor(sel)))}"
-                        title="${escapeHtml(window.i18n.t('mbMappedRemoveItem'))}" style="flex-shrink:0;">↩</button>` : ''}
+                    ${removeAct ? `<button type="button" class="mb-icon-btn danger" data-act="${removeAct}" data-args="${escapeHtml(JSON.stringify(removeArgsFor(sel)))}"
+                        title="${escapeHtml(window.i18n.t('mbMappedRemoveItem'))}" style="flex-shrink:0;">${_MB_ICON_DELETE}</button>` : ''}
                 </div>`).join('')}
         </div>`).join('');
 }
@@ -1255,7 +1255,7 @@ function mbAssessmentReferenceHtml(lo) {
     const itemRow = sel => {
         const k = _mbSelKey(sel);
         const btn = ownKeys.has(k)
-            ? `<button type="button" class="mb-icon-btn" data-act="mbRemoveAssessmentMappedItem" data-args="${escapeHtml(JSON.stringify([lo.id, k]))}" title="${escapeHtml(window.i18n.t('mbMappedRemoveItem'))}" style="flex-shrink:0;">↩</button>`
+            ? `<button type="button" class="mb-icon-btn danger" data-act="mbRemoveAssessmentMappedItem" data-args="${escapeHtml(JSON.stringify([lo.id, k]))}" title="${escapeHtml(window.i18n.t('mbMappedRemoveItem'))}" style="flex-shrink:0;">${_MB_ICON_DELETE}</button>`
             : '';
         return `<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;font-size:0.86em;color:#374151;margin-bottom:3px;">
             <span dir="auto" style="flex:1;min-width:0;">• ${escapeHtml(_mbSelText(module, sel))} <span style="color:#9ca3af;">(${escapeHtml(_mbTaskLabel(sel.taskId))})</span></span>${btn}</div>`;
