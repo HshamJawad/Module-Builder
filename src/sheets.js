@@ -573,6 +573,11 @@ function updateInfoSheetNav(lo) {
     nav.textContent = total === 0
         ? window.i18n.t('dgNoSheets')
         : window.i18n.tf('dgSheetXOfY', { v0: mbState.currentInfoSheetIndex + 1, v1: total });
+    /* Every path that changes which info sheet is on screen (load, prev/
+       next, add, remove, clear) passes through here, so the Mapped Task
+       Analysis reference panel (module-ai.js) is repainted from the same
+       single place instead of from each caller. */
+    if (typeof mbRenderSheetMappedSource === 'function') mbRenderSheetMappedSource('info', lo);
 }
 
 // ── Auto-numbering helper ──────────────────────────────────────
@@ -736,6 +741,9 @@ function updateActivitySheetNav(lo) {
     nav.textContent = total === 0
         ? window.i18n.t('dgNoSheets')
         : window.i18n.tf('dgSheetXOfY', { v0: mbState.currentActivitySheetIndex + 1, v1: total });
+    /* See updateInfoSheetNav — same single repaint point for the
+       Activity/Job Sheet's Mapped Task Analysis reference panel. */
+    if (typeof mbRenderSheetMappedSource === 'function') mbRenderSheetMappedSource('activity', lo);
 }
 
 async function addNewActivitySheet() {

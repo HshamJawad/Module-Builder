@@ -148,6 +148,7 @@ function renderAssessmentForms() {
                 </div>
             </div>
             
+            ${typeof mbAssessmentReferenceHtml === 'function' ? mbAssessmentReferenceHtml(lo) : ''}
             <div style="margin-bottom: 20px;">
                 <h5 style="font-weight: 600; color: #374151; margin-bottom: 10px;"><span data-i18n="expPortfolioOfEvidence">${window.i18n.t('expPortfolioOfEvidence')}</span></h5>
                 <div style="overflow-x: auto;">
@@ -169,27 +170,27 @@ function renderAssessmentForms() {
             formHTML += `
                 <tr>
                     <td style="border: 1px solid #d1d5db; padding: 8px;">
-                        <input type="text" value="${row.criteria || ''}" 
+                        <input type="text" value="${escapeHtml(row.criteria || '')}" 
                             data-act="updateAssessmentCell" data-on="change" data-args='["${lo.id}",${rowIndex},"criteria","$value"]'
                             style="width: 100%; border: 1px solid #e5e7eb; padding: 6px; border-radius: 4px; font-size: 0.9em;">
                     </td>
                     <td style="border: 1px solid #d1d5db; padding: 8px;">
-                        <input type="text" value="${row.activities || ''}"
+                        <input type="text" value="${escapeHtml(row.activities || '')}"
                             data-act="updateAssessmentCell" data-on="change" data-args='["${lo.id}",${rowIndex},"activities","$value"]'
                             style="width: 100%; border: 1px solid #e5e7eb; padding: 6px; border-radius: 4px; font-size: 0.9em;">
                     </td>
                     <td style="border: 1px solid #d1d5db; padding: 8px;">
-                        <input type="text" value="${row.outcomes || ''}"
+                        <input type="text" value="${escapeHtml(row.outcomes || '')}"
                             data-act="updateAssessmentCell" data-on="change" data-args='["${lo.id}",${rowIndex},"outcomes","$value"]'
                             style="width: 100%; border: 1px solid #e5e7eb; padding: 6px; border-radius: 4px; font-size: 0.9em;">
                     </td>
                     <td style="border: 1px solid #d1d5db; padding: 8px;">
-                        <input type="text" value="${row.verification || ''}"
+                        <input type="text" value="${escapeHtml(row.verification || '')}"
                             data-act="updateAssessmentCell" data-on="change" data-args='["${lo.id}",${rowIndex},"verification","$value"]'
                             style="width: 100%; border: 1px solid #e5e7eb; padding: 6px; border-radius: 4px; font-size: 0.9em;">
                     </td>
                     <td style="border: 1px solid #d1d5db; padding: 8px;">
-                        <input type="text" value="${row.date || ''}"
+                        <input type="text" value="${escapeHtml(row.date || '')}"
                             data-act="updateAssessmentCell" data-on="change" data-args='["${lo.id}",${rowIndex},"date","$value"]'
                             style="width: 100%; border: 1px solid #e5e7eb; padding: 6px; border-radius: 4px; font-size: 0.9em;">
                     </td>

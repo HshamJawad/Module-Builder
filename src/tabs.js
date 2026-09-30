@@ -58,6 +58,14 @@ async function switchTab(tabName) {
         if (tabName === 'activity') ensureFirstActivitySheet();
     }
     
+    if (tabName === 'mapping') {
+        /* Sheets can be removed, and mapped items returned to Available,
+           from the Information / Activity / Assessment tabs — repaint the
+           Available and Assigned lists from current state on entry. */
+        if (typeof renderSourceBrowser === 'function') renderSourceBrowser();
+        if (typeof renderAssignedItemsPanel === 'function') renderAssignedItemsPanel();
+    }
+
     if (tabName === 'assessment') {
         // Auto-create a form for every LO that doesn't have one yet
         syncLearningOutcomesFromCurrentModule();
