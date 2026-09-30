@@ -18,6 +18,9 @@
         let _toastEl         = null;
         let _sessionBannerEl = null;
         let _initialized     = false;
+        let _pendingSnap     = null;   // last session, offered after a refresh
+        let _offerEl         = null;
+        let _dirty           = false;  // user edited something in THIS page load
 
         /* ── CSS ──────────────────────────────────────────────────── */
         const style = document.createElement('style');
@@ -57,6 +60,25 @@
             }
             #as-session-banner .as-dismiss:hover { color: #e2e8f0; }
 
+            #as-offer-banner {
+                position: fixed; bottom: 80px; right: 20px;
+                background: #1e293b; color: #e2e8f0;
+                padding: 10px 14px; border-radius: 10px;
+                font-size: 0.84em; font-weight: 500;
+                box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+                z-index: 99991; display: flex; align-items: center; gap: 10px;
+                opacity: 0; pointer-events: none; transform: translateY(8px);
+                transition: opacity 0.3s, transform 0.3s; max-width: 380px;
+            }
+            #as-offer-banner.as-visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+            #as-offer-banner .as-restore-now {
+                background: #6366f1; color: #fff; border: none; border-radius: 6px;
+                padding: 5px 12px; font-weight: 600; cursor: pointer; white-space: nowrap;
+            }
+            #as-offer-banner .as-restore-now:hover { background: #4f46e5; }
+            #as-offer-banner .as-dismiss {
+                background: transparent; border: none; color: #94a3b8; cursor: pointer; font-size: 1em;
+            }
             #as-reminder-toast {
                 position: fixed;
                 bottom: 24px;
@@ -135,6 +157,18 @@
             `;
             _sessionBannerEl.querySelector('.as-dismiss').onclick = hideBanner;
             document.body.appendChild(_sessionBannerEl);
+
+            // Previous-session offer (shown after a refresh)
+            _offerEl = document.createElement('div');
+            _offerEl.id = 'as-offer-banner';
+            _offerEl.innerHTML = `
+                <span>🕘 <span data-i18n="asPrevSessionFound">${window.i18n.t('asPrevSessionFound')}</span></span>
+                <button class="as-restore-now" data-i18n="asRestorePrev">${window.i18n.t('asRestorePrev')}</button>
+                <button class="as-dismiss" title="${window.i18n.t('dgDismiss')}" data-i18n-title="dgDismiss">✕</button>
+            `;
+            _offerEl.querySelector('.as-restore-now').onclick = function () { restorePending(); };
+            _offerEl.querySelector('.as-dismiss').onclick = hideOffer;
+            document.body.appendChild(_offerEl);
 
             // Backup reminder toast
             _toastEl = document.createElement('div');
@@ -290,19 +324,80 @@
                 }
                 if (!snap._autosave || !snap.version) return false;
 
-                // Re-use the existing handleLoadFile logic by dispatching
-                // data into the same path as manual JSON load
-                if (typeof restoreFromData === 'function') {
-                    restoreFromData(snap);
-                } else {
-                    // Fallback: fire the internal load pipeline directly
-                    _applySnapshot(snap);
-                }
+                /* A browser refresh now starts a CLEAN project (the user
+                   was warned by beforeunload before leaving). The last
+                   snapshot is not thrown away, though: it is held here
+                   and offered in a banner, so a refresh by mistake — or
+                   a crash — is still one click from recovery. Nothing is
+                   applied unless the user asks for it. */
+                if (!_snapHasWork(snap)) return false;
+                _pendingSnap = snap;
                 return true;
             }).catch(function (e) {
                 console.warn('[AutoSave] restore error:', e);
                 return false;
             });
+        }
+
+        /* ── Is there real work in a project / snapshot? ─────────── */
+        function _txt(v) {
+            if (v === null || v === undefined) return '';
+            if (typeof v === 'string') return v.trim();
+            if (typeof v === 'object') return Object.keys(v).map(k => (typeof v[k] === 'string' ? v[k] : '')).join('').trim();
+            return String(v).trim();
+        }
+        function _modulesHaveWork(modules) {
+            return (modules || []).some(function (m) {
+                if (m && m.taskAnalysisSource && (m.taskAnalysisSource.sourceTaskIds || []).length) return true;
+                const los = (m && m.learningOutcomes) || [];
+                if (los.length > 1) return true;
+                return los.some(function (lo) {
+                    return (lo.performanceCriteria || []).length ||
+                        (lo.infoSheets || []).some(sh => _txt(sh && sh.title) || ((sh && sh.contentSections) || []).length) ||
+                        (lo.activitySheets || []).some(sh => _txt(sh && sh.title) || ((sh && sh.steps) || []).length);
+                });
+            });
+        }
+        function _snapHasWork(d) {
+            if (!d || typeof d !== 'object') return false;
+            return _modulesHaveWork(d.modules) ||
+                !!d.frontCoverImage || !!d.backCoverImage ||
+                (d.teamMembers || []).length > 0 ||
+                (d.introBlocks || []).length > 0 ||
+                (d.referencesData || []).some(r => _txt(r && r.value)) ||
+                Object.keys(d.assessmentFormsData || {}).length > 0 ||
+                !!_txt(d.coversAdditionalInfo) || !!_txt(d.introAdditionalDetails);
+        }
+        function _projectHasWork() {
+            if (typeof mbState === 'undefined') return false;
+            return _dirty || _modulesHaveWork(mbState.modulesData) ||
+                !!mbState.frontCoverImage || !!mbState.backCoverImage ||
+                (mbState.teamMembers || []).length > 0 ||
+                (mbState.introBlocks || []).length > 0;
+        }
+
+        /* ── Offer the previous session after a refresh ──────────── */
+        function showOffer() {
+            if (!_offerEl || !_pendingSnap) return;
+            _offerEl.classList.add('as-visible');
+        }
+        function hideOffer() {
+            if (_offerEl) _offerEl.classList.remove('as-visible');
+        }
+        async function restorePending() {
+            if (!_pendingSnap) return;
+            if (_dirty && typeof mbConfirm === 'function' &&
+                !(await mbConfirm(window.i18n.t('asRestoreReplaceConfirm'), { danger: true }))) return;
+            const snap = _pendingSnap;
+            _pendingSnap = null;
+            hideOffer();
+            _applySnapshot(snap);
+            _dirty = true;
+            if (typeof renderStructureProposal === 'function') renderStructureProposal();
+            if (typeof renderSourceBrowser === 'function') renderSourceBrowser();
+            if (typeof renderAssignedItemsPanel === 'function') renderAssignedItemsPanel();
+            scheduleSave();
+            showBanner();
         }
 
         function _applySnapshot(data) {
@@ -342,6 +437,26 @@
             const root = document.getElementById('main-container') || document.body;
             ['input', 'change'].forEach(evt => {
                 root.addEventListener(evt, scheduleSave, { passive: true });
+                root.addEventListener(evt, function (e) { if (e.isTrusted) _dirty = true; }, { passive: true });
+            });
+
+            /* Refresh / close warning. A refresh starts a clean project
+               now, so leaving with work on screen must be confirmed.
+               Browsers show their own generic wording; the text cannot
+               be customised. */
+            window.addEventListener('beforeunload', function (e) {
+                if (!_projectHasWork()) return;
+                e.preventDefault();
+                e.returnValue = '';
+                return '';
+            });
+
+            /* Clear All: the project is intentionally empty now. */
+            window.addEventListener('mb:projectcleared', function () {
+                _dirty = false;
+                _pendingSnap = null;
+                clearTimeout(_debounceTimer);
+                hideOffer();
             });
 
             // Also hook into the existing saveWork button to reset reminder timer
@@ -484,8 +599,8 @@
                     return;
                 }
 
-                tryRestore().then(function (restored) {
-                    if (restored) showBanner();
+                tryRestore().then(function (found) {
+                    if (found) showOffer();
                 });
             }, 1200);
         }

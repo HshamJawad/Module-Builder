@@ -590,6 +590,28 @@ async function clearAll() {
         updateActivitySheetNav(null);
 
         await initializeLearningOutcomes();
+
+        // ── Training Structure Mapping & mapped-source panels ─────
+        /* These are painted from state by their own renderers and were
+           never told the project changed, so the previous module's
+           context, Task Analysis items and proposal stayed on screen. */
+        mbState.structureProposal = null;
+        if (typeof renderStructureProposal === 'function') renderStructureProposal();
+        if (typeof renderSourceBrowser === 'function') renderSourceBrowser();
+        if (typeof renderAssignedItemsPanel === 'function') renderAssignedItemsPanel();
+        if (typeof mbRenderSheetMappedSource === 'function') {
+            mbRenderSheetMappedSource('info', null);
+            mbRenderSheetMappedSource('activity', null);
+        }
+        if (typeof updateModuleSummary === 'function') updateModuleSummary();
+        if (typeof renderAssessmentForms === 'function' && Object.keys(mbState.assessmentFormsData).length) renderAssessmentForms();
+
+        /* The crash-recovery snapshot still held the old project, so a
+           refresh after Clear All brought everything back. Remove it:
+           the next edit writes a fresh one. */
+        try { await mbRemoveDoc(MB_KEYS.autosave); } catch (e) { console.warn('[ClearAll] autosave snapshot not removed:', e); }
+        window.dispatchEvent(new CustomEvent('mb:projectcleared'));
+
         showStatus(window.i18n.t('dgAllDataCleared'), 'success');
     }
 }
