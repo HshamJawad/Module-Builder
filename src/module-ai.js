@@ -127,6 +127,43 @@ async function mbAnalyzeModuleStructure() {
  *  response must degrade to "fewer suggestions", never to a crash or a
  *  fabricated entry. Every array defaults to empty; every item gets the
  *  fields the review UI and the build step depend on. */
+// Proposal item ids are generated HERE, never taken from the AI
+// response. A backend that numbers its suggestions "is-1", "is-2"… on
+// every run (or repeats one id inside a response) would otherwise make
+// the duplicate-protection list treat genuinely new suggestions as
+// already built and silently skip them — which is how only the first
+// sheet, or none, could appear after Approve & Build.
+let _mbTempIdSeq = 0;
+function _mbNewTempId(prefix) {
+    _mbTempIdSeq += 1;
+    return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}-${_mbTempIdSeq}`;
+}
+
+/** Resolves an LO reference to the module's own internal id. The AI
+ *  (or an older proposal) may name an outcome by its DACUM number
+ *  ("LO1", "1") rather than by the internal id ("lo-1"); an
+ *  unresolved reference would otherwise drop every such sheet onto the
+ *  first outcome. */
+function _mbResolveLOId(module, ref) {
+    if (!module || ref === undefined || ref === null) return null;
+    const los = module.learningOutcomes || [];
+    const r = String(ref).trim();
+    if (!r) return null;
+    let lo = los.find(l => l.id === r);
+    if (lo) return lo.id;
+    const norm = v => String(v || '').trim().toLowerCase().replace(/\s+/g, '');
+    lo = los.find(l => l.number && norm(l.number) === norm(r));
+    if (lo) return lo.id;
+    const m = r.match(/(\d+)\s*$/);
+    if (m) {
+        lo = los.find(l => l.number && (String(l.number).match(/(\d+)\s*$/) || [])[1] === m[1]);
+        if (lo) return lo.id;
+        const byPos = los[parseInt(m[1], 10) - 1];
+        if (byPos && /^lo/i.test(r)) return byPos.id;
+    }
+    return null;
+}
+
 function mbNormalizeProposal(data, mode) {
     const arr = (v) => Array.isArray(v) ? v : [];
     const str = (v) => (typeof v === 'string' ? v : '');
@@ -153,7 +190,7 @@ function mbNormalizeProposal(data, mode) {
         mappingType: (item && (item.mappingType === 'transformation' ? 'transformation' : 'direct'))
     });
 
-    return {
+    const out = {
         mode,
         analysisSummary: str(data && data.analysisSummary),
         informationSheets: arr(data && data.informationSheets).map((it, i) => normItem(it, 'is', i)),
@@ -163,6 +200,26 @@ function mbNormalizeProposal(data, mode) {
             sourceTaskId: str(m && m.sourceTaskId), field: str(m && m.field), message: str(m && m.message)
         }))
     };
+
+    // Every item gets its own fresh id, and its LO/PC links are brought
+    // in line with the module: inherited from its selected Task Analysis
+    // items when it has any (the same rule manual mapping uses), else the
+    // AI's LO references resolved to real outcome ids.
+    const module = _mbCurrentModule();
+    [['informationSheets', 'is'], ['activitySheets', 'as'], ['assessmentUnits', 'au']].forEach(([key, prefix]) => {
+        out[key].forEach(item => {
+            item.tempId = _mbNewTempId(prefix);
+            if (!module) return;
+            const inherited = item.sourceSelections.length ? _mbInheritedLinksForItem(module, item) : { loIds: [], pcIds: [] };
+            if (inherited.loIds.length) {
+                item.learningOutcomeIds = inherited.loIds;
+                item.performanceCriteriaIds = inherited.pcIds;
+            } else {
+                item.learningOutcomeIds = [...new Set(item.learningOutcomeIds.map(r => _mbResolveLOId(module, r)).filter(Boolean))];
+            }
+        });
+    });
+    return out;
 }
 
 // ── Manual mapping (AI unavailable, or user prefers to skip it) ─
@@ -178,7 +235,7 @@ function mbAddManualProposalItem(kind) {
     const key = kind === 'info' ? 'informationSheets' : kind === 'activity' ? 'activitySheets' : 'assessmentUnits';
     const prefix = kind === 'info' ? 'is' : kind === 'activity' ? 'as' : 'au';
     mbState.structureProposal[key].push({
-        tempId: `${prefix}-${Date.now()}-${mbState.structureProposal[key].length}`,
+        tempId: _mbNewTempId(prefix),
         title: '', rationale: '', learningOutcomeIds: [], performanceCriteriaIds: [],
         sourceSelections: [], mappingType: 'direct'
     });
@@ -344,10 +401,25 @@ function _mbParseSelKey(key) {
  *  own selections). Shared by the standalone browser (excludeKeys = all
  *  assignments) and the item editor (excludeKeys = assignments minus
  *  this item's own) so the two never drift into different behaviour. */
-function _mbBuildSourceChecklistHtml(module, checkedKeys, namePrefix, excludeKeys) {
+function _mbBuildSourceChecklistHtml(module, checkedKeys, namePrefix, excludeKeys, opts) {
     excludeKeys = excludeKeys || [];
+    opts = opts || {};
     const taskIds = (module.taskAnalysisSource && module.taskAnalysisSource.sourceTaskIds) || [];
-    const blocks = taskIds.map(taskId => {
+    const los = module.learningOutcomes || [];
+
+    // Context read from what DACUM Live Pro already established — every
+    // Performance Criterion carries the taskId it came from. Nothing here
+    // is re-picked or stored; it is only displayed.
+    const taskLinks = {};   // taskId -> [{ lo, pcs:[pc] }]
+    los.forEach(lo => (lo.performanceCriteria || []).forEach(pc => {
+        if (!pc || !pc.taskId) return;
+        const list = taskLinks[pc.taskId] = taskLinks[pc.taskId] || [];
+        let entry = list.find(e => e.lo === lo);
+        if (!entry) { entry = { lo, pcs: [] }; list.push(entry); }
+        entry.pcs.push(pc);
+    }));
+
+    const taskCard = taskId => {
         const fieldsHtml = Object.keys(MB_TA_FIELD_LABELS).map(field => {
             const items = _mbGetFieldItems(module, taskId, field);
             if (!items.length) return '';
@@ -371,13 +443,114 @@ function _mbBuildSourceChecklistHtml(module, checkedKeys, namePrefix, excludeKey
                 </div>`;
         }).join('');
         if (!fieldsHtml) return '';
+        const title = _mbTaskTitle(module, taskId);
+        const links = taskLinks[taskId] || [];
+        const pcHtml = links.length
+            ? links.map(e => e.pcs.map(pc => `<div dir="auto">${escapeHtml(pc.id || '')} — ${escapeHtml(_mbPcText(pc))} <span style="color:#9ca3af;">(${escapeHtml(e.lo.number || e.lo.id)})</span></div>`).join('')).join('')
+            : `<div style="color:#b45309;">${window.i18n.t('mbCtxNoLinkedPC')}</div>`;
         return `
             <div style="border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;margin-bottom:10px;background:#fff;">
-                <div style="font-weight:700;color:#0ea5e9;font-size:0.88em;margin-bottom:6px;">${escapeHtml(_mbTaskLabel(taskId))}</div>
+                <div style="font-size:0.72em;font-weight:700;color:#64748b;letter-spacing:0.04em;">${window.i18n.t('mbCtxTask')}</div>
+                <div dir="auto" style="font-weight:700;color:#0ea5e9;font-size:0.9em;margin-bottom:6px;">${escapeHtml(_mbTaskLabel(taskId))}${title ? ' — ' + escapeHtml(title) : ''}</div>
+                <div style="background:#f8fafc;border:1px dashed #cbd5e1;border-radius:6px;padding:6px 8px;margin-bottom:8px;font-size:0.8em;color:#334155;">
+                    <div style="font-weight:700;color:#64748b;margin-bottom:2px;">${window.i18n.t('mbCtxLinkedPC')}</div>
+                    ${pcHtml}
+                </div>
                 ${fieldsHtml}
             </div>`;
+    };
+
+    // Grouped Module → Learning Outcome → Task, each task shown once
+    // (under the first outcome whose criteria reference it) so the same
+    // item can never be offered twice.
+    const placed = new Set();
+    const groups = los.map(lo => {
+        const ids = taskIds.filter(t => !placed.has(t) && (taskLinks[t] || []).some(e => e.lo === lo));
+        ids.forEach(t => placed.add(t));
+        return { lo, ids };
+    });
+    const unlinked = taskIds.filter(t => !placed.has(t));
+    if (unlinked.length) groups.push({ lo: null, ids: unlinked });
+
+    const blocks = groups.map(g => {
+        const cards = g.ids.map(taskCard).join('');
+        if (!cards) return '';
+        const isCurrent = g.lo && g.lo.id === mbState.currentLOId;
+        const open = !opts.collapseOthers || isCurrent || !g.lo;
+        const heading = g.lo
+            ? `<span style="font-size:0.72em;font-weight:700;color:#64748b;letter-spacing:0.04em;">${window.i18n.t('mbCtxLearningOutcome')}</span>
+               <span dir="auto" style="font-weight:700;color:#1e3a8a;">${escapeHtml(_mbAsmTitle(g.lo))}</span>
+               ${isCurrent ? `<span style="background:#dbeafe;color:#1d4ed8;border-radius:10px;padding:1px 8px;font-size:0.72em;font-weight:700;">${window.i18n.t('mbCtxCurrent')}</span>` : ''}`
+            : `<span style="font-weight:700;color:#92400e;">${window.i18n.t('mbCtxUnlinkedTasks')}</span>`;
+        return `
+            <details ${open ? 'open' : ''} style="border:1px solid ${isCurrent ? '#93c5fd' : '#e2e8f0'};border-radius:10px;padding:8px 10px;margin-bottom:10px;background:${isCurrent ? '#eff6ff' : '#f8fafc'};">
+                <summary style="cursor:pointer;display:flex;flex-wrap:wrap;align-items:center;gap:8px;">${heading}</summary>
+                <div style="margin-top:8px;">${cards}</div>
+            </details>`;
     }).join('');
     return blocks || `<p style="color:#9ca3af;font-size:0.85em;font-style:italic;">${window.i18n.t('mbAllItemsAssigned')}</p>`;
+}
+
+function _mbTextOf(v) {
+    if (v === undefined || v === null) return '';
+    if (typeof v === 'string') return v;
+    return (typeof biGet === 'function' ? biGet(v, contentLang()) : '') || '';
+}
+
+/** Context header of the Training Structure Mapping tab: which Module
+ *  and which Learning Outcome (with its inherited Performance Criteria)
+ *  the user is working in, and the hierarchy the mapping follows. */
+function _mbRenderMappingContext() {
+    const tab = document.getElementById('mapping-tab');
+    if (!tab) return;
+    let host = document.getElementById('mb-mapping-context');
+    if (!host) {
+        const bar = tab.querySelector('.form-group > div');
+        if (!bar) return;
+        host = document.createElement('div');
+        host.id = 'mb-mapping-context';
+        bar.insertAdjacentElement('afterend', host);
+    }
+    const module = _mbCurrentModule();
+    if (!module) { host.innerHTML = ''; return; }
+    syncLearningOutcomesFromCurrentModule();
+    const los = module.learningOutcomes || [];
+    const cur = los.find(l => l.id === mbState.currentLOId);
+    const modTitle = _mbTextOf(module.title);
+    const options = los.map(lo => `<option value="${escapeHtml(lo.id)}" ${cur && cur.id === lo.id ? 'selected' : ''}>${escapeHtml(_mbAsmTitle(lo))}</option>`).join('');
+    const pcs = cur ? (cur.performanceCriteria || []) : [];
+    const pcHtml = pcs.length
+        ? pcs.map(pc => `<div dir="auto">${escapeHtml(pc.id || '')} — ${escapeHtml(_mbPcText(pc))}${pc.taskId ? ` <span style="color:#94a3b8;">(${escapeHtml(_mbTaskLabel(pc.taskId))})</span>` : ''}</div>`).join('')
+        : `<div style="color:#94a3b8;">${window.i18n.t('mbNoneYet')}</div>`;
+    const lbl = k => `<div style="font-size:0.72em;font-weight:700;color:#64748b;letter-spacing:0.04em;margin-bottom:2px;">${window.i18n.t(k)}</div>`;
+    host.innerHTML = `
+        <div style="background:#fff;border:1px solid #c7d2fe;border-radius:10px;padding:12px 14px;margin-bottom:18px;">
+            <div style="display:flex;flex-wrap:wrap;gap:16px;">
+                <div style="flex:1;min-width:200px;">
+                    ${lbl('mbCtxModule')}
+                    <div dir="auto" style="font-weight:700;color:#0c4a6e;">${escapeHtml([module.moduleNumber, modTitle].filter(Boolean).join(' — ') || window.i18n.t('mbUntitled'))}</div>
+                </div>
+                <div style="flex:2;min-width:240px;">
+                    ${lbl('mbCtxLearningOutcome')}
+                    <select data-act="mbMappingSelectLO" data-on="change" data-args='["$value"]' style="width:100%;padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;font-weight:600;">
+                        ${cur ? '' : `<option value="">${window.i18n.t('mbSelectLearningOutcome')}</option>`}${options}
+                    </select>
+                </div>
+            </div>
+            <div style="margin-top:10px;font-size:0.84em;color:#334155;">
+                ${lbl('mbCtxLinkedPC')}
+                ${pcHtml}
+            </div>
+            <div style="margin-top:10px;font-size:0.76em;color:#6366f1;font-weight:600;">${window.i18n.t('mbCtxHierarchy')}</div>
+        </div>`;
+}
+
+/** Changing the Learning Outcome here is the same switch the Basic Info
+ *  and sheet tabs make (all selectors stay in sync). */
+function mbMappingSelectLO(loId) {
+    if (!loId) return;
+    if (typeof _applyLOSwitch === 'function') _applyLOSwitch(loId);
+    renderSourceBrowser();
 }
 
 // ── Standalone source browser: pick items, THEN create a sheet ──
@@ -387,8 +560,12 @@ function _mbBuildSourceChecklistHtml(module, checkedKeys, namePrefix, excludeKey
 // row was deleted elsewhere would be exactly the kind of quiet data
 // loss this tool needs to avoid.
 function renderSourceBrowser() {
+    _mbRenderMappingContext();
     const host = document.getElementById('mb-source-browser');
     if (!host) return;
+    // Keep whatever the user has ticked but not yet turned into a sheet
+    // across repaints (LO switch, language switch, tab re-entry).
+    const prevChecked = [...host.querySelectorAll('input[name="mbsrc"]:checked')].map(cb => cb.value);
     const module = _mbCurrentModule();
     if (!module || !module.taskAnalysisSource || !(module.taskAnalysisSource.sourceTaskIds || []).length) {
         host.innerHTML = '';
@@ -398,7 +575,7 @@ function renderSourceBrowser() {
         <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;margin-bottom:18px;">
             <h4 style="margin:0 0 4px;color:#374151;">${window.i18n.t('mbSourceBrowserTitle')}</h4>
             <p style="margin:0 0 10px;color:#6b7280;font-size:0.85em;">${window.i18n.t('mbSourceBrowserIntro')}</p>
-            <div id="mb-source-browser-list">${_mbBuildSourceChecklistHtml(module, [], 'mbsrc', Object.keys(_mbAllAssignments()))}</div>
+            <div id="mb-source-browser-list">${_mbBuildSourceChecklistHtml(module, prevChecked, 'mbsrc', Object.keys(_mbAllAssignments()), { collapseOthers: true })}</div>
             <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
                 <button data-act="mbCreateFromSelection" data-args='["info"]' style="background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;border-radius:6px;padding:7px 14px;font-size:0.85em;font-weight:600;cursor:pointer;">➕ ${window.i18n.t('mbCreateInfoFromSelection')}</button>
                 <button data-act="mbCreateFromSelection" data-args='["activity"]' style="background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;border-radius:6px;padding:7px 14px;font-size:0.85em;font-weight:600;cursor:pointer;">➕ ${window.i18n.t('mbCreateActivityFromSelection')}</button>
@@ -434,7 +611,7 @@ function mbCreateFromSelection(kind) {
     const inherited = module ? _mbInheritedLinksForItem(module, { sourceSelections }) : { loIds: [], pcIds: [] };
 
     mbState.structureProposal[key].push({
-        tempId: `${prefix}-${Date.now()}-${mbState.structureProposal[key].length}`,
+        tempId: _mbNewTempId(prefix),
         title: autoTitle, rationale: '',
         learningOutcomeIds: inherited.loIds, performanceCriteriaIds: inherited.pcIds,
         sourceSelections, mappingType: 'direct'
@@ -1111,6 +1288,7 @@ function mbAssessmentReferenceHtml(lo) {
         const lo = mbState.learningOutcomesData.find(l => l.id === mbState.currentLOId);
         mbRenderSheetMappedSource('info', lo);
         mbRenderSheetMappedSource('activity', lo);
+        renderSourceBrowser();
     });
 });
 
@@ -1135,8 +1313,11 @@ function _mbEnsureAiMapping(module) {
 }
 
 async function _mbBuildInfoSheet(module, item, aiMapping, touchedLOs) {
-    const lo = (module.learningOutcomes || []).find(l => l.id === item.learningOutcomeIds[0]) || module.learningOutcomes[0];
-    if (!lo) return;
+    const loId = _mbResolveLOId(module, item.learningOutcomeIds[0]);
+    const lo = (module.learningOutcomes || []).find(l => l.id === loId) || module.learningOutcomes[0];
+    if (!lo) return false;
+    if (!Array.isArray(lo.infoSheets)) lo.infoSheets = [];
+    const countBefore = lo.infoSheets.length;
     _mbFocusLO(lo.id);
     await addNewInfoSheet();
     // addNewInfoSheet() already painted the new sheet's (still-empty)
@@ -1146,6 +1327,7 @@ async function _mbBuildInfoSheet(module, item, aiMapping, touchedLOs) {
     // data object here does not, by itself, repaint that already-drawn
     // form; mbApproveAndBuild() repaints it explicitly afterward using
     // touchedLOs, once every sheet's title has actually been set.
+    if (lo.infoSheets.length <= countBefore) return false;
     const newIndex = lo.infoSheets.length - 1;
     const newSheet = lo.infoSheets[newIndex];
     if (newSheet && item.title) biPut(newSheet, 'title', item.title);
@@ -1157,13 +1339,18 @@ async function _mbBuildInfoSheet(module, item, aiMapping, touchedLOs) {
     if (newSheet) loadInfoSheetAtIndex(lo, newIndex);
     aiMapping.builtTempIds.push(item.tempId);
     if (touchedLOs) { if (!touchedLOs[lo.id]) touchedLOs[lo.id] = {}; touchedLOs[lo.id].infoIndex = newIndex; }
+    return lo.infoSheets.length > countBefore;
 }
 
 async function _mbBuildActivitySheet(module, item, aiMapping, touchedLOs) {
-    const lo = (module.learningOutcomes || []).find(l => l.id === item.learningOutcomeIds[0]) || module.learningOutcomes[0];
-    if (!lo) return;
+    const loId = _mbResolveLOId(module, item.learningOutcomeIds[0]);
+    const lo = (module.learningOutcomes || []).find(l => l.id === loId) || module.learningOutcomes[0];
+    if (!lo) return false;
+    if (!Array.isArray(lo.activitySheets)) lo.activitySheets = [];
+    const countBefore = lo.activitySheets.length;
     _mbFocusLO(lo.id);
     await addNewActivitySheet();
+    if (lo.activitySheets.length <= countBefore) return false;
     const newIndex = lo.activitySheets.length - 1;
     const newSheet = lo.activitySheets[newIndex];
     if (newSheet && item.title) biPut(newSheet, 'title', item.title);
@@ -1171,6 +1358,7 @@ async function _mbBuildActivitySheet(module, item, aiMapping, touchedLOs) {
     if (newSheet) loadActivitySheetAtIndex(lo, newIndex);
     aiMapping.builtTempIds.push(item.tempId);
     if (touchedLOs) { if (!touchedLOs[lo.id]) touchedLOs[lo.id] = {}; touchedLOs[lo.id].activityIndex = newIndex; }
+    return lo.activitySheets.length > countBefore;
 }
 
 /** Assessment is ONE form per Learning Outcome in this app (see
@@ -1181,7 +1369,7 @@ async function _mbBuildActivitySheet(module, item, aiMapping, touchedLOs) {
  *  pre-fill its criteria rows from the linked Performance Criteria —
  *  never overwriting a row the user already filled in. */
 function _mbBuildAssessmentUnit(module, item, aiMapping) {
-    const loId = item.learningOutcomeIds[0];
+    const loId = _mbResolveLOId(module, item.learningOutcomeIds[0]);
     const lo = (module.learningOutcomes || []).find(l => l.id === loId);
     if (!lo) return false; // no LO linked — see the caller's skip-count warning
 
@@ -1224,18 +1412,24 @@ async function mbApproveAndBuild() {
     const already = new Set(aiMapping.builtTempIds);
     const touchedLOs = {}; // loId -> { infoIndex?, activityIndex? } of the LAST sheet built for it
 
+    // Every approved item is built on its own: one item failing must not
+    // stop the rest of the proposal from becoming real sheets.
+    const built = { info: 0, activity: 0, assessment: 0, failed: 0 };
     for (const item of p.informationSheets) {
         if (already.has(item.tempId)) continue;
-        await _mbBuildInfoSheet(module, item, aiMapping, touchedLOs);
+        try { if (await _mbBuildInfoSheet(module, item, aiMapping, touchedLOs)) built.info++; else built.failed++; }
+        catch (err) { console.error('Approve & Build — information sheet failed:', err); built.failed++; }
     }
     for (const item of p.activitySheets) {
         if (already.has(item.tempId)) continue;
-        await _mbBuildActivitySheet(module, item, aiMapping, touchedLOs);
+        try { if (await _mbBuildActivitySheet(module, item, aiMapping, touchedLOs)) built.activity++; else built.failed++; }
+        catch (err) { console.error('Approve & Build — activity sheet failed:', err); built.failed++; }
     }
     let skippedAssessments = 0;
     for (const item of p.assessmentUnits) {
         if (already.has(item.tempId)) continue;
-        if (!_mbBuildAssessmentUnit(module, item, aiMapping)) skippedAssessments++;
+        try { if (_mbBuildAssessmentUnit(module, item, aiMapping)) built.assessment++; else skippedAssessments++; }
+        catch (err) { console.error('Approve & Build — assessment failed:', err); built.failed++; }
     }
 
     // Assessment inherits the Learning Outcome → Performance Criteria
@@ -1283,8 +1477,10 @@ async function mbApproveAndBuild() {
     _mbNudgeAutosave();
     if (skippedAssessments > 0) {
         showStatus(window.i18n.tf('mbSomeAssessmentsSkipped', { v0: skippedAssessments }), 'error');
+    } else if (built.failed > 0) {
+        showStatus(window.i18n.tf('mbBuildSomeFailed', { v0: built.failed }), 'error');
     } else {
-        showStatus(window.i18n.t('mbModuleBuilt'), 'success');
+        showStatus(window.i18n.tf('mbBuiltSummary', { v0: built.info, v1: built.activity, v2: built.assessment }), 'success');
     }
 }
 
