@@ -64,6 +64,30 @@ async function initializeLearningOutcomes() {
                             taskAnalysis: dacumModule.taskAnalysis || {}
                         }
                     };
+
+                    /* Programme level (1..N) and specialisation code
+                       ("CMCN", "CM" …) from DACUM's Module Mapping tab.
+                       Optional: absent on exports made before DACUM Live
+                       Pro 3.26, and every reader below treats absent as
+                       "not set". Saved with the module, so they survive
+                       autosave and the project JSON with no other change. */
+                    const lvl = parseInt(dacumModule.level, 10);
+                    if (Number.isInteger(lvl) && lvl > 0) newModule.level = lvl;
+                    const trk = String(dacumModule.track || '').trim();
+                    if (trk) newModule.track = trk;
+
+                    /* Verified Occupational Reference Data — occupation-
+                       level evidence from DACUM's supplementary
+                       verification. It used to be dropped here, because
+                       the export key is removed right after this read and
+                       nothing else ever saw it. Kept on each imported
+                       module (the module object is what autosave and the
+                       project file already persist). Reference only: it
+                       is never turned into outcomes or content. */
+                    const ref = exportData.occupationalReference;
+                    if (ref && typeof ref === 'object' && ref.available !== false) {
+                        newModule.occupationalReference = ref;
+                    }
                     
                     dacumModule.learningOutcomes.forEach(lo => {
                         mbState.loIdCounter++;
@@ -82,6 +106,10 @@ async function initializeLearningOutcomes() {
                     mbState.modulesData.push(newModule);
                 });
                 
+                // Fill empty cover rows from the handoff (never overwrites).
+                try { _mbPrefillCoverFromDacum(exportData); }
+                catch (e) { console.warn('[ModuleBuilder←DACUM] cover prefill skipped:', e); }
+
                 // Select first module
                 if (mbState.modulesData.length > 0) {
                     mbState.currentModuleId = mbState.modulesData[0].id;
@@ -130,6 +158,60 @@ async function initializeLearningOutcomes() {
     renderLOSelector();
 }
 
+/**
+ * Pre-fill the cover table from a DACUM handoff — EMPTY rows only.
+ *
+ *   Level        ← the modules' level, when every imported module that
+ *                  has one shares it (a multi-level import has no single
+ *                  answer, so the row is left for the author).
+ *   Occupation   ← the occupation title from DACUM.
+ *   Unit title   ← the module title, when exactly one module came over.
+ *
+ * Written to every language side: the values are names and a number,
+ * and a side left empty would make the row vanish from an export in
+ * that language. Anything the author has typed is never touched.
+ */
+function _mbPrefillCoverFromDacum(exportData) {
+    if (!Array.isArray(mbState.coverRows) || typeof biSet !== 'function') return;
+    if (typeof mbSeedCoverLabels === 'function') mbSeedCoverLabels();   // rows + seedKeys exist
+    const codes = (typeof BILANG_CODES !== 'undefined' && BILANG_CODES.length) ? BILANG_CODES : ['en', 'ar'];
+    const rowBy = key => mbState.coverRows.find(r => r.seedKey === key || r.field === key);
+    const isEmpty = r => (typeof biEmpty === 'function') ? biEmpty(r.value)
+        : !codes.some(c => String((r.value || {})[c] || '').trim());
+    const fill = (key, text) => {
+        const r = rowBy(key);
+        text = String(text || '').trim();
+        if (!r || !text) return;
+        if (typeof biIs === 'function' && !biIs(r.value)) r.value = biNew();
+        if (!isEmpty(r)) return;
+        codes.forEach(c => biSet(r, 'value', c, text));
+    };
+
+    const mods = exportData.modules || [];
+    const levels = Array.from(new Set(mods.map(m => parseInt(m.level, 10)).filter(n => n > 0)));
+    if (levels.length === 1) fill('cvLevel', String(levels[0]));
+    if (exportData.occupation && exportData.occupation !== 'Unknown Occupation') fill('cvOccupation', exportData.occupation);
+    if (mods.length === 1) fill('cvUnitTitle', mods[0].moduleTitle);
+
+    if (typeof renderCoverTable === 'function') renderCoverTable();
+}
+
+/* "(L1 · CMCN)" after a module's name — level and specialisation from
+   DACUM, when present. Short on purpose: it sits inside a <select>. */
+function _mbLevelShort() {
+    const lang = (window.i18n && window.i18n.getLang) ? window.i18n.getLang() : 'en';
+    return ({ ar: 'م', fr: 'N' })[lang] || 'L';
+}
+function mbModuleTag(m) {
+    const parts = [];
+    if (m && m.level) parts.push(_mbLevelShort() + m.level);
+    if (m && m.track) parts.push(m.track);
+    return parts.length ? ` (${parts.join(' · ')})` : '';
+}
+function mbModuleLabel(m) {
+    return (m.moduleNumber ? m.moduleNumber + ' — ' : '') + m.title + mbModuleTag(m);
+}
+
 // Helper function to sync mbState.learningOutcomesData with current module
 function syncLearningOutcomesFromCurrentModule() {
     const currentModule = mbState.modulesData.find(m => m.id === mbState.currentModuleId);
@@ -154,7 +236,7 @@ function renderModuleSelector() {
        resolved label: the attribute lets a language switch repaint it
        without re-rendering the list and losing the current selection. */
     const optionsHtml = '<option data-i18n="mbSelectModule" value="">' + window.i18n.t('mbSelectModule') + '</option>' +
-        mbState.modulesData.map(m => `<option value="${m.id}">${m.title}</option>`).join('');
+        mbState.modulesData.map(m => `<option value="${m.id}">${mbModuleLabel(m)}</option>`).join('');
 
     // Sync ALL module selectors (basic-info + tab bars)
     ['current-module-selector',
@@ -399,4 +481,25 @@ function updateModuleSummary() {
     
     document.getElementById('module-lo-count').textContent = loCount;
     document.getElementById('module-sheets-count').textContent = sheetsCount;
+
+    /* Level / specialisation line, only for a module that has them
+       (imported from DACUM Live Pro). Created on first use so index.html
+       needs no change. */
+    let info = document.getElementById('module-level-info');
+    if (!module.level && !module.track) { if (info) info.remove(); return; }
+    if (!info) {
+        info = document.createElement('div');
+        info.id = 'module-level-info';
+        info.style.cssText = 'margin-top:12px;padding-top:10px;border-top:1px solid #e0f2fe;color:#0c4a6e;font-size:0.95em;display:flex;flex-wrap:wrap;gap:6px 18px;';
+        summary.appendChild(info);
+    }
+    const lang = (window.i18n && window.i18n.getLang) ? window.i18n.getLang() : 'en';
+    const lvlLabel = (window.i18n && window.i18n.t && window.i18n.t('cvLevel') !== 'cvLevel')
+        ? window.i18n.t('cvLevel').replace(/:\s*$/, '')
+        : ({ ar: 'المستوى', fr: 'Niveau' })[lang] || 'Level';
+    const trkLabel = ({ ar: 'التخصص', fr: 'Spécialisation' })[lang] || 'Specialisation';
+    const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+    info.innerHTML =
+        (module.level ? `<span><strong>${esc(lvlLabel)}:</strong> ${esc(module.level)}</span>` : '') +
+        (module.track ? `<span><strong>${esc(trkLabel)}:</strong> ${esc(module.track)}</span>` : '');
 }
