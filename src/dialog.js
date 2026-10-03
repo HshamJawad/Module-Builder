@@ -131,7 +131,9 @@ function _mbDialog(opts) {
         d.overlay.addEventListener('click', function (e) {
             /* Clicking the backdrop cancels — but never on a destructive
                confirm, where a stray click would delete a sheet. */
-            if (e.target === d.overlay && !opts.danger) {
+            /* noBackdrop: a choice between two actions (no "cancel"),
+               where a stray click must not pick one of them. */
+            if (e.target === d.overlay && !opts.danger && !opts.noBackdrop) {
                 close(opts.type === 'confirm' ? false : (opts.type === 'alert' ? undefined : null));
             }
         });

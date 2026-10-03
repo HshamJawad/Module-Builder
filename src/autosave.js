@@ -368,6 +368,10 @@
                 Object.keys(d.assessmentFormsData || {}).length > 0 ||
                 !!_txt(d.coversAdditionalInfo) || !!_txt(d.introAdditionalDetails);
         }
+        /* For modules.js: the DACUM import asks before replacing a
+           previous session only when that session holds real work. */
+        window.mbSnapshotHasWork = _snapHasWork;
+
         function _projectHasWork() {
             if (typeof mbState === 'undefined') return false;
             return _dirty || _modulesHaveWork(mbState.modulesData) ||

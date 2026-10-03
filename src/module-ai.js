@@ -56,7 +56,9 @@ function mbGatherModuleMappingInput() {
         number: lo.number || '',
         statement: (typeof biGetStrict === 'function' ? biGetStrict(lo.statement, contentLang()) : lo.statement) || '',
         performanceCriteria: (lo.performanceCriteria || []).map(pc => ({
-            id: pc.id || '', text: pc.text || pc.id || pc || '', taskId: pc.taskId || null
+            id: pc.id || '', text: pc.text || pc.id || pc || '', taskId: pc.taskId || null,
+            /* DACUM 3.44+: the tasks a competency criterion traces to. */
+            sourceTaskIds: Array.isArray(pc.sourceTaskIds) ? pc.sourceTaskIds : []
         }))
     }));
 
@@ -68,6 +70,7 @@ function mbGatherModuleMappingInput() {
             moduleId: module.id,
             moduleNumber: module.moduleNumber || '',
             moduleTitle: module.title || '',
+            moduleCode: module.moduleCode || '',
             /* From DACUM Live Pro's Module Mapping (3.26+); null / '' when
                the module was built here or came from an older export. */
             level: module.level || null,
@@ -76,6 +79,9 @@ function mbGatherModuleMappingInput() {
         learningOutcomes,
         sourceTaskIds: src.sourceTaskIds || [],
         taskAnalysis: src.taskAnalysis || {},
+        /* DACUM 3.44+: code and statement of every source task, including
+           those without Task Analysis. */
+        sourceTasks: src.sourceTasks || [],
         /* Verified Occupational Reference Data, compacted to what a
            suggestion can use. Reference evidence only — see the contract
            at the end of this file. Absent when the module has none. */
@@ -272,7 +278,11 @@ function _mbTaskLabel(taskId) {
     if (taskId === MB_REF_TASK) return _mbRefText('title');
     const module = _mbCurrentModule();
     const ta = module && module.taskAnalysisSource && module.taskAnalysisSource.taskAnalysis[taskId];
-    return (ta && ta.taskCode) || String(taskId);
+    if (ta && ta.taskCode) return ta.taskCode;
+    /* DACUM 3.44+ also sends the code of source tasks that have no Task
+       Analysis yet. */
+    const st = module && module.taskAnalysisSource && (module.taskAnalysisSource.sourceTasks || []).find(t => t.id === taskId);
+    return (st && st.code) || String(taskId);
 }
 
 function _mbFieldLabel(field) {
@@ -289,7 +299,11 @@ function _mbLoPcForTask(module, taskId) {
     const loIds = new Set(); const pcIds = new Set();
     (module.learningOutcomes || []).forEach(lo => {
         (lo.performanceCriteria || []).forEach(pc => {
-            if (pc.taskId === taskId) { loIds.add(lo.id); pcIds.add(pc.id); }
+            /* pc.sourceTaskIds (DACUM 3.44+): a competency criterion traces
+               to every task of its competency, not to one taskId. */
+            if (pc.taskId === taskId || (Array.isArray(pc.sourceTaskIds) && pc.sourceTaskIds.includes(taskId))) {
+                loIds.add(lo.id); pcIds.add(pc.id);
+            }
         });
     });
     return { loIds: [...loIds], pcIds: [...pcIds] };
@@ -1046,6 +1060,12 @@ function mbSwitchMappingMode(mode) {
 //   //   learning outcomes. A suggestion may cite it in sourceSelections as
 //   //   { "taskId": "__occref__", "field": <category id>, "itemIndex": n,
 //   //     "itemText": "..." } — the client resolves that like any task.
+//   // Added in Module Builder 3.9 — optional, additive (DACUM 3.44+):
+//   //   module.moduleCode ("CMCN 1-1" | "")
+//   //   performanceCriteria[].sourceTaskIds: the tasks a competency
+//   //       criterion traces to (taskId stays null for those criteria)
+//   //   sourceTasks: [ { id, code: "TASK B4", text, dutyTitle } ] — every
+//   //       source task, including those without Task Analysis
 // }
 //
 // Response body (200, application/json) — see mbNormalizeProposal()

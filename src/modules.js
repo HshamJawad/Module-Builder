@@ -28,91 +28,60 @@ async function initializeLearningOutcomes() {
             // the race every time — the fresh DACUM import renders first,
             // then silently reverts to whatever was open before, which is
             // exactly the "shows the new modules for a moment, then goes
-            // back to the old session" symptom this fixes. A fresh handoff
-            // from DACUM is a deliberate new session; it should not be
-            // merged with unrelated leftover autosave data at all.
+            // back to the old session" symptom this fixes. Set BEFORE the
+            // first await below, while still inside the synchronous part of
+            // the boot, so the 1.2 s restore timer always sees it.
             mbState._skipAutosaveRestore = true;
             
-            // Convert DACUM modules to Module Builder format
             if (exportData.modules && exportData.modules.length > 0) {
-                mbState.modulesData = [];
-                mbState.moduleIdCounter = 0;
-                mbState.loIdCounter = 0;
-                
-                exportData.modules.forEach(dacumModule => {
-                    mbState.moduleIdCounter++;
-                    const newModule = {
-                        id: dacumModule.moduleId || `module-${mbState.moduleIdCounter}`,
-                        title: dacumModule.moduleTitle || window.i18n.tf('dgDefaultModuleName', { v0: mbState.moduleIdCounter }),
-                        learningOutcomes: [],
-                        /* "M1" as assigned in DACUM Live Pro's own Module
-                           Mapping tab — carried through purely for display
-                           continuity between the two tools; nothing here
-                           derives module identity from it. */
-                        moduleNumber: dacumModule.moduleNumber || '',
-                        /* Task Analysis detail from DACUM Live Pro for this
-                           module's source tasks — read by the Training
-                           Structure Mapping tab (module-ai.js) to let the
-                           user select, assign and move individual items.
-                           Absent (undefined) for a module created manually
-                           in Module Builder, or for a DACUM export built
-                           before this field existed; every reader of this
-                           property already treats that as "nothing to
-                           show" rather than an error. */
-                        taskAnalysisSource: {
-                            sourceTaskIds: dacumModule.sourceTaskIds || [],
-                            taskAnalysis: dacumModule.taskAnalysis || {}
-                        }
-                    };
+                /* 3.9.0 — never discard earlier work silently. The previous
+                   session lives only in the autosave snapshot (a page load
+                   starts clean), and this import used to replace it: a
+                   module built yesterday and not saved to a file was gone
+                   the moment another module arrived from DACUM. When that
+                   snapshot holds real work the user now chooses: add the
+                   received modules to it, or start a new session — and in
+                   that case the previous one is first kept as a backup
+                   (a downloaded project file + a stored copy). */
+                const prev = await _mbPreviousSessionWithWork();
+                let mode = 'new';
+                if (prev) {
+                    const answer = await _mbAskDacumImportMode(exportData.modules.length);
+                    // Esc (null) takes the choice that loses nothing on screen.
+                    mode = answer === false ? 'new' : 'add';
+                }
 
-                    /* Programme level (1..N) and specialisation code
-                       ("CMCN", "CM" …) from DACUM's Module Mapping tab.
-                       Optional: absent on exports made before DACUM Live
-                       Pro 3.26, and every reader below treats absent as
-                       "not set". Saved with the module, so they survive
-                       autosave and the project JSON with no other change. */
-                    const lvl = parseInt(dacumModule.level, 10);
-                    if (Number.isInteger(lvl) && lvl > 0) newModule.level = lvl;
-                    const trk = String(dacumModule.track || '').trim();
-                    if (trk) newModule.track = trk;
-
-                    /* Verified Occupational Reference Data — occupation-
-                       level evidence from DACUM's supplementary
-                       verification. It used to be dropped here, because
-                       the export key is removed right after this read and
-                       nothing else ever saw it. Kept on each imported
-                       module (the module object is what autosave and the
-                       project file already persist). Reference only: it
-                       is never turned into outcomes or content. */
-                    const ref = exportData.occupationalReference;
-                    if (ref && typeof ref === 'object' && ref.available !== false) {
-                        newModule.occupationalReference = ref;
-                    }
-                    
-                    dacumModule.learningOutcomes.forEach(lo => {
-                        mbState.loIdCounter++;
-                        const newLO = {
-                            id: `lo-${mbState.loIdCounter}`,
-                            title: `${lo.number}: ${lo.statement}`,
-                            number: lo.number || '',
-                            statement: lo.statement || '',
-                            performanceCriteria: lo.performanceCriteria || [],
-                            infoSheets: [],
-                            activitySheets: []
-                        };
-                        newModule.learningOutcomes.push(newLO);
+                let added = 0, updated = 0;
+                if (mode === 'add') {
+                    /* Same path the "restore previous session" banner uses,
+                       so the whole project — cover, team, references,
+                       assessment — comes back exactly as it was. */
+                    document.dispatchEvent(new CustomEvent('autosave:restore', { detail: prev }));
+                    if (!Array.isArray(mbState.modulesData)) mbState.modulesData = [];
+                    exportData.modules.forEach(dacumModule => {
+                        const existing = mbState.modulesData.find(m => m.id === dacumModule.moduleId);
+                        if (existing) { _mbMergeDacumModule(existing, dacumModule, exportData); updated++; }
+                        else { mbState.modulesData.push(_mbModuleFromDacum(dacumModule, exportData)); added++; }
                     });
-                    
-                    mbState.modulesData.push(newModule);
-                });
+                } else {
+                    if (prev) await _mbBackupPreviousSession(prev);
+                    mbState.modulesData = [];
+                    mbState.moduleIdCounter = 0;
+                    mbState.loIdCounter = 0;
+                    exportData.modules.forEach(dacumModule => {
+                        mbState.modulesData.push(_mbModuleFromDacum(dacumModule, exportData));
+                    });
+                }
                 
                 // Fill empty cover rows from the handoff (never overwrites).
                 try { _mbPrefillCoverFromDacum(exportData); }
                 catch (e) { console.warn('[ModuleBuilder←DACUM] cover prefill skipped:', e); }
 
-                // Select first module
-                if (mbState.modulesData.length > 0) {
-                    mbState.currentModuleId = mbState.modulesData[0].id;
+                // Select the first module that just arrived
+                const firstId = exportData.modules[0].moduleId;
+                const first = mbState.modulesData.find(m => m.id === firstId) || mbState.modulesData[0];
+                if (first) {
+                    mbState.currentModuleId = first.id;
                     syncLearningOutcomesFromCurrentModule();
                     renderModuleSelector();
                     renderLOSelector();
@@ -122,10 +91,24 @@ async function initializeLearningOutcomes() {
                         mbState.currentLOId = mbState.learningOutcomesData[0].id;
                         ['current-lo-selector','info-lo-selector','activity-lo-selector'].forEach(id => { const s=document.getElementById(id); if(s) s.value=mbState.currentLOId; });
                         loadCurrentLOSheets();
+                    } else {
+                        mbState.currentLOId = null;
                     }
                 }
-                
-                showStatus(window.i18n.tf('dgImportedModulesWithLearningOutcome', { v0: mbState.modulesData.length, v1: mbState.loIdCounter }), 'success');
+                if (typeof renderStructureProposal === 'function') renderStructureProposal();
+                if (typeof renderSourceBrowser === 'function') renderSourceBrowser();
+
+                const loCount = exportData.modules.reduce((n, m) => n + (m.learningOutcomes || []).length, 0);
+                if (mode === 'add') {
+                    showStatus(window.i18n.tf('mbDacumMerged', { v0: added, v1: updated }), 'success');
+                } else {
+                    showStatus(window.i18n.tf('dgImportedModulesWithLearningOutcome', { v0: exportData.modules.length, v1: loCount }), 'success');
+                }
+                /* Persist the session that now exists (autosave only
+                   writes on edits; without this the snapshot would still
+                   hold the old session, and the next page load would offer
+                   to bring it back over the received modules). */
+                _mbTouchAutosave();
                 return;
             }
         }
@@ -191,9 +174,177 @@ function _mbPrefillCoverFromDacum(exportData) {
     const levels = Array.from(new Set(mods.map(m => parseInt(m.level, 10)).filter(n => n > 0)));
     if (levels.length === 1) fill('cvLevel', String(levels[0]));
     if (exportData.occupation && exportData.occupation !== 'Unknown Occupation') fill('cvOccupation', exportData.occupation);
-    if (mods.length === 1) fill('cvUnitTitle', mods[0].moduleTitle);
+    /* DACUM Live Pro 3.44+: job title and sector from Chart Info. */
+    fill('cvJob', exportData.jobTitle);
+    fill('cvSector', exportData.sector);
+    if (mods.length === 1) {
+        const m = mods[0];
+        fill('cvUnitTitle', m.moduleTitle);
+        fill('cvModuleCode', m.moduleCode);
+        /* From DACUM's Module Curriculum tab, when it was filled in. */
+        const cur = m.curriculum || {};
+        if (cur.totalHours) fill('cvHours', String(cur.totalHours));
+        if (Array.isArray(cur.prerequisites) && cur.prerequisites.length) fill('cvEntryReq', cur.prerequisites.join('\n'));
+    }
 
     if (typeof renderCoverTable === 'function') renderCoverTable();
+}
+
+/* ── DACUM Live Pro handoff helpers (3.9.0) ───────────────────── */
+
+/** A Module Builder module built from one module of a DACUM export. */
+function _mbModuleFromDacum(dacumModule, exportData) {
+    mbState.moduleIdCounter++;
+    const newModule = {
+        id: dacumModule.moduleId || `module-${mbState.moduleIdCounter}`,
+        title: dacumModule.moduleTitle || window.i18n.tf('dgDefaultModuleName', { v0: mbState.moduleIdCounter }),
+        learningOutcomes: [],
+        /* "M1" as assigned in DACUM Live Pro's own Module Mapping tab —
+           carried through for display continuity between the two tools;
+           nothing here derives module identity from it. */
+        moduleNumber: dacumModule.moduleNumber || ''
+    };
+    _mbApplyDacumModuleFields(newModule, dacumModule, exportData);
+    (dacumModule.learningOutcomes || []).forEach(lo => {
+        newModule.learningOutcomes.push(_mbLoFromDacum(lo));
+    });
+    return newModule;
+}
+
+function _mbLoFromDacum(lo) {
+    mbState.loIdCounter++;
+    return {
+        id: `lo-${mbState.loIdCounter}`,
+        title: `${lo.number}: ${lo.statement}`,
+        number: lo.number || '',
+        statement: lo.statement || '',
+        // DACUM's own outcome id (DACUM Live Pro 3.44+) — lets a later
+        // transfer update this outcome instead of matching by position.
+        dacumLoId: lo.loId || null,
+        performanceCriteria: lo.performanceCriteria || [],
+        infoSheets: [],
+        activitySheets: []
+    };
+}
+
+/** Fields DACUM owns on a module — written on import and on every later
+ *  transfer of the same module. Sheets, blocks and assessment written in
+ *  Module Builder are never touched. */
+function _mbApplyDacumModuleFields(module, dacumModule, exportData) {
+    module.title = dacumModule.moduleTitle || module.title;
+    module.moduleNumber = dacumModule.moduleNumber || module.moduleNumber || '';
+    /* Task Analysis detail from DACUM Live Pro for this module's source
+       tasks — read by the Training Structure Mapping tab (module-ai.js).
+       sourceTasks (DACUM 3.44+) carries the code and statement of every
+       source task, so a task without Task Analysis is still labelled. */
+    module.taskAnalysisSource = {
+        sourceTaskIds: dacumModule.sourceTaskIds || [],
+        taskAnalysis: dacumModule.taskAnalysis || {},
+        sourceTasks: dacumModule.sourceTasks || []
+    };
+    /* Programme level (1..N) and specialisation code ("CMCN", "CM" …)
+       from DACUM's Module Mapping tab. Optional: absent on exports made
+       before DACUM Live Pro 3.26; every reader treats absent as unset. */
+    const lvl = parseInt(dacumModule.level, 10);
+    if (Number.isInteger(lvl) && lvl > 0) module.level = lvl; else delete module.level;
+    const trk = String(dacumModule.track || '').trim();
+    if (trk) module.track = trk; else delete module.track;
+    /* Module code ("CMCN 1-1") and short name (DACUM 3.34+), and how
+       DACUM shows modules (code / number / both). */
+    const code = String(dacumModule.moduleCode || '').trim();
+    if (code) module.moduleCode = code; else delete module.moduleCode;
+    const short = String(dacumModule.shortName || '').trim();
+    if (short) module.shortName = short; else delete module.shortName;
+    if (exportData.labelMode) module.labelMode = exportData.labelMode;
+    /* Module Curriculum summary (DACUM 3.44+): credits, hours, purpose,
+       prerequisites, outcome hours. Reference data on the module. */
+    if (dacumModule.curriculum && typeof dacumModule.curriculum === 'object') module.curriculum = dacumModule.curriculum;
+    else delete module.curriculum;
+    /* Verified Occupational Reference Data — occupation-level evidence
+       from DACUM's supplementary verification. Reference only: it is
+       never turned into outcomes or content. */
+    const ref = exportData.occupationalReference;
+    if (ref && typeof ref === 'object' && ref.available !== false) module.occupationalReference = ref;
+}
+
+/** A module Module Builder already holds receives a new transfer: DACUM's
+ *  fields are refreshed; each outcome is matched by DACUM id (then by
+ *  number) and gets its new statement and criteria while keeping its
+ *  sheets; new outcomes are appended; outcomes DACUM no longer sends are
+ *  kept, because they may carry sheets written here. */
+function _mbMergeDacumModule(module, dacumModule, exportData) {
+    _mbApplyDacumModuleFields(module, dacumModule, exportData);
+    if (!Array.isArray(module.learningOutcomes)) module.learningOutcomes = [];
+    const used = new Set();
+    (dacumModule.learningOutcomes || []).forEach(lo => {
+        let target = lo.loId ? module.learningOutcomes.find(x => x.dacumLoId === lo.loId) : null;
+        if (!target) target = module.learningOutcomes.find(x => !used.has(x) && !x.dacumLoId && x.number && x.number === lo.number);
+        if (target) {
+            target.number = lo.number || target.number;
+            target.statement = lo.statement || '';
+            target.title = `${lo.number}: ${lo.statement}`;
+            target.dacumLoId = lo.loId || target.dacumLoId || null;
+            target.performanceCriteria = lo.performanceCriteria || [];
+            used.add(target);
+        } else {
+            const fresh = _mbLoFromDacum(lo);
+            module.learningOutcomes.push(fresh);
+            used.add(fresh);
+        }
+    });
+}
+
+/** The autosaved previous session, when it holds real work; else null. */
+async function _mbPreviousSessionWithWork() {
+    try {
+        let snap = await mbLoadDoc(MB_KEYS.autosave);
+        if (!snap || snap.__corrupt) return null;
+        if (typeof snap === 'string') { try { snap = JSON.parse(snap); } catch (e) { return null; } }
+        if (!snap._autosave || !snap.version) return null;
+        if (typeof window.mbSnapshotHasWork === 'function' && !window.mbSnapshotHasWork(snap)) return null;
+        return snap;
+    } catch (e) {
+        console.warn('[ModuleBuilder←DACUM] could not read the previous session:', e);
+        return null;
+    }
+}
+
+function _mbAskDacumImportMode(n) {
+    return _mbDialog({
+        type: 'confirm',
+        message: window.i18n.tf('mbDacumAskMode', { v0: n }),
+        okLabel: window.i18n.t('mbDacumAddBtn'),
+        cancelLabel: window.i18n.t('mbDacumNewBtn'),
+        noBackdrop: true
+    });
+}
+
+/** Keeps the previous session before a new one replaces it: a project
+ *  file in Downloads (opens with 📂 Load) and a stored copy. */
+async function _mbBackupPreviousSession(snap) {
+    const d = new Date(), p = n => String(n).padStart(2, '0');
+    const name = `Module_Builder_backup_${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}_${p(d.getHours())}-${p(d.getMinutes())}.json`;
+    try {
+        const file = Object.assign({}, snap);
+        delete file._autosave; delete file._savedAt;
+        const blob = new Blob([JSON.stringify(file, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = name;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 4000);
+    } catch (e) { console.warn('[ModuleBuilder←DACUM] backup file failed:', e); }
+    try { await mbSaveDoc(MB_KEYS.autosave + '_before_dacum', snap); }
+    catch (e) { console.warn('[ModuleBuilder←DACUM] stored backup failed:', e); }
+    showStatus(window.i18n.tf('mbDacumBackupSaved', { v0: name }), 'success');
+}
+
+/** Asks autosave.js to write the current session (it listens for input
+ *  events on the main container; an untrusted event does not mark the
+ *  page as edited by the user). */
+function _mbTouchAutosave() {
+    const root = document.getElementById('main-container') || document.body;
+    root.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
 /* "(L1 · CMCN)" after a module's name — level and specialisation from
@@ -209,7 +360,15 @@ function mbModuleTag(m) {
     return parts.length ? ` (${parts.join(' · ')})` : '';
 }
 function mbModuleLabel(m) {
-    return (m.moduleNumber ? m.moduleNumber + ' — ' : '') + m.title + mbModuleTag(m);
+    /* DACUM 3.34+ sends the module code; it is shown the way DACUM shows
+       modules ("Show modules as": code / number / both). Without a code,
+       the number as before. */
+    const num = m.moduleNumber || '';
+    const code = m.moduleCode || '';
+    let ref = num;
+    if (code) ref = m.labelMode === 'number' ? (num || code) : (m.labelMode === 'both' && num ? `${num} · ${code}` : code);
+    // A code already carries track and level ("CMCN 1-1"), so the tag is not repeated.
+    return (ref ? ref + ' — ' : '') + m.title + (code ? '' : mbModuleTag(m));
 }
 
 // Helper function to sync mbState.learningOutcomesData with current module
