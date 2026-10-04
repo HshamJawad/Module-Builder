@@ -222,6 +222,9 @@ function mbRemoveProposalItem(kind, tempId) {
 const _MB_ICON_EDIT = '<svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4.5 19.5h4l10-10a2.1 2.1 0 0 0-3-3l-10 10z"/><path d="M14.5 6.5l3 3"/><path d="M4.5 19.5l.6-3.4"/></svg>';
 const _MB_ICON_DELETE = '<svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg>';
 
+/* English fallbacks; the interface label comes from mb-translations.js
+   (mbTaFld_<field>) since 3.11.0 — these used to show in English in
+   every language. */
 const MB_TA_FIELD_LABELS = {
     requiredKnowledge: 'Required Knowledge', requiredSkills: 'Required Skills',
     performanceSteps: 'Performance Steps', toolsEquipmentMaterials: 'Tools, Equipment & Materials',
@@ -229,6 +232,31 @@ const MB_TA_FIELD_LABELS = {
     decisionsCriticalPoints: 'Decisions / Critical Points', performanceCriteria: 'Performance Criteria (task-level)',
     performanceStandard: 'Performance Standard', commonErrorsTroubleshooting: 'Common Errors / Troubleshooting'
 };
+
+/* 3.11.0: the order DACUM Live Pro 3.46 shows them in — by importance. */
+const MB_TA_FIELD_ORDER = [
+    'performanceSteps', 'requiredKnowledge', 'requiredSkills',
+    'performanceCriteria', 'performanceStandard',
+    'toolsEquipmentMaterials', 'safetyOSH', 'decisionsCriticalPoints',
+    'conditionsWorkEnvironment', 'commonErrorsTroubleshooting'
+];
+
+/* Sections the user added in DACUM (3.46+) arrive per task as
+   customSections [{ title, items }]. Their field key here is
+   "custom:<title>" — the title is what identifies them across transfers
+   (DACUM does not send its internal ids), and it keeps working in the
+   selection keys (taskId|||field|||index) like any standard field. */
+const MB_TA_CUSTOM = 'custom:';
+
+/** Fields of one task, in display order: the standard ones, then the
+ *  sections the user added, as they come from DACUM. */
+function _mbTaskFields(module, taskId) {
+    const ta = module && module.taskAnalysisSource && module.taskAnalysisSource.taskAnalysis[taskId];
+    const custom = (ta && Array.isArray(ta.customSections) ? ta.customSections : [])
+        .filter(sec => sec && String(sec.title || '').trim())
+        .map(sec => MB_TA_CUSTOM + String(sec.title).trim());
+    return MB_TA_FIELD_ORDER.concat(custom);
+}
 
 function _mbCurrentModule() {
     return mbState.modulesData.find(m => m.id === mbState.currentModuleId);
@@ -286,7 +314,12 @@ function _mbTaskLabel(taskId) {
 }
 
 function _mbFieldLabel(field) {
-    if (MB_TA_FIELD_LABELS[field]) return MB_TA_FIELD_LABELS[field];
+    if (String(field).indexOf(MB_TA_CUSTOM) === 0) return String(field).slice(MB_TA_CUSTOM.length);
+    if (MB_TA_FIELD_LABELS[field]) {
+        const k = 'mbTaFld_' + field;
+        const tr = window.i18n && window.i18n.t ? window.i18n.t(k) : k;
+        return tr && tr !== k ? tr : MB_TA_FIELD_LABELS[field];
+    }
     const cat = _mbRefCategory(_mbCurrentModule(), field);
     return (cat && cat.name) || field;
 }
@@ -367,6 +400,12 @@ function _mbGetFieldItems(module, taskId, field) {
     }
     const ta = module.taskAnalysisSource && module.taskAnalysisSource.taskAnalysis[taskId];
     if (!ta) return [];
+    if (String(field).indexOf(MB_TA_CUSTOM) === 0) {
+        const title = String(field).slice(MB_TA_CUSTOM.length);
+        const sec = (Array.isArray(ta.customSections) ? ta.customSections : [])
+            .find(x => x && String(x.title || '').trim() === title);
+        return sec ? (sec.items || []).map(v => String(v == null ? '' : v).trim()).filter(Boolean) : [];
+    }
     const val = ta[field];
     if (Array.isArray(val)) return val.filter(v => v && String(v).trim()).map(v => String(v).trim());
     if (val && String(val).trim()) return [String(val).trim()];
@@ -408,7 +447,7 @@ function _mbBuildSourceChecklistHtml(module, checkedKeys, namePrefix, excludeKey
     excludeKeys = excludeKeys || [];
     const taskIds = (module.taskAnalysisSource && module.taskAnalysisSource.sourceTaskIds) || [];
     const blocks = taskIds.map(taskId => {
-        const fieldsHtml = Object.keys(MB_TA_FIELD_LABELS).map(field => {
+        const fieldsHtml = _mbTaskFields(module, taskId).map(field => {
             const items = _mbGetFieldItems(module, taskId, field);
             if (!items.length) return '';
             const rows = items.map((text, idx) => {
@@ -426,7 +465,7 @@ function _mbBuildSourceChecklistHtml(module, checkedKeys, namePrefix, excludeKey
             if (!rows) return '';
             return `
                 <div style="margin-bottom:10px;">
-                    <div style="font-size:0.8em;font-weight:600;color:#4b5563;margin-bottom:3px;">${_mbFieldLabel(field)}</div>
+                    <div dir="auto" style="font-size:0.8em;font-weight:600;color:#4b5563;margin-bottom:3px;">${escapeHtml(_mbFieldLabel(field))}</div>
                     ${rows}
                 </div>`;
         }).join('');
