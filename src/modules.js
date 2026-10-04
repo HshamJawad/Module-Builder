@@ -395,7 +395,7 @@ function renderModuleSelector() {
        resolved label: the attribute lets a language switch repaint it
        without re-rendering the list and losing the current selection. */
     const optionsHtml = '<option data-i18n="mbSelectModule" value="">' + window.i18n.t('mbSelectModule') + '</option>' +
-        mbState.modulesData.map(m => `<option value="${m.id}">${mbModuleLabel(m)}</option>`).join('');
+        mbState.modulesData.map(m => `<option value="${m.id}">${mbModuleLabel(m)}${typeof mbModuleTaSuffix === 'function' ? mbModuleTaSuffix(m) : ''}</option>`).join('');
 
     // Sync ALL module selectors (basic-info + tab bars)
     ['current-module-selector',

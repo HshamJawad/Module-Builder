@@ -1,0 +1,191 @@
+// ============================================================
+// /src/ta_finder.js — "Where is the Task Analysis?" (3.10.0)
+//
+// DACUM Live Pro links every module to its source tasks (a competency
+// criterion traces to the tasks of its competency), and sends each
+// task's Task Analysis with every module that uses it. Nothing on screen
+// said which module that was, so a user who had analysed the tasks of
+// duty A had to open the modules one by one to find them. This file
+// only READS what each module already holds
+// (module.taskAnalysisSource) and shows it in three places:
+//
+//   • the module lists: "CMCN 1-2 — Storage 1-2 · 🔬 3"
+//     (count of this module's tasks that carry Task Analysis);
+//   • a folding index at the top of Training Structure Mapping: every
+//     analysed task, and the modules that use it, each one a button
+//     that switches to that module;
+//   • one line above "Browse Task Analysis": how many of this module's
+//     tasks are analysed, and which — or, when none is, where the
+//     analysed tasks are.
+//
+// Nothing is stored. Older projects (no taskAnalysisSource) show
+// nothing new.
+// ============================================================
+
+/* Task Analysis sections whose content counts — taskCode is a label. */
+function _mbTaHasContent(rec) {
+    if (!rec || typeof rec !== 'object') return false;
+    return Object.keys(rec).some(k => {
+        if (k === 'taskCode') return false;
+        const v = rec[k];
+        if (Array.isArray(v)) return v.some(x => String(x == null ? '' : x).trim());
+        return !!String(v == null ? '' : v).trim();
+    });
+}
+
+/** Ids of this module's source tasks that carry Task Analysis. */
+function mbAnalysedTaskIds(module) {
+    const src = module && module.taskAnalysisSource;
+    if (!src || !src.taskAnalysis) return [];
+    const ids = src.sourceTaskIds && src.sourceTaskIds.length ? src.sourceTaskIds : Object.keys(src.taskAnalysis);
+    return ids.filter(id => _mbTaHasContent(src.taskAnalysis[id]));
+}
+
+function _mbTaskInfo(module, taskId) {
+    const src = (module && module.taskAnalysisSource) || {};
+    const st = (src.sourceTasks || []).find(t => t.id === taskId) || {};
+    const ta = (src.taskAnalysis || {})[taskId] || {};
+    /* DACUM sends the label in its interface language: "TASK B4",
+       "TÂCHE B4", "المهمة ب4". The short code is the last word when it
+       carries a digit; anything else ("ADDED TASK") is kept whole. */
+    const label = String(ta.taskCode || st.code || taskId).trim();
+    const parts = label.split(/\s+/);
+    const last = parts[parts.length - 1];
+    return { code: parts.length > 1 && /\d/.test(last) ? last : label, text: st.text || '' };
+}
+
+/* "A10" after "A9", letters first. */
+function _mbCodeCompare(a, b) {
+    const pa = /^([A-Za-z]*)\s*(\d*)/.exec(a) || [], pb = /^([A-Za-z]*)\s*(\d*)/.exec(b) || [];
+    if ((pa[1] || '') !== (pb[1] || '')) return (pa[1] || '').localeCompare(pb[1] || '');
+    const na = parseInt(pa[2], 10), nb = parseInt(pb[2], 10);
+    if (!isNaN(na) && !isNaN(nb) && na !== nb) return na - nb;
+    return a.localeCompare(b);
+}
+
+/** Every analysed task in the project, with the modules that use it. */
+function mbTaskAnalysisIndex() {
+    const byTask = new Map();
+    (mbState.modulesData || []).forEach(m => {
+        mbAnalysedTaskIds(m).forEach(id => {
+            if (!byTask.has(id)) byTask.set(id, Object.assign({ id, modules: [] }, _mbTaskInfo(m, id)));
+            byTask.get(id).modules.push(m);
+        });
+    });
+    return [...byTask.values()].sort((a, b) => _mbCodeCompare(a.code, b.code));
+}
+
+function _mbListSep() {
+    const lang = (window.i18n && window.i18n.getLang) ? window.i18n.getLang() : 'en';
+    return lang === 'ar' ? '، ' : ', ';
+}
+
+/** Short module reference for chips: the code, else "M1", else the title. */
+function _mbModuleRef(m) {
+    return m.moduleCode || m.moduleNumber || m.title || m.id;
+}
+
+const _mbEsc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
+function _mbModuleChip(m, current) {
+    const isCur = current && m.id === current.id;
+    const title = _mbEsc(typeof mbModuleLabel === 'function' ? mbModuleLabel(m) : m.title);
+    return `<button type="button" class="mb-ta-chip${isCur ? ' is-current' : ''}" data-act="mbJumpToModule" data-args='${_mbEsc(JSON.stringify([m.id]))}'
+                title="${title}"${isCur ? ' aria-current="true"' : ''}><bdi>${_mbEsc(_mbModuleRef(m))}</bdi></button>`;
+}
+
+/** Switches every module selector to this module (same path as choosing
+ *  it in the Training Structure Mapping bar). */
+function mbJumpToModule(moduleId) {
+    const sel = document.getElementById('mapping-module-selector');
+    if (!sel || !mbState.modulesData.some(m => m.id === moduleId)) return;
+    sel.value = moduleId;
+    if (typeof switchModuleFromTab === 'function') switchModuleFromTab('mapping');
+}
+
+let _mbTaIndexOpen = null;   // remembered for this page load
+
+function mbRenderTaskAnalysisIndex() {
+    const host = document.getElementById('mb-ta-index');
+    if (!host) return;
+    _mbInjectTaFinderStyles();
+    const rows = mbTaskAnalysisIndex();
+    if (!rows.length) { host.innerHTML = ''; return; }
+    const current = (mbState.modulesData || []).find(m => m.id === mbState.currentModuleId) || null;
+    const moduleCount = new Set(rows.flatMap(r => r.modules.map(m => m.id))).size;
+    const open = _mbTaIndexOpen === null ? false : _mbTaIndexOpen;
+    host.innerHTML = `
+        <details class="mb-ta-index"${open ? ' open' : ''}>
+            <summary>
+                <span class="mb-ta-index-title">🔬 ${_mbEsc(window.i18n.t('mbTaIndexTitle'))}</span>
+                <span class="mb-ta-index-sum">${_mbEsc(window.i18n.tf('mbTaIndexSummary', { v0: rows.length, v1: moduleCount }))}</span>
+            </summary>
+            <p class="mb-ta-index-hint">${_mbEsc(window.i18n.t('mbTaIndexHint'))}</p>
+            <div class="mb-ta-index-list">
+                ${rows.map(r => `
+                    <div class="mb-ta-row">
+                        <div class="mb-ta-task"><bdi class="mb-ta-code">${_mbEsc(r.code)}</bdi> <span dir="auto">${_mbEsc(r.text)}</span></div>
+                        <div class="mb-ta-mods">${r.modules.map(m => _mbModuleChip(m, current)).join('')}</div>
+                    </div>`).join('')}
+            </div>
+        </details>`;
+    host.querySelector('details').addEventListener('toggle', function () { _mbTaIndexOpen = this.open; });
+}
+
+/** The line above "Browse Task Analysis" for the current module. */
+function mbTaskAnalysisModuleLine(module) {
+    const src = (module && module.taskAnalysisSource) || {};
+    const total = (src.sourceTaskIds || []).length;
+    if (!total) return '';
+    const ids = mbAnalysedTaskIds(module);
+    if (ids.length) {
+        const codes = ids.map(id => _mbTaskInfo(module, id).code).sort(_mbCodeCompare);
+        return `<p class="mb-ta-line">🔬 ${_mbEsc(window.i18n.tf('mbTaLineSome', { v0: total, v1: ids.length }))}
+                <bdi>${_mbEsc(codes.join(_mbListSep()))}</bdi></p>`;
+    }
+    const elsewhere = (mbState.modulesData || []).filter(m => m.id !== module.id && mbAnalysedTaskIds(m).length);
+    return `<p class="mb-ta-line is-empty">🔬 ${_mbEsc(window.i18n.tf('mbTaLineNone', { v0: total }))}
+            ${elsewhere.length ? `<span class="mb-ta-line-where">${_mbEsc(window.i18n.t('mbTaLineElsewhere'))}</span> ${elsewhere.map(m => _mbModuleChip(m, null)).join('')}` : ''}</p>`;
+}
+
+/** " · 🔬 3" after a module name in the selectors (nothing when 0). */
+function mbModuleTaSuffix(m) {
+    const n = mbAnalysedTaskIds(m).length;
+    return n ? ` · 🔬 ${n}` : '';
+}
+
+function _mbInjectTaFinderStyles() {
+    if (document.getElementById('mb-ta-finder-styles')) return;
+    const st = document.createElement('style');
+    st.id = 'mb-ta-finder-styles';
+    st.textContent = `
+        .mb-ta-index { background:#fefce8; border:1px solid #fde68a; border-radius:10px; margin-bottom:18px; }
+        .mb-ta-index > summary { cursor:pointer; padding:10px 14px; display:flex; flex-wrap:wrap; align-items:center; gap:4px 12px; list-style:none; }
+        .mb-ta-index > summary::-webkit-details-marker { display:none; }
+        .mb-ta-index > summary::after { content:'▾'; margin-inline-start:auto; color:#92400e; }
+        .mb-ta-index[open] > summary::after { content:'▴'; }
+        .mb-ta-index-title { font-weight:700; color:#92400e; }
+        .mb-ta-index-sum { color:#a16207; font-size:0.88em; }
+        .mb-ta-index-hint { margin:0 14px 8px; color:#78716c; font-size:0.84em; }
+        .mb-ta-index-list { padding:0 14px 12px; max-height:340px; overflow-y:auto; }
+        .mb-ta-row { display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 12px; padding:7px 0; border-top:1px solid #fef3c7; }
+        .mb-ta-task { flex:1 1 260px; min-width:0; font-size:0.9em; color:#374151; overflow-wrap:anywhere; }
+        .mb-ta-code { font-weight:700; color:#0369a1; }
+        .mb-ta-mods { display:flex; flex-wrap:wrap; gap:6px; }
+        /* Chips follow the house style (mb-styles.css paints every button
+           silver, by design); only the shape is set here. The module on
+           screen is marked by a blue outline — the one override, so it
+           can be told apart. */
+        button.mb-ta-chip { border-radius:999px; padding:3px 10px; margin:0; font-size:0.82em; font-weight:600; line-height:1.5; cursor:pointer; white-space:nowrap; min-height:0; width:auto; }
+        #mb-ta-index button.mb-ta-chip.is-current { border:2px solid #0284c7 !important; color:#075985 !important; background:#e0f2fe !important; cursor:default; }
+        .mb-ta-line { margin:0 0 10px; padding:7px 10px; background:#ecfdf5; border:1px solid #a7f3d0; border-radius:8px; color:#065f46; font-size:0.86em; display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
+        .mb-ta-line.is-empty { background:#fff7ed; border-color:#fed7aa; color:#9a3412; }
+        .mb-ta-line-where { font-weight:600; }
+    `;
+    document.head.appendChild(st);
+}
+
+window.addEventListener('mb:langchange', function () {
+    mbRenderTaskAnalysisIndex();
+    if (typeof renderSourceBrowser === 'function') renderSourceBrowser();
+});

@@ -485,6 +485,9 @@ function _mbBuildRefChecklistHtml(module, checkedKeys, namePrefix, excludeKeys) 
 // row was deleted elsewhere would be exactly the kind of quiet data
 // loss this tool needs to avoid.
 function renderSourceBrowser() {
+    /* 3.10.0: the project-wide "Where is the Task Analysis?" index above
+       this tab is repainted with it (ta_finder.js). */
+    if (typeof mbRenderTaskAnalysisIndex === 'function') mbRenderTaskAnalysisIndex();
     const host = document.getElementById('mb-source-browser');
     if (!host) return;
     const module = _mbCurrentModule();
@@ -497,6 +500,7 @@ function renderSourceBrowser() {
         <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;margin-bottom:18px;">
             <h4 style="margin:0 0 4px;color:#374151;">${window.i18n.t('mbSourceBrowserTitle')}</h4>
             <p style="margin:0 0 10px;color:#6b7280;font-size:0.85em;">${window.i18n.t('mbSourceBrowserIntro')}</p>
+            ${typeof mbTaskAnalysisModuleLine === 'function' ? mbTaskAnalysisModuleLine(module) : ''}
             <div id="mb-source-browser-list">${_mbBuildSourceChecklistHtml(module, [], 'mbsrc', Object.keys(_mbAllAssignments()))}</div>
             <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
                 <button data-act="mbCreateFromSelection" data-args='["info"]' style="background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;border-radius:6px;padding:7px 14px;font-size:0.85em;font-weight:600;cursor:pointer;">➕ ${window.i18n.t('mbCreateInfoFromSelection')}</button>
