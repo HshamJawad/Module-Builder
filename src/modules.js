@@ -641,11 +641,11 @@ function updateModuleSummary() {
     document.getElementById('module-lo-count').textContent = loCount;
     document.getElementById('module-sheets-count').textContent = sheetsCount;
 
-    /* Level / specialisation line, only for a module that has them
+    /* Level / track / code / short-name line, only for a module that has them
        (imported from DACUM Live Pro). Created on first use so index.html
        needs no change. */
     let info = document.getElementById('module-level-info');
-    if (!module.level && !module.track) { if (info) info.remove(); return; }
+    if (!module.level && !module.track && !module.moduleCode && !module.shortName) { if (info) info.remove(); return; }
     if (!info) {
         info = document.createElement('div');
         info.id = 'module-level-info';
@@ -656,9 +656,22 @@ function updateModuleSummary() {
     const lvlLabel = (window.i18n && window.i18n.t && window.i18n.t('cvLevel') !== 'cvLevel')
         ? window.i18n.t('cvLevel').replace(/:\s*$/, '')
         : ({ ar: 'المستوى', fr: 'Niveau' })[lang] || 'Level';
-    const trkLabel = ({ ar: 'التخصص', fr: 'Spécialisation' })[lang] || 'Specialisation';
+    /* 3.9.1: the same names DACUM Live Pro's Module Mapping card uses
+       ("Track / code prefix", "Code", "Short name") — it used to read
+       "Specialisation", which made the same value look like a different
+       field. Code and short name arrive from DACUM 3.34+. */
+    const t = (k, fb) => (window.i18n && window.i18n.t && window.i18n.t(k) !== k) ? window.i18n.t(k) : fb;
+    const trkLabel  = t('mbInfoTrack', 'Track / code prefix');
+    const codeLabel = t('mbInfoCode', 'Code');
+    const shortLbl  = t('mbInfoShortName', 'Short name');
     const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+    /* <bdi>: codes such as "CMCN 1-1" stay in their own order inside an
+       Arabic line. */
+    const colon = lang === 'fr' ? '\u00A0:' : ':';   // French puts a space before the colon
+    const item = (label, value) => `<span><strong>${esc(String(label).trim())}${colon}</strong> <bdi>${esc(value)}</bdi></span>`;
     info.innerHTML =
-        (module.level ? `<span><strong>${esc(lvlLabel)}:</strong> ${esc(module.level)}</span>` : '') +
-        (module.track ? `<span><strong>${esc(trkLabel)}:</strong> ${esc(module.track)}</span>` : '');
+        (module.level ? item(lvlLabel, module.level) : '') +
+        (module.track ? item(trkLabel, module.track) : '') +
+        (module.moduleCode ? item(codeLabel, module.moduleCode) : '') +
+        (module.shortName ? item(shortLbl, module.shortName) : '');
 }
