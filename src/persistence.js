@@ -67,6 +67,11 @@ var MB_KEYS = {
        of what the tool writes. */
     navCollapsed: 'mb_nav_collapsed',
     /* Cross-tool. Not prefixed on purpose — see header. */
+    /* Module library (3.12.0). Small settings, read synchronously at
+       boot: which project to reopen, and who is writing. */
+    activeProject: 'mb_active_project',
+    authorName:    'mb_author_name',
+    authorAsked:   'mb_author_asked',
     uiLang:      'dacum_lang',
     dacumImport: 'dacum_modules_export'
 };
@@ -127,8 +132,18 @@ var mbBackend = {
       corrupt one. */
 
 var MB_IDB_NAME    = 'module_builder';
-var MB_IDB_VERSION = 1;
+/* 2 (3.12.0): the module library — one record per module instead of one
+   snapshot per session. The stores are created below and used only by
+   project_store.js; `docs` stays for the legacy snapshot it migrates. */
+var MB_IDB_VERSION = 3;   // 3 (3.13.0): `images`, one Blob per picture
 var MB_IDB_STORE   = 'docs';
+var MB_IDB_LIBRARY_STORES = {
+    projects:   { keyPath: 'id' },          // project meta + module order
+    shared:     { keyPath: 'pid' },         // cover, team, intro, references
+    heads:      { keyPath: ['pid', 'mid'] },// light module skeleton + card + stats
+    modules:    { keyPath: ['pid', 'mid'] }, // the full module, one record each
+    images:     { keyPath: 'h' }             // { h: sha-256 hex, blob, type, size } — shared by all projects
+};
 var MB_IDB_OPEN_TIMEOUT = 3000;
 
 var _mbIdbPromise = null;
@@ -162,6 +177,9 @@ function mbIdbOpen() {
         req.onupgradeneeded = function () {
             var db = req.result;
             if (!db.objectStoreNames.contains(MB_IDB_STORE)) db.createObjectStore(MB_IDB_STORE);
+            Object.keys(MB_IDB_LIBRARY_STORES).forEach(function (name) {
+                if (!db.objectStoreNames.contains(name)) db.createObjectStore(name, MB_IDB_LIBRARY_STORES[name]);
+            });
         };
         req.onsuccess = function () {
             var db = req.result;

@@ -1,14 +1,19 @@
 // ============================================================
 // /src/autosave.js
-// Autosave + backup reminder. Self-contained IIFE; touches no
-// other module's variables except through window/global reads.
-// Extracted from Module_Builder.html lines 7058-EOF (v2.0-legacy).
+// Autosave + backup reminder.
+//
+// 3.12.0: autosave no longer writes a snapshot of the session. It asks
+// the module library (module_library.js) to save what is open, and the
+// library writes only what changed — the open module's record, and the
+// shared project data or the project record when those changed. So the
+// cost of a save is the cost of ONE module, however many the project
+// holds, and a page reload reopens the project where it was left: the
+// "restore previous session" banner is gone with the snapshot.
 // ============================================================
 
 (function AutoSaveModule() {
         'use strict';
 
-        const LS_KEY        = 'module_builder_autosave';
         const DEBOUNCE_MS   = 900;
         const REMINDER_MS   = 8 * 60 * 1000;   // 8 minutes
         const TOAST_HIDE_MS = 7000;
@@ -16,11 +21,8 @@
         let _debounceTimer   = null;
         let _reminderTimer   = null;
         let _toastEl         = null;
-        let _sessionBannerEl = null;
         let _initialized     = false;
-        let _pendingSnap     = null;   // last session, offered after a refresh
-        let _offerEl         = null;
-        let _dirty           = false;  // user edited something in THIS page load
+        let _saving          = null;   // the save in flight, if any
 
         /* ── CSS ──────────────────────────────────────────────────── */
         const style = document.createElement('style');
@@ -148,28 +150,6 @@
 
         /* ── DOM Elements ─────────────────────────────────────────── */
         function buildUI() {
-            // Session restored banner
-            _sessionBannerEl = document.createElement('div');
-            _sessionBannerEl.id = 'as-session-banner';
-            _sessionBannerEl.innerHTML = `
-                <span>✅ <span data-i18n="asRestored">${window.i18n.t('asRestored')}</span></span>
-                <button class="as-dismiss" title="${window.i18n.t('dgDismiss')}" data-i18n-title="dgDismiss">✕</button>
-            `;
-            _sessionBannerEl.querySelector('.as-dismiss').onclick = hideBanner;
-            document.body.appendChild(_sessionBannerEl);
-
-            // Previous-session offer (shown after a refresh)
-            _offerEl = document.createElement('div');
-            _offerEl.id = 'as-offer-banner';
-            _offerEl.innerHTML = `
-                <span>🕘 <span data-i18n="asPrevSessionFound">${window.i18n.t('asPrevSessionFound')}</span></span>
-                <button class="as-restore-now" data-i18n="asRestorePrev">${window.i18n.t('asRestorePrev')}</button>
-                <button class="as-dismiss" title="${window.i18n.t('dgDismiss')}" data-i18n-title="dgDismiss">✕</button>
-            `;
-            _offerEl.querySelector('.as-restore-now').onclick = function () { restorePending(); };
-            _offerEl.querySelector('.as-dismiss').onclick = hideOffer;
-            document.body.appendChild(_offerEl);
-
             // Backup reminder toast
             _toastEl = document.createElement('div');
             _toastEl.id = 'as-reminder-toast';
@@ -195,90 +175,23 @@
             document.body.appendChild(dot);
         }
 
-        /* ── Snapshot ─────────────────────────────────────────────── */
-        function collectSnapshot() {
-            try {
-                /* Flush current form state into data structures.
-                   syncProjectTextFromDOM() joined this list: without it
-                   the four free-text fields below would be read from
-                   state the editor has not been written into yet. It
-                   also flushes the section boxes (blocks.js). */
-                if (typeof saveCurrentSheetToLO  === 'function') saveCurrentSheetToLO();
-                if (typeof saveCurrentModuleLOData=== 'function') saveCurrentModuleLOData();
-                if (typeof saveCoverData          === 'function') saveCoverData();
-                if (typeof saveWorkTeamData       === 'function') saveWorkTeamData();
-                if (typeof syncProjectTextFromDOM === 'function') syncProjectTextFromDOM();
-
-                /* ── Pairs, not .value ──────────────────────────────
-                   These four were read straight off the textareas:
-                       (document.getElementById('...') || {}).value || ''
-                   A textarea holds ONE side of an { en, ar } pair — the
-                   side currently being edited. So every autosave wrote a
-                   half-project, and a crash after a content-language
-                   switch restored the visible half and dropped the other
-                   one, silently, with no file to fall back on. That is
-                   the exact failure autosave exists to prevent. State
-                   already holds both sides; the flush above makes it
-                   current. */
-                return {
-                    version:              '3.0',
-                    schemaVersion:        4,        // matches saveWork()
-                    _autosave:            true,
-                    _savedAt:             Date.now(),
-                    coversAdditionalInfo:   mbState.coversAdditionalInfo,
-                    coversAdditionalNotes:  mbState.coversAdditionalNotes,
-                    frontCoverImage:      mbState.frontCoverImage  || null,
-                    backCoverImage:       mbState.backCoverImage   || null,
-                    coverRows:            mbState.coverRows        || [],
-                    coverRowIdCounter:    mbState.coverRowIdCounter|| 7,
-                    coverFrameworkSeeded: !!mbState.coverFrameworkSeeded,
-                    teamMembers:          mbState.teamMembers      || [],
-                    teamMemberIdCounter:  mbState.teamMemberIdCounter || 0,
-                    introAdditionalDetails: mbState.introAdditionalDetails,
-                    introBlocks:          mbState.introBlocks      || [],
-                    includeLearningGuide: !!mbState.includeLearningGuide,
-                    modules:              mbState.modulesData      || [],
-                    currentModuleId:      mbState.currentModuleId  || null,
-                    moduleIdCounter:      mbState.moduleIdCounter  || 0,
-                    currentLOId:          mbState.currentLOId      || null,
-                    loIdCounter:          mbState.loIdCounter      || 0,
-                    assessmentContent:    mbState.assessmentContent,
-                    assessmentFormsData:  mbState.assessmentFormsData || {},
-                    /* null, never 'References' — see the restore note.
-                       The literal here put the English heading into
-                       storage on the first autosave of a new project,
-                       so it came back through the restore path even
-                       after that path was fixed. */
-                    referencesTitle:      mbState.referencesTitle  || null,
-                    referencesData:       mbState.referencesData   || [],
-                    refIdCounter:         mbState.refIdCounter     || 1,
-                    /* The framework card is project-level state like the
-                       cover rows, so it belongs in the crash snapshot for
-                       the same reason they do: a browser that dies with
-                       an hour of accreditation detail typed into it and
-                       never saved to a file has lost it otherwise. */
-                    tvqfBasic:            mbState.tvqfBasic        || {},
-                    tvqfExtended:         mbState.tvqfExtended     || {},
-                };
-            } catch(e) {
-                console.warn('[AutoSave] snapshot error:', e);
-                return null;
-            }
-        }
-
-        /* ── Save through the persistence layer ───────────────────── */
-        function persistSnapshot() {
-            const snap = collectSnapshot();
-            if (!snap) return;
-            mbSaveDoc(MB_KEYS.autosave, snap)
-                .then(flashDot)
+        /* ── Save through the module library ──────────────────────── */
+        function persistNow() {
+            clearTimeout(_debounceTimer);
+            _debounceTimer = null;
+            if (typeof mbLibrarySave !== 'function') return Promise.resolve();
+            const run = mbLibrarySave()
+                .then(function (r) { if (r && r.changed) flashDot(); })
                 .catch(function (e) {
                     /* Autosave degrades quietly by design — it fires every
                        few seconds and a modal on each failure would make
                        the tool unusable exactly when storage is full. The
-                       DELIBERATE save in storage.js does surface it. */
-                    console.warn('[AutoSave] write failed:', e.message);
+                       DELIBERATE save (💾) surfaces its own errors. */
+                    console.warn('[AutoSave] write failed:', e && e.message);
                 });
+            _saving = run;
+            run.then(function () { if (_saving === run) _saving = null; });
+            return run;
         }
 
         function flashDot() {
@@ -291,55 +204,12 @@
         /* ── Debounced trigger ────────────────────────────────────── */
         function scheduleSave() {
             clearTimeout(_debounceTimer);
-            _debounceTimer = setTimeout(persistSnapshot, DEBOUNCE_MS);
+            _debounceTimer = setTimeout(persistNow, DEBOUNCE_MS);
         }
 
-        /* ── Restore on load ──────────────────────────────────────── */
-        /**
-         * THE call site the old comment here flagged as "the one to
-         * convert first". It is converted.
-         *
-         * It used to read the snapshot with mbGetSetting — the SETTINGS
-         * accessor, synchronous, localStorage-only — which worked only
-         * because both APIs happened to sit on the same backend. Now
-         * that documents live in IndexedDB, a synchronous read cannot
-         * exist: IndexedDB has no such operation at all. So this returns
-         * a Promise, and its one caller awaits it.
-         *
-         * The snapshot also arrives as an OBJECT now, not a JSON string
-         * — structured clone stores the shape itself. The JSON.parse
-         * branch is kept for a snapshot still coming from the
-         * localStorage fallback on a browser that refused IndexedDB.
-         */
-        function tryRestore() {
-            return mbLoadDoc(MB_KEYS.autosave).then(function (snap) {
-                if (!snap) return false;
-
-                if (snap.__corrupt) {
-                    console.warn('[AutoSave] stored snapshot is unreadable; leaving it in place');
-                    return false;
-                }
-                if (typeof snap === 'string') {
-                    try { snap = JSON.parse(snap); } catch (e) { return false; }
-                }
-                if (!snap._autosave || !snap.version) return false;
-
-                /* A browser refresh now starts a CLEAN project (the user
-                   was warned by beforeunload before leaving). The last
-                   snapshot is not thrown away, though: it is held here
-                   and offered in a banner, so a refresh by mistake — or
-                   a crash — is still one click from recovery. Nothing is
-                   applied unless the user asks for it. */
-                if (!_snapHasWork(snap)) return false;
-                _pendingSnap = snap;
-                return true;
-            }).catch(function (e) {
-                console.warn('[AutoSave] restore error:', e);
-                return false;
-            });
-        }
-
-        /* ── Is there real work in a project / snapshot? ─────────── */
+        /* ── Is there real work in a snapshot? ────────────────────────
+           Kept for the one-time move of a 3.11 snapshot into the library
+           (module_library.js): an empty one is not worth a project. */
         function _txt(v) {
             if (v === null || v === undefined) return '';
             if (typeof v === 'string') return v.trim();
@@ -368,58 +238,7 @@
                 Object.keys(d.assessmentFormsData || {}).length > 0 ||
                 !!_txt(d.coversAdditionalInfo) || !!_txt(d.introAdditionalDetails);
         }
-        /* For modules.js: the DACUM import asks before replacing a
-           previous session only when that session holds real work. */
         window.mbSnapshotHasWork = _snapHasWork;
-
-        function _projectHasWork() {
-            if (typeof mbState === 'undefined') return false;
-            return _dirty || _modulesHaveWork(mbState.modulesData) ||
-                !!mbState.frontCoverImage || !!mbState.backCoverImage ||
-                (mbState.teamMembers || []).length > 0 ||
-                (mbState.introBlocks || []).length > 0;
-        }
-
-        /* ── Offer the previous session after a refresh ──────────── */
-        function showOffer() {
-            if (!_offerEl || !_pendingSnap) return;
-            _offerEl.classList.add('as-visible');
-        }
-        function hideOffer() {
-            if (_offerEl) _offerEl.classList.remove('as-visible');
-        }
-        async function restorePending() {
-            if (!_pendingSnap) return;
-            if (_dirty && typeof mbConfirm === 'function' &&
-                !(await mbConfirm(window.i18n.t('asRestoreReplaceConfirm'), { danger: true }))) return;
-            const snap = _pendingSnap;
-            _pendingSnap = null;
-            hideOffer();
-            _applySnapshot(snap);
-            _dirty = true;
-            if (typeof renderStructureProposal === 'function') renderStructureProposal();
-            if (typeof renderSourceBrowser === 'function') renderSourceBrowser();
-            if (typeof renderAssignedItemsPanel === 'function') renderAssignedItemsPanel();
-            scheduleSave();
-            showBanner();
-        }
-
-        function _applySnapshot(data) {
-            // This mirrors handleLoadFile logic for v3.0
-            // We call the same branch used by the existing load system
-            const evt = new CustomEvent('autosave:restore', { detail: data });
-            document.dispatchEvent(evt);
-        }
-
-        /* ── Banner ───────────────────────────────────────────────── */
-        function showBanner() {
-            if (!_sessionBannerEl) return;
-            _sessionBannerEl.classList.add('as-visible');
-            setTimeout(hideBanner, 6000);
-        }
-        function hideBanner() {
-            if (_sessionBannerEl) _sessionBannerEl.classList.remove('as-visible');
-        }
 
         /* ── Reminder toast ───────────────────────────────────────── */
         function showToast() {
@@ -437,176 +256,58 @@
 
         /* ── Attach input listeners ───────────────────────────────── */
         function attachListeners() {
-            // All input/change/click events on the main container
             const root = document.getElementById('main-container') || document.body;
             ['input', 'change'].forEach(evt => {
                 root.addEventListener(evt, scheduleSave, { passive: true });
-                root.addEventListener(evt, function (e) { if (e.isTrusted) _dirty = true; }, { passive: true });
             });
+            /* Buttons change state too — add a sheet, delete an image,
+               reorder steps — without an input event. Any click on a
+               button schedules a save; the library writes nothing when
+               nothing changed, so a click that only navigates costs one
+               walk of the open module. Capture phase, on the document:
+               the dialogs live outside the main container. */
+            document.addEventListener('click', function (e) {
+                if (e.target && e.target.closest && e.target.closest('button, [data-act], label')) scheduleSave();
+            }, { capture: true, passive: true });
 
-            /* Refresh / close warning. A refresh starts a clean project
-               now, so leaving with work on screen must be confirmed.
-               Browsers show their own generic wording; the text cannot
-               be customised. */
+            /* Leaving the page: the pending save goes out now. IndexedDB
+               writes started here normally complete; the browser's own
+               "leave page?" question is asked only while one is still
+               waiting, so it no longer appears for work already saved. */
             window.addEventListener('beforeunload', function (e) {
-                if (!_projectHasWork()) return;
+                const pending = !!_debounceTimer || !!_saving;
+                if (_debounceTimer) persistNow();
+                if (!pending) return;
                 e.preventDefault();
                 e.returnValue = '';
                 return '';
             });
-
-            /* Clear All: the project is intentionally empty now. */
-            window.addEventListener('mb:projectcleared', function () {
-                _dirty = false;
-                _pendingSnap = null;
-                clearTimeout(_debounceTimer);
-                hideOffer();
+            document.addEventListener('visibilitychange', function () {
+                if (document.visibilityState === 'hidden' && _debounceTimer) persistNow();
             });
 
-            // Also hook into the existing saveWork button to reset reminder timer
-            document.querySelectorAll('[onclick*="saveWork"]').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    resetReminderTimer();
-                    // Clear autosave after manual save (optional — keeps it for safety)
-                }, { passive: true });
+            /* Clear All: the library already wrote the empty project. */
+            window.addEventListener('mb:projectcleared', function () {
+                clearTimeout(_debounceTimer);
+                _debounceTimer = null;
+            });
+
+            // The 💾 button resets the backup reminder
+            document.querySelectorAll('[data-act="saveWork"]').forEach(btn => {
+                btn.addEventListener('click', resetReminderTimer, { passive: true });
             });
         }
 
-        /* ── Listen for restore event (from _applySnapshot) ──────── */
-        document.addEventListener('autosave:restore', function(e) {
-            const data = e.detail;
-            if (!data || typeof data !== 'object') return;
-
-            // Mirror the existing v3.0 load path from handleLoadFile
-            try {
-                /* Into state, then onto the screen through the one
-                   function that knows which side to show. Assigning
-                   .value directly printed "[object Object]" the moment
-                   the snapshot started carrying pairs. biUpgrade keeps
-                   older snapshots working: a bare string is lifted to a
-                   pair, its side guessed from its script, exactly as
-                   biMigrateProject does for old project files. */
-                mbState.coversAdditionalInfo  = biUpgrade(data.coversAdditionalInfo);
-                mbState.coversAdditionalNotes = biUpgrade(data.coversAdditionalNotes);
-
-                mbState.frontCoverImage = data.frontCoverImage || null;
-                mbState.backCoverImage  = data.backCoverImage  || null;
-                if (typeof _showCoverPreview === 'function') {
-                    if (mbState.frontCoverImage) _showCoverPreview('front', mbState.frontCoverImage);
-                    else if (typeof deleteFrontCoverImage === 'function') deleteFrontCoverImage();
-                    if (mbState.backCoverImage)  _showCoverPreview('back',  mbState.backCoverImage);
-                    else if (typeof deleteBackCoverImage  === 'function') deleteBackCoverImage();
-                }
-                if (data.coverRows && typeof renderCoverTable === 'function') {
-                    mbState.coverRows         = data.coverRows;
-                    mbState.coverRowIdCounter = data.coverRowIdCounter || 7;
-                    mbState.coverFrameworkSeeded = !!data.coverFrameworkSeeded;
-                    renderCoverTable();
-                }
-                if (data.teamMembers && typeof renderWorkTeam === 'function') {
-                    mbState.teamMembers          = data.teamMembers;
-                    mbState.teamMemberIdCounter  = data.teamMemberIdCounter || 0;
-                    renderWorkTeam();
-                }
-                mbState.introAdditionalDetails = biUpgrade(data.introAdditionalDetails);
-                /* mbNormalizeBlocks is idempotent and tolerates the key
-                   being absent — every snapshot written before this
-                   feature existed. */
-                if (typeof mbNormalizeBlocks === 'function') {
-                    mbState.introBlocks = mbNormalizeBlocks(data.introBlocks);
-                }
-                mbState.includeLearningGuide = !!data.includeLearningGuide;
-                if (typeof mbRenderLearningGuideToggle === 'function') mbRenderLearningGuideToggle();
-
-                mbState.assessmentContent = biUpgrade(data.assessmentContent);
-                if (data.assessmentFormsData)
-                    mbState.assessmentFormsData = data.assessmentFormsData;
-
-                /* One call paints all four textareas and every section
-                   box, on the side the author is editing. */
-                if (typeof applyProjectTextToDOM === 'function') applyProjectTextToDOM();
-
-                /* `|| 'References'` is what overwrote the seeded Arabic
-                   heading on every restore. mb_state.js leaves this null
-                   deliberately: null is the signal mbSeedReferencesTitle()
-                   waits for, and it fills BOTH sides from the dictionary.
-                   A literal here is a translation the dictionary has no
-                   say over — the same mistake the cover-row labels used
-                   to carry. */
-                mbState.referencesTitle = data.referencesTitle
-                    ? biUpgrade(data.referencesTitle)
-                    : null;
-                mbState.referencesData  = data.referencesData  || [];
-                mbState.refIdCounter    = data.refIdCounter    || 1;
-                if (typeof mbSeedReferencesTitle === 'function') mbSeedReferencesTitle();
-                if (typeof renderReferences === 'function') renderReferences();
-
-                /* Still restored, still migrated: a snapshot taken while
-                   the framework card existed carries these keys, and
-                   renderCoverTable() is what moves them onto the rows.
-                   It has to run AFTER the assignment — the table was
-                   drawn a hundred lines above, before these keys were
-                   read — which is why this is not a redundant render. */
-                mbState.tvqfBasic    = data.tvqfBasic    || {};
-                mbState.tvqfExtended = data.tvqfExtended || {};
-                if (typeof renderCoverTable === 'function') renderCoverTable();
-
-                if (data.modules && typeof renderModuleSelector === 'function') {
-                    mbState.modulesData      = data.modules;
-                    mbState.currentModuleId  = data.currentModuleId || null;
-                    mbState.moduleIdCounter  = data.moduleIdCounter || 0;
-                    mbState.currentLOId      = data.currentLOId    || null;
-                    mbState.loIdCounter      = data.loIdCounter    || 0;
-
-                    if (typeof syncLearningOutcomesFromCurrentModule === 'function')
-                        syncLearningOutcomesFromCurrentModule();
-                    renderModuleSelector();
-                    if (typeof renderLOSelector === 'function') renderLOSelector();
-
-                    ['current-lo-selector','info-lo-selector','activity-lo-selector'].forEach(id => {
-                        const s = document.getElementById(id);
-                        if (s && mbState.currentLOId) s.value = mbState.currentLOId;
-                    });
-                    if (mbState.currentLOId && typeof loadCurrentLOSheets === 'function')
-                        loadCurrentLOSheets();
-                }
-            } catch(err) {
-                console.warn('[AutoSave] restore apply error:', err);
-            }
-        });
+        /* For other modules: save now, wait for it. */
+        window.mbAutosaveFlush = persistNow;
 
         /* ── Init ─────────────────────────────────────────────────── */
         function init() {
             if (_initialized) return;
             _initialized = true;
-
             buildUI();
-
-            // Try restore after DOM + existing init have settled
-            setTimeout(function() {
-                /* Listeners are attached BEFORE the restore resolves, not
-                   after: the read is asynchronous now and a user typing
-                   during those few milliseconds would otherwise have that
-                   first edit go unwatched. The restore overwrites the
-                   fields either way — it is a restore. */
-                attachListeners();
-                resetReminderTimer();
-
-                // Set synchronously by modules.js's DACUM import (see
-                // initializeLearningOutcomes) earlier in this same page
-                // load — a fresh handoff from DACUM Live Pro is a
-                // deliberate new session, not a crash to recover from, so
-                // it must never be overwritten by an older IndexedDB
-                // snapshot arriving a moment later.
-                if (typeof mbState !== 'undefined' && mbState._skipAutosaveRestore) {
-                    console.log('[AutoSave] restore skipped — DACUM import is active for this session');
-                    return;
-                }
-
-                tryRestore().then(function (found) {
-                    if (found) showOffer();
-                });
-            }, 1200);
+            attachListeners();
+            resetReminderTimer();
         }
 
         // Wait for DOMContentLoaded (may already have fired)

@@ -339,7 +339,8 @@ async function clearAndStartManual() {
     
     if (!confirmed) return;
     
-    // Clear all module data
+    // Clear all module data — in storage too (the open project only)
+    await mbLibraryClearModules();
     mbState.modulesData = [];
     mbState.moduleIdCounter = 0;
     mbState.loIdCounter = 0;

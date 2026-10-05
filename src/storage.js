@@ -76,388 +76,27 @@ async function clearForm() {
     }
 }
 
+/**
+ * 💾 Save: the OPEN MODULE as one package (.mbz) — module_library.js,
+ * package_mbz.js. A module package is the tool's only file format since
+ * 3.13.0: it carries the module, its pictures and its identity card, and
+ * 📂 imports any number of them back.
+ */
 function saveWork() {
-    try {
-        // Save current sheet to LO before creating backup
-        if (mbState.currentLOId) {
-            saveCurrentSheetToLO();
-        }
-        
-        // Save current module's LO data
-        if (mbState.currentModuleId) {
-            saveCurrentModuleLOData();
-        }
-        
-        // Save cover data
-        syncProjectTextFromDOM();
-        saveCoverData();
-        
-        // Save work team data
-        saveWorkTeamData();
-        
-        const data = {
-            version: '3.0',
-            schemaVersion: 4,      // bilingual { en, ar } content
-            coversAdditionalInfo: mbState.coversAdditionalInfo,
-            coversAdditionalNotes: mbState.coversAdditionalNotes,
-            frontCoverImage: mbState.frontCoverImage,
-            backCoverImage: mbState.backCoverImage,
-            coverRows: mbState.coverRows,
-            coverRowIdCounter: mbState.coverRowIdCounter,
-            /* Whether the nine qualifications-framework rows have already
-               been added to this project. Saved because "already added"
-               is not recoverable from the rows themselves once the user
-               has deleted the ones their ministry does not ask for —
-               without it, every one of them would come back on load. */
-            coverFrameworkSeeded: mbState.coverFrameworkSeeded,
-            teamMembers: mbState.teamMembers,
-            teamMemberIdCounter: mbState.teamMemberIdCounter,
-            introAdditionalDetails: mbState.introAdditionalDetails,
-            introBlocks: mbState.introBlocks,
-            includeLearningGuide: !!mbState.includeLearningGuide,
-            modules: mbState.modulesData,
-            currentModuleId: mbState.currentModuleId,
-            moduleIdCounter: mbState.moduleIdCounter,
-            currentLOId: mbState.currentLOId,
-            loIdCounter: mbState.loIdCounter,
-            assessmentContent: mbState.assessmentContent,
-            assessmentFormsData: mbState.assessmentFormsData,
-            referencesTitle: mbState.referencesTitle,
-            referencesData: mbState.referencesData,
-            refIdCounter: mbState.refIdCounter,
-            /* Saved whole, empty or not. An empty object costs two bytes
-               and keeps the load path symmetric with this one; the
-               "don't print empty fields" rule belongs to the export, not
-               to the file format. */
-            tvqfBasic: mbState.tvqfBasic,
-            tvqfExtended: mbState.tvqfExtended,
-        };
-
-        // Create and download JSON file
-        const jsonStr = JSON.stringify(data, null, 2);
-        const blob = new Blob([jsonStr], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = getExportFilename('json');
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-
-        showStatus(window.i18n.t('dgWorkSavedSuccessfully'), 'success');
-    } catch (error) {
-        console.error('Save error:', error);
-        showStatus(window.i18n.t('dgErrorSavingWork') + error.message, 'error');
-        /* Route to error handler with SAVE context */
-        if (window.onerror) window.onerror('[SAVE] ' + error.message, 'saveWork', 0, 0, error);
-    }
+    return mbSaveModulePackage();
 }
 
 function loadWork() {
     document.getElementById('load-file-input').click();
 }
 
+/** 📂: the chosen packages are imported, one after another (package_ui.js). */
 function handleLoadFile() {
     const input = document.getElementById('load-file-input');
-    const file = input.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const data = mbAssignProjectUids(biMigrateProject(JSON.parse(e.target.result)));
-            /* Every project file written before Schema v4 holds bare
-               strings. Migration runs here, on the way IN, and nowhere
-               else — so the rest of the app may assume pairs, and a file
-               is never rewritten on disk until the user saves. */
-            
-            // Check if this is v3.0 with module support
-            if (data.version === '3.0' && data.modules) {
-                // Load cover data
-                if (document.getElementById('covers-additional-info')) {
-                    mbState.coversAdditionalInfo = biUpgrade(data.coversAdditionalInfo);
-                }
-                if (document.getElementById('covers-additional-notes')) {
-                    mbState.coversAdditionalNotes = biUpgrade(data.coversAdditionalNotes);
-                }
-                // Load front & back cover images
-                mbState.frontCoverImage = data.frontCoverImage || null;
-                if (mbState.frontCoverImage) { _showCoverPreview('front', mbState.frontCoverImage); } else { deleteFrontCoverImage(); }
-                mbState.backCoverImage = data.backCoverImage || null;
-                if (mbState.backCoverImage) { _showCoverPreview('back', mbState.backCoverImage); } else { deleteBackCoverImage(); }
-                if (data.coverRows) {
-                    mbState.coverRows = data.coverRows;
-                    mbState.coverRowIdCounter = data.coverRowIdCounter || 7;
-                    /* Read from the FILE, not left over from whatever was
-                       open before: loading an older project into a session
-                       that has already seeded a newer one must not make the
-                       older one look as if it had been seeded too, or its
-                       framework rows would never be created and the card it
-                       does carry would have nowhere to migrate to. */
-                    mbState.coverFrameworkSeeded = !!data.coverFrameworkSeeded;
-                    renderCoverTable();
-                }
-                
-                // Load work team data
-                if (data.teamMembers) {
-                    mbState.teamMembers = data.teamMembers;
-                    mbState.teamMemberIdCounter = data.teamMemberIdCounter || 0;
-                    renderWorkTeam();
-                }
-                if (document.getElementById('intro-additional-details')) {
-                    mbState.introAdditionalDetails = biUpgrade(data.introAdditionalDetails);
-                }
-                /* mbNormalizeBlocks is idempotent and tolerates the key
-                   being absent — every file saved before this feature. */
-                mbState.introBlocks = mbNormalizeBlocks(data.introBlocks);
-                mbRenderBlocks('intro');
-                mbState.includeLearningGuide = !!data.includeLearningGuide;
-                if (typeof mbRenderLearningGuideToggle === 'function') mbRenderLearningGuideToggle();
-                
-                // Load assessment data
-                if (document.getElementById('assessment-simple-content')) {
-                    mbState.assessmentContent = biUpgrade(data.assessmentContent);
-                    applyProjectTextToDOM();
-                }
-                if (data.assessmentFormsData) {
-                    mbState.assessmentFormsData = data.assessmentFormsData;
-                }
-
-                // Load references data
-                if (data.referencesData) {
-                    mbState.referencesData = data.referencesData;
-                    mbState.refIdCounter = data.refIdCounter || mbState.referencesData.length;
-                }
-                /* biUpgrade, not a bare assignment: biMigrateProject already
-                   upgrades this field for a project that went through
-                   migration, but this load path also serves the older
-                   branch below where that may not have run — biUpgrade is
-                   a no-op on an already-upgraded pair, so it's safe either
-                   way. renderReferences() reads and displays it (with
-                   biGetStrict, not string concatenation, which used to
-                   print "[object Object]" the moment this became a pair). */
-                if (data.referencesTitle) {
-                    mbState.referencesTitle = biUpgrade(data.referencesTitle);
-                }
-                renderReferences();
-
-                /* The qualifications-framework card that used to own these
-                   two objects is gone; its fields are rows of the module
-                   information table now. They are still READ, because
-                   every project file written while the card existed still
-                   carries them, and mbMigrateTvqfRows() — which runs from
-                   mbSeedCoverLabels(), inside renderCoverTable() — moves
-                   their contents onto the rows and empties them.
-
-                   The render below is therefore not cosmetic and not a
-                   duplicate of the one further up: the table was drawn
-                   before these keys were loaded, so without a second pass
-                   the migration would run against the PREVIOUS project's
-                   card and this one's would sit in the file unseen. */
-                mbState.tvqfBasic    = data.tvqfBasic    || {};
-                mbState.tvqfExtended = data.tvqfExtended || {};
-                if (typeof renderCoverTable === 'function') renderCoverTable();
-                
-                // Load module data
-                mbState.modulesData = data.modules || [];
-                mbState.moduleIdCounter = data.moduleIdCounter || 0;
-                mbState.currentModuleId = data.currentModuleId || null;
-                mbState.loIdCounter = data.loIdCounter || 0;
-                mbState.currentLOId = data.currentLOId || null;
-                
-                // If no current module but modules exist, select first
-                if (!mbState.currentModuleId && mbState.modulesData.length > 0) {
-                    mbState.currentModuleId = mbState.modulesData[0].id;
-                }
-                
-                // Sync LO data from current module
-                syncLearningOutcomesFromCurrentModule();
-                
-                // If no current LO but LOs exist in module, select first
-                if (!mbState.currentLOId && mbState.learningOutcomesData.length > 0) {
-                    mbState.currentLOId = mbState.learningOutcomesData[0].id;
-                }
-                
-                renderModuleSelector();
-                renderLOSelector();
-                loadCurrentLOSheets();
-                showStatus(window.i18n.t('dgWorkLoadedSuccessfully'), 'success');
-            }
-            // Check if this is v2.0 with Learning Outcomes (convert to v3.0)
-            else if (data.version === '2.0' && data.learningOutcomes) {
-                // Load cover data
-                if (document.getElementById('covers-additional-info')) {
-                    mbState.coversAdditionalInfo = biUpgrade(data.coversAdditionalInfo);
-                }
-                if (document.getElementById('covers-additional-notes')) {
-                    mbState.coversAdditionalNotes = biUpgrade(data.coversAdditionalNotes);
-                }
-                // Load front & back cover images
-                mbState.frontCoverImage = data.frontCoverImage || null;
-                if (mbState.frontCoverImage) { _showCoverPreview('front', mbState.frontCoverImage); } else { deleteFrontCoverImage(); }
-                mbState.backCoverImage = data.backCoverImage || null;
-                if (mbState.backCoverImage) { _showCoverPreview('back', mbState.backCoverImage); } else { deleteBackCoverImage(); }
-                if (data.coverRows) {
-                    mbState.coverRows = data.coverRows;
-                    mbState.coverRowIdCounter = data.coverRowIdCounter || 7;
-                    /* Read from the FILE, not left over from whatever was
-                       open before: loading an older project into a session
-                       that has already seeded a newer one must not make the
-                       older one look as if it had been seeded too, or its
-                       framework rows would never be created and the card it
-                       does carry would have nowhere to migrate to. */
-                    mbState.coverFrameworkSeeded = !!data.coverFrameworkSeeded;
-                    renderCoverTable();
-                }
-                
-                // Load work team data
-                if (data.teamMembers) {
-                    mbState.teamMembers = data.teamMembers;
-                    mbState.teamMemberIdCounter = data.teamMemberIdCounter || 0;
-                    renderWorkTeam();
-                }
-                if (document.getElementById('intro-additional-details')) {
-                    mbState.introAdditionalDetails = biUpgrade(data.introAdditionalDetails);
-                }
-                /* mbNormalizeBlocks is idempotent and tolerates the key
-                   being absent — every file saved before this feature. */
-                mbState.introBlocks = mbNormalizeBlocks(data.introBlocks);
-                mbRenderBlocks('intro');
-                mbState.includeLearningGuide = !!data.includeLearningGuide;
-                if (typeof mbRenderLearningGuideToggle === 'function') mbRenderLearningGuideToggle();
-                
-                // Load assessment data
-                if (document.getElementById('assessment-simple-content')) {
-                    mbState.assessmentContent = biUpgrade(data.assessmentContent);
-                    applyProjectTextToDOM();
-                }
-                if (data.assessmentFormsData) {
-                    mbState.assessmentFormsData = data.assessmentFormsData;
-                }
-
-                // Load references data
-                if (data.referencesData) {
-                    mbState.referencesData = data.referencesData;
-                    mbState.refIdCounter = data.refIdCounter || mbState.referencesData.length;
-                }
-                /* biUpgrade, not a bare assignment: biMigrateProject already
-                   upgrades this field for a project that went through
-                   migration, but this load path also serves the older
-                   branch below where that may not have run — biUpgrade is
-                   a no-op on an already-upgraded pair, so it's safe either
-                   way. renderReferences() reads and displays it (with
-                   biGetStrict, not string concatenation, which used to
-                   print "[object Object]" the moment this became a pair). */
-                if (data.referencesTitle) {
-                    mbState.referencesTitle = biUpgrade(data.referencesTitle);
-                }
-                renderReferences();
-
-                /* The qualifications-framework card that used to own these
-                   two objects is gone; its fields are rows of the module
-                   information table now. They are still READ, because
-                   every project file written while the card existed still
-                   carries them, and mbMigrateTvqfRows() — which runs from
-                   mbSeedCoverLabels(), inside renderCoverTable() — moves
-                   their contents onto the rows and empties them.
-
-                   The render below is therefore not cosmetic and not a
-                   duplicate of the one further up: the table was drawn
-                   before these keys were loaded, so without a second pass
-                   the migration would run against the PREVIOUS project's
-                   card and this one's would sit in the file unseen. */
-                mbState.tvqfBasic    = data.tvqfBasic    || {};
-                mbState.tvqfExtended = data.tvqfExtended || {};
-                if (typeof renderCoverTable === 'function') renderCoverTable();
-                
-                // Convert v2.0 to v3.0: wrap LOs in a module
-                mbState.moduleIdCounter = 1;
-                mbState.modulesData = [{
-                    id: 'module-1',
-                    title: 'Imported Module',
-                    learningOutcomes: data.learningOutcomes || []
-                }];
-                mbState.currentModuleId = 'module-1';
-                mbState.loIdCounter = data.loIdCounter || 0;
-                mbState.currentLOId = data.currentLOId || null;
-                
-                syncLearningOutcomesFromCurrentModule();
-                
-                if (!mbState.currentLOId && mbState.learningOutcomesData.length > 0) {
-                    mbState.currentLOId = mbState.learningOutcomesData[0].id;
-                }
-                
-                renderModuleSelector();
-                renderLOSelector();
-                loadCurrentLOSheets();
-                showStatus(window.i18n.t('dgWorkLoadedSuccessfullyConvertedFro'), 'success');
-            } else {
-                // Convert old format to new
-                if (document.getElementById('covers-additional-info')) {
-                    document.getElementById('covers-additional-info').value = data.coversContent || '';
-                }
-                document.getElementById('assessment-placeholder').value = data.assessmentContent || '';
-                
-                mbState.loIdCounter = 1;
-                mbState.learningOutcomesData = [{
-                    id: 'lo-1',
-                    title: 'Imported Learning Outcome',
-                    infoSheets: [],
-                    activitySheets: []
-                }];
-                
-                if (data.infoTitle || data.infoObjective) {
-                    mbState.learningOutcomesData[0].infoSheets.push({
-                        sheetNumber: data.infoSheetNumber || '',
-                        title: data.infoTitle || '',
-                        objective: data.infoObjective || '',
-                        linkSubject: data.infoLinkSubject || '',
-                        linkUrl: data.infoLinkUrl || '',
-                        qrImage: data.infoQRImage || null,
-                        selfCheckNumber: data.selfCheckNumber || '',
-                        selfCheckContent: data.selfCheckContent || '',
-                        answersKeyNumber: data.answersKeyNumber || '',
-                        answersKeyContent: data.answersKeyContent || '',
-                        contentSections: data.contentSections || [],
-                        contentSectionImages: data.contentSectionImages || {}
-                    });
-                }
-                
-                if (data.title || data.objective) {
-                    mbState.learningOutcomesData[0].activitySheets.push({
-                        sheetNumber: data.sheetNumber || '',
-                        title: data.title || '',
-                        objective: data.objective || '',
-                        duration: data.duration || '0',
-                        linkSubject: data.activityLinkSubject || '',
-                        linkUrl: data.activityLinkUrl || '',
-                        qrImage: data.activityQRImage || null,
-                        resources: data.resources || [],
-                        steps: data.steps || [],
-                        images: data.images || {},
-                        includeCriteria: data.includeCriteria || false,
-                        criteriaTitle: data.criteriaTitle || '',
-                        criteriaInstruction: data.criteriaInstruction || '',
-                        criteriaFooter: data.criteriaFooter || '',
-                        criteria: data.criteria || []
-                    });
-                }
-                
-                mbState.currentLOId = 'lo-1';
-                renderLOSelector();
-                loadCurrentLOSheets();
-                showStatus(window.i18n.t('dgOldFormatImportedSuccessfully'), 'success');
-            }
-        } catch (error) {
-            console.error('Load error:', error);
-            showStatus(window.i18n.t('dgErrorLoadingWork') + error.message, 'error');
-            /* Route to error handler with LOAD context */
-            if (window.onerror) window.onerror('[LOAD] ' + error.message, 'handleLoadFile', 0, 0, error);
-        }
-    };
-    reader.readAsText(file);
+    const files = Array.prototype.slice.call(input.files || []);
     input.value = '';
+    if (!files.length) return;
+    return mbImportPackages(files);
 }
 
 async function clearAll() {
@@ -578,6 +217,10 @@ async function clearAll() {
         addStep();
 
         // ── Modules & Learning Outcomes ───────────────────────────
+        /* Clears the OPEN PROJECT of the library: its modules leave
+           storage, and one default module replaces them. Other projects
+           are not touched. */
+        await mbLibraryClearModules();
         mbState.modulesData = [];
         mbState.currentModuleId = null;
         mbState.moduleIdCounter = 0;
@@ -589,7 +232,7 @@ async function clearAll() {
         updateInfoSheetNav(null);
         updateActivitySheetNav(null);
 
-        await initializeLearningOutcomes();
+        await mbLibraryAfterClear();
 
         // ── Training Structure Mapping & mapped-source panels ─────
         /* These are painted from state by their own renderers and were
@@ -606,10 +249,6 @@ async function clearAll() {
         if (typeof updateModuleSummary === 'function') updateModuleSummary();
         if (typeof renderAssessmentForms === 'function' && Object.keys(mbState.assessmentFormsData).length) renderAssessmentForms();
 
-        /* The crash-recovery snapshot still held the old project, so a
-           refresh after Clear All brought everything back. Remove it:
-           the next edit writes a fresh one. */
-        try { await mbRemoveDoc(MB_KEYS.autosave); } catch (e) { console.warn('[ClearAll] autosave snapshot not removed:', e); }
         window.dispatchEvent(new CustomEvent('mb:projectcleared'));
 
         showStatus(window.i18n.t('dgAllDataCleared'), 'success');

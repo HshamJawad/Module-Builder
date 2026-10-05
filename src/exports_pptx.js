@@ -41,12 +41,11 @@
 // export.
 // ============================================================
 
-/* The CDN copy is fetched on FIRST EXPORT, not at page load. PptxGenJS
-   is ~1 MB; every user pays for it in the <head>, and only the ones who
-   press this button need it. The three libraries the page does load
-   eagerly (docx, jspdf) are there because they predate this decision —
-   not because eager is right. */
-var PX_CDN = 'https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js';
+/* Fetched on FIRST EXPORT, not at page load: PptxGenJS is ~470 KB and
+   only the people who press this button need it. Self-hosted in vendor/
+   since 3.13.0 (it was a CDN copy), so the deck can be built offline once
+   the service worker has cached it. */
+var PX_LIB = 'vendor/pptxgenjs-3.12.0/pptxgen.bundle.js';
 
 /* ── Strings ────────────────────────────────────────────────
    This file owns its own table, the same way word_settings.js and
@@ -689,7 +688,7 @@ function _pxLoadLib() {
     if (_pxLibPromise) return _pxLibPromise;
     _pxLibPromise = new Promise(function (resolve, reject) {
         var s = document.createElement('script');
-        s.src = PX_CDN;
+        s.src = PX_LIB;
         s.onload = function () {
             window.PptxGenJS ? resolve(window.PptxGenJS) : reject(new Error('library loaded but absent'));
         };

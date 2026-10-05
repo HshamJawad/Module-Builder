@@ -4,151 +4,39 @@
 // Extracted verbatim from Module_Builder.html lines 2932-3271 (v2.0-legacy).
 // ============================================================
 
+/**
+ * Boot: hands over to the module library (module_library.js), which
+ * opens the last project — or, when DACUM Live Pro has just handed
+ * modules over, files them into the project of their programme.
+ *
+ * The handoff is read and removed HERE, synchronously, during the first
+ * script turn after DOMContentLoaded: it must be consumed exactly once,
+ * whatever happens to the asynchronous boot that follows.
+ */
 async function initializeLearningOutcomes() {
-    // Check for DACUM export data in localStorage
+    let exportData = null;
     try {
-        const dacumExportData = mbGetSetting(MB_KEYS.dacumImport);
-        if (dacumExportData) {
-            const exportData = JSON.parse(dacumExportData);
-            
-            // Diagnostic only — confirms exactly what this side actually
-            // read out of localStorage before anything else touches it, so
-            // "fewer modules than expected" can be checked against this
-            // line to rule the import step in or out. Safe to remove once
-            // transfer reliability is fully confirmed.
+        const raw = mbGetSetting(MB_KEYS.dacumImport);
+        if (raw) {
+            exportData = JSON.parse(raw);
+            // Diagnostic only — what this side read, to compare with the
+            // line DACUM logs when it writes the handoff.
             console.log('[ModuleBuilder←DACUM] read', (exportData.modules || []).length, 'module(s):',
-                (exportData.modules || []).map(m => m.moduleId));
-
-            // Clear localStorage after reading (one-time import)
-            mbRemoveSetting(MB_KEYS.dacumImport);
-
-            // autosave.js restores the last IndexedDB snapshot ~1.2s after
-            // load, unconditionally, into the same mbState.modulesData this
-            // import is about to fill. Without this flag that restore wins
-            // the race every time — the fresh DACUM import renders first,
-            // then silently reverts to whatever was open before, which is
-            // exactly the "shows the new modules for a moment, then goes
-            // back to the old session" symptom this fixes. Set BEFORE the
-            // first await below, while still inside the synchronous part of
-            // the boot, so the 1.2 s restore timer always sees it.
-            mbState._skipAutosaveRestore = true;
-            
-            if (exportData.modules && exportData.modules.length > 0) {
-                /* 3.9.0 — never discard earlier work silently. The previous
-                   session lives only in the autosave snapshot (a page load
-                   starts clean), and this import used to replace it: a
-                   module built yesterday and not saved to a file was gone
-                   the moment another module arrived from DACUM. When that
-                   snapshot holds real work the user now chooses: add the
-                   received modules to it, or start a new session — and in
-                   that case the previous one is first kept as a backup
-                   (a downloaded project file + a stored copy). */
-                const prev = await _mbPreviousSessionWithWork();
-                let mode = 'new';
-                if (prev) {
-                    const answer = await _mbAskDacumImportMode(exportData.modules.length);
-                    // Esc (null) takes the choice that loses nothing on screen.
-                    mode = answer === false ? 'new' : 'add';
-                }
-
-                let added = 0, updated = 0;
-                if (mode === 'add') {
-                    /* Same path the "restore previous session" banner uses,
-                       so the whole project — cover, team, references,
-                       assessment — comes back exactly as it was. */
-                    document.dispatchEvent(new CustomEvent('autosave:restore', { detail: prev }));
-                    if (!Array.isArray(mbState.modulesData)) mbState.modulesData = [];
-                    exportData.modules.forEach(dacumModule => {
-                        const existing = mbState.modulesData.find(m => m.id === dacumModule.moduleId);
-                        if (existing) { _mbMergeDacumModule(existing, dacumModule, exportData); updated++; }
-                        else { mbState.modulesData.push(_mbModuleFromDacum(dacumModule, exportData)); added++; }
-                    });
-                } else {
-                    if (prev) await _mbBackupPreviousSession(prev);
-                    mbState.modulesData = [];
-                    mbState.moduleIdCounter = 0;
-                    mbState.loIdCounter = 0;
-                    exportData.modules.forEach(dacumModule => {
-                        mbState.modulesData.push(_mbModuleFromDacum(dacumModule, exportData));
-                    });
-                }
-                
-                // Fill empty cover rows from the handoff (never overwrites).
-                try { _mbPrefillCoverFromDacum(exportData); }
-                catch (e) { console.warn('[ModuleBuilder←DACUM] cover prefill skipped:', e); }
-
-                // Select the first module that just arrived
-                const firstId = exportData.modules[0].moduleId;
-                const first = mbState.modulesData.find(m => m.id === firstId) || mbState.modulesData[0];
-                if (first) {
-                    mbState.currentModuleId = first.id;
-                    syncLearningOutcomesFromCurrentModule();
-                    renderModuleSelector();
-                    renderLOSelector();
-                    
-                    // Select first LO
-                    if (mbState.learningOutcomesData.length > 0) {
-                        mbState.currentLOId = mbState.learningOutcomesData[0].id;
-                        ['current-lo-selector','info-lo-selector','activity-lo-selector'].forEach(id => { const s=document.getElementById(id); if(s) s.value=mbState.currentLOId; });
-                        loadCurrentLOSheets();
-                    } else {
-                        mbState.currentLOId = null;
-                    }
-                }
-                if (typeof renderStructureProposal === 'function') renderStructureProposal();
-                if (typeof renderSourceBrowser === 'function') renderSourceBrowser();
-
-                const loCount = exportData.modules.reduce((n, m) => n + (m.learningOutcomes || []).length, 0);
-                if (mode === 'add') {
-                    showStatus(window.i18n.tf('mbDacumMerged', { v0: added, v1: updated }), 'success');
-                } else {
-                    showStatus(window.i18n.tf('dgImportedModulesWithLearningOutcome', { v0: exportData.modules.length, v1: loCount }), 'success');
-                }
-                /* Persist the session that now exists (autosave only
-                   writes on edits; without this the snapshot would still
-                   hold the old session, and the next page load would offer
-                   to bring it back over the received modules). */
-                _mbTouchAutosave();
-                return;
-            }
+                (exportData.modules || []).map(m => m.moduleId), 'programme:', exportData.programId || '(none)');
         }
     } catch (error) {
-        console.error('Error loading DACUM export:', error);
+        console.error('Error reading DACUM export:', error);
+        exportData = null;
     }
-    
-    // If no DACUM data or error, proceed with default initialization
-    // Create default module structure
-    if (mbState.modulesData.length === 0) {
-        mbState.moduleIdCounter = 1;
-        mbState.modulesData = [{
-            id: `module-${mbState.moduleIdCounter}`,
-            title: window.i18n.tf('dgDefaultModuleName', { v0: 1 }),
-            learningOutcomes: []
-        }];
-        mbState.currentModuleId = mbState.modulesData[0].id;
-    }
-    
-    // If no LOs exist in current module, create a default one
-    syncLearningOutcomesFromCurrentModule();
-    if (mbState.learningOutcomesData.length === 0) {
-        /* awaited: addNewLearningOutcome is async now (it can raise a
-           modal), and the two renderers below read the list it creates.
-           Without the await they would run against an empty list and the
-           new outcome would not appear until some later repaint. */
-        await addNewLearningOutcome(window.i18n.tf('dgDefaultLOName', { v0: 1 }));
-    }
-    renderModuleSelector();
-    renderLOSelector();
+    // One-time import, read or unreadable.
+    if (mbGetSetting(MB_KEYS.dacumImport) !== null) mbRemoveSetting(MB_KEYS.dacumImport);
+
+    return mbLibraryBoot(exportData);
 }
 
 /**
- * Pre-fill the cover table from a DACUM handoff — EMPTY rows only.
- *
- *   Level        ← the modules' level, when every imported module that
- *                  has one shares it (a multi-level import has no single
- *                  answer, so the row is left for the author).
- *   Occupation   ← the occupation title from DACUM.
- *   Unit title   ← the module title, when exactly one module came over.
+ * Pre-fill the cover table from a DACUM handoff — EMPTY rows only, and
+ * only the rows the whole programme shares: occupation, job, sector.
  *
  * Written to every language side: the values are names and a number,
  * and a side left empty would make the row vanish from an export in
@@ -170,22 +58,13 @@ function _mbPrefillCoverFromDacum(exportData) {
         codes.forEach(c => biSet(r, 'value', c, text));
     };
 
-    const mods = exportData.modules || [];
-    const levels = Array.from(new Set(mods.map(m => parseInt(m.level, 10)).filter(n => n > 0)));
-    if (levels.length === 1) fill('cvLevel', String(levels[0]));
     if (exportData.occupation && exportData.occupation !== 'Unknown Occupation') fill('cvOccupation', exportData.occupation);
     /* DACUM Live Pro 3.44+: job title and sector from Chart Info. */
     fill('cvJob', exportData.jobTitle);
     fill('cvSector', exportData.sector);
-    if (mods.length === 1) {
-        const m = mods[0];
-        fill('cvUnitTitle', m.moduleTitle);
-        fill('cvModuleCode', m.moduleCode);
-        /* From DACUM's Module Curriculum tab, when it was filled in. */
-        const cur = m.curriculum || {};
-        if (cur.totalHours) fill('cvHours', String(cur.totalHours));
-        if (Array.isArray(cur.prerequisites) && cur.prerequisites.length) fill('cvEntryReq', cur.prerequisites.join('\n'));
-    }
+    /* Unit title, module code, level, hours and entry requirements are
+       per module since 3.12.0: each module carries its own and puts them
+       on the table when it is opened (module_library.js). */
 
     if (typeof renderCoverTable === 'function') renderCoverTable();
 }
@@ -202,7 +81,8 @@ function _mbModuleFromDacum(dacumModule, exportData) {
         /* "M1" as assigned in DACUM Live Pro's own Module Mapping tab —
            carried through for display continuity between the two tools;
            nothing here derives module identity from it. */
-        moduleNumber: dacumModule.moduleNumber || ''
+        moduleNumber: dacumModule.moduleNumber || '',
+        source: 'dacum'
     };
     _mbApplyDacumModuleFields(newModule, dacumModule, exportData);
     (dacumModule.learningOutcomes || []).forEach(lo => {
@@ -294,57 +174,10 @@ function _mbMergeDacumModule(module, dacumModule, exportData) {
     });
 }
 
-/** The autosaved previous session, when it holds real work; else null. */
-async function _mbPreviousSessionWithWork() {
-    try {
-        let snap = await mbLoadDoc(MB_KEYS.autosave);
-        if (!snap || snap.__corrupt) return null;
-        if (typeof snap === 'string') { try { snap = JSON.parse(snap); } catch (e) { return null; } }
-        if (!snap._autosave || !snap.version) return null;
-        if (typeof window.mbSnapshotHasWork === 'function' && !window.mbSnapshotHasWork(snap)) return null;
-        return snap;
-    } catch (e) {
-        console.warn('[ModuleBuilder←DACUM] could not read the previous session:', e);
-        return null;
-    }
-}
-
-function _mbAskDacumImportMode(n) {
-    return _mbDialog({
-        type: 'confirm',
-        message: window.i18n.tf('mbDacumAskMode', { v0: n }),
-        okLabel: window.i18n.t('mbDacumAddBtn'),
-        cancelLabel: window.i18n.t('mbDacumNewBtn'),
-        noBackdrop: true
-    });
-}
-
-/** Keeps the previous session before a new one replaces it: a project
- *  file in Downloads (opens with 📂 Load) and a stored copy. */
-async function _mbBackupPreviousSession(snap) {
-    const d = new Date(), p = n => String(n).padStart(2, '0');
-    const name = `Module_Builder_backup_${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}_${p(d.getHours())}-${p(d.getMinutes())}.json`;
-    try {
-        const file = Object.assign({}, snap);
-        delete file._autosave; delete file._savedAt;
-        const blob = new Blob([JSON.stringify(file, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = name;
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 4000);
-    } catch (e) { console.warn('[ModuleBuilder←DACUM] backup file failed:', e); }
-    try { await mbSaveDoc(MB_KEYS.autosave + '_before_dacum', snap); }
-    catch (e) { console.warn('[ModuleBuilder←DACUM] stored backup failed:', e); }
-    showStatus(window.i18n.tf('mbDacumBackupSaved', { v0: name }), 'success');
-}
-
-/** Asks autosave.js to write the current session (it listens for input
- *  events on the main container; an untrusted event does not mark the
- *  page as edited by the user). */
+/** Asks the module library to write what is open (it writes only what
+ *  changed). */
 function _mbTouchAutosave() {
-    const root = document.getElementById('main-container') || document.body;
-    root.dispatchEvent(new Event('input', { bubbles: true }));
+    if (typeof mbLibrarySave === 'function') mbLibrarySave();
 }
 
 /* "(L1 · CMCN)" after a module's name — level and specialisation from
@@ -417,141 +250,53 @@ function renderModuleSelector() {
     updateModuleSummary();
 }
 
-// Called from tab context bars — mirrors switchModule() logic
-function switchModuleFromTab(source) {
-    const selectorId = source + '-module-selector';
-    const sel = document.getElementById(selectorId);
-    if (!sel) return;
-    const selectedId = sel.value;
+const MB_MODULE_SELECTORS = ['current-module-selector', 'info-module-selector', 'activity-module-selector',
+                             'assessment-module-selector', 'mapping-module-selector'];
 
-    // Sync all module selectors first
-    ['current-module-selector',
-     'info-module-selector',
-     'activity-module-selector',
-     'assessment-module-selector',
-     'mapping-module-selector'].forEach(id => {
-        const s = document.getElementById(id);
-        if (s) s.value = selectedId;
-    });
-
+/**
+ * Every module selector ends here. The module is opened through the
+ * library, which saves the one being left and reads the chosen one from
+ * storage (only one module is complete in memory at a time).
+ */
+async function mbSelectModule(selectedId, labelText) {
     if (!selectedId) {
-        mbState.currentModuleId = null;
-        mbState.learningOutcomesData = [];
-        const summary = document.getElementById('module-summary');
-        if (summary) summary.style.display = 'none';
-        renderLOSelector();
+        /* "-- Select module --" is not a state the library has: there is
+           always an open module. Put the selectors back. */
+        MB_MODULE_SELECTORS.forEach(id => { const s = document.getElementById(id); if (s) s.value = mbState.currentModuleId || ''; });
         return;
     }
+    MB_MODULE_SELECTORS.forEach(id => { const s = document.getElementById(id); if (s) s.value = selectedId; });
+    if (selectedId === mbState.currentModuleId) return;
+    await mbLibraryOpenModule(selectedId);
+    const m = mbState.modulesData.find(x => x.id === selectedId);
+    showStatus(window.i18n.tf('dgSwitchedTo', { v0: labelText || (m ? mbModuleLabel(m) : selectedId) }), 'success');
+}
 
-    if (mbState.currentModuleId && mbState.currentModuleId !== selectedId) {
-        saveCurrentModuleLOData();
-        if (mbState.currentLOId) saveCurrentSheetToLO();
-    }
-
-    mbState.currentModuleId = selectedId;
-    syncLearningOutcomesFromCurrentModule();
-    mbState.currentLOId = null;
-    if (mbState.learningOutcomesData.length > 0) {
-        mbState.currentLOId = mbState.learningOutcomesData[0].id;
-        loadCurrentLOSheets();
-    } else {
-        clearAllForms();
-    }
-    renderLOSelector();
-    updateModuleSummary();
-    // A pending Training Structure Mapping proposal belongs to the
-    // module it was built for; switching modules invalidates it rather
-    // than silently approving suggestions onto the wrong module.
-    mbState.structureProposal = null;
-    if (typeof renderStructureProposal === 'function') renderStructureProposal();
-    if (typeof renderSourceBrowser === 'function') renderSourceBrowser();
-    if (typeof renderAssignedItemsPanel === 'function') renderAssignedItemsPanel();
-    const selText = sel.options[sel.selectedIndex]?.text || selectedId;
-    showStatus(window.i18n.tf('dgSwitchedTo', { v0: selText }), 'success');
+// Called from tab context bars
+function switchModuleFromTab(source) {
+    const sel = document.getElementById(source + '-module-selector');
+    if (!sel) return;
+    return mbSelectModule(sel.value, sel.options[sel.selectedIndex]?.text);
 }
 
 function switchModule() {
-    const selector = document.getElementById('current-module-selector');
-    const selectedModuleId = selector.value;
-
-    // Sync all module selectors
-    ['info-module-selector',
-     'activity-module-selector',
-     'assessment-module-selector'].forEach(id => {
-        const s = document.getElementById(id);
-        if (s) s.value = selectedModuleId;
-    });
-
-    if (!selectedModuleId) {
-        mbState.currentModuleId = null;
-        mbState.learningOutcomesData = [];
-        document.getElementById('module-summary').style.display = 'none';
-        renderLOSelector();
-        return;
-    }
-    
-    // Save current module's LO data before switching
-    if (mbState.currentModuleId && mbState.currentModuleId !== selectedModuleId) {
-        saveCurrentModuleLOData();
-        // Also save current sheet to LO
-        if (mbState.currentLOId) {
-            saveCurrentSheetToLO();
-        }
-    }
-    
-    // Switch to new module
-    mbState.currentModuleId = selectedModuleId;
-    syncLearningOutcomesFromCurrentModule();
-    
-    // Reset current LO and load first LO if available
-    mbState.currentLOId = null;
-    if (mbState.learningOutcomesData.length > 0) {
-        mbState.currentLOId = mbState.learningOutcomesData[0].id;
-        loadCurrentLOSheets();
-    } else {
-        clearAllForms();
-    }
-    
-    renderLOSelector();
-    updateModuleSummary();
-    mbState.structureProposal = null;
-    if (typeof renderStructureProposal === 'function') renderStructureProposal();
-    if (typeof renderSourceBrowser === 'function') renderSourceBrowser();
-    if (typeof renderAssignedItemsPanel === 'function') renderAssignedItemsPanel();
-    showStatus(window.i18n.tf('dgSwitchedTo2', { v0: selector.options[selector.selectedIndex].text }), 'success');
+    const sel = document.getElementById('current-module-selector');
+    if (!sel) return;
+    return mbSelectModule(sel.value, sel.options[sel.selectedIndex]?.text);
 }
 
 async function addNewModule() {
     const title = await mbPrompt(window.i18n.t('dgEnterModuleTitle'), window.i18n.tf('dgDefaultModuleName', { v0: mbState.modulesData.length + 1 }));
     if (!title) return;
-    
-    // Save current module before creating new one
-    if (mbState.currentModuleId) {
-        saveCurrentModuleLOData();
-        if (mbState.currentLOId) {
-            saveCurrentSheetToLO();
-        }
-    }
-    
+
     mbState.moduleIdCounter++;
     const newModule = {
         id: `module-${mbState.moduleIdCounter}`,
         title: title,
         learningOutcomes: []
     };
-    
-    mbState.modulesData.push(newModule);
-    mbState.currentModuleId = newModule.id;
-    syncLearningOutcomesFromCurrentModule();
-    
-    renderModuleSelector();
-    ['current-module-selector','info-module-selector','activity-module-selector','assessment-module-selector'].forEach(id=>{const s=document.getElementById(id);if(s)s.value=mbState.currentModuleId;});
-    
-    // Clear LO selection and forms
-    mbState.currentLOId = null;
-    clearAllForms();
-    renderLOSelector();
-    
+    /* Saves the module being left, then appends and opens this one. */
+    await mbLibraryAddModule(newModule);
     showStatus(window.i18n.t('dgModuleAddedYouCanNow'), 'success');
 }
 
@@ -569,6 +314,7 @@ async function renameModule() {
     
     module.title = newTitle;
     renderModuleSelector();
+    _mbTouchAutosave();
     showStatus(window.i18n.t('dgModuleRenamed'), 'success');
 }
 
@@ -593,28 +339,9 @@ async function deleteModule() {
         return;
     }
     
-    mbState.modulesData = mbState.modulesData.filter(m => m.id !== mbState.currentModuleId);
-    mbState.currentModuleId = null;
-    
-    // If there are still modules, select the first one
-    if (mbState.modulesData.length > 0) {
-        mbState.currentModuleId = mbState.modulesData[0].id;
-        syncLearningOutcomesFromCurrentModule();
-        if (mbState.learningOutcomesData.length > 0) {
-            mbState.currentLOId = mbState.learningOutcomesData[0].id;
-            loadCurrentLOSheets();
-        } else {
-            mbState.currentLOId = null;
-            clearAllForms();
-        }
-    } else {
-        mbState.learningOutcomesData = [];
-        mbState.currentLOId = null;
-        clearAllForms();
-    }
-    
-    renderModuleSelector();
-    renderLOSelector();
+    /* Removed from storage too; the first remaining module opens (or a
+       new default one, when this was the last). */
+    await mbLibraryDeleteModule(module.id);
     showStatus(window.i18n.t('dgModuleDeleted'), 'success');
 }
 
