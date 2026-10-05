@@ -1,5 +1,5 @@
 // ============================================================
-// sw.js — Module Builder service worker (3.13.0; list updated in 3.14.0)
+// sw.js — Module Builder service worker (3.13.0; list updated in 3.14.0 and 3.15.0)
 //
 // Makes the tool work offline once it has been opened online.
 //
@@ -25,7 +25,7 @@
 // Playwright suite checks that every tag is listed here).
 // ============================================================
 
-const CACHE_VERSION = 'mb-3.14.0';
+const CACHE_VERSION = 'mb-3.15.0';
 const CACHE_NAME    = 'module-builder-' + CACHE_VERSION;
 const BASE          = self.registration ? self.registration.scope : '/';
 const OFFLINE_URL   = BASE + 'index.html';
@@ -90,6 +90,7 @@ const PRECACHE_URLS = [
   BASE + 'src/package_mbz.js',
   BASE + 'src/package_ui.js',
   BASE + 'src/package_preview.js',
+  BASE + 'src/folder_sync.js',
   BASE + 'src/module_library_ui.js',
   BASE + 'src/module_model.js',
   BASE + 'src/exports_html.js',

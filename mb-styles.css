@@ -3364,3 +3364,29 @@ body.mb-readonly .container { padding-top: 44px; }
 .mb-pk-overlay .mb-prv-box button.mb-pk-btn.primary {
   background: #0f766e !important; border-color: #0f766e !important; color: #fff !important;
 }
+
+/* ════════════════════════════════════════════════════════════
+   📁 Folder on this computer (3.15.0) — src/folder_sync.js
+   ════════════════════════════════════════════════════════════ */
+.mb-lib-folder {
+  padding: 8px 10px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+  font-size: .85em; color: #334155; margin-bottom: 12px; display: grid; gap: 6px;
+}
+.mb-lib-folder[hidden] { display: none; }
+.mb-fld-text { overflow-wrap: anywhere; line-height: 1.45; }
+.mb-fld-note { color: #64748b; }
+.mb-fld-status { overflow-wrap: anywhere; color: #475569; }
+.mb-fld-status.is-ok { color: #047857; }
+.mb-fld-status.is-warn { color: #b45309; }
+.mb-fld-bar {
+  position: fixed; z-index: 99975; inset-inline: 12px; bottom: 16px;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 10px;
+  padding: 10px 14px; background: #eff6ff; color: #1e3a8a; border: 1px solid #93c5fd; border-radius: 10px;
+  font-weight: 600; font-size: .9em; text-align: center; box-shadow: 0 6px 18px rgba(15,23,42,.15);
+}
+.mb-fld-bar[hidden] { display: none; }
+.mb-fld-bar button { padding: 5px 12px !important; border-radius: 8px; font-weight: 700; cursor: pointer; }
+.mb-fld-bar button[data-fb="allow"] { background: #1d4ed8 !important; border-color: #1d4ed8 !important; color: #fff !important; }
+/* Beat the global silver-button rule (0,3,1). */
+.mb-fld-bar.mb-fld-bar button[data-fb="allow"] { background: #1d4ed8 !important; border-color: #1d4ed8 !important; color: #fff !important; }
+.mb-ro-banner.mb-ro-banner button[data-ro="take"] { background: #b45309 !important; border-color: #b45309 !important; color: #fff !important; }
