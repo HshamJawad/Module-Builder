@@ -1,0 +1,3392 @@
+/* ============================================================
+   mb-styles.css — Module Builder
+   Extracted verbatim from Module_Builder.html <style> (lines 18-1384).
+   Step 2 will split this into -typography / -components / -responsive / -rtl.
+   ============================================================ */
+
+* {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            min-height: 100dvh;
+            padding: 20px;
+            padding-top: 76px;
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+            /* `direction: ltr` used to sit here. It overrode the dir="rtl"
+               that the i18n engine sets on <html>, which is why switching
+               the interface to Arabic changed the words but not the layout:
+               the tabs, the headings and every flex row stayed left-to-right.
+               Direction now comes from <html> and nowhere else. */
+            overflow-x: hidden;
+        }
+
+        /* ── Figma-style fixed toolbar ─────────────────────────────── */
+        .figma-toolbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 56px;
+            background: #ffffff;
+            border-bottom: 1px solid #e5e7eb;
+            box-shadow: 0 1px 8px rgba(0,0,0,0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            z-index: 9998;
+            padding: 0 24px;
+            /* PHYSICAL on purpose. The notch and the home indicator are
+               on physical edges of the device; they do not move when the
+               text direction does, so these two must not become logical. */
+            padding-left:  max(24px, env(safe-area-inset-left));
+            padding-right: max(24px, env(safe-area-inset-right));
+            padding-top: env(safe-area-inset-top, 0px);
+
+            /* The bar grew from five buttons to eight. `justify-content:
+               center` with no overflow rule meant the row simply
+               overflowed its box: the outermost buttons were clipped by
+               the viewport at BOTH ends, and neither could be scrolled
+               to.
+
+               Scrolling horizontally fixes it, but only if the content
+               is allowed to start at the edge rather than being centred
+               — a centred flex row overflows symmetrically and the
+               scroll container cannot reach either end. So: centre
+               while it fits, scroll when it does not. */
+            /* NOT overflow-x on the bar itself. That was the first fix
+               and it broke the language menu: its dropdown is
+               position:absolute inside this element, and a scroll
+               container clips absolutely positioned children — the panel
+               opened and was immediately cut off at the bar's edge, so
+               the button looked dead.
+
+               The scrolling moves to an inner track instead, and the bar
+               keeps `overflow: visible` so the dropdown can escape. */
+            overflow: visible;
+        }
+
+        .figma-toolbar .figma-toolbar-scroll {
+            display: flex;
+            align-items: center;
+            gap: inherit;
+            min-width: 0;
+            max-width: 100%;
+            overflow-x: auto;
+            overflow-y: visible;
+            /* NOT `justify-content: center`, and not `safe center`
+               either. A centred flex row that overflows spills equally
+               past BOTH ends of its scroll box, and neither end can be
+               scrolled to — which is why the French labels, being the
+               longest, were cut off at both edges.
+
+               Auto margins on two empty pseudo-elements do what centring
+               was meant to do: they absorb the spare room when the row
+               fits, and collapse to nothing when it does not, leaving a
+               plain start-aligned row that scrolls properly. */
+            justify-content: flex-start;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+            /* Room for the dropdown to hang out of the track without the
+               scrollbar area clipping it. */
+            padding-bottom: 2px;
+        }
+        .figma-toolbar .figma-toolbar-scroll::-webkit-scrollbar { display: none; }
+        .figma-toolbar .figma-toolbar-scroll::before,
+        .figma-toolbar .figma-toolbar-scroll::after {
+            content: '';
+            margin: auto;
+            flex: 0 0 0;
+        }
+
+        /* The language menu must not live inside the scroll track, for
+           the same clipping reason — it stays a direct child of the bar. */
+        .figma-toolbar > .mb-lang-menu { flex: 0 0 auto; }
+
+        /* Buttons must not be squeezed narrower than their labels; that
+           is what turns "تصدير إلى Word" into a clipped stub. */
+        /* Children must not be squeezed narrower than their labels —
+           EXCEPT the scroll track itself, which has to shrink to the
+           bar's width or it never scrolls and simply overflows past both
+           ends. That single missing exception is why the French labels,
+           the longest set, stayed clipped after the first fix. */
+        .figma-toolbar > *,
+        .figma-toolbar-scroll > * { flex: 0 0 auto; }
+        .figma-toolbar > .figma-toolbar-scroll { flex: 0 1 auto; min-width: 0; }
+
+        .figma-btn { white-space: nowrap; }
+
+        .figma-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px 6px 6px;
+            border-radius: 999px;
+            border: 1.5px solid #e5e7eb;
+            background: #f9fafb;
+            cursor: pointer;
+            font-size: 0.88em;
+            font-weight: 600;
+            color: #374151;
+            transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+            white-space: nowrap;
+            text-decoration: none;
+        }
+
+        .figma-btn:hover {
+            background: #f3f4f6;
+            border-color: #d1d5db;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .figma-btn:active {
+            transform: scale(0.97);
+        }
+
+        .figma-btn-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1em;
+            flex-shrink: 0;
+        }
+
+        .figma-btn-icon.green  { background: #dcfce7; }
+        .figma-btn-icon.blue   { background: #dbeafe; }
+        .figma-btn-icon.purple { background: #ede9fe; }
+        .figma-btn-icon.red    { background: #fee2e2; }
+
+        .figma-divider {
+            width: 1px;
+            height: 28px;
+            background: #e5e7eb;
+            margin: 0 4px;
+        }
+
+        /* disabled state for export btn */
+        #export-btn:disabled .figma-btn-icon.purple { background: #e5e7eb; }
+        #export-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* ── App title (always visible, centered, above tabs) ───────── */
+        .app-title-bar {
+            text-align: center;
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .app-title-bar h1 {
+            margin: 0 0 6px 0;
+            font-size: 1.9em;
+            color: #667eea;
+        }
+
+        .app-title-bar p {
+            margin: 0;
+            font-size: 0.93em;
+            color: #6b7280;
+            font-weight: 400;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+            overflow-x: hidden;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 2em;
+        }
+
+        .tabs-container {
+            margin-bottom: 30px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .tabs-container::-webkit-scrollbar { display: none; }
+
+        .tabs {
+            display: flex;
+            gap: 5px;
+            border-bottom: 3px solid #667eea;
+            margin-bottom: 0;
+            flex-wrap: wrap;
+            min-width: 0;
+        }
+
+        .tab {
+            padding: 15px 30px;
+            background: #e0e0e0;
+            border: none;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s;
+            white-space: nowrap;
+            flex-shrink: 0;
+            min-height: 44px;
+        }
+
+        .tab:hover {
+            background: #d0d0d0;
+        }
+
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+
+        .tab-content.active {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            min-height: 500px !important;
+            background: #f5f5f5 !important;
+            padding: 20px !important;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 2px solid #e0e0e0;
+            flex-wrap: wrap;
+        }
+
+        .btn-action {
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 0;
+            white-space: nowrap;
+            justify-content: center;
+            flex-shrink: 0;
+            min-height: 40px;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-action:active {
+            transform: translateY(0);
+        }
+
+        .btn-save {
+            background: #10b981;
+        }
+
+        .btn-save:hover {
+            background: #059669;
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-load {
+            background: #3b82f6;
+        }
+
+        .btn-load:hover {
+            background: #2563eb;
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-export-word {
+            background: #8b5cf6;
+        }
+
+        .btn-export-word:hover {
+            background: #7c3aed;
+            box-shadow: 0 5px 15px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-clear {
+            background: #ef4444;
+        }
+
+        .btn-clear:hover {
+            background: #dc2626;
+            box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
+        }
+
+        .title-section {
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .btn-remove-sheet {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-bottom: 15px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-remove-sheet:hover {
+            background: #dc2626;
+        }
+
+        .title-group {
+            width: 100%;
+        }
+
+        .title-input-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .title-input-row input[type="text"] {
+            flex: 1;
+        }
+
+        .title-input-row input[type="text"]:first-child {
+            flex: 0 0 100px;
+        }
+
+        .form-group {
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #333;
+            font-weight: 600;
+            font-size: 1em;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+            text-align: start;   /* logical: follows the element's dir */
+            direction: inherit;   /* was ltr — now follows the field\'s own dir attribute, set by contentLang */
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 1em;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            resize: vertical;
+            min-height: 80px;
+            transition: border-color 0.3s;
+            text-align: start;   /* logical: follows the element's dir */
+            direction: inherit;   /* was ltr — now follows the field\'s own dir attribute, set by contentLang */
+        }
+
+        .example-text {
+            color: #888;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .section-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .btn-add {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 5px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-add:hover {
+            background: #059669;
+        }
+
+        .resource-item,
+        .step-item {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .step-item textarea {
+            direction: inherit;   /* was ltr — now follows the field\'s own dir attribute, set by contentLang */
+            text-align: start;   /* logical: follows the element's dir */
+        }
+
+        .content-section-item {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .content-section-item textarea {
+            direction: inherit;   /* was ltr — now follows the field\'s own dir attribute, set by contentLang */
+            text-align: start;   /* logical: follows the element's dir */
+            width: 100%;
+            min-height: 150px;
+            resize: vertical;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .content-section-item textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .criteria-item {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .criteria-number {
+            min-width: 40px;
+            font-weight: 600;
+            font-size: 1.1em;
+            color: #333;
+        }
+
+        .criteria-text {
+            flex: 1;
+        }
+
+        .criteria-table-container {
+            background: white;
+            border: 1px solid #000;
+            margin-top: 20px;
+        }
+
+        .criteria-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .criteria-table td {
+            border: 1px solid #000;
+            padding: 10px;
+        }
+
+        .criteria-table input[type="text"] {
+            width: 100%;
+            border: none;
+            padding: 5px;
+            font-size: 1em;
+            direction: inherit;   /* was ltr — now follows the field\'s own dir attribute, set by contentLang */
+            text-align: start;   /* logical: follows the element's dir */
+        }
+
+        .criteria-table input[type="text"]:focus {
+            outline: 1px solid #667eea;
+        }
+
+        .criteria-table .criteria-row-number {
+            text-align: center;
+            font-weight: 600;
+            width: 8%;
+        }
+
+        .criteria-table .criteria-row-remove {
+            text-align: center;
+            width: 5%;
+        }
+
+        /* criteria edit checkboxes removed */
+
+        .resource-row {
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+        }
+
+        .resource-number {
+            min-width: 30px;
+            font-weight: 600;
+            font-size: 1.2em;
+            color: #333;
+        }
+
+        .resource-name {
+            flex: 1;
+            min-height: 60px;
+            resize: vertical;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: start;   /* logical: follows the element's dir */
+            direction: inherit;   /* was ltr — now follows the field\'s own dir attribute, set by contentLang */
+            width: 100%;
+        }
+
+        .resource-name:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .resource-quantity {
+            width: 80px;
+            height: 45px;
+            text-align: center;
+            padding: 8px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .resource-quantity:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        /* Style the number input arrows */
+        .resource-quantity::-webkit-inner-spin-button,
+        .resource-quantity::-webkit-outer-spin-button {
+            opacity: 1;
+            height: 40px;
+        }
+
+        .resource-name-input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+            text-align: start;   /* logical: follows the element's dir */
+            direction: inherit;   /* was ltr — now follows the field\'s own dir attribute, set by contentLang */
+        }
+
+        .resource-name-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn-remove {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: 700;
+            transition: background 0.2s;
+            width: 28px;
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            line-height: 1;
+        }
+
+        .btn-remove:hover {
+            background: #b91c1c;
+        }
+
+        .step-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .step-label {
+            color: #667eea;
+            font-weight: 600;
+            font-size: 1em;
+        }
+
+        .btn-add-image {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 5px;
+            font-size: 0.85em;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-add-image:hover {
+            background: #059669;
+        }
+
+        /* ── Instructional Mark Styles ────────────────────────────────── */
+        .btn-add-mark {
+            background: #f59e0b;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 5px;
+            font-size: 0.85em;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+        .btn-add-mark:hover { background: #d97706; }
+
+        .mark-dropdown-menu {
+            position: fixed;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+            z-index: 99999;
+            min-width: 200px;
+            padding: 6px 0;
+            animation: markDropFade 0.12s ease;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        @keyframes markDropFade {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .mark-dropdown-item {
+            padding: 9px 18px;
+            cursor: pointer;
+            font-size: 0.93em;
+            font-weight: 500;
+            color: #374151;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.1s;
+        }
+        .mark-dropdown-item:hover { background: #f3f4f6; }
+
+        .mark-item {
+            border-radius: 8px;
+            margin-top: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .mark-item-header {
+            padding: 7px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 700;
+            font-size: 0.9em;
+        }
+        .mark-item-header .mark-remove-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2em;
+            opacity: 0.75;
+            line-height: 1;
+            padding: 0 2px;
+            transition: opacity 0.15s;
+        }
+        .mark-item-header .mark-remove-btn:hover { opacity: 1; }
+        .mark-item textarea {
+            width: 100%;
+            border: none;
+            outline: none;
+            padding: 9px 12px;
+            min-height: 62px;
+            font-size: 0.9em;
+            resize: vertical;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+        .marks-container { margin-top: 0; }
+
+        /* ── Inline editable table widget ─────────────────────────── */
+        .content-table-widget {
+            margin-top: 10px;
+            border: 1.5px solid #667eea;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #fff;
+        }
+        .content-table-toolbar {
+            background: #f0f4ff;
+            border-bottom: 1.5px solid #667eea;
+            padding: 6px 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .content-table-toolbar .ctb-left {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .content-table-toolbar .ctb-right {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .content-table-toolbar span {
+            font-size: 0.8em;
+            font-weight: 600;
+            color: #4f46e5;
+            margin-inline-end: 4px;
+        }
+        .ctb {
+            border: none;
+            border-radius: 5px;
+            padding: 4px 10px;
+            font-size: 0.78em;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            transition: background 0.15s;
+        }
+        .ctb-add  { background: #10b981; color: #fff; }
+        .ctb-add:hover  { background: #059669; }
+        .ctb-del  { background: #ef4444; color: #fff; }
+        .ctb-del:hover  { background: #b91c1c; }
+        .ctb-close { background: #6b7280; color: #fff; }
+        .ctb-close:hover { background: #374151; }
+        .content-table-grid { overflow-x: auto; }
+        .content-table-grid table { border-collapse: collapse; width: 100%; }
+        .content-table-grid td {
+            border: 1px solid #d1d5db;
+            padding: 3px;
+            min-width: 100px;
+        }
+        .content-table-grid td textarea {
+            width: 100%;
+            min-height: 48px;
+            border: none;
+            outline: none;
+            resize: both;
+            padding: 5px;
+            font-size: 0.88em;
+            font-family: inherit;
+            background: transparent;
+            box-sizing: border-box;
+        }
+
+        /* ── Multi-image gallery (Info Sheet content sections) ─────────── */
+        .content-image-gallery {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .content-img-thumb {
+            position: relative;
+            display: inline-block;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+            background: #f3f4f6;
+        }
+        .content-img-thumb img {
+            display: block;
+            max-width: 160px;
+            max-height: 120px;
+            object-fit: cover;
+        }
+        .content-img-delete {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: rgba(220,38,38,0.85);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: 700;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s;
+        }
+        .content-img-delete:hover { background: #dc2626; }
+
+        .btn-export {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 30px;
+        }
+
+        .btn-export:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-export:active {
+            transform: translateY(0);
+        }
+
+        .btn-activity-sheet {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            border-radius: 10px;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 40px;
+            margin-bottom: 40px;
+        }
+
+        .btn-activity-sheet:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
+            background: #2563eb;
+        }
+
+        .btn-activity-sheet:active {
+            transform: translateY(0);
+        }
+
+        .footer {
+            text-align: center;
+            color: #888;
+            font-size: 0.95em;
+            padding: 10px 0;
+            margin-top: 10px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 600;
+            display: none;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            display: block;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+
+        .status.info {
+            background: #cfe2ff;
+            color: #084298;
+            display: block;
+        }
+
+        .image-preview {
+            margin-top: 10px;
+            max-width: 300px;
+        }
+
+        .image-preview img {
+            max-width: 100%;
+            border-radius: 5px;
+            border: 2px solid #e0e0e0;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            position: relative;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px;
+            border-radius: 16px 16px 0 0;
+            text-align: center;
+            color: white;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 24px;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .contact-item {
+            background: #f9fafb;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .contact-item h4 {
+            color: #374151;
+            font-size: 0.9em;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .contact-item p,
+        .contact-item a {
+            color: #667eea;
+            font-size: 1em;
+            margin: 0;
+            word-break: break-word;
+        }
+
+        .contact-item a {
+            text-decoration: none;
+        }
+
+        .contact-item a:hover {
+            text-decoration: underline;
+        }
+
+        /* Objective Formatting Controls */
+        .objective-wrapper {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .objective-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .objective-header label {
+            margin: 0;
+        }
+
+        .objective-formatting-controls {
+            display: flex;
+            gap: 5px;
+        }
+
+        .objective-format-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .objective-format-btn:hover {
+            background: #5568d3;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        .objective-format-btn:active {
+            transform: translateY(0);
+        }
+
+        .objective-format-btn.clear {
+            background: #ef4444;
+        }
+
+        .objective-format-btn.clear:hover {
+            background: #dc2626;
+        }
+
+        /* Rename, beside the clear and delete controls on a content
+           card. Sized to sit level with the 28px clear square rather
+           than matching the 36px icon-only buttons: it carries a word,
+           so it is a small pill, not a square. The theme layer paints
+           every button silver, which is where its colour comes from. */
+        /* Shown only when a card container is empty. Dashed, muted and
+           quiet: it is a state, not an error, and the button underneath
+           it is the actual instruction. */
+        /* The row label. An input, but it must still READ as a table
+           label — a grid of boxed fields turns a reference table into a
+           form. Borderless until hovered or focused, so the affordance
+           appears exactly when the pointer says the user is looking for
+           it, and the table stays a table the rest of the time. */
+        /* The lead-in between «Objective:» and the list. It prints as a
+           heading in the DOCX, so it is shown as one here: same blue,
+           same weight. Borderless until hovered or focused, like the
+           cover-table labels — it is prefilled boilerplate the author
+           will usually leave alone, and a permanent input box around it
+           would read as one more field waiting to be filled. */
+        .objective-lead {
+            width: 100%;
+            margin: 0 0 8px;
+            padding: 6px 8px;
+            font-weight: 600;
+            font-size: 0.95em;
+            font-family: inherit;
+            color: #0070C0;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            outline: none;
+            text-align: start;
+            transition: border-color 0.15s, background 0.15s;
+        }
+        .objective-lead::placeholder { color: #9bbfd8; font-weight: 500; }
+        .objective-lead:hover { border-color: #dfe3e8; background: rgba(255,255,255,0.7); }
+        .objective-lead:focus { border-color: #3b82f6; background: #ffffff; }
+
+        .cover-label {
+            font-weight: 600;
+            color: #374151;
+            text-align: start;
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            background: transparent;
+            font-size: inherit;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.15s, background 0.15s;
+        }
+        .cover-label:hover  { border-color: #dfe3e8; background: rgba(255,255,255,0.7); }
+        .cover-label:focus  { border-color: #3b82f6; background: #ffffff; }
+
+        .mb-empty-hint {
+            border: 1px dashed #c9cdc7;
+            border-radius: 8px;
+            padding: 14px 16px;
+            color: #6b7280;
+            font-size: 0.9em;
+            text-align: center;
+            background: transparent;
+        }
+
+        .btn-rename-section {
+            background: #f5f5f3;
+            color: #3f4a54;
+            border: 1px solid #dfe3e8;
+            height: 28px;
+            padding: 0 10px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 0.8em;
+            font-weight: 600;
+            white-space: nowrap;
+            flex-shrink: 0;
+            transition: background 0.15s, border-color 0.15s;
+            line-height: 1;
+        }
+        .btn-rename-section .mb-ico { width: 15px; height: 15px; }
+        .btn-rename-section:hover { background: #ebebe8; }
+
+        /* A card the author has named. The dotted underline is the only
+           signal that the heading is editable text rather than the
+           numbered scaffolding — enough to notice, quiet enough not to
+           compete with the section titles above it. */
+        .step-label.is-renamed {
+            border-bottom: 1px dotted #c4c7c2;
+            padding-bottom: 1px;
+        }
+
+        .btn-clear-section {
+            background: #f59e0b;
+            color: white;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8em;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: background 0.2s;
+            line-height: 1;
+        }
+        .btn-clear-section:hover { background: #d97706; }
+
+        /* Export info message styling */
+        .export-info {
+            background: #eff6ff;
+            border: 2px solid #93c5fd;
+            color: #1e40af;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+
+        .export-info.show {
+            display: flex;
+        }
+
+        .export-warning {
+            background: #fef3c7;
+            border: 2px solid #fbbf24;
+            color: #92400e;
+        }
+
+        /* ── Responsive helpers ─────────────────────────────────────── */
+        .mgmt-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .mgmt-row select {
+            flex: 1;
+            min-width: 120px;
+        }
+        .mgmt-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        /* ══════════════════════════════════════════════════════════════
+           RESPONSIVE BREAKPOINTS
+           Desktop  : > 900px  (current default styles)
+           Tablet   : 600–900px
+           Mobile   : < 600px
+           Small    : < 400px
+        ══════════════════════════════════════════════════════════════ */
+
+        /* ── Tablet (600–900px) ──────────────────────────────────────── */
+        @media (max-width: 900px) {
+            body {
+                padding: 10px;
+                padding-top: 68px;
+                padding-bottom: env(safe-area-inset-bottom, 0px);
+            }
+            .container { padding: 20px 16px; border-radius: 14px; }
+
+            /* Toolbar */
+            .figma-toolbar {
+                gap: 4px;
+                padding: 0 12px;
+                padding-left:  max(12px, env(safe-area-inset-left));
+                padding-right: max(12px, env(safe-area-inset-right));
+                height: 52px;
+            }
+            .figma-btn { padding: 5px 10px 5px 5px; font-size: 0.82em; }
+
+            /* Tabs */
+            .tabs-container { -webkit-overflow-scrolling: touch; }
+            .tab  { padding: 10px 16px; font-size: 0.88em; }
+
+            /* App title */
+            .app-title-bar h1 { font-size: 1.6em; }
+
+            /* Module/LO management */
+            .mgmt-header { flex-wrap: wrap; gap: 8px; }
+
+            /* Cover table */
+            .cover-row { grid-template-columns: 1fr 1fr auto auto !important; }
+
+            /* Assessment */
+            .assessment-form { overflow-x: auto; }
+        }
+
+        /* ── Mobile (< 600px) ───────────────────────────────────────── */
+        @media (max-width: 600px) {
+            body {
+                padding: 0;
+                padding-top: 60px;
+                padding-bottom: env(safe-area-inset-bottom, 0px);
+                background: #667eea;
+                -webkit-tap-highlight-color: transparent;
+                touch-action: pan-y;
+                overscroll-behavior-y: contain;
+            }
+            .container {
+                padding: 14px 12px 24px;
+                border-radius: 0;
+                box-shadow: none;
+                min-height: calc(100vh - 60px);
+            }
+
+            /* ── Toolbar ── */
+            .figma-toolbar {
+                height: 56px;
+                padding: 0 8px;
+                padding-left:  max(8px, env(safe-area-inset-left));
+                padding-right: max(8px, env(safe-area-inset-right));
+                gap: 2px;
+                justify-content: space-around;
+            }
+            /* Hide text labels on mobile, keep icons */
+            .figma-btn span:not(.figma-btn-icon) { display: none; }
+            .figma-btn {
+                padding: 7px;
+                border-radius: 12px;
+                border: none;
+                background: transparent;
+                flex-direction: column;
+                gap: 2px;
+                min-width: 44px;
+                min-height: 44px;
+                justify-content: center;
+            }
+            .figma-btn:hover { background: #f3f4f6; }
+            .figma-btn-icon { width: 34px; height: 34px; font-size: 1.15em; }
+            .figma-divider { display: none; }
+
+            /* ── App title ── */
+            .app-title-bar { margin-bottom: 16px; padding-bottom: 14px; }
+            .app-title-bar h1 { font-size: 1.3em; }
+            .app-title-bar p  { font-size: 0.8em; }
+
+            /* ── Tabs: horizontally scrollable pill strip ── */
+            .tabs-container {
+                margin-bottom: 18px;
+                margin-inline: -12px;
+                padding: 0 12px;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+            .tabs-container::-webkit-scrollbar { display: none; }
+            .tabs {
+                border-bottom: none;
+                flex-wrap: nowrap;
+                gap: 6px;
+                padding-bottom: 4px;
+            }
+            .tab {
+                padding: 9px 14px;
+                font-size: 0.78em;
+                border-radius: 20px;
+                white-space: nowrap;
+                flex-shrink: 0;
+                background: #e5e7eb;
+                min-height: 36px;
+            }
+            .tab.active {
+                background: #667eea;
+                color: white;
+                box-shadow: 0 2px 8px rgba(102,126,234,0.35);
+            }
+            /* No bottom border trick — tabs are pills */
+            .tab-content.active { border-radius: 12px; }
+
+            /* ── Form elements: full-width touch-friendly ── */
+            input[type="text"],
+            input[type="number"],
+            input[type="date"],
+            select,
+            textarea {
+                font-size: 16px !important; /* prevents iOS zoom */
+                border-radius: 8px;
+            }
+            .btn-action {
+                padding: 10px 14px;
+                font-size: 0.88em;
+                min-height: 42px;
+                touch-action: manipulation;
+            }
+            .btn-remove-sheet {
+                padding: 10px 14px;
+                font-size: 0.88em;
+                min-height: 42px;
+                touch-action: manipulation;
+            }
+
+            /* ── Management rows ── */
+            .mgmt-header { flex-direction: column; align-items: stretch; gap: 8px; }
+            .mgmt-header .btn-action { width: 100%; justify-content: center; }
+            .mgmt-row { flex-direction: column; align-items: stretch; gap: 8px; }
+            .mgmt-row label  { margin-bottom: 2px; }
+            .mgmt-row select { width: 100%; }
+            .mgmt-row .btn-action { width: 100%; justify-content: center; }
+
+            /* ── Sheet nav header (info/activity tabs) ── */
+            /* LO selector row */
+            [id$="-lo-selector"] { font-size: 15px !important; }
+            /* Controls row: stack vertically */
+            #info-tab .title-section > div:nth-child(2),
+            #activity-tab .title-section > div:nth-child(2) {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            #info-tab .title-section > div:nth-child(2) > div,
+            #activity-tab .title-section > div:nth-child(2) > div {
+                justify-content: space-between;
+                width: 100%;
+            }
+            #info-tab .title-section > div:nth-child(2) > button,
+            #activity-tab .title-section > div:nth-child(2) > button {
+                width: 100%;
+                justify-content: center;
+            }
+
+            /* ── Title input rows ── */
+            .title-input-row { flex-wrap: wrap; gap: 8px; }
+            .title-input-row input[type="text"]:first-child {
+                width: 72px !important;
+                flex: 0 0 72px !important;
+            }
+
+            /* ── Resource / step rows ── */
+            .resource-row { flex-wrap: wrap; gap: 8px; }
+            .step-header   { flex-wrap: wrap; gap: 8px; }
+
+            /* ── Scrollable tables ── */
+            .criteria-table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .assessment-form          { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+            /* ── Cover table: 2-column on mobile ── */
+            .cover-row { grid-template-columns: 1fr auto !important; gap: 6px !important; }
+
+            /* ── Section/objective headers ── */
+            .section-header { flex-wrap: wrap; gap: 8px; }
+            .objective-formatting-controls { flex-wrap: wrap; gap: 4px; }
+            .objective-format-btn { padding: 4px 8px !important; font-size: 0.78em !important; }
+
+            /* ── Modal ── */
+            .modal-content {
+                max-height: 92vh;
+                margin: 4vh auto;
+                border-radius: 16px;
+                padding: 20px 16px;
+            }
+
+            /* ── LO sheets summary grid: 1 column ── */
+            #lo-sheets-summary > div > div { grid-template-columns: 1fr !important; gap: 10px !important; }
+
+            /* ── Back/Front cover upload areas ── */
+            #front-cover-upload-area,
+            #back-cover-upload-area { padding: 16px; }
+
+            /* ── Proceed buttons full width ── */
+            [onclick^="proceedToTab"] {
+                width: 100%;
+                text-align: center;
+                justify-content: center;
+            }
+
+            /* ── References list ── */
+            .ref-entry { flex-wrap: wrap; }
+
+            /* ── Help tab: stack cards vertically ── */
+            #help-tab .form-group > div:last-child { grid-template-columns: 1fr !important; }
+        }
+
+        /* ── Small phones (< 400px) ─────────────────────────────────── */
+        @media (max-width: 400px) {
+            .container { padding: 10px 8px 20px; }
+            .tab  { padding: 8px 11px; font-size: 0.74em; }
+            .figma-btn-icon { width: 30px; height: 30px; font-size: 1em; }
+            .app-title-bar h1 { font-size: 1.15em; }
+            .btn-action { padding: 9px 10px; font-size: 0.82em; }
+        }
+
+
+/* ── Content-language switch ────────────────────────────────────────
+   Visually distinct from the (future) interface-language switch on
+   purpose. Users conflate the two constantly, and the cost of the
+   confusion is asymmetric: picking the wrong interface language is
+   noticed instantly, picking the wrong content side means typing a
+   paragraph into the slot meant for the other language. */
+.content-lang-switch {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 0;
+    padding: 8px 14px;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 0.9em;
+}
+.content-lang-switch .cls-label { font-weight: 600; color: #334155; }
+.content-lang-switch .cls-btn {
+    padding: 5px 14px;
+    border: 1px solid #94a3b8;
+    background: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95em;
+}
+.content-lang-switch .cls-btn.active {
+    background: #0ea5e9;
+    border-color: #0ea5e9;
+    color: #fff;
+    font-weight: 600;
+}
+.content-lang-switch .cls-hint { margin-inline-start: auto; color: #64748b; font-variant-numeric: tabular-nums; }
+
+
+
+
+/* ══════════════════════════════════════════════════════════════════
+   RTL INTERFACE LAYER
+   Hooked to html[dir="rtl"], which the i18n engine sets, and scoped to
+   INTERFACE chrome only. Editor fields are not touched here: their
+   direction follows contentLang, a different setting, and the two are
+   allowed to disagree — an Arabic interface editing English content is
+   a normal working state, not an error.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* NO flex-direction: row-reverse anywhere in this layer.
+   That was the bug behind the screenshot: `dir="rtl"` ALREADY reverses
+   the main axis of a flex row, so adding row-reverse reverses it a
+   second time and lands back at left-to-right — which is why the first
+   tab kept sitting on the left. A flex container in an RTL document
+   needs no direction rule at all; it needs to be left alone.
+
+   The same applied to .mgmt-header, .mgmt-row and .section-header, which
+   is why the Module Management and Learning Outcome Management cards
+   came out mirrored while the plain tabs did not. */
+
+/* Body copy and headings inside the tabs. */
+html[dir="rtl"] .tab-content,
+html[dir="rtl"] .container,
+html[dir="rtl"] .section,
+html[dir="rtl"] h1, html[dir="rtl"] h2,
+html[dir="rtl"] h3, html[dir="rtl"] h4,
+html[dir="rtl"] label            { text-align: start; }
+
+/* Interface tables: header cells too. */
+html[dir="rtl"] table th         { text-align: start; }
+
+/* CSS Grid does not flip the way flex does: `grid-template-columns` is
+   physical, so a 2fr/2fr/2fr/auto row keeps its delete button on the
+   physical right in both directions. Rows built with grid therefore need
+   their column order stated for RTL — unlike flex, which needs nothing. */
+html[dir="rtl"] .team-member-row { direction: rtl; }
+
+/* Interface tables. Editor tables whose CELLS hold content are handled
+   by applyContentDirection instead — a table can have an Arabic header
+   row and English cells. */
+html[dir="rtl"] table            { direction: rtl; }
+html[dir="rtl"] table th,
+html[dir="rtl"] table td         { text-align: start; }
+
+/* Logical properties do the mirroring for spacing, so no rule here has
+   to be written twice. Anything still using left/right in the original
+   sheet is a candidate for conversion as it is touched. */
+html[dir="rtl"] .btn-action,
+html[dir="rtl"] .figma-btn       { margin-inline: 0 8px; }
+
+/* Arabic renders short at the same nominal size; Tahoma carries the
+   full Arabic range on Windows, which Segoe UI does not. */
+html[dir="rtl"] body             { font-family: 'Segoe UI', Tahoma, 'Traditional Arabic', sans-serif; font-size: 1.04em; }
+
+/* Emoji and arrows inside translated labels. An arrow glyph in an RTL
+   run keeps its own direction unless isolated, so "المتابعة إلى … ←"
+   renders with the arrow adrift. */
+html[dir="rtl"] [data-i18n]      { unicode-bidi: isolate; }
+
+/* ── Interface-language pills ───────────────────────────────────────
+   Three pills, not a <select>: a dropdown costs two taps and hides the
+   active language behind a closed control. */
+.mb-lang-host { display: flex; gap: 6px; align-items: center; margin: 12px 0 0; }
+#mbLangWrap { display: inline-flex; gap: 4px; }
+.mb-lang-btn {
+    padding: 4px 12px; border: 1px solid #94a3b8; background: #fff;
+    border-radius: 6px; cursor: pointer; font-size: 0.85em; font-weight: 600;
+}
+.mb-lang-btn.is-active { background: #334155; border-color: #334155; color: #fff; }
+#mbLangWrap.is-locked .mb-lang-btn { opacity: .55; cursor: not-allowed; }
+
+/* An earlier `body.mb-rtl` block sat here duplicating the RTL layer
+   above — and its row-reverse rules were half the reason the header
+   cards came out mirrored. Deleted rather than fixed: two stylesheets
+   competing over the same elements is how this bug survived one round
+   of fixing already. `html[dir="rtl"]` is now the only RTL hook. */
+
+
+/* ── Modal dialog ───────────────────────────────────────────────────
+   Replaces alert/confirm/prompt, which cannot be translated: their
+   buttons follow the browser's locale, not the page's. */
+.mb-dialog-overlay {
+    position: fixed; inset: 0; z-index: 10000;
+    background: rgba(15, 23, 42, .55);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+}
+.mb-dialog {
+    background: #fff; border-radius: 12px; padding: 24px;
+    max-width: 480px; width: 100%;
+    box-shadow: 0 20px 50px rgba(0,0,0,.3);
+    font-size: 1em;
+}
+/* pre-line, not pre: the messages carry meaningful \n breaks but should
+   still wrap at the box width. */
+.mb-dialog-msg { white-space: pre-line; line-height: 1.6; color: #1e293b; }
+.mb-dialog-input {
+    width: 100%; margin-top: 16px; padding: 10px;
+    border: 2px solid #cbd5e1; border-radius: 8px; font-size: 1em;
+}
+.mb-dialog-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+.mb-dialog-btn {
+    padding: 9px 20px; border-radius: 8px; border: 1px solid #cbd5e1;
+    background: #fff; cursor: pointer; font-size: .95em; font-weight: 600;
+    min-height: 44px;
+}
+.mb-dialog-ok { background: #0ea5e9; border-color: #0ea5e9; color: #fff; }
+.mb-dialog-ok.is-danger { background: #dc2626; border-color: #dc2626; }
+.mb-dialog-cancel { color: #475569; }
+
+
+/* Inline layouts that reversed wrongly under dir=rtl.
+   Grid is physical — grid-template-columns keeps its order regardless of
+   direction — so every grid row that ends in an action button needs its
+   direction stated. Flex needs nothing; adding row-reverse to flex is
+   what broke the tabs in the first round. */
+html[dir="rtl"] .cover-row,
+html[dir="rtl"] .team-member-row,
+html[dir="rtl"] .mgmt-row        { direction: rtl; }
+
+/* Numeric fields stay LTR in both directions: digits read
+   left-to-right in Arabic too, and flipping a number input only moves
+   the caret to the wrong end. */
+input[type="number"],
+.resource-quantity               { direction: ltr; text-align: center; }
+
+/* Emoji + label buttons. An emoji is direction-neutral and joins the
+   surrounding run, so in an RTL line "🗑️ حذف" can render with the icon
+   adrift. Isolating the label keeps the pair together. */
+html[dir="rtl"] button [data-i18n] { unicode-bidi: isolate; }
+
+/* The status banner and both language switches sit above the tabs and
+   read as interface, so they follow the interface direction. */
+html[dir="rtl"] .status,
+html[dir="rtl"] .content-lang-switch,
+html[dir="rtl"] .mb-lang-host    { direction: rtl; }
+
+/* Modal actions: cancel/confirm are ordered in the DOM, and the flex row
+   mirrors on its own. Only the alignment needs stating. */
+html[dir="rtl"] .mb-dialog-actions { justify-content: flex-end; }
+
+/* ═══════════════════════════════════════════════════════════════
+   SIDE NAVIGATION  (silver rail)
+   ---------------------------------------------------------------
+   The section switcher moved from a top strip to a fixed vertical
+   rail on the inline-start edge. The markup of the buttons is
+   untouched: same <button class="tab" data-act="switchTab">, same
+   .active class, so tabs.js / events.js keep working exactly as
+   before — only their placement and skin change.
+
+   Everything here is scoped to (min-width: 1025px). Below that the
+   original pill strip stays in force, which is the right shape for
+   a phone.
+
+   Logical properties (inset-inline-start, border-inline-start,
+   padding-inline) are used throughout so the rail flips to the
+   right side by itself when the i18n engine sets html[dir="rtl"].
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+    --mb-nav-w:        272px;
+    --mb-silver:       #DADCDE;
+    --mb-silver-light: #EFF1F2;
+    --mb-silver-dark:  #C6CACE;
+    --mb-silver-line:  #BFC4C9;
+    --mb-nav-ink:      #3F464D;
+    --mb-nav-ink-soft: #6B7379;
+    --mb-accent:       #667eea;
+}
+
+@media (min-width: 1025px) {
+
+    /* Room for the rail. Logical, so RTL needs no second rule. */
+    body { padding-inline-start: calc(var(--mb-nav-w) + 20px); }
+
+    .tabs-container {
+        position: fixed;
+        inset-inline-start: 0;
+        top: 56px;                       /* under the figma toolbar */
+        bottom: 0;
+        width: var(--mb-nav-w);
+        z-index: 9990;
+
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+
+        margin: 0;
+        padding: 18px 14px calc(20px + env(safe-area-inset-bottom, 0px));
+
+        background: linear-gradient(180deg,
+                    var(--mb-silver-light) 0%,
+                    var(--mb-silver)      55%,
+                    var(--mb-silver-dark) 100%);
+        border-inline-end: 1px solid var(--mb-silver-line);
+        box-shadow: 0 0 18px rgba(15, 23, 42, 0.13);
+
+        overflow-x: hidden;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #AEB4BA transparent;
+    }
+    .tabs-container::-webkit-scrollbar        { display: block; width: 8px; }
+    .tabs-container::-webkit-scrollbar-thumb  { background: #AEB4BA; border-radius: 8px; }
+    .tabs-container::-webkit-scrollbar-track  { background: transparent; }
+
+    /* ── Rail header ───────────────────────────────────────────── */
+    .mb-nav-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 4px 8px 14px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.75);
+        box-shadow: 0 1px 0 var(--mb-silver-line);
+        flex-shrink: 0;
+    }
+
+    .mb-nav-mark {
+        width: 34px;
+        height: 34px;
+        flex-shrink: 0;
+        border-radius: 9px;
+        background: var(--mb-accent);
+        color: #fff;
+        font-size: 0.78em;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 6px rgba(102, 126, 234, 0.4);
+        direction: ltr;                  /* the mark is always "MB" */
+    }
+
+    .mb-nav-head-text { min-width: 0; }
+
+    .mb-nav-title {
+        display: block;
+        font-size: 0.86em;
+        font-weight: 700;
+        color: var(--mb-nav-ink);
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+    }
+
+    /* ── The list ──────────────────────────────────────────────── */
+    .tabs {
+        display: flex;
+        flex-direction: column;
+        flex-wrap: nowrap;
+        gap: 4px;
+        flex: 1 1 auto;
+        border-bottom: none;
+        margin: 0;
+        min-width: 0;
+    }
+
+    .tabs .tab {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        width: 100%;
+        text-align: start;
+
+        padding: 11px 14px;
+        min-height: 46px;
+        border-radius: 10px;
+        border: 1px solid transparent;
+        border-inline-start: 3px solid transparent;   /* accent slot, no shift */
+
+        background: transparent;
+        color: var(--mb-nav-ink);
+        font-size: 0.94em;
+        font-weight: 600;
+        line-height: 1.4;
+
+        white-space: normal;             /* long Arabic labels wrap */
+        overflow-wrap: anywhere;
+        flex-shrink: 0;
+        transition: background 0.18s, color 0.18s, border-color 0.18s;
+    }
+
+    .tabs .tab:hover {
+        background: rgba(255, 255, 255, 0.72);
+        border-color: rgba(255, 255, 255, 0.9);
+        border-inline-start-color: var(--mb-silver-dark);
+        color: #2F3439;
+    }
+
+    .tabs .tab:focus-visible {
+        outline: 2px solid var(--mb-accent);
+        outline-offset: 2px;
+    }
+
+    .tabs .tab.active {
+        background: #FFFFFF;
+        color: var(--mb-accent);
+        border-color: #FFFFFF;
+        border-inline-start-color: var(--mb-accent);
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+    }
+
+    /* Help sits at the foot of the rail, where a help entry belongs. */
+    .tabs .tab:last-child {
+        margin-top: auto;
+        color: var(--mb-nav-ink-soft);
+        font-size: 0.88em;
+        min-height: 40px;
+    }
+    .tabs .tab:last-child.active { color: var(--mb-accent); }
+
+    /* The panel no longer needs the strip's clearance. */
+    .tab-content.active { border-radius: 14px; }
+}
+
+/* Phones and small tablets keep the original horizontal pill strip. */
+@media (max-width: 1024px) {
+    .mb-nav-head { display: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SIDE NAVIGATION — collapse toggle
+   ---------------------------------------------------------------
+   src/sidenav.js only ever adds or removes .mb-nav-collapsed on
+   <body>. The transform is the one place a physical axis is
+   unavoidable (translate has no logical form), so RTL gets its
+   own mirrored rule rather than a second class name.
+   ═══════════════════════════════════════════════════════════════ */
+
+.figma-btn-icon.silver {
+    background: var(--mb-silver, #DADCDE);
+    color: #3F464D;
+    font-size: 1.05em;
+    line-height: 1;
+}
+
+.mb-nav-toggle { padding: 6px; }
+
+/* Suppress the slide on first paint while the saved state is restored. */
+body.mb-nav-no-anim .tabs-container { transition: none !important; }
+
+@media (min-width: 1025px) {
+
+    .tabs-container {
+        transition: transform 0.22s ease, visibility 0.22s;
+    }
+
+    body { transition: padding-inline-start 0.22s ease; }
+
+    body.mb-nav-collapsed { padding-inline-start: 20px; }
+
+    body.mb-nav-collapsed .tabs-container {
+        transform: translateX(-100%);
+        visibility: hidden;
+    }
+
+    html[dir="rtl"] body.mb-nav-collapsed .tabs-container {
+        transform: translateX(100%);
+    }
+
+    body.mb-nav-collapsed .mb-nav-toggle .figma-btn-icon.silver {
+        background: #EDEEF0;
+        color: #8A9198;
+    }
+}
+
+/* On phones the rail is already the horizontal pill strip, which is
+   the right shape there — nothing to collapse, so the button goes. */
+@media (max-width: 1024px) {
+    .mb-nav-toggle { display: none; }
+    .mb-nav-toggle + .figma-divider { display: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   VISUAL IDENTITY — paper #FCFCFB, silver controls, faded red for
+   destructive actions
+   ---------------------------------------------------------------
+   This layer sits last on purpose. Much of the original palette
+   lives in inline style="" attributes in the markup, which no
+   ordinary rule can outrank, so the overrides here are matched on
+   the attribute text itself ([style*="#667eea"]) and carry
+   !important. That is the cost of re-skinning without editing
+   several hundred inline attributes by hand — and it keeps every
+   data-act, id and class exactly where the scripts expect them.
+
+   Three colours do the whole job:
+     paper    #FCFCFB   every surface
+     silver   #DADCDE   every control at rest, and the rail
+     faded red          delete / clear / remove only
+
+   Destructive buttons are selected by INTENT, not by class:
+   [data-act^="delete"] and friends also catch the rows that the
+   renderers build at runtime, which a class list would miss.
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+    --mb-paper:       #FCFCFB;
+    --mb-paper-sunk:  #F4F4F2;
+    --mb-line:        #E4E5E2;
+    --mb-line-strong: #D3D5D1;
+    --mb-ink:         #3F464D;
+    --mb-ink-soft:    #6B7379;
+
+    /* Controls at rest — the toolbar's untouched state, everywhere. */
+    --mb-btn:         linear-gradient(180deg, #FBFBFA 0%, #F0F0EE 100%);
+    --mb-btn-hover:   linear-gradient(180deg, #F3F3F1 0%, #E4E5E2 100%);
+
+    /* Destructive — present, not shouting. */
+    /* Faded, not pink. The first pass tinted the whole button and it
+       read as a coloured control; a destructive action needs to be
+       recognisable, not loud. The fill is now within a shade of the
+       silver used everywhere else, and the red carries in the text
+       and the hairline only. Colour returns on hover, where the
+       pointer has already committed to the button. */
+    --mb-red:         linear-gradient(180deg, #FCFAFA 0%, #F4EFEE 100%);
+    --mb-red-hover:   linear-gradient(180deg, #FAF0EE 0%, #F1DEDB 100%);
+    --mb-red-line:    #E2D2CF;
+    --mb-red-ink:     #A25B54;
+
+    /* The former purple accent, de-saturated to graphite. */
+    --mb-accent:      #5E666D;
+}
+
+/* ── Surfaces ──────────────────────────────────────────────────── */
+body                       { background: #E8E9E6 !important; }
+.container                 { background: var(--mb-paper) !important;
+                             box-shadow: 0 18px 50px rgba(15,23,42,0.18) !important; }
+.tab-content.active        { background: var(--mb-paper) !important; }
+.mb-dialog                 { background: var(--mb-paper); }
+
+/* Panels that were painted white or grey inline, and the boxed areas. */
+.container [style*="background: white"],
+.container [style*="background:white"],
+.container [style*="background: #fff"],
+.container [style*="background:#fff"],
+.container [style*="background: #f9fafb"],
+.container [style*="background:#f9fafb"],
+.container [style*="background: #f8f9fa"],
+.container [style*="background: #f3f4f6"],
+.container [style*="background: #f0f4ff"],
+.container [style*="background:#f0f4ff"] { background: var(--mb-paper) !important; }
+
+/* ── The old purple, neutralised ───────────────────────────────── */
+[style*="color:#667eea"],
+[style*="color: #667eea"]  { color: var(--mb-ink) !important; }
+
+[style*="solid #667eea"]   { border-color: var(--mb-line-strong) !important; }
+
+/* Purple fills: banners, avatars, table headers. */
+[style*="background:#667eea"],
+[style*="background: #667eea"],
+[style*="background:linear-gradient(135deg,#667eea"],
+[style*="background: linear-gradient(135deg, #667eea"] {
+    background: linear-gradient(180deg, #6E767D 0%, #5A6167 100%) !important;
+    box-shadow: none !important;
+}
+
+.app-title-bar h1,
+h1, .section-title,
+.step-label                { color: var(--mb-ink) !important; }
+.app-title-bar p           { color: var(--mb-ink-soft) !important; }
+
+/* ── Every control, at rest, is the toolbar's silver ───────────── */
+button:not(.tab):not(.figma-btn):not(.mark-dropdown-item),
+.container a[style*="background"],
+.mb-dialog-btn {
+    background: var(--mb-btn) !important;
+    background-color: #F5F5F3 !important;
+    color: var(--mb-ink) !important;
+    border: 1px solid var(--mb-line-strong) !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    transition: background 0.15s, border-color 0.15s !important;
+}
+
+button:not(.tab):not(.figma-btn):not(.mark-dropdown-item):hover,
+.container a[style*="background"]:hover,
+.mb-dialog-btn:hover {
+    background: var(--mb-btn-hover) !important;
+    border-color: #C4C7C2 !important;
+}
+
+/* The toolbar keeps its own resting state; only the trash turns red. */
+.figma-btn                 { background: #F7F7F5; border-color: var(--mb-line-strong); }
+.figma-btn-icon.green,
+.figma-btn-icon.blue,
+.figma-btn-icon.purple     { background: #E9EAE7; }
+
+/* ── Destructive actions: delete, clear, remove, reset ─────────── */
+[data-act^="delete"],
+[data-act^="remove"],
+[data-act^="clear"],
+[data-act*="Delete"],
+[data-act*="Remove"],
+[data-act*="Clear"],
+.btn-clear,
+.btn-remove,
+.btn-remove-sheet,
+.btn-clear-section,
+.content-img-delete,
+.objective-format-btn.clear,
+.mb-dialog-ok.is-danger {
+    background: var(--mb-red) !important;
+    background-color: #F8F4F3 !important;
+    color: var(--mb-red-ink) !important;
+    border: 1px solid var(--mb-red-line) !important;
+    box-shadow: none !important;
+}
+
+[data-act^="delete"]:hover,
+[data-act^="remove"]:hover,
+[data-act^="clear"]:hover,
+[data-act*="Delete"]:hover,
+[data-act*="Remove"]:hover,
+[data-act*="Clear"]:hover,
+.btn-clear:hover,
+.btn-remove:hover,
+.btn-remove-sheet:hover,
+.btn-clear-section:hover,
+.content-img-delete:hover,
+.objective-format-btn.clear:hover,
+.mb-dialog-ok.is-danger:hover {
+    background: var(--mb-red-hover) !important;
+    border-color: #D8BEB9 !important;
+}
+
+.figma-btn[data-act="clearAll"] {
+    color: var(--mb-red-ink) !important;
+}
+.figma-btn[data-act="clearAll"] .figma-btn-icon.red { background: #F7E3E0; }
+
+/* clearAndStartManual is a reset, not a delete — silver, not red. */
+[data-act="clearAndStartManual"] {
+    background: var(--mb-btn) !important;
+    color: var(--mb-ink) !important;
+    border: 1px solid var(--mb-line-strong) !important;
+}
+[data-act="clearAndStartManual"]:hover { background: var(--mb-btn-hover) !important; }
+
+/* ── Remaining coloured leftovers in the stylesheet itself ─────── */
+.btn-export,
+.btn-activity-sheet {
+    background: var(--mb-btn) !important;
+    color: var(--mb-ink) !important;
+    border: 1px solid var(--mb-line-strong) !important;
+}
+.btn-export:hover,
+.btn-activity-sheet:hover {
+    background: var(--mb-btn-hover) !important;
+    box-shadow: none !important;
+}
+
+.export-info               { background: var(--mb-paper-sunk); border-color: var(--mb-line); }
+.mb-dialog-ok              { background: var(--mb-btn) !important; }
+
+/* Borders and rules throughout drop to one hairline value. */
+.action-buttons            { border-bottom-color: var(--mb-line) !important; }
+.app-title-bar             { border-bottom-color: var(--mb-line) !important; }
+table, table th, table td  { border-color: var(--mb-line-strong) !important; }
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus,
+select:focus,
+textarea:focus             { border-color: #A9AEB3 !important; outline: none; }
+
+/* ── The rail, re-tuned to the same three colours ──────────────── */
+@media (min-width: 1025px) {
+    .tabs-container        { background: linear-gradient(180deg, #EFF0EE 0%, #DADCDE 60%, #CDD0D2 100%); }
+    .tabs .tab.active      { background: var(--mb-paper); color: var(--mb-ink);
+                             border-color: var(--mb-paper);
+                             border-inline-start-color: #6E767D; }
+    .mb-nav-mark           { background: #6E767D; box-shadow: none; }
+}
+
+@media (max-width: 1024px) {
+    .tab                   { background: #EDEEEB; color: var(--mb-ink); }
+    .tab.active            { background: #6E767D !important; color: #fff !important;
+                             box-shadow: none !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FOOTER IN THE HELP PANEL  +  UPDATE BANNER
+   ═══════════════════════════════════════════════════════════════ */
+
+/* The footer is now a block of the Help panel rather than the last
+   thing under every tab, so it needs the panel's own separation
+   instead of the page's. */
+#help-tab .footer {
+    margin-top: 28px;
+    padding-top: 20px;
+    border-top: 1px solid var(--mb-line);
+    color: var(--mb-ink-soft);
+    font-size: 0.85em;
+    text-align: center;
+}
+
+#help-tab .mb-credit { color: var(--mb-ink); }
+
+/* Belt and braces: if a stray .footer is ever rendered outside the
+   Help panel again, it stays out of the working panels. */
+.container > .footer { display: none; }
+
+/* ── Update banner ─────────────────────────────────────────────
+   Bottom of the viewport, above the safe-area inset, and it never
+   covers the toolbar. Hidden until version.js opens it. */
+.mb-update-bar {
+    position: fixed;
+    inset-inline: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    margin-inline: auto;
+    max-width: 720px;
+    z-index: 10000;
+
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+
+    background: var(--mb-paper);
+    border: 1px solid var(--mb-line-strong);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.20);
+
+    transform: translateY(140%);
+    opacity: 0;
+    visibility: hidden;
+    transition: transform 0.25s ease, opacity 0.25s ease, visibility 0.25s;
+}
+
+.mb-update-bar.is-open {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+}
+
+.mb-update-icon  { font-size: 1.15em; flex-shrink: 0; }
+.mb-update-copy  { display: flex; flex-direction: column; gap: 2px; flex: 1 1 auto; min-width: 0; }
+.mb-update-text  { font-size: 0.92em; font-weight: 700; color: var(--mb-ink); line-height: 1.35; }
+.mb-update-note  { font-size: 0.8em;  color: var(--mb-ink-soft); line-height: 1.35; }
+
+.mb-update-bar button {
+    flex-shrink: 0;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.86em;
+    font-weight: 600;
+    cursor: pointer;
+    min-height: 38px;
+}
+
+/* The primary action reads a shade darker than the rest of the
+   silver so it is findable without introducing another colour. */
+.mb-update-bar .mb-update-go {
+    background: linear-gradient(180deg, #E9EAE7 0%, #DADCDE 100%) !important;
+    border-color: #C4C7C2 !important;
+}
+.mb-update-bar .mb-update-later {
+    color: var(--mb-ink-soft) !important;
+    background: transparent !important;
+    border-color: transparent !important;
+}
+.mb-update-bar .mb-update-later:hover { background: var(--mb-paper-sunk) !important; }
+
+@media (max-width: 600px) {
+    .mb-update-bar { flex-wrap: wrap; gap: 8px; }
+    .mb-update-copy { flex-basis: 100%; }
+    .mb-update-bar button { flex: 1 1 auto; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LANGUAGE MENU IN THE TOOLBAR
+   ---------------------------------------------------------------
+   One list of three languages. The original switchers are still in
+   the document — hidden, not deleted, because src/ renders into
+   their ids and the menu clicks them. Hidden with position/clip
+   rather than display:none: a display:none subtree is not laid out,
+   and a click dispatched into one is far less likely to behave the
+   way the original renderer expects.
+   ═══════════════════════════════════════════════════════════════ */
+
+.mb-lang-legacy {
+    position: absolute;
+    width: 1px; height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.mb-lang-menu { position: relative; display: inline-flex; }
+
+.mb-lang-trigger { gap: 6px; }
+.mb-lang-trigger #mb-lang-current {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.5px;
+    min-width: 22px;
+    text-align: center;
+}
+.mb-lang-caret { font-size: 0.75em; color: var(--mb-ink-soft); transition: transform 0.15s; }
+.mb-lang-menu.is-open .mb-lang-caret { transform: rotate(180deg); }
+.mb-lang-menu.is-open .mb-lang-trigger { background: var(--mb-btn-hover) !important; border-color: #C4C7C2 !important; }
+
+.mb-lang-panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    inset-inline-end: 0;
+    width: 210px;
+    max-width: calc(100vw - 24px);
+    z-index: 10001;
+
+    background: var(--mb-paper);
+    border: 1px solid var(--mb-line-strong);
+    border-radius: 12px;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18);
+    padding: 6px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px);
+    transition: opacity 0.15s, transform 0.15s, visibility 0.15s;
+}
+
+.mb-lang-menu.is-open .mb-lang-panel {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.mb-lang-panel .mb-lang-opt {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: 8px;
+    font-size: 0.9em;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: start;
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    color: var(--mb-ink) !important;
+    min-height: 40px;
+}
+
+.mb-lang-panel .mb-lang-opt:hover {
+    background: var(--mb-paper-sunk) !important;
+    border-color: var(--mb-line) !important;
+}
+
+.mb-lang-panel .mb-lang-opt.is-active {
+    background: #6E767D !important;
+    border-color: #6E767D !important;
+    color: #fff !important;
+}
+
+.mb-lang-opt-code {
+    font-size: 0.78em;
+    letter-spacing: 0.5px;
+    opacity: 0.7;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Each option carries its own script direction: "Français" must read
+   left-to-right even when the interface is Arabic, and vice versa. */
+.mb-lang-opt[data-lang="ar"] .mb-lang-opt-name { direction: rtl; }
+.mb-lang-opt[data-lang="en"] .mb-lang-opt-name,
+.mb-lang-opt[data-lang="fr"] .mb-lang-opt-name { direction: ltr; }
+
+@media (max-width: 600px) {
+    .mb-lang-panel {
+        position: fixed;
+        top: 62px;
+        inset-inline: 12px;
+        width: auto;
+    }
+    .mb-lang-trigger #mb-lang-current { display: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TYPEFACES
+   ---------------------------------------------------------------
+   Cairo for Arabic, the system UI stack for English and French.
+
+   JetBrains Mono is gone. It is a code face — fixed width, tall
+   ascenders, built to make `l` and `1` distinguishable in a
+   terminal — and none of that helps a form full of prose.
+
+   The Latin side needs no font file. "Segoe UI, system-ui, ..."
+   is what the tool has always rendered in, and a system face has
+   one advantage a hosted one cannot match: it is already on the
+   machine, so it paints on the first frame with no swap and no
+   request. If a specific Latin face is wanted later, it drops
+   into --mb-font-latin and nothing else changes.
+
+   Two things the wiring has to get right:
+
+   1. The switch is keyed to <html lang>, which the i18n engine
+      already sets — not a class anyone has to remember to add.
+
+   2. Cairo stays in the Latin fallback chain. The INTERFACE
+      language and the CONTENT language are still separate
+      underneath: someone working in the English interface types
+      Arabic into the bilingual fields, and the Latin stack has
+      thin Arabic coverage at best. Without the fallback that text
+      renders in whatever the browser substitutes, which is how
+      one paragraph ends up in three typefaces.
+
+   3. Form controls do not inherit font-family. They are listed
+      explicitly or the inputs stay on the browser default while
+      everything around them changes.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Several spellings listed on purpose. GitHub Pages is case-sensitive
+   and the file may have shipped as Cairo.woff2, cairo.woff2 or with a
+   -VF suffix; the browser walks this list and uses the first URL that
+   resolves, so one of them being wrong costs nothing. If ALL of them
+   404, the stack falls through to Segoe UI / Tahoma and the interface
+   still reads correctly — check the Network tab for which name is
+   actually served and the rest can be deleted. */
+@font-face {
+    font-family: 'Cairo';
+    src: url('fonts/Cairo.woff2')         format('woff2'),
+         url('fonts/cairo.woff2')         format('woff2'),
+         url('fonts/Cairo-VF.woff2')      format('woff2'),
+         url('fonts/Cairo-Regular.woff2') format('woff2');
+    font-weight: 200 1000;              /* variable */
+    font-style: normal;
+    font-display: swap;
+}
+
+:root {
+    --mb-font-latin:  'Segoe UI', system-ui, -apple-system, 'Helvetica Neue',
+                      Arial, 'Cairo', sans-serif;
+    --mb-font-arabic: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+    --mb-font:        var(--mb-font-latin);
+}
+
+html[lang^="ar"],
+html[dir="rtl"] { --mb-font: var(--mb-font-arabic); }
+
+body,
+button,
+input,
+select,
+textarea,
+.figma-btn,
+.tab,
+.mb-dialog,
+.mb-dialog-input,
+.mb-update-bar,
+.mb-lang-panel,
+.footer { font-family: var(--mb-font) !important; }
+
+/* Cairo carries a taller x-height than the Latin stack and reads a
+   size larger at the same value; the interface was tuned for the
+   latter, so the Arabic side comes back down a step. */
+html[lang^="ar"] body { font-size: 1em; }
+
+/* Version strings, counters and codes read as data, not prose. */
+.mb-update-bar .mb-update-note,
+#mb-credit,
+.cls-hint,
+.mb-lang-opt-code { font-variant-numeric: tabular-nums; }
+
+/* ── Free text sections (intro pages + learning outcomes) ────
+   Same shape in both hosts so the user learns one control once.
+   Rows are built by blocks.js; this file styles them. */
+.mb-blocks {
+    margin-top: 30px;
+    padding: 15px;
+    background: var(--mb-paper-sunk, #f9fafb);
+    border: 1px solid var(--mb-line, #e5e7eb);
+    border-radius: 8px;
+}
+.mb-blocks--lo { margin-top: 15px; }
+
+.mb-blocks-head {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 10px; flex-wrap: wrap; margin-bottom: 10px;
+}
+.mb-blocks-label { font-weight: 600; color: var(--mb-ink, #374151); }
+.mb-blocks-note  { font-size: 0.9em; color: var(--mb-ink-soft, #6b7280); }
+
+.mb-block {
+    background: var(--mb-paper, #fff);
+    border: 1px solid var(--mb-line, #e5e7eb);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 12px;
+}
+.mb-block-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+
+.mb-block-title {
+    flex: 1; min-width: 0;
+    padding: 8px 10px;
+    border: 2px solid var(--mb-line, #d1d5db);
+    border-radius: 6px;
+    font-size: 1em; font-weight: 600;
+    color: var(--mb-ink, #374151);
+    background: var(--mb-paper, #fff);
+}
+.mb-block-title:focus { outline: 2px solid #667eea; outline-offset: 1px; border-color: #667eea; }
+
+.mb-block-remove {
+    flex-shrink: 0;
+    padding: 8px 10px; border: none; border-radius: 6px;
+    cursor: pointer; font-size: 0.9em; line-height: 1;
+}
+
+.mb-block-body {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid var(--mb-line, #d1d5db);
+    border-radius: 6px;
+    font-size: 1em; font-family: inherit;
+    background: var(--mb-paper, #fff);
+    color: var(--mb-ink, #374151);
+    resize: vertical;
+}
+
+.mb-block-add {
+    background: #10b981; color: #fff;
+    border: none; border-radius: 6px;
+    padding: 8px 16px;
+    font-weight: 600; font-size: 0.9em;
+    cursor: pointer;
+}
+.mb-block-add:hover { filter: brightness(0.95); }
+.mb-block-add:focus-visible { outline: 2px solid #065f46; outline-offset: 2px; }
+
+/* A section whose body is empty is a draft, not a document page.
+   The interface says so quietly rather than blocking the field. */
+.mb-block.is-empty { border-style: dashed; opacity: 0.85; }
+
+@media (max-width: 640px) {
+    .mb-block-head { flex-wrap: wrap; }
+    .mb-block-title { flex-basis: 100%; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   COLLAPSIBLE CARD  (.mb-fold)  +  FRAMEWORK CARD  (.mb-tvqf-*)
+   ──────────────────────────────────────────────────────────────
+   The fold is a <details>/<summary>, so everything below is
+   appearance only — no state, no height animation, no aria
+   attributes to keep in sync. `list-style: none` (plus the WebKit
+   pseudo-element) removes the browser's own triangle so the bar
+   can carry its own chevron on the far end, where the tool's
+   other disclosure controls put it.
+   ══════════════════════════════════════════════════════════════ */
+.mb-fold {
+    margin-top: 15px;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--mb-paper, #fff);
+}
+
+/* Silver, with dark ink. The saturated bar read as a call to action —
+   it was the loudest thing on the tab, for a card that is optional and
+   that most projects will never open. A neutral bar says "there is more
+   here" without competing with the Proceed button below it, and it
+   matches the toolbar and the icon buttons, which are the tool's other
+   two neutral surfaces. */
+.mb-fold-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    cursor: pointer;
+    background: linear-gradient(135deg, #f3f4f6 0%, #dfe3e8 100%);
+    color: var(--mb-ink, #374151);
+    border-bottom: 1px solid #cbd5e1;
+    font-weight: 700;
+    font-size: 1.05em;
+    list-style: none;               /* Firefox + standards */
+    user-select: none;
+}
+.mb-fold-bar::-webkit-details-marker { display: none; }   /* Safari/Chrome */
+.mb-fold-bar:hover  { background: linear-gradient(135deg, #e9ecef 0%, #d3d9e0 100%); }
+.mb-fold-bar:focus-visible { outline: 3px solid #667eea; outline-offset: -3px; }
+
+.mb-fold-icon  { font-size: 1.2em; flex-shrink: 0; }
+.mb-fold-title { flex: 1; min-width: 0; }
+
+/* margin-inline-start, not margin-left: the chevron has to sit at the
+   END of the bar, which is the left edge in an Arabic interface. */
+.mb-fold-chevron {
+    flex-shrink: 0;
+    margin-inline-start: auto;
+    transition: transform 0.22s ease;
+}
+.mb-fold[open] > .mb-fold-bar .mb-fold-chevron { transform: rotate(180deg); }
+
+@media (prefers-reduced-motion: reduce) {
+    .mb-fold-chevron { transition: none; }
+}
+
+.mb-fold-body { padding: 18px; background: var(--mb-paper-sunk, #f9fafb); }
+
+/* The note and the clear button share a row: the destructive control
+   sits at the END of it, away from the fields it would empty. */
+.mb-fold-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.mb-fold-head .mb-fold-note { flex: 1; min-width: 200px; }
+
+.mb-fold-clear {
+    flex-shrink: 0;
+    padding: 7px 13px;
+    border: 1px solid #fee2e2;
+    border-radius: 8px;
+    background: #fef2f2;
+    color: #dc2626;
+    font-family: inherit;
+    font-size: 0.85em;
+    font-weight: 600;
+    cursor: pointer;
+}
+.mb-fold-clear:hover { background: #fee2e2; color: #b91c1c; }
+.mb-fold-clear:focus-visible { outline: 2px solid #dc2626; outline-offset: 2px; }
+
+/* Divides the two halves of one card — it is a section heading, not a
+   second bar. */
+.mb-tvqf-subhead {
+    margin: 22px 0 4px;
+    padding-top: 16px;
+    border-top: 1px solid var(--mb-line, #e5e7eb);
+    font-size: 1em;
+    font-weight: 700;
+    color: var(--mb-ink, #374151);
+}
+.mb-fold-note {
+    margin: 0 0 14px;
+    font-size: 0.9em;
+    color: var(--mb-ink-soft, #6b7280);
+    line-height: 1.6;
+}
+
+/* ── The field grid ─────────────────────────────────────────
+   auto-fit rather than a fixed column count, so the card reflows on a
+   phone without a media query of its own. */
+.mb-tvqf-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+}
+
+.mb-tvqf-field { display: flex; flex-direction: column; gap: 5px; }
+
+.mb-tvqf-label {
+    font-size: 0.88em;
+    font-weight: 600;
+    color: var(--mb-ink, #374151);
+    margin: 0;
+}
+
+.mb-tvqf-input {
+    width: 100%;
+    padding: 9px 11px;
+    border: 2px solid var(--mb-line, #d1d5db);
+    border-radius: 6px;
+    font-size: 0.95em;
+    font-family: inherit;
+    background: var(--mb-paper, #fff);
+    color: var(--mb-ink, #374151);
+    text-align: start;
+    margin-bottom: 0;
+}
+.mb-tvqf-input:focus { outline: 2px solid #667eea; outline-offset: 1px; border-color: #667eea; }
+textarea.mb-tvqf-input { min-height: 0; resize: vertical; }
+
+.mb-tvqf-hint { font-size: 0.8em; color: var(--mb-ink-soft, #9ca3af); }
+
+/* Mirrored from the cover table — shown so the card reads as a whole
+   card, greyed so it is obvious they are not edited here. */
+.mb-tvqf-field--mirror .mb-tvqf-input {
+    background: #f3f4f6;
+    border-style: dashed;
+    color: var(--mb-ink-soft, #6b7280);
+    cursor: default;
+}
+
+/* ── Paste-image button & fallback paste zone ─────────────────────
+   The paste button reuses .btn-add-image's geometry so the two sit as a
+   pair, and only changes hue: teal reads as "same family, different
+   source" where a second green would read as a duplicate button. */
+.btn-paste-image {
+    background: #0d9488;
+}
+.btn-paste-image:hover {
+    background: #0f766e;
+}
+
+/* The fallback target for Ctrl+V. It is contenteditable, so it needs a
+   visible edge — an invisible box that must be focused to work is a dead
+   end for the user who cannot see where to press. min-height keeps it a
+   comfortable target on touch; the caret is hidden because nothing typed
+   here is ever kept. */
+.mb-paste-zone {
+    margin-top: 14px;
+    min-height: 90px;
+    border: 2px dashed #94a3b8;
+    border-radius: 8px;
+    background: #f8fafc;
+    padding: 10px;
+    outline: none;
+    caret-color: transparent;
+    overflow: hidden;
+}
+.mb-paste-zone:focus {
+    border-color: #0d9488;
+    background: #f0fdfa;
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+
+/* ============================================================
+   Learning Guide — toggle card + read-only preview
+   ============================================================ */
+
+.lg-card {
+    margin-top: 30px;
+    padding: 18px 20px;
+    background: #f5f3ff;
+    border: 2px solid #a78bfa;
+    border-radius: 10px;
+}
+.lg-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+.lg-card-label { font-weight: 700; color: #5b21b6; font-size: 1.05em; }
+.lg-card-note  { color: #6b7280; font-size: 0.85em; }
+.lg-question   { margin: 6px 0 12px; color: #374151; font-weight: 600; }
+.lg-choices    { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.lg-choice     { display: inline-flex; align-items: center; gap: 7px; cursor: pointer; color: #374151; }
+.lg-choice input { width: 17px; height: 17px; accent-color: #7c3aed; cursor: pointer; }
+.lg-preview-btn {
+    margin-inline-start: auto;
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.9em;
+    letter-spacing: 0.03em;
+}
+.lg-hint { margin: 12px 0 0; color: #6b7280; font-size: 0.85em; line-height: 1.6; }
+
+/* Same silver-flattening rule in this theme applies to every button
+   (see the `button:not(.tab)…` rule earlier in this file), so the
+   preview button marks itself with colour rather than fighting a fill
+   that would lose to `!important` anyway. */
+button#lg-preview-btn {
+    color: #5b21b6 !important;
+    border-color: #a78bfa !important;
+    font-weight: 700 !important;
+}
+button#lg-preview-btn:disabled {
+    color: #9ca3af !important;
+    border-color: #e5e7eb !important;
+}
+
+/* ── Preview overlay ───────────────────────────────────────── */
+.lg-overlay {
+    position: fixed; inset: 0; z-index: 10000;
+    background: rgba(17, 24, 39, 0.55);
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+}
+.lg-modal {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    width: min(900px, 100%);
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.lg-modal-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+    color: #fff;
+}
+.lg-modal-title { font-weight: 700; font-size: 1.05em; }
+.lg-close {
+    background: transparent; border: none; color: #fff;
+    font-size: 1.1em; cursor: pointer; padding: 2px 6px; line-height: 1;
+}
+.lg-readonly-note {
+    padding: 9px 20px;
+    background: #fef3c7;
+    color: #92400e;
+    font-size: 0.85em;
+    border-bottom: 1px solid #fde68a;
+}
+.lg-modal-body { padding: 20px; overflow-y: auto; }
+.lg-modal-foot { padding: 12px 20px; border-top: 1px solid #e5e7eb; text-align: end; }
+.lg-close-btn {
+    background: #e5e7eb; border: none; padding: 8px 20px;
+    border-radius: 7px; font-weight: 600; cursor: pointer; color: #374151;
+}
+
+.lg-block { margin-bottom: 28px; }
+.lg-lo-label { font-size: 0.85em; color: #6b7280; margin-bottom: 4px; }
+.lg-page-title { font-weight: 700; color: #1f2937; margin-bottom: 8px; font-size: 1.05em; }
+.lg-empty { color: #6b7280; font-style: italic; }
+
+.lg-table { width: 100%; border-collapse: collapse; font-size: 0.92em; }
+.lg-table th, .lg-table td {
+    border: 1px solid #9ca3af;
+    padding: 8px 10px;
+    vertical-align: top;
+    line-height: 1.7;
+}
+.lg-table th { background: #ede9fe; color: #4c1d95; }
+.lg-table tr.lg-head-row td { background: #f9fafb; }
+.lg-instr { margin: 0; padding-inline-start: 18px; }
+.lg-instr li { margin-bottom: 4px; }
+
+/* ── Word export settings dialog (word_settings.js) ──────────
+   Scoped under .ws-* so nothing here can reach the rest of the tool.
+   The dialog is direction-aware via a dir attribute on the overlay
+   rather than a language class, because it is opened fresh each time
+   and the interface language is known at that moment. */
+.ws-overlay {
+    position: fixed; inset: 0; z-index: 10050;
+    background: rgba(15, 23, 42, .45);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+}
+.ws-modal {
+    background: #fff; border-radius: 14px;
+    width: min(560px, 100%); max-height: 88vh;
+    display: flex; flex-direction: column;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, .28);
+    font-size: 0.95em;
+}
+.ws-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; padding: 16px 20px;
+    border-bottom: 1px solid #e5e7eb;
+    font-weight: 700; font-size: 1.05em;
+}
+.ws-modal .ws-head button.ws-x {
+    background: none !important; background-color: transparent !important;
+    border: none !important; box-shadow: none !important; cursor: pointer;
+    font-size: 1.5em; line-height: 1; color: #6b7280 !important; padding: 0 4px !important;
+}
+.ws-modal .ws-head button.ws-x:hover { color: #111827 !important; background: none !important; }
+.ws-body { padding: 18px 20px; overflow-y: auto; }
+.ws-note {
+    background: #f0f9ff; border: 1px solid #bae6fd; color: #075985;
+    border-radius: 8px; padding: 10px 12px; margin: 0 0 16px;
+    font-size: .88em; line-height: 1.55;
+}
+.ws-note-sm { margin: 8px 0 18px; font-size: .84em; }
+.ws-group {
+    margin: 18px 0 10px; font-size: .95em; font-weight: 700; color: #374151;
+    border-bottom: 1px solid #f1f5f9; padding-bottom: 6px;
+}
+.ws-group:first-of-type { margin-top: 4px; }
+.ws-row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 14px; margin-bottom: 10px; flex-wrap: wrap;
+}
+.ws-row > label { color: #374151; font-weight: 600; font-size: .92em; }
+.ws-select {
+    border: 1px solid #d1d5db; border-radius: 7px;
+    padding: 6px 10px; font-size: .92em; background: #fff; cursor: pointer;
+    min-width: 96px;
+}
+.ws-swatches { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* ── Why these selectors are this long ──────────────────────
+   `button:not(.tab):not(.figma-btn):not(.mark-dropdown-item)` above
+   paints every remaining button silver with !important. Two things
+   beat it, and BOTH are needed:
+
+     1. !important — an inline `style="background:#0070C0"` loses to an
+        !important declaration, which is why the first build rendered
+        eight empty grey boxes.
+     2. Specificity — that rule scores (0,3,1). A bare `.ws-swatch` is
+        (0,1,0) and still loses even with !important on both sides.
+        `.ws-modal .ws-swatches button.ws-swatch.ws-c-XXXXXX` is
+        (0,4,1) and wins outright.
+
+   The colour is a literal per-swatch class rather than a custom
+   property, so it survives anywhere var() does not and can be asserted
+   against a real computed style in the test suite.
+
+   These eight rules mirror WS_PALETTE in word_settings.js. Changing one
+   list means changing the other. */
+.ws-modal .ws-swatches button.ws-swatch {
+    width: 26px !important; height: 26px !important;
+    border-radius: 6px !important; cursor: pointer;
+    border: 2px solid transparent !important;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, .18) inset !important;
+    padding: 0 !important; min-width: 0 !important; margin: 0 !important;
+}
+.ws-modal .ws-swatches button.ws-swatch.ws-c-0070C0,
+.ws-modal .ws-swatches button.ws-swatch.ws-c-0070C0:hover {
+    background: #0070C0 !important; background-color: #0070C0 !important;
+}
+.ws-modal .ws-swatches button.ws-swatch.ws-c-1F3864,
+.ws-modal .ws-swatches button.ws-swatch.ws-c-1F3864:hover {
+    background: #1F3864 !important; background-color: #1F3864 !important;
+}
+.ws-modal .ws-swatches button.ws-swatch.ws-c-375623,
+.ws-modal .ws-swatches button.ws-swatch.ws-c-375623:hover {
+    background: #375623 !important; background-color: #375623 !important;
+}
+.ws-modal .ws-swatches button.ws-swatch.ws-c-7B241C,
+.ws-modal .ws-swatches button.ws-swatch.ws-c-7B241C:hover {
+    background: #7B241C !important; background-color: #7B241C !important;
+}
+.ws-modal .ws-swatches button.ws-swatch.ws-c-5B2C6F,
+.ws-modal .ws-swatches button.ws-swatch.ws-c-5B2C6F:hover {
+    background: #5B2C6F !important; background-color: #5B2C6F !important;
+}
+.ws-modal .ws-swatches button.ws-swatch.ws-c-3F464D,
+.ws-modal .ws-swatches button.ws-swatch.ws-c-3F464D:hover {
+    background: #3F464D !important; background-color: #3F464D !important;
+}
+.ws-modal .ws-swatches button.ws-swatch.ws-c-0F6674,
+.ws-modal .ws-swatches button.ws-swatch.ws-c-0F6674:hover {
+    background: #0F6674 !important; background-color: #0F6674 !important;
+}
+.ws-modal .ws-swatches button.ws-swatch.ws-c-000000,
+.ws-modal .ws-swatches button.ws-swatch.ws-c-000000:hover {
+    background: #000000 !important; background-color: #000000 !important;
+}
+.ws-modal .ws-swatches button.ws-swatch.is-on,
+.ws-modal .ws-swatches button.ws-swatch.is-on:hover {
+    border-color: #111827 !important;
+    box-shadow: 0 0 0 2px #fff inset, 0 0 0 3px #111827 !important;
+}
+.ws-preview {
+    border: 1px solid #e5e7eb; border-radius: 10px;
+    padding: 16px; background: #fff;
+}
+.ws-pv-line { margin-bottom: 8px; line-height: 1.4; }
+.ws-pv-th {
+    margin-top: 10px; padding: 7px 12px; border-radius: 4px;
+    font-weight: 700; font-size: .92em; text-align: center;
+}
+.ws-foot {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 20px; border-top: 1px solid #e5e7eb;
+}
+.ws-foot-right { display: flex; gap: 10px; margin-inline-start: auto; }
+.ws-msg { font-size: .84em; line-height: 1.35; flex: 1 1 auto; min-width: 0; }
+.ws-msg-ok   { color: #2F6B57; font-weight: 600; }
+.ws-msg-warn { color: #8A5A20; }
+/* Same override problem, same fix — the footer buttons and the close
+   × would otherwise all come out silver. */
+.ws-modal .ws-foot button.ws-btn {
+    border: 1px solid transparent !important; border-radius: 8px !important;
+    padding: 9px 18px !important; font-weight: 600; font-size: .92em;
+    cursor: pointer; box-shadow: none !important;
+}
+.ws-modal .ws-foot button.ws-btn-ghost {
+    background: #f3f4f6 !important; background-color: #f3f4f6 !important;
+    color: #374151 !important; border-color: #e5e7eb !important;
+}
+.ws-modal .ws-foot button.ws-btn-ghost:hover {
+    background: #e5e7eb !important; background-color: #e5e7eb !important;
+}
+.ws-modal .ws-foot button.ws-btn-primary {
+    background: #4A7C6A !important; background-color: #4A7C6A !important;
+    color: #fff !important; border-color: #4A7C6A !important;
+}
+.ws-modal .ws-foot button.ws-btn-primary:hover {
+    background: #3E6A5A !important; background-color: #3E6A5A !important;
+    border-color: #3E6A5A !important;
+}
+/* Disabled means "nothing to save" — the resting state of a dialog the
+   user has only looked at. */
+.ws-modal .ws-foot button.ws-btn-primary:disabled {
+    background: #DCE5E1 !important; background-color: #DCE5E1 !important;
+    color: #7C8B85 !important; border-color: #DCE5E1 !important;
+    cursor: default;
+}
+
+/* HTML-section checkboxes in the export settings dialog. */
+.ws-checks { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 4px 14px; }
+.ws-modal .ws-checks label.ws-check {
+    display: flex; align-items: center; gap: 8px; cursor: pointer;
+    font-size: .89em; color: #374151; padding: 3px 0;
+}
+.ws-modal .ws-checks input[type="checkbox"] {
+    width: 16px !important; height: 16px !important; flex-shrink: 0;
+    accent-color: #4A7C6A; margin: 0 !important;
+}
+
+/* Link / QR modal (link_modal.js). Reuses the export-settings shell. */
+.ws-modal .lm-stack { flex-direction: column; align-items: stretch; gap: 6px; }
+.ws-modal .lm-input {
+    width: 100%; border: 1px solid #d1d5db; border-radius: 8px;
+    padding: 9px 11px; font: inherit; font-size: .92em; background: #fff;
+}
+.ws-modal .lm-radios { display: flex; gap: 22px; flex-wrap: wrap; }
+.ws-modal .lm-radios .ws-check { gap: 9px; }
+.ws-modal .lm-radios input[type="radio"] {
+    width: 16px !important; height: 16px !important; margin: 0 !important; accent-color: #7c3aed;
+}
+.lm-note {
+    border-radius: 9px; padding: 10px 13px; margin: 12px 0 4px;
+    font-size: .86em; line-height: 1.6;
+}
+.lm-note-video { background: #f3f0ff; border: 1px solid #ddd6fe; color: #4c1d95; }
+.lm-note-page  { background: #f0f9ff; border: 1px solid #bae6fd; color: #075985; }
+.lm-dim { color: #8b93a8; font-size: .84em; line-height: 1.55; }
+.lm-auto { margin-top: 6px; }
+.lm-qr { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+.lm-qr img { width: 88px; height: 88px; object-fit: contain; border: 1px solid #e5e7eb; border-radius: 8px; }
+.btn-link-modal.has-link { box-shadow: 0 0 0 2px #c4b5fd; }
+
+/* Performance-criteria title bar.
+   The inline `background:#667eea; color:white` was repainted grey by the
+   theme layer while the text stayed white — a white label on a mid-grey
+   bar, and the placeholder fainter still. Owning both colours in one
+   rule is the only way to keep them in step. */
+.mb-criteria-title-bar {
+    background: linear-gradient(180deg, #4A5568 0%, #3C4655 100%) !important;
+    box-shadow: none !important;
+}
+.mb-criteria-title,
+.criteria-table-container input.mb-criteria-title {
+    background: transparent !important;
+    border: none !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff;
+}
+.mb-criteria-title::placeholder { color: rgba(255,255,255,.72) !important; opacity: 1; }
+
+/* ════════════════════════════════════════════════════════════
+   📚 Project modules panel (3.12.0) — src/module_library_ui.js
+   Logical properties throughout: the panel sits at the inline END of
+   the page, which is the right in English/French and the left in Arabic,
+   without a second set of rules.
+   ════════════════════════════════════════════════════════════ */
+.mb-lib-overlay {
+  position: fixed; inset: 0;
+  background: rgba(15, 23, 42, .28);
+  z-index: 99980;
+}
+.mb-lib-panel {
+  position: fixed;
+  inset-block: 0;
+  inset-inline-end: 0;
+  width: min(440px, 100vw);
+  max-width: 100vw;
+  box-sizing: border-box;
+  background: #f8fafc;
+  border-inline-start: 1px solid #e2e8f0;
+  box-shadow: -12px 0 32px rgba(15, 23, 42, .18);
+  z-index: 99985;
+  display: flex; flex-direction: column;
+  font-size: 15px;
+  color: #0f172a;
+}
+.mb-rtl .mb-lib-panel { box-shadow: 12px 0 32px rgba(15, 23, 42, .18); }
+.mb-lib-panel[hidden], .mb-lib-overlay[hidden] { display: none; }
+.mb-lib-panel *, .mb-lib-panel *::before, .mb-lib-panel *::after { box-sizing: border-box; }
+
+.mb-lib-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 14px 16px;
+  background: #0f766e; color: #fff;
+}
+.mb-lib-head h2 { margin: 0; font-size: 1.1em; font-weight: 700; color: #fff; }
+.mb-lib-x {
+  flex: none; width: 36px; height: 36px; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,.35); background: transparent; color: #fff;
+  font-size: 16px; cursor: pointer; padding: 0; box-shadow: none;
+}
+.mb-lib-x:hover { background: rgba(255,255,255,.15); transform: none; }
+
+.mb-lib-body { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 12px 16px; }
+.mb-lib-foot { padding: 10px 16px; border-top: 1px solid #e2e8f0; background: #fff; }
+
+.mb-lib-project { display: grid; gap: 6px; margin-bottom: 12px; }
+.mb-lib-project label { font-weight: 600; font-size: .85em; color: #475569; }
+.mb-lib-project select,
+.mb-lib-sort select {
+  width: 100%; min-width: 0; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px;
+  background: #fff; font-size: .95em; color: #0f172a;
+}
+.mb-lib-btns { display: flex; flex-wrap: wrap; gap: 6px; }
+.mb-lib-btn {
+  border: 1px solid #cbd5e1; background: #fff; color: #0f172a;
+  padding: 7px 10px; border-radius: 8px; font-size: .85em; font-weight: 600;
+  cursor: pointer; box-shadow: none; line-height: 1.2;
+}
+.mb-lib-btn:hover { background: #f1f5f9; transform: none; }
+.mb-lib-btn.danger { color: #b91c1c; border-color: #fecaca; background: #fef2f2; }
+.mb-lib-btn.primary { width: 100%; background: #0f766e; border-color: #0f766e; color: #fff; padding: 10px; font-size: .95em; }
+.mb-lib-btn.primary:hover { background: #115e59; }
+.mb-lib-link {
+  border: none; background: none; color: #0f766e; font-weight: 600; text-decoration: underline;
+  cursor: pointer; padding: 2px 4px; font-size: .9em; box-shadow: none;
+}
+.mb-lib-link:hover { background: none; color: #115e59; transform: none; }
+
+.mb-lib-author {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 8px;
+  padding: 8px 10px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+  font-size: .9em; margin-bottom: 10px;
+}
+.mb-lib-author em { color: #94a3b8; }
+
+.mb-lib-storage {
+  padding: 8px 10px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+  font-size: .82em; color: #475569; margin-bottom: 12px;
+}
+.mb-lib-st-bar { height: 6px; background: #e2e8f0; border-radius: 99px; overflow: hidden; margin-bottom: 6px; }
+.mb-lib-st-bar i { display: block; height: 100%; width: 0; background: #0ea5e9; border-radius: 99px; }
+.mb-lib-storage.is-high .mb-lib-st-bar i { background: #f59e0b; }
+.mb-lib-st-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px; margin-top: 4px; }
+.mb-lib-st-prot { color: #b45309; }
+.mb-lib-st-prot.is-ok { color: #047857; }
+
+.mb-lib-tools { display: grid; gap: 8px; margin-bottom: 8px; }
+.mb-lib-search {
+  width: 100%; min-width: 0; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px;
+  font-size: .95em; background: #fff;
+}
+.mb-lib-search:focus { outline: 2px solid #0f766e; outline-offset: 0; border-color: #0f766e; }
+.mb-lib-filters { display: flex; flex-wrap: wrap; gap: 6px; }
+.mb-lib-filters button {
+  border: 1px solid #cbd5e1; background: #fff; color: #334155; border-radius: 99px;
+  padding: 5px 11px; font-size: .82em; font-weight: 600; cursor: pointer; box-shadow: none;
+}
+.mb-lib-filters button:hover { background: #f1f5f9; transform: none; }
+.mb-lib-filters button.is-on { background: #0f766e; border-color: #0f766e; color: #fff; }
+.mb-lib-sort { display: flex; align-items: center; gap: 8px; font-size: .85em; color: #475569; }
+.mb-lib-sort span { white-space: nowrap; }
+.mb-lib-count { font-size: .8em; color: #64748b; margin: 4px 0 8px; }
+
+.mb-lib-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.mb-lib-none { color: #64748b; text-align: center; padding: 20px 0; }
+.mb-lib-item {
+  display: grid; gap: 4px; width: 100%; text-align: start;
+  padding: 10px 12px; background: #fff; color: #0f172a;
+  border: 1px solid #e2e8f0; border-inline-start: 4px solid #cbd5e1; border-radius: 8px;
+  cursor: pointer; font: inherit; box-shadow: none;
+}
+.mb-lib-item:hover { border-color: #94a3b8; background: #fff; transform: none; }
+.mb-lib-item:focus-visible { outline: 2px solid #0f766e; outline-offset: 2px; }
+.mb-lib-item.is-open { border-color: #0f766e; border-inline-start-color: #0f766e; background: #f0fdfa; }
+.mb-lib-item.is-loading { opacity: .6; cursor: progress; }
+.mb-lib-line1 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; min-width: 0; }
+.mb-lib-code {
+  font-weight: 700; font-size: .85em; color: #0f766e; background: #ccfbf1;
+  padding: 1px 7px; border-radius: 5px; white-space: nowrap;
+}
+.mb-lib-name { font-weight: 600; min-width: 0; overflow-wrap: anywhere; flex: 1 1 60%; }
+.mb-lib-here { font-size: .72em; font-weight: 700; color: #0f766e; text-transform: uppercase; letter-spacing: .02em; }
+.mb-lib-meta { display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: .78em; color: #64748b; }
+.mb-lib-line3 { display: flex; align-items: center; }
+.mb-lib-prog { display: flex; align-items: center; gap: 8px; width: 100%; }
+.mb-lib-bar { flex: 1; height: 6px; background: #e2e8f0; border-radius: 99px; overflow: hidden; }
+.mb-lib-bar i { display: block; height: 100%; background: #10b981; border-radius: 99px; }
+.mb-lib-pct { font-size: .78em; font-weight: 700; color: #047857; min-width: 3.2em; text-align: end; }
+.mb-lib-badge {
+  font-size: .76em; font-weight: 600; color: #6d28d9; background: #ede9fe;
+  padding: 2px 8px; border-radius: 99px;
+}
+
+/* Button in the Module Management card */
+.mb-lib-mgmt-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.mb-lib-mgmt-btns .btn-lib { background: #0f766e; }
+
+@media (max-width: 720px) {
+  .mb-lib-panel { width: 100vw; border-inline-start: none; }
+  .mb-lib-mgmt-btns { flex-direction: column; align-items: stretch; width: 100%; }
+}
+@media (max-width: 400px) {
+  .mb-lib-body { padding: 10px 12px; }
+  .mb-lib-head { padding: 12px; }
+  .mb-lib-foot { padding: 10px 12px; }
+}
+
+/* The tool's buttons are silver by a global !important rule (above).
+   The panel keeps that look and overrides only what must read as a
+   state: the active filter, the open module, the links, the close
+   button on the teal header. */
+#mb-lib-panel .mb-lib-link {
+  background: transparent !important; border: none !important;
+  color: #0f766e !important; padding: 2px 4px; min-height: 0;
+}
+#mb-lib-panel .mb-lib-link:hover { background: transparent !important; color: #115e59 !important; }
+#mb-lib-panel .mb-lib-x {
+  background: transparent !important; border: 1px solid rgba(255,255,255,.45) !important; color: #fff !important;
+}
+#mb-lib-panel .mb-lib-x:hover { background: rgba(255,255,255,.15) !important; }
+#mb-lib-panel .mb-lib-filters button.is-on {
+  background: #0f766e !important; border-color: #0f766e !important; color: #fff !important;
+}
+#mb-lib-panel .mb-lib-item { background: #fff !important; border-color: #e2e8f0 !important; border-inline-start: 4px solid #cbd5e1 !important; }
+#mb-lib-panel .mb-lib-item:hover { border-color: #94a3b8 !important; }
+#mb-lib-panel .mb-lib-item.is-open {
+  background: #f0fdfa !important; border-color: #0f766e !important; border-inline-start-color: #0f766e !important;
+}
+#mb-lib-panel .mb-lib-btn.danger { color: #b91c1c !important; }
+
+/* ════════════════════════════════════════════════════════════
+   Module packages (3.13.0) — src/package_ui.js
+   ════════════════════════════════════════════════════════════ */
+.mb-lib-pkg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+.mb-lib-pkg .mb-lib-btn { width: 100%; }
+@media (max-width: 380px) { .mb-lib-pkg { grid-template-columns: 1fr; } }
+
+.mb-pk-overlay {
+  position: fixed; inset: 0; z-index: 100000;
+  background: rgba(15, 23, 42, .45);
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px; box-sizing: border-box;
+}
+.mb-pk-box {
+  background: #fff; color: #0f172a; border-radius: 12px;
+  width: min(520px, 100%); max-height: calc(100vh - 32px); overflow-y: auto; overflow-x: hidden;
+  padding: 18px 18px 14px; box-sizing: border-box;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, .3);
+  font-size: 15px;
+}
+.mb-pk-box * { box-sizing: border-box; }
+.mb-pk-title { margin: 0 0 10px; font-size: 1.05em; font-weight: 700; color: #0f172a; }
+.mb-pk-msg { margin: 0 0 12px; white-space: pre-line; line-height: 1.55; color: #334155; }
+.mb-pk-mod { font-weight: 700; color: #0f766e; margin-bottom: 10px; overflow-wrap: anywhere; }
+.mb-pk-tablewrap { overflow-x: auto; margin-bottom: 12px; }
+.mb-pk-cmp { width: 100%; border-collapse: collapse; font-size: .9em; }
+.mb-pk-cmp th, .mb-pk-cmp td { padding: 7px 8px; border-bottom: 1px solid #e2e8f0; text-align: start; vertical-align: top; }
+.mb-pk-cmp thead th { color: #475569; font-size: .88em; }
+.mb-pk-cmp tbody th { color: #64748b; font-weight: 600; white-space: nowrap; }
+.mb-pk-newer {
+  display: inline-block; font-size: .78em; font-weight: 700; color: #047857; background: #d1fae5;
+  padding: 1px 7px; border-radius: 99px; margin-inline-start: 4px;
+}
+.mb-pk-all { display: flex; align-items: center; gap: 8px; font-size: .9em; color: #334155; margin: 4px 0 12px; cursor: pointer; }
+.mb-pk-all input { width: 18px; height: 18px; flex: none; }
+.mb-pk-btns { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.mb-pk-btn { padding: 9px 14px; border-radius: 8px; font-weight: 600; font-size: .92em; cursor: pointer; }
+/* Specific enough to beat the global silver-button rule (0,3,1). */
+.mb-pk-overlay .mb-pk-box button.mb-pk-btn.primary {
+  background: #0f766e !important; border-color: #0f766e !important; color: #fff !important;
+}
+.mb-pk-pbar { height: 8px; background: #e2e8f0; border-radius: 99px; overflow: hidden; margin: 6px 0 10px; }
+.mb-pk-pbar i { display: block; height: 100%; width: 0; background: #0f766e; border-radius: 99px; transition: width .2s; }
+.mb-pk-ptext { font-size: .9em; color: #334155; min-height: 2.6em; overflow-wrap: anywhere; margin-bottom: 8px; }
+@media (max-width: 420px) {
+  .mb-pk-btns { flex-direction: column; align-items: stretch; }
+  .mb-pk-btn { width: 100%; }
+  .mb-pk-cmp tbody th { white-space: normal; }
+}
+
+.mb-pk-drophint {
+  position: fixed; inset-inline: 16px; top: 72px; z-index: 99995;
+  padding: 14px 16px; border: 2px dashed #0f766e; border-radius: 12px;
+  background: rgba(240, 253, 250, .96); color: #0f766e; font-weight: 700; text-align: center;
+  pointer-events: none; opacity: 0; transform: translateY(-6px); transition: opacity .15s, transform .15s;
+}
+.mb-pk-drophint.is-on { opacity: 1; transform: none; }
+
+/* ════════════════════════════════════════════════════════════
+   3.14.0 — panel views, projects list, read-only tabs, preview
+   ════════════════════════════════════════════════════════════ */
+.mb-lib-views { display: flex; gap: 0; padding: 0 16px; background: #0f766e; }
+.mb-lib-views[hidden] { display: none; }
+#mb-lib-panel .mb-lib-views button {
+  flex: 1; background: transparent !important; color: rgba(255,255,255,.75) !important;
+  border: none !important; border-bottom: 3px solid transparent !important; border-radius: 0;
+  padding: 9px 6px; font-weight: 700; font-size: .9em; cursor: pointer;
+}
+#mb-lib-panel .mb-lib-views button.is-on { color: #fff !important; border-bottom-color: #fff !important; }
+.mb-lib-pline {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-bottom: 10px;
+  font-weight: 700; color: #0f172a;
+}
+.mb-lib-pname { min-width: 0; overflow-wrap: anywhere; }
+.mb-lib-ro { font-size: .78em; font-weight: 700; color: #b45309; background: #fef3c7; padding: 2px 8px; border-radius: 99px; }
+.mb-lib-warn { color: #b45309; font-weight: 600; }
+.mb-lib-more { margin-bottom: 8px; }
+.mb-lib-more summary {
+  cursor: pointer; font-weight: 700; font-size: .9em; color: #0f766e; padding: 4px 2px; list-style-position: inside;
+}
+.mb-lib-more[open] summary { margin-bottom: 8px; }
+.mb-lib-pkg .mb-lib-btn.wide { grid-column: 1 / -1; }
+
+.mb-prj-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.mb-prj {
+  display: flex; align-items: stretch; gap: 6px;
+  background: #fff; border: 1px solid #e2e8f0; border-inline-start: 4px solid #cbd5e1; border-radius: 8px; padding: 6px;
+}
+.mb-prj.is-open { border-color: #0f766e; border-inline-start-color: #0f766e; background: #f0fdfa; }
+#mb-lib-panel .mb-prj-main {
+  flex: 1; min-width: 0; display: grid; gap: 3px; text-align: start; padding: 6px 8px;
+  background: transparent !important; border: none !important; cursor: pointer; font: inherit; color: #0f172a !important;
+}
+.mb-prj-name { font-weight: 700; overflow-wrap: anywhere; }
+.mb-prj-sub { font-size: .82em; color: #475569; overflow-wrap: anywhere; }
+.mb-prj-meta { display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: .78em; color: #64748b; }
+.mb-prj-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.mb-prj-tags:empty { display: none; }
+.mb-prj-tag { font-size: .72em; font-weight: 700; padding: 1px 8px; border-radius: 99px; }
+.mb-prj-tag.is-here { color: #0f766e; background: #ccfbf1; }
+.mb-prj-tag.is-busy { color: #b45309; background: #fef3c7; }
+.mb-prj-acts { display: flex; flex-direction: column; gap: 4px; justify-content: center; }
+.mb-prj-acts .mb-lib-btn { padding: 5px 8px; min-width: 36px; }
+
+/* Read-only tab */
+.mb-ro-banner {
+  position: fixed; z-index: 99970; inset-inline: 0; top: 56px;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 12px;
+  padding: 8px 14px; background: #fef3c7; color: #78350f; border-bottom: 1px solid #fcd34d;
+  font-weight: 600; font-size: .9em; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}
+.mb-ro-banner[hidden] { display: none; }
+.mb-ro-banner.is-flash { background: #fde68a; }
+.mb-ro-banner button {
+  padding: 5px 12px !important; border-radius: 8px; font-weight: 700; cursor: pointer;
+}
+.mb-ro-banner button[data-ro="take"] { background: #b45309 !important; border-color: #b45309 !important; color: #fff !important; }
+body.mb-readonly .container { padding-top: 44px; }
+
+/* Preview */
+.mb-prv-overlay { padding: 10px; }
+.mb-prv-box {
+  background: #fff; color: #0f172a; border-radius: 12px; width: min(1100px, 100%); height: calc(100vh - 20px);
+  display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 50px rgba(15,23,42,.3); font-size: 15px;
+}
+.mb-prv-box * { box-sizing: border-box; }
+.mb-prv-top { padding: 12px 16px; border-bottom: 1px solid #e2e8f0; }
+.mb-prv-title { font-weight: 800; font-size: 1.05em; }
+.mb-prv-sub { font-size: .85em; color: #475569; overflow-wrap: anywhere; margin-top: 2px; }
+.mb-prv-note { font-size: .8em; color: #b45309; margin-top: 4px; }
+.mb-prv-main { flex: 1; min-height: 0; display: flex; }
+.mb-prv-list { width: 240px; flex: none; overflow-y: auto; border-inline-end: 1px solid #e2e8f0; padding: 8px; display: grid; align-content: start; gap: 6px; }
+.mb-prv-box .mb-prv-mod {
+  display: grid; gap: 2px; text-align: start; padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: .85em;
+}
+.mb-prv-box .mb-prv-mod small { color: #64748b; }
+.mb-prv-overlay .mb-prv-box button.mb-prv-mod.is-on { background: #f0fdfa !important; border-color: #0f766e !important; }
+.mb-prv-doc { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.mb-prv-head { padding: 8px 14px; border-bottom: 1px solid #f1f5f9; }
+.mb-prv-mt { font-weight: 700; color: #0f766e; overflow-wrap: anywhere; }
+.mb-prv-ml { font-size: .8em; color: #64748b; }
+.mb-prv-status { font-size: .85em; color: #475569; padding: 0 14px; }
+.mb-prv-status:empty { display: none; }
+.mb-prv-frame { flex: 1; width: 100%; border: 0; background: #fff; }
+.mb-prv-btns { padding: 10px 16px; border-top: 1px solid #e2e8f0; }
+@media (max-width: 720px) {
+  .mb-prv-main { flex-direction: column; }
+  .mb-prv-list { width: auto; max-height: 30vh; border-inline-end: none; border-bottom: 1px solid #e2e8f0; }
+  .mb-ro-banner { top: 50px; }
+}
+
+/* Dialogs asked from the library panel, the import or the preview must
+   sit above them (panel 99985, package dialogs 100000). */
+.mb-dialog-overlay { z-index: 100010 !important; }
+.mb-prj-search {
+  width: 100%; min-width: 0; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px;
+  font-size: .95em; background: #fff;
+}
+.mb-prj-search:focus { outline: 2px solid #0f766e; outline-offset: 0; border-color: #0f766e; }
+.mb-pk-overlay .mb-prv-box button.mb-pk-btn.primary {
+  background: #0f766e !important; border-color: #0f766e !important; color: #fff !important;
+}
+
+/* ════════════════════════════════════════════════════════════
+   📁 Folder on this computer (3.15.0) — src/folder_sync.js
+   ════════════════════════════════════════════════════════════ */
+.mb-lib-folder {
+  padding: 8px 10px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+  font-size: .85em; color: #334155; margin-bottom: 12px; display: grid; gap: 6px;
+}
+.mb-lib-folder[hidden] { display: none; }
+.mb-fld-text { overflow-wrap: anywhere; line-height: 1.45; }
+.mb-fld-note { color: #64748b; }
+.mb-fld-status { overflow-wrap: anywhere; color: #475569; }
+.mb-fld-status.is-ok { color: #047857; }
+.mb-fld-status.is-warn { color: #b45309; }
+.mb-fld-bar {
+  position: fixed; z-index: 99975; inset-inline: 12px; bottom: 16px;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 10px;
+  padding: 10px 14px; background: #eff6ff; color: #1e3a8a; border: 1px solid #93c5fd; border-radius: 10px;
+  font-weight: 600; font-size: .9em; text-align: center; box-shadow: 0 6px 18px rgba(15,23,42,.15);
+}
+.mb-fld-bar[hidden] { display: none; }
+.mb-fld-bar button { padding: 5px 12px !important; border-radius: 8px; font-weight: 700; cursor: pointer; }
+.mb-fld-bar button[data-fb="allow"] { background: #1d4ed8 !important; border-color: #1d4ed8 !important; color: #fff !important; }
+/* Beat the global silver-button rule (0,3,1). */
+.mb-fld-bar.mb-fld-bar button[data-fb="allow"] { background: #1d4ed8 !important; border-color: #1d4ed8 !important; color: #fff !important; }
+.mb-ro-banner.mb-ro-banner button[data-ro="take"] { background: #b45309 !important; border-color: #b45309 !important; color: #fff !important; }
