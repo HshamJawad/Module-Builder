@@ -248,6 +248,7 @@
             '<div class="mb-lib-btns">' +
                 '<button type="button" class="mb-lib-btn" data-lib-do="fldWriteAll">' + esc(t('mbFldWriteAll')) + '</button>' +
                 '<button type="button" class="mb-lib-btn" data-lib-do="fldImport">' + esc(t('mbFldImport')) + '</button>' +
+                '<button type="button" class="mb-lib-btn" data-lib-do="fldDownload">' + esc(t('mbFldDownload')) + '</button>' +
                 '<button type="button" class="mb-lib-btn danger" data-lib-do="fldUnlink">' + esc(t('mbFldUnlink')) + '</button>' +
             '</div>';
     }
@@ -536,6 +537,8 @@
             mbFolderSync.retry();
         } else if (what === 'fldWriteAll') {
             mbFolderSync.writeAll();
+        } else if (what === 'fldDownload') {
+            mbSaveModulePackage(null, { download: true });
         } else if (what === 'fldImport') {
             close();
             mbFolderSync.importFromFolder();

@@ -142,9 +142,25 @@
        ══════════════════════════════════════════════════════════ */
 
     /** 💾 — the open module as a .mbz. */
-    function mbSaveModulePackage(mid) {
+    function mbSaveModulePackage(mid, opts) {
         mid = (typeof mid === 'string' && mid) || mbLib.openId || mbState.currentModuleId;
+        opts = (opts && typeof opts === 'object' && !opts.nodeType) ? opts : {};
         if (!mid) return Promise.resolve(false);
+        /* 📁 A folder is linked: 💾 updates the module's file in it — the
+           same file autosave keeps up to date — instead of downloading
+           yet another copy. ("⬇️ Download" in the panel still downloads.) */
+        var fs = (typeof mbFolderSync !== 'undefined' && !opts.download) ? mbFolderSync.state() : null;
+        if (fs && fs.linked && !mbLib.readOnly) {
+            return mbLibrarySave().then(function () { return mbFolderSync.writeNow(mid); }).then(function (name) {
+                if (name) {
+                    showStatus(t('mbFldSavedNow', { v0: name, v1: fs.name }), 'success');
+                    return true;
+                }
+                /* No permission, or the folder is gone: fall back to a
+                   download so the click is never lost. */
+                return mbSaveModulePackage(mid, { download: true });
+            });
+        }
         return mbBuildModulePackage(mid).then(function (p) {
             download(p.blob, p.name);
             if (mbLib.project) mbLibraryMarkBackedUp(mbLib.project.id, [mid]);
@@ -425,7 +441,14 @@
         var D = { conflict: null, programme: null, cover: null };
         var open = { meta: mbLib.project, heads: mbLib.heads, isOpen: true };
         var others = {};
-        var blank = isBlankProject() ? { emptyIds: (mbState.modulesData || []).map(function (m) { return m.id; }), adopted: false } : null;
+        var blank = isBlankProject() ? { adopted: false } : null;
+        /* A project that holds only untouched default modules ("Module 1"
+           of a new project, or what Clear All leaves): those are dropped
+           once real modules arrive. */
+        var placeholders = (mbState.modulesData || []).length && (mbState.modulesData || []).every(function (m) {
+            var h = mbLib.heads[m.id];
+            return h && h.stats && h.stats.skeleton && !h.fromDacum;
+        }) ? mbState.modulesData.map(function (m) { return m.id; }) : [];
         var reloadOpen = false, sharedChanged = false, firstImported = null;
         var maxLo = 0, maxMod = 0;
 
@@ -678,15 +701,15 @@
         if (maxMod > (mbState.moduleIdCounter || 0)) mbState.moduleIdCounter = maxMod;
 
         var target = mbLib.openId;
-        if (blank && blank.adopted && firstImported) {
-            /* The empty default module(s) the blank project started with. */
-            for (var k = 0; k < blank.emptyIds.length; k++) {
-                var id = blank.emptyIds[k];
+        if (placeholders.length && firstImported) {
+            for (var k = 0; k < placeholders.length; k++) {
+                var id = placeholders[k];
                 if (open.heads[id] && open.heads[id].stats && open.heads[id].stats.skeleton && id !== firstImported) {
                     await mbStore.deleteModule(open.meta.id, id);
                     delete mbLib.heads[id]; delete mbLib.cards[id]; delete mbLib.fps.modules[id];
                     mbState.modulesData = mbState.modulesData.filter(function (m) { return m.id !== id; });
                     if (id === target) { target = null; mbLib.openId = null; }
+                    if (typeof mbFolderSync !== 'undefined') mbFolderSync.queue(id);   // a file of it, if any → _deleted/
                 }
             }
         }

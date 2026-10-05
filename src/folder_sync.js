@@ -208,9 +208,17 @@ var mbFolderSync = (function () {
         });
     }
 
-    function writeOne(mid) {
+    /* An untouched default module ("Module 1" of a new or cleared
+       project) is not written: an empty file is noise in a backup, and
+       the module disappears as soon as real modules arrive. */
+    function placeholder(head) {
+        return !!(head && head.stats && head.stats.skeleton && !head.fromDacum);
+    }
+
+    function writeOne(mid, force) {
         var head = mbLib.heads[mid];
         var known = st.rec.files[mid];
+        if (head && !force && !known && placeholder(head)) return Promise.resolve();
         if (!head) {
             /* Deleted from the project. */
             if (!known) return Promise.resolve();
@@ -247,7 +255,7 @@ var mbFolderSync = (function () {
         if (!st.rec || !window.mbLib) return Promise.resolve();
         (mbState.modulesData || []).forEach(function (m) {
             var h = mbLib.heads[m.id], f = st.rec.files[m.id];
-            if (h && (!f || (h.card && (h.card.revision || 0) !== f.rev))) st.queue.add(m.id);
+            if (h && !(placeholder(h) && !f) && (!f || (h.card && (h.card.revision || 0) !== f.rev))) st.queue.add(m.id);
         });
         Object.keys(st.rec.files).forEach(function (mid) { if (!mbLib.heads[mid]) st.queue.add(mid); });
         emit();
@@ -293,6 +301,32 @@ var mbFolderSync = (function () {
 
     function retry() { st.error = null; return syncStale(); }
 
+    /** 💾 with a folder linked: write the module's file NOW (the same
+     *  file autosave keeps up to date) and say where. Asks for the
+     *  permission first when the browser needs it — 💾 is a click, so it
+     *  may. Resolves the file name, or null when it could not write. */
+    function writeNow(mid) {
+        if (!st.rec || mbLib.readOnly) return Promise.resolve(null);
+        var ready = st.perm === 'granted' ? Promise.resolve('granted') : allow();
+        return ready.then(function (p) {
+            if (p !== 'granted') return null;
+            var wait = function () {
+                return st.busy ? new Promise(function (r) { setTimeout(r, 120); }).then(wait) : Promise.resolve();
+            };
+            return wait().then(function () {
+                st.busy = true;
+                st.queue.delete(mid);
+                return writeOne(mid, true).then(function () {
+                    st.busy = false; st.writing = null; st.error = null; emit();
+                    return st.rec.files[mid] ? st.rec.files[mid].name : null;
+                }, function (e) {
+                    st.busy = false; st.writing = null; st.error = (e && e.message) || String(e); emit();
+                    return null;
+                });
+            });
+        });
+    }
+
     /* ── The permission bar ───────────────────────────────────────
        The browser forgets the permission between sessions. Writes then
        wait — and an author who never opens the panel would never know
@@ -334,7 +368,7 @@ var mbFolderSync = (function () {
         },
         load: load, link: link, linkHandle: linkHandle, unlink: unlink, allow: allow,
         queue: queue, flush: flush, syncStale: syncStale, writeAll: writeAll,
-        importFromFolder: importFromFolder, retry: retry,
+        importFromFolder: importFromFolder, retry: retry, writeNow: writeNow,
         stem: stem
     };
 })();
