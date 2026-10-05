@@ -100,6 +100,7 @@ function handleLoadFile() {
 }
 
 async function clearAll() {
+    if (typeof mbIsReadOnly === 'function' && mbIsReadOnly()) return;
     if (await mbConfirm(window.i18n.t('dgConfirmClearAllDatathisWill'), { danger: true })) {
 
         // ── Covers tab ────────────────────────────────────────────

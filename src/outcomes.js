@@ -333,6 +333,7 @@ async function deletePerformanceCriterion(index) {
 }
 
 async function clearAndStartManual() {
+    if (typeof mbIsReadOnly === 'function' && mbIsReadOnly()) return;
     /* Was an English-only confirmation, built here rather than in
        index.html, so applyTranslations() never saw it. */
     const confirmed = await mbConfirm(window.i18n.t('dgClearImportedStartManual'));

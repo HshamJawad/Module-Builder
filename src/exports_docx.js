@@ -5,6 +5,10 @@
 // ============================================================
 
 async function exportToDocx() {
+    /* 3.14.0 — a programme compile (package_ui.js) sets mbExportSink to
+       receive each module's document instead of a download, and to be
+       told — without a dialog — when a module has nothing to export. */
+    const _sink = window.mbExportSink || null;
 
     /* ── Single-language projection ────────────────────────────────
        Shadows the global mbState for the whole of this function with a
@@ -75,6 +79,13 @@ async function exportToDocx() {
                     message: 'This module has no content yet. Add a Learning Outcome, then add an Information Sheet or an Activity Sheet to it.' };
         }
         if (!_ready.ok) {
+            if (_sink) {
+                _sink.skip(_ready.title);
+                if (typeof setExportButtonState === 'function') setExportButtonState(false);
+                if (typeof hideExportInfo === 'function') hideExportInfo();
+                _mbEndExport();
+                return;
+            }
             const _msg = _ready.title + '\n\n' + _ready.message;
             if (typeof mbAlert === 'function') await mbAlert(_msg); else alert(_msg);
             if (typeof showStatus === 'function') showStatus(_ready.title, 'error');
@@ -142,6 +153,7 @@ async function exportToDocx() {
     
     if (!hasCoversContent && !hasIntroContent && !infoTitle.trim() && !hasInfoContent && !title.trim() && !objective.trim() && !hasAssessmentData) {
         console.log('Validation failed: No content found');
+        if (_sink) { _sink.skip(window.i18n.t('dgPleaseFillInAtLeast')); _mbEndExport(); return; }
         showStatus(window.i18n.t('dgPleaseFillInAtLeast'), 'error');
         return;
     }
@@ -2132,6 +2144,12 @@ async function exportToDocx() {
         console.log('Generating blob...');
         const blob = await Packer.toBlob(doc);
         console.log('Blob generated, size: ' + blob.size);
+        if (_sink) {
+            await _sink.take(blob, getExportFilename('docx'));
+            setExportButtonState(false);
+            hideExportInfo();
+            return;
+        }
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
@@ -2173,7 +2191,8 @@ async function exportToDocx() {
         // Hide export info
         hideExportInfo();
         
-        showStatus(window.i18n.t('dgExportFailed') + error.message, 'error');
+        if (_sink) _sink.fail(error);
+        else showStatus(window.i18n.t('dgExportFailed') + error.message, 'error');
 
         /* Route to error handler with EXPORT context */
         if (window.onerror) window.onerror('[EXPORT] ' + error.message, 'exportToDocx', 0, 0, error);

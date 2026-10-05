@@ -147,6 +147,7 @@
         if (!mid) return Promise.resolve(false);
         return mbBuildModulePackage(mid).then(function (p) {
             download(p.blob, p.name);
+            if (mbLib.project) mbLibraryMarkBackedUp(mbLib.project.id, [mid]);
             showStatus(t('mbPkgSaved', { v0: p.name, v1: bytes(p.bytes) }), 'success');
             return true;
         }).catch(function (e) {
@@ -171,6 +172,7 @@
                 prog.set(i, ids.length, (m.moduleCode ? m.moduleCode + ' — ' : '') + mbPlainText(m.title));
                 return mbBuildModulePackage(id).then(function (p) {
                     download(p.blob, p.name);
+                    if (mbLib.project) mbLibraryMarkBackedUp(mbLib.project.id, [id]);
                     done++; total += p.bytes;
                     /* Browsers drop downloads fired in the same instant. */
                     return sleep(450);
@@ -187,6 +189,98 @@
             showStatus(t('mbPkgSaveFailed') + ' ' + errText(e), 'error');
             return done;
         });
+    }
+
+    /** 🗂 — the whole programme as ONE package, module after module. */
+    function mbExportProgrammePackage(pid) {
+        pid = (typeof pid === 'string' && pid) || (mbLib.project && mbLib.project.id);
+        if (!pid) return Promise.resolve(null);
+        var prog = progress(t('mbPrgPkgTitle'));
+        return mbBuildProgrammePackage(pid, function (i, n, label) { prog.set(i, n, label); }, prog.stopped)
+            .then(function (r) {
+                prog.close();
+                if (!r) { showStatus(t('mbPrgCancelled'), 'error'); return null; }
+                download(r.blob, r.name);
+                return mbStore.getHeads(pid).then(function (hs) {
+                    return mbLibraryMarkBackedUp(pid, hs.map(function (h) { return h.mid; }));
+                }).then(function () {
+                    showStatus(t('mbPrgPkgDone', { v0: r.count, v1: bytes(r.bytes), v2: r.name }), 'success');
+                    return r;
+                });
+            }, function (e) {
+                prog.close();
+                console.error('[Package] programme package failed:', e);
+                showStatus(t('mbPkgSaveFailed') + ' ' + errText(e), 'error');
+                return null;
+            });
+    }
+
+    /** 📚 — the whole programme in Word: one document per module, all in
+     *  one ZIP. Each module is opened, exported and let go before the
+     *  next, so the memory used is one module's, however long the
+     *  programme. Modules with nothing to export are listed, not failed. */
+    async function mbExportProgrammeWord() {
+        if (!mbLib.project) return null;
+        if (typeof exportToDocx !== 'function') return null;
+        var ids = (mbState.modulesData || []).map(function (m) { return m.id; });
+        var startId = mbLib.openId;
+        var prog = progress(t('mbPrgWordTitle'));
+        var w = mbZipWriter(), done = 0, skipped = [], failed = [];
+        var safe = function (s) { return String(s || '').replace(/[\\/:*?"<>|\u0000-\u001f]+/g, '').replace(/\s+/g, '_').slice(0, 70); };
+        try {
+            for (var i = 0; i < ids.length; i++) {
+                if (prog.stopped()) break;
+                var m0 = mbState.modulesData.find(function (x) { return x.id === ids[i]; }) || {};
+                var label = (m0.moduleCode ? m0.moduleCode + ' — ' : '') + mbPlainText(m0.title);
+                prog.set(i, ids.length, label);
+                await mbLibraryOpenModule(ids[i]);
+                var res = null;
+                window.mbExportSink = {
+                    take: function (blob, name) { res = { blob: blob, name: name }; return Promise.resolve(); },
+                    skip: function (why) { res = { skip: why }; },
+                    fail: function (e) { res = { fail: e }; }
+                };
+                try { await exportToDocx(); }
+                catch (e) { res = { fail: e }; }
+                finally { window.mbExportSink = null; }
+                if (res && res.blob) {
+                    var bytesU8 = new Uint8Array(await res.blob.arrayBuffer());
+                    var nm = String(i + 1).padStart(2, '0') + '_' + (m0.moduleCode ? safe(m0.moduleCode) + '_' : '') + safe(res.name);
+                    w.add(nm, bytesU8, true);       // a .docx is compressed already
+                    done++;
+                } else if (res && res.fail) {
+                    failed.push(label + ' — ' + ((res.fail && res.fail.message) || res.fail));
+                } else {
+                    skipped.push(label);
+                }
+                res = null;
+                await sleep(0);
+            }
+            prog.set(ids.length, ids.length);
+        } finally {
+            prog.close();
+            window.mbExportSink = null;
+        }
+        var stopped = prog.stopped();
+        var zipBlob = w.finish();
+        if (startId && startId !== mbLib.openId) await mbLibraryOpenModule(startId);
+        if (done) {
+            var d = new Date(), p = function (n) { return String(n).padStart(2, '0'); };
+            download(zipBlob, safe(mbLib.project.name || 'programme') + '_Word_' + d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + '.zip');
+        }
+        var L = [t('mbPrgWordSum', { v0: done, v1: ids.length })];
+        if (skipped.length) {
+            L.push(t('mbPrgWordSkipped', { v0: skipped.length }));
+            skipped.slice(0, 15).forEach(function (x) { L.push('   • ' + x); });
+            if (skipped.length > 15) L.push('   …');
+        }
+        if (failed.length) {
+            L.push(t('mbPkgSumFailed', { v0: failed.length }));
+            failed.slice(0, 10).forEach(function (x) { L.push('   • ' + x); });
+        }
+        if (stopped) L.push(t('mbPrgCancelled'));
+        await mbAlert(L.join('\n'));
+        return { done: done, skipped: skipped.length, failed: failed.length, bytes: zipBlob.size };
     }
 
     /* ══════════════════════════════════════════════════════════
@@ -348,6 +442,10 @@
                         (card.programId && p.programId === card.programId));
             });
             var heads = {};
+            /* A project another tab is editing is never written from here. */
+            if (meta && typeof mbTabGuard !== 'undefined' && await mbTabGuard.heldElsewhere(meta.id)) {
+                var busy = new Error('busy'); busy.mbCode = 'busy'; throw busy;
+            }
             if (!meta) {
                 meta = _mbNewProjectRecord({
                     name: mp.name || card.programName || t('mbLibNewProjectDefault'),
@@ -447,8 +545,8 @@
             var head = ctx.heads[modS.id];
             var action;
             if (!head) action = 'add';
-            else if (head.stats && head.stats.skeleton) action = 'fill';
             else if (sameVersion(head.card, card)) action = 'same';
+            else if (head.stats && head.stats.skeleton) action = 'fill';
             else {
                 var c = D.conflict ? { choice: D.conflict } : null;
                 if (!c) {
@@ -537,18 +635,38 @@
                 if (prog.stopped()) break;
                 var f = files[i];
                 prog.set(i, files.length, f.name);
-                var pkg = null;
-                try {
-                    pkg = await mbReadPackage(f);
-                    var cd = pkg.card || {};
-                    prog.set(i, files.length, (cd.moduleCode ? cd.moduleCode + ' — ' : '') + (cd.moduleTitle || f.name));
-                    await importOne(pkg);
-                } catch (e) {
-                    console.warn('[Package] import failed:', f.name, e);
+                var pk = null;
+                try { pk = await mbOpenPackage(f); }
+                catch (e) {
+                    console.warn('[Package] cannot open:', f.name, e);
                     S.failed.push({ name: f.name, reason: errText(e) });
+                    continue;
                 }
-                pkg = null;               // let the bytes go before the next file
-                await sleep(0);
+                /* A module package holds one module, a programme bundle
+                   many: either way they come out one at a time, each with
+                   only its own pictures — plus the covers' pictures, read
+                   once per file. */
+                var coverImgs = {};
+                try { coverImgs = await pk.readImages(mbImages.refsIn((pk.project && pk.project.cover) || {})); }
+                catch (e) { coverImgs = {}; }
+                for (var j = 0; j < pk.count; j++) {
+                    if (prog.stopped()) break;
+                    var m = null;
+                    try {
+                        m = await pk.readModule(j);
+                        var cd = m.card || {};
+                        prog.set(i, files.length, (pk.count > 1 ? '[' + (j + 1) + '/' + pk.count + '] ' : '') +
+                                 (cd.moduleCode ? cd.moduleCode + ' — ' : '') + (cd.moduleTitle || f.name));
+                        await importOne({ manifest: pk.manifest, card: cd, module: m.module, forms: m.forms,
+                                          project: pk.project, images: Object.assign({}, coverImgs, m.images) });
+                    } catch (e) {
+                        console.warn('[Package] import failed:', f.name, j, e);
+                        S.failed.push({ name: f.name + (pk.count > 1 ? ' #' + (j + 1) : ''), reason: errText(e) });
+                    }
+                    m = null;               // let the bytes go before the next module
+                    await sleep(0);
+                }
+                pk = null;
             }
             prog.set(files.length, files.length);
         } finally {
@@ -622,6 +740,7 @@
         var files = Array.prototype.slice.call(fileList || []).filter(function (f) { return /\.mbz$/i.test(f.name || ''); });
         if (!files.length) { showStatus(t('mbPkgNoFiles'), 'error'); return null; }
         if (!mbLib.enabled) { await mbAlert(t('mbPkgNeedsStorage')); return null; }
+        if (typeof mbIsReadOnly === 'function' && mbIsReadOnly()) return null;
 
         var total = files.reduce(function (n, f) { return n + (f.size || 0); }, 0);
         var est = await mbStorageEstimate();
@@ -665,6 +784,8 @@
     });
 
     window.mbSaveModulePackage = mbSaveModulePackage;
+    window.mbExportProgrammePackage = mbExportProgrammePackage;
+    window.mbExportProgrammeWord = mbExportProgrammeWord;
     window.mbExportAllPackages = mbExportAllPackages;
     window.mbImportPackages = mbImportPackages;
 })();

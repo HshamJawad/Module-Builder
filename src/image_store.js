@@ -233,8 +233,13 @@ var mbImages = (function () {
         return out;
     }
 
-    /** Release the object URLs of pictures no longer on screen. */
+    /** Release the object URLs of pictures no longer on screen — and
+     *  forget the data URLs met so far: they belonged to the module being
+     *  closed (an upload, or a picture inlined for an export), whose
+     *  record is saved. Kept, they would pin every picture of every
+     *  module ever exported in this session in memory. */
     function release(keepHashes) {
+        known.clear();
         var keep = new Set(keepHashes || []);
         urlOf.forEach(function (u, h) {
             if (keep.has(h)) return;

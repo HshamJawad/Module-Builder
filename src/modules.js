@@ -286,6 +286,7 @@ function switchModule() {
 }
 
 async function addNewModule() {
+    if (typeof mbIsReadOnly === 'function' && mbIsReadOnly()) return;
     const title = await mbPrompt(window.i18n.t('dgEnterModuleTitle'), window.i18n.tf('dgDefaultModuleName', { v0: mbState.modulesData.length + 1 }));
     if (!title) return;
 
@@ -301,6 +302,7 @@ async function addNewModule() {
 }
 
 async function renameModule() {
+    if (typeof mbIsReadOnly === 'function' && mbIsReadOnly()) return;
     if (!mbState.currentModuleId) {
         await mbAlert(window.i18n.t('dgPleaseSelectAModuleFirst'));
         return;
@@ -319,6 +321,7 @@ async function renameModule() {
 }
 
 async function deleteModule() {
+    if (typeof mbIsReadOnly === 'function' && mbIsReadOnly()) return;
     if (!mbState.currentModuleId) {
         await mbAlert(window.i18n.t('dgPleaseSelectAModuleFirst'));
         return;

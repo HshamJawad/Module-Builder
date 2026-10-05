@@ -1,25 +1,34 @@
 // ============================================================
 // /src/module_library_ui.js
-// 📚 Project modules — the side panel listing every module of the open
-// project.
+// 📚 The library panel: the modules of the open project, and the list
+// of projects (3.14.0).
 //
-// Painted from the library's light records (mbLib.heads), never from
-// the modules themselves, so drawing a list of 200 modules reads nothing
-// from storage. Clicking a module saves the open one and opens it
-// (mbSelectModule → mbLibraryOpenModule).
+//   Modules   every module of the open project — code, title, author,
+//             last change, size, completion, "structure only", and
+//             "not saved to a file since its last change". Search,
+//             filters, sort. Clicking a module saves the open one and
+//             opens it (mbSelectModule → mbLibraryOpenModule).
+//   Projects  every project in this browser, like DACUM Live Pro's
+//             sidebar: open, rename, export as one package, delete; a
+//             project being edited in another tab says so.
 //
-// Built in JS rather than in index.html so the feature lives in one
-// file; translated through window.i18n and repainted on mb:langchange.
-// Logical CSS properties only, so the panel opens on the right in
-// English and French and on the left in Arabic without a second rule.
+// Painted from the library's light records (heads and project records),
+// never from the modules themselves, so drawing a list of 200 modules
+// reads nothing heavy from storage.
+//
+// Built in JS so the feature lives in one file; translated through
+// window.i18n and repainted on mb:langchange. Logical CSS properties
+// only: the panel opens on the right in English and French and on the
+// left in Arabic without a second rule.
 // ============================================================
 
 (function () {
     'use strict';
 
     var ui = {
-        root: null, overlay: null, list: null,
-        query: '', filter: 'all', sort: 'order',
+        root: null, overlay: null, list: null, plist: null,
+        view: 'modules',
+        query: '', filter: 'all', sort: 'order', pquery: '',
         open: false, lastFocus: null
     };
 
@@ -56,7 +65,9 @@
         } catch (e) { return d.toLocaleString(); }
     }
 
-    /* ── Rows ─────────────────────────────────────────────────── */
+    /* ══════════════════════════════════════════════════════════
+       MODULES
+       ══════════════════════════════════════════════════════════ */
     function rows() {
         var out = [];
         (mbState.modulesData || []).forEach(function (m, i) {
@@ -87,6 +98,7 @@
                 savedAt: card.savedAt || '',
                 stats: stats,
                 fromDacum: fromDacum,
+                needsBackup: h ? mbModuleNeedsBackup(h) : false,
                 isOpen: m.id === mbLib.openId
             });
         });
@@ -106,6 +118,7 @@
             if (ui.filter === 'skeleton' && !r.stats.skeleton) return false;
             if (ui.filter === 'progress' && (r.stats.skeleton || r.stats.completion >= 100)) return false;
             if (ui.filter === 'done' && !(r.stats.completion >= 100)) return false;
+            if (ui.filter === 'backup' && !r.needsBackup) return false;
             if (!q) return true;
             return norm(r.code + ' ' + r.title + ' ' + r.shortName + ' ' + r.author).indexOf(q) !== -1;
         });
@@ -131,6 +144,7 @@
         if (r.author) meta.push('<span>✍️ <bdi>' + esc(r.author) + '</bdi></span>');
         if (r.savedAt) meta.push('<span>🕒 ' + esc(when(r.savedAt)) + '</span>');
         if (s.bytes) meta.push('<span>💾 <bdi>' + esc(bytes(s.bytes)) + '</bdi></span>');
+        if (r.needsBackup) meta.push('<span class="mb-lib-warn" title="' + esc(t('mbLibNotBackedUpTip')) + '">⚠️ ' + esc(t('mbLibNotBackedUp')) + '</span>');
         return '<li><button type="button" class="mb-lib-item' + (r.isOpen ? ' is-open' : '') + '" data-mid="' + esc(r.id) + '"' +
             (r.isOpen ? ' aria-current="true"' : '') + '>' +
             '<span class="mb-lib-line1">' +
@@ -143,7 +157,6 @@
             '</button></li>';
     }
 
-    /* ── Painting ─────────────────────────────────────────────── */
     function paintList() {
         if (!ui.root) return;
         var all = rows();
@@ -151,21 +164,19 @@
         ui.list.innerHTML = shown.length ? shown.map(rowHtml).join('')
             : '<li class="mb-lib-none">' + esc(t('mbLibNoMatch')) + '</li>';
         ui.root.querySelector('.mb-lib-count').textContent = t('mbLibCount', { v0: shown.length, v1: all.length });
-        var btn = document.querySelectorAll('.mb-lib-open-count');
-        btn.forEach(function (b) { b.textContent = all.length ? ' (' + all.length + ')' : ''; });
+        var nb = all.filter(function (r) { return r.needsBackup; }).length;
+        var chip = ui.root.querySelector('[data-filter="backup"]');
+        if (chip) chip.textContent = t('mbLibFilterBackup') + (nb ? ' (' + nb + ')' : '');
+        paintCountOnly();
     }
 
-    function paintProjects() {
-        if (!ui.root || !mbLib.enabled) return;
-        var sel = ui.root.querySelector('#mb-lib-project-sel');
-        mbLibraryListProjects().then(function (list) {
-            var cur = mbLib.project && mbLib.project.id;
-            sel.innerHTML = list.map(function (p) {
-                var n = (p.moduleOrder || []).length;
-                return '<option value="' + esc(p.id) + '"' + (p.id === cur ? ' selected' : '') + '>' +
-                    esc(p.name || t('mbLibNewProjectDefault')) + ' — ' + esc(t('mbLibModulesN', { v0: n })) + '</option>';
-            }).join('');
-        });
+    function paintProjectLine() {
+        if (!ui.root) return;
+        var el = ui.root.querySelector('.mb-lib-pline');
+        var p = mbLib.project || {};
+        el.innerHTML = '<span class="mb-lib-pname">🗂 <bdi>' + esc(p.name || t('mbLibNewProjectDefault')) + '</bdi></span>' +
+            (mbLib.readOnly ? '<span class="mb-lib-ro">🔒 ' + esc(t('mbTabReadOnlyShort')) + '</span>' : '') +
+            (mbLib.enabled ? '<button type="button" class="mb-lib-link" data-lib-do="toProjects">' + esc(t('mbLibChangeProject')) + '</button>' : '');
     }
 
     function paintAuthor() {
@@ -203,6 +214,88 @@
         }).catch(function () { btn.hidden = true; });
     }
 
+    /* ══════════════════════════════════════════════════════════
+       PROJECTS
+       ══════════════════════════════════════════════════════════ */
+    function paintProjects() {
+        if (!ui.root || ui.view !== 'projects' || !mbLib.enabled) return;
+        Promise.all([mbLibraryListProjects(), mbTabGuard.heldIds()]).then(function (r) {
+            var list = r[0], held = r[1];
+            var mine = mbTabGuard.heldPid();
+            var cur = mbLib.project && mbLib.project.id;
+            var q = norm(ui.pquery.trim());
+            var shown = list.filter(function (p) {
+                return !q || norm((p.name || '') + ' ' + (p.programName || '') + ' ' + (p.occupation || '')).indexOf(q) !== -1;
+            });
+            ui.plist.innerHTML = shown.length ? shown.map(function (p) {
+                var n = (p.moduleOrder || []).length;
+                var busy = held.indexOf(p.id) !== -1 && p.id !== mine;
+                var sub = [p.programName && p.programName !== p.name ? p.programName : '', p.occupation].filter(Boolean)
+                    .filter(function (x, i, a) { return a.indexOf(x) === i; }).join(' · ');
+                return '<li class="mb-prj' + (p.id === cur ? ' is-open' : '') + '" data-pid="' + esc(p.id) + '">' +
+                    '<button type="button" class="mb-prj-main" data-pact="open">' +
+                        '<span class="mb-prj-name"><bdi>' + esc(p.name || t('mbLibNewProjectDefault')) + '</bdi></span>' +
+                        (sub ? '<span class="mb-prj-sub"><bdi>' + esc(sub) + '</bdi></span>' : '') +
+                        '<span class="mb-prj-meta"><span>📦 ' + esc(t('mbLibModulesN', { v0: n })) + '</span>' +
+                        (p.updatedAt ? '<span>🕒 ' + esc(when(new Date(p.updatedAt).toISOString())) + '</span>' : '') + '</span>' +
+                        '<span class="mb-prj-tags">' +
+                            (p.id === cur ? '<span class="mb-prj-tag is-here">' + esc(t('mbLibCurrent')) + '</span>' : '') +
+                            (busy ? '<span class="mb-prj-tag is-busy">🔒 ' + esc(t('mbPrjBusy')) + '</span>' : '') +
+                        '</span>' +
+                    '</button>' +
+                    '<div class="mb-prj-acts">' +
+                        '<button type="button" class="mb-lib-btn" data-pact="rename" title="' + esc(t('mbLibRenameProject')) + '">✏️</button>' +
+                        '<button type="button" class="mb-lib-btn" data-pact="export" title="' + esc(t('mbPrgPkgBtn')) + '">🗂</button>' +
+                        '<button type="button" class="mb-lib-btn danger" data-pact="delete" title="' + esc(t('mbLibDeleteProject')) + '"' + (busy ? ' disabled' : '') + '>🗑️</button>' +
+                    '</div>' +
+                '</li>';
+            }).join('') : '<li class="mb-lib-none">' + esc(t('mbLibNoMatch')) + '</li>';
+            ui.root.querySelector('.mb-prj-count').textContent = t('mbPrjCount', { v0: shown.length, v1: list.length });
+        });
+    }
+
+    function projectAction(act, pid) {
+        if (act === 'open') {
+            if (mbLib.project && pid === mbLib.project.id) { setView('modules'); return; }
+            mbLibraryOpenProject(pid).then(function () {
+                showStatus(t('mbLibProjectOpened', { v0: mbLib.project.name }), 'success');
+                setView('modules');
+            });
+        } else if (act === 'rename') {
+            mbStore.getProject(pid).then(function (p) {
+                if (!p) return;
+                mbPrompt(t('mbLibRenamePrompt'), p.name || '').then(function (name) {
+                    name = String(name || '').trim();
+                    if (!name) return;
+                    if (mbLib.project && pid === mbLib.project.id) return mbLibraryRenameProject(name).then(paintProjects);
+                    p.name = name;
+                    return mbStore.putProject(p).then(function () {
+                        mbTabGuard.post({ type: 'projects' });
+                        paintProjects();
+                    });
+                });
+            });
+        } else if (act === 'export') {
+            close();
+            mbExportProgrammePackage(pid);
+        } else if (act === 'delete') {
+            mbStore.getProject(pid).then(function (p) {
+                if (!p) return;
+                return mbConfirm(t('mbLibDeleteProjectConfirm', { v0: p.name || '', v1: (p.moduleOrder || []).length }), { danger: true })
+                    .then(function (yes) {
+                        if (!yes) return;
+                        return mbLibraryDeleteProject(pid).then(function (ok) {
+                            if (ok !== false) showStatus(t('mbLibProjectDeleted'), 'success');
+                            paintProjects();
+                        });
+                    });
+            });
+        }
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       PANEL
+       ══════════════════════════════════════════════════════════ */
     function paintStatic() {
         if (!ui.root) return;
         ui.root.querySelectorAll('[data-lib-t]').forEach(function (el) {
@@ -216,19 +309,33 @@
             el.setAttribute('aria-label', s);
             el.setAttribute('title', s);
         });
-        ui.root.querySelector('.mb-lib-project').hidden = !mbLib.enabled;
+        ui.root.querySelector('.mb-lib-views').hidden = !mbLib.enabled;
+    }
+
+    function setView(v) {
+        ui.view = v === 'projects' && mbLib.enabled ? 'projects' : 'modules';
+        if (!ui.root) return;
+        ui.root.querySelectorAll('[data-view]').forEach(function (b) {
+            var on = b.getAttribute('data-view') === ui.view;
+            b.classList.toggle('is-on', on);
+            b.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
+        ui.root.querySelector('.mb-lib-vmod').hidden = ui.view !== 'modules';
+        ui.root.querySelector('.mb-lib-vprj').hidden = ui.view !== 'projects';
+        ui.root.querySelector('.mb-lib-foot').hidden = ui.view !== 'modules';
+        if (ui.view === 'projects') paintProjects();
+        else paintList();
     }
 
     function paintAll() {
         if (!ui.root || !ui.open) return;
         paintStatic();
-        paintProjects();
+        paintProjectLine();
         paintAuthor();
         paintStorage();
-        paintList();
+        setView(ui.view);
     }
 
-    /* ── Build ────────────────────────────────────────────────── */
     function build() {
         if (ui.root) return;
         ui.overlay = document.createElement('div');
@@ -247,50 +354,69 @@
                 '<h2 id="mb-lib-title" data-lib-t="mbLibTitle"></h2>' +
                 '<button type="button" class="mb-lib-x" data-lib-aria="mbLibClose">✕</button>' +
             '</div>' +
+            '<div class="mb-lib-views" role="tablist">' +
+                '<button type="button" role="tab" data-view="modules" data-lib-t="mbLibViewModules"></button>' +
+                '<button type="button" role="tab" data-view="projects" data-lib-t="mbLibViewProjects"></button>' +
+            '</div>' +
             '<div class="mb-lib-body">' +
-                '<section class="mb-lib-project">' +
-                    '<label for="mb-lib-project-sel" data-lib-t="mbLibProject"></label>' +
-                    '<select id="mb-lib-project-sel"></select>' +
-                    '<div class="mb-lib-btns">' +
-                        '<button type="button" class="mb-lib-btn" data-lib-do="newProject" data-lib-t="mbLibNewProject"></button>' +
-                        '<button type="button" class="mb-lib-btn" data-lib-do="renameProject" data-lib-t="mbLibRenameProject"></button>' +
-                        '<button type="button" class="mb-lib-btn danger" data-lib-do="deleteProject" data-lib-t="mbLibDeleteProject"></button>' +
+                /* ── Modules view ── */
+                '<div class="mb-lib-vmod">' +
+                    '<div class="mb-lib-pline"></div>' +
+                    '<div class="mb-lib-author">' +
+                        '<span>✍️ <span data-lib-t="mbLibAuthor"></span> <span class="mb-lib-author-name"></span></span>' +
+                        '<button type="button" class="mb-lib-link" data-lib-do="author" data-lib-t="mbLibAuthorChange"></button>' +
                     '</div>' +
-                '</section>' +
-                '<div class="mb-lib-author">' +
-                    '<span>✍️ <span data-lib-t="mbLibAuthor"></span> <span class="mb-lib-author-name"></span></span>' +
-                    '<button type="button" class="mb-lib-link" data-lib-do="author" data-lib-t="mbLibAuthorChange"></button>' +
-                '</div>' +
-                '<div class="mb-lib-storage">' +
-                    '<div class="mb-lib-st-bar"><i></i></div>' +
-                    '<div class="mb-lib-st-text"></div>' +
-                    '<div class="mb-lib-st-row"><span class="mb-lib-st-prot"></span>' +
-                    '<button type="button" class="mb-lib-link mb-lib-st-btn" data-lib-do="persist" data-lib-t="mbLibStoragePersistBtn" hidden></button></div>' +
-                '</div>' +
-                '<div class="mb-lib-tools">' +
-                    '<input type="search" class="mb-lib-search" data-lib-ph="mbLibSearch" data-lib-aria="mbLibSearch" autocomplete="off">' +
-                    '<div class="mb-lib-filters" role="group">' +
-                        '<button type="button" data-filter="all" data-lib-t="mbLibFilterAll"></button>' +
-                        '<button type="button" data-filter="skeleton" data-lib-t="mbLibFilterSkeleton"></button>' +
-                        '<button type="button" data-filter="progress" data-lib-t="mbLibFilterProgress"></button>' +
-                        '<button type="button" data-filter="done" data-lib-t="mbLibFilterDone"></button>' +
+                    '<div class="mb-lib-storage">' +
+                        '<div class="mb-lib-st-bar"><i></i></div>' +
+                        '<div class="mb-lib-st-text"></div>' +
+                        '<div class="mb-lib-st-row"><span class="mb-lib-st-prot"></span>' +
+                        '<button type="button" class="mb-lib-link mb-lib-st-btn" data-lib-do="persist" data-lib-t="mbLibStoragePersistBtn" hidden></button></div>' +
                     '</div>' +
-                    '<label class="mb-lib-sort"><span data-lib-t="mbLibSort"></span> ' +
-                    '<select>' +
-                        '<option value="order" data-lib-t="mbLibSortOrder"></option>' +
-                        '<option value="code" data-lib-t="mbLibSortCode"></option>' +
-                        '<option value="recent" data-lib-t="mbLibSortRecent"></option>' +
-                        '<option value="title" data-lib-t="mbLibSortTitle"></option>' +
-                    '</select></label>' +
+                    '<div class="mb-lib-tools">' +
+                        '<input type="search" class="mb-lib-search" data-lib-ph="mbLibSearch" data-lib-aria="mbLibSearch" autocomplete="off">' +
+                        '<div class="mb-lib-filters" role="group">' +
+                            '<button type="button" data-filter="all" data-lib-t="mbLibFilterAll"></button>' +
+                            '<button type="button" data-filter="skeleton" data-lib-t="mbLibFilterSkeleton"></button>' +
+                            '<button type="button" data-filter="progress" data-lib-t="mbLibFilterProgress"></button>' +
+                            '<button type="button" data-filter="done" data-lib-t="mbLibFilterDone"></button>' +
+                            '<button type="button" data-filter="backup"></button>' +
+                        '</div>' +
+                        '<label class="mb-lib-sort"><span data-lib-t="mbLibSort"></span> ' +
+                        '<select>' +
+                            '<option value="order" data-lib-t="mbLibSortOrder"></option>' +
+                            '<option value="code" data-lib-t="mbLibSortCode"></option>' +
+                            '<option value="recent" data-lib-t="mbLibSortRecent"></option>' +
+                            '<option value="title" data-lib-t="mbLibSortTitle"></option>' +
+                        '</select></label>' +
+                    '</div>' +
+                    '<div class="mb-lib-count" aria-live="polite"></div>' +
+                    '<ul class="mb-lib-list"></ul>' +
                 '</div>' +
-                '<div class="mb-lib-count" aria-live="polite"></div>' +
-                '<ul class="mb-lib-list"></ul>' +
+                /* ── Projects view ── */
+                '<div class="mb-lib-vprj" hidden>' +
+                    '<div class="mb-lib-tools">' +
+                        '<input type="search" class="mb-prj-search" data-lib-ph="mbPrjSearch" data-lib-aria="mbPrjSearch" autocomplete="off">' +
+                        '<div class="mb-lib-btns">' +
+                            '<button type="button" class="mb-lib-btn" data-lib-do="newProject" data-lib-t="mbLibNewProject"></button>' +
+                            '<button type="button" class="mb-lib-btn" data-lib-do="importPkg" data-lib-t="mbLibImportBtn"></button>' +
+                            '<button type="button" class="mb-lib-btn" data-lib-do="preview" data-lib-t="mbPrvBtn"></button>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="mb-lib-count mb-prj-count" aria-live="polite"></div>' +
+                    '<ul class="mb-prj-list"></ul>' +
+                '</div>' +
             '</div>' +
             '<div class="mb-lib-foot">' +
-                '<div class="mb-lib-pkg">' +
-                    '<button type="button" class="mb-lib-btn" data-lib-do="importPkg" data-lib-t="mbLibImportBtn"></button>' +
-                    '<button type="button" class="mb-lib-btn" data-lib-do="exportAll" data-lib-t="mbLibExportAllBtn"></button>' +
-                '</div>' +
+                '<details class="mb-lib-more">' +
+                    '<summary data-lib-t="mbLibMore"></summary>' +
+                    '<div class="mb-lib-pkg">' +
+                        '<button type="button" class="mb-lib-btn" data-lib-do="importPkg" data-lib-t="mbLibImportBtn"></button>' +
+                        '<button type="button" class="mb-lib-btn" data-lib-do="preview" data-lib-t="mbPrvBtn"></button>' +
+                        '<button type="button" class="mb-lib-btn" data-lib-do="exportAll" data-lib-t="mbLibExportAllBtn"></button>' +
+                        '<button type="button" class="mb-lib-btn" data-lib-do="exportProgramme" data-lib-t="mbPrgPkgBtn"></button>' +
+                        '<button type="button" class="mb-lib-btn wide" data-lib-do="exportWord" data-lib-t="mbPrgWordBtn"></button>' +
+                    '</div>' +
+                '</details>' +
                 '<button type="button" class="mb-lib-btn primary" data-lib-do="addModule" data-lib-t="mbAddModule"></button>' +
             '</div>';
 
@@ -298,9 +424,11 @@
         document.body.appendChild(root);
         ui.root = root;
         ui.list = root.querySelector('.mb-lib-list');
+        ui.plist = root.querySelector('.mb-prj-list');
 
         root.querySelector('.mb-lib-x').addEventListener('click', close);
         root.querySelector('.mb-lib-search').addEventListener('input', function (e) { ui.query = e.target.value; paintList(); });
+        root.querySelector('.mb-prj-search').addEventListener('input', function (e) { ui.pquery = e.target.value; paintProjects(); });
         root.querySelector('.mb-lib-sort select').addEventListener('change', function (e) { ui.sort = e.target.value; paintList(); });
         root.querySelector('.mb-lib-filters').addEventListener('click', function (e) {
             var b = e.target.closest('[data-filter]');
@@ -309,12 +437,9 @@
             syncFilters();
             paintList();
         });
-        root.querySelector('#mb-lib-project-sel').addEventListener('change', function (e) {
-            var pid = e.target.value;
-            if (!pid || (mbLib.project && pid === mbLib.project.id)) return;
-            mbLibraryOpenProject(pid).then(function () {
-                showStatus(t('mbLibProjectOpened', { v0: mbLib.project.name }), 'success');
-            });
+        root.querySelector('.mb-lib-views').addEventListener('click', function (e) {
+            var b = e.target.closest('[data-view]');
+            if (b) setView(b.getAttribute('data-view'));
         });
         ui.list.addEventListener('click', function (e) {
             var b = e.target.closest('.mb-lib-item');
@@ -326,6 +451,11 @@
                 /* On a phone the panel covers the module: get out of the way. */
                 if (window.matchMedia('(max-width: 720px)').matches) close();
             });
+        });
+        ui.plist.addEventListener('click', function (e) {
+            var b = e.target.closest('[data-pact]');
+            var li = e.target.closest('[data-pid]');
+            if (b && li && !b.disabled) projectAction(b.getAttribute('data-pact'), li.getAttribute('data-pid'));
         });
         root.addEventListener('click', function (e) {
             var b = e.target.closest('[data-lib-do]');
@@ -347,7 +477,6 @@
         if (s) s.value = ui.sort;
     }
 
-    /* ── Actions ──────────────────────────────────────────────── */
     function act(what) {
         if (what === 'author') {
             mbLibraryAskAuthor(true).then(paintAuthor);
@@ -358,12 +487,22 @@
                     paintStorage();
                 });
             }
+        } else if (what === 'toProjects') {
+            setView('projects');
         } else if (what === 'importPkg') {
             var inp = document.getElementById('load-file-input');
             if (inp) inp.click();
+        } else if (what === 'preview') {
+            mbPreviewPick();
         } else if (what === 'exportAll') {
             close();
             mbExportAllPackages();
+        } else if (what === 'exportProgramme') {
+            close();
+            mbExportProgrammePackage();
+        } else if (what === 'exportWord') {
+            close();
+            mbExportProgrammeWord();
         } else if (what === 'addModule') {
             Promise.resolve(addNewModule()).then(paintList);
         } else if (what === 'newProject') {
@@ -371,30 +510,16 @@
                 if (name === null || name === undefined) return;
                 return mbLibraryCreateProject(String(name).trim()).then(function (meta) {
                     showStatus(t('mbLibProjectCreated', { v0: meta.name }), 'success');
+                    setView('modules');
                 });
             });
-        } else if (what === 'renameProject') {
-            if (!mbLib.project) return;
-            mbPrompt(t('mbLibRenamePrompt'), mbLib.project.name || '').then(function (name) {
-                if (name) mbLibraryRenameProject(name);
-            });
-        } else if (what === 'deleteProject') {
-            if (!mbLib.project) return;
-            var p = mbLib.project;
-            mbConfirm(t('mbLibDeleteProjectConfirm', { v0: p.name || '', v1: (mbState.modulesData || []).length }), { danger: true })
-                .then(function (yes) {
-                    if (!yes) return;
-                    return mbLibraryDeleteProject(p.id).then(function () {
-                        showStatus(t('mbLibProjectDeleted'), 'success');
-                    });
-                });
         }
     }
 
-    /* ── Open / close ─────────────────────────────────────────── */
-    function open() {
+    function open(view) {
         build();
         ui.open = true;
+        if (view) ui.view = view;
         ui.lastFocus = document.activeElement;
         ui.overlay.hidden = false;
         ui.root.hidden = false;
@@ -403,7 +528,7 @@
         Promise.resolve(typeof mbLibrarySave === 'function' ? mbLibrarySave() : null).then(paintAll);
         paintAll();
         setTimeout(function () {
-            var s = ui.root.querySelector('.mb-lib-search');
+            var s = ui.root.querySelector(ui.view === 'projects' ? '.mb-prj-search' : '.mb-lib-search');
             /* No keyboard pop-up on a phone just for opening the list. */
             if (s && !window.matchMedia('(pointer: coarse)').matches) s.focus();
         }, 50);
@@ -420,9 +545,10 @@
     window.mbLibraryTogglePanel = function () { if (ui.open) close(); else open(); };
     window.mbLibraryOpenPanel = open;
     window.mbLibraryClosePanel = close;
+    window.mbLibraryOpenProjects = function () { open('projects'); };
 
     window.addEventListener('mb:librarychanged', function () {
-        if (ui.open) { paintProjects(); paintList(); paintStorage(); }
+        if (ui.open) { paintProjectLine(); paintStorage(); setView(ui.view); }
         else paintCountOnly();
     });
     window.addEventListener('mb:langchange', function () { if (ui.open) paintAll(); paintCountOnly(); });

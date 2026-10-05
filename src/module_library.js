@@ -34,6 +34,7 @@
 
 var mbLib = {
     enabled: false,      // IndexedDB available — false keeps everything in memory
+    readOnly: false,     // the project is being edited in another tab (tab_guard.js)
     booted: false,
     project: null,       // the open project's record
     openId: null,        // the module that is complete in memory
@@ -272,12 +273,14 @@ function _mbWriteStored(modS, formsS, hashes, imgBytes, card, project, fp) {
     var stats = mbModuleStats(modS, formsS);
     stats.bytes = f.bytes + (imgBytes || 0);
     stats.images = (hashes || []).length;
+    var prevHead = (mbLib.project && project.id === mbLib.project.id) ? mbLib.heads[modS.id] : null;
     var head = {
         pid: project.id, mid: modS.id,
         skeleton: mbModuleSkeleton(modS),
         card: card, stats: stats,
         images: hashes || [],
-        fromDacum: _mbFromDacum(modS)
+        fromDacum: _mbFromDacum(modS),
+        backup: (prevHead && prevHead.backup) || null
     };
     var body = { pid: project.id, mid: modS.id, module: modS, assessmentForms: formsS, card: card };
     return mbStore.putModule(head, body).then(function () {
@@ -317,6 +320,8 @@ function _mbMetaSnapshot() {
 
 async function _mbSaveNow(force) {
     if (!mbLib.enabled || !mbLib.project) return { changed: false };
+    /* Another tab edits this project: this one never writes it. */
+    if (mbLib.readOnly) return { changed: false };
     _mbLibFlush();
     var changed = false;
     var project = mbLib.project;
@@ -358,7 +363,10 @@ async function _mbSaveNow(force) {
         await mbStore.putProject(meta);
         mbLib.fps.meta = fm;
     }
-    if (changed) _mbLibEmit();
+    if (changed) {
+        _mbLibEmit();
+        if (typeof mbTabGuard !== 'undefined') mbTabGuard.post({ type: 'saved', pid: project.id, mid: mbLib.openId });
+    }
     return { changed: changed };
 }
 
@@ -547,7 +555,14 @@ function _mbCreateDefaultModule() {
  */
 function _mbOpenProjectNow(pid, opts) {
     opts = opts || {};
-    return Promise.all([mbStore.getProject(pid), mbStore.getShared(pid), mbStore.getHeads(pid)])
+    /* One writer per project (tab_guard.js): take the project's lock, or
+       open it read-only when another tab is editing it. */
+    var claim = (mbLib.enabled && typeof mbTabGuard !== 'undefined' && !opts.noClaim)
+        ? mbTabGuard.claim(pid, { ask: opts.ask }).then(function (r) { mbTabGuard.setReadOnly(r === 'readonly'); })
+        : Promise.resolve();
+    return claim.then(function () {
+        return Promise.all([mbStore.getProject(pid), mbStore.getShared(pid), mbStore.getHeads(pid)]);
+    })
         .then(function (r) {
             var meta = r[0], shared = r[1], heads = r[2] || [];
             if (!meta) return false;
@@ -595,6 +610,17 @@ function _mbOpenProjectNow(pid, opts) {
         .then(function () { _mbLibEmit(); return true; });
 }
 
+/** Read the open project again from storage, without saving what is on
+ *  screen first — another tab has changed it (tab_guard.js). */
+function mbLibraryReload(mid) {
+    if (!mbLib.project) return Promise.resolve(false);
+    var pid = mbLib.project.id;
+    return _mbLibQueue(function () {
+        mbLib.openId = null;
+        return _mbOpenProjectNow(pid, { openModule: mid, noClaim: true });
+    });
+}
+
 function mbLibraryOpenProject(pid, opts) {
     return _mbLibQueue(function () {
         return _mbSaveNow(false).then(function () { return _mbOpenProjectNow(pid, opts); });
@@ -612,17 +638,23 @@ function _mbCreateProjectNow(fields, opts) {
 }
 
 function mbLibraryCreateProject(name) {
+    if (typeof mbTabGuard !== 'undefined') setTimeout(function () { mbTabGuard.post({ type: 'projects' }); }, 500);
     return _mbLibQueue(function () {
         return _mbSaveNow(false).then(function () { return _mbCreateProjectNow({ name: name || '' }); });
     });
 }
 
 function mbLibraryRenameProject(name) {
+    if (mbLib.readOnly) { mbIsReadOnly(); return Promise.resolve(false); }
     name = String(name || '').trim();
     if (!name || !mbLib.project) return Promise.resolve(false);
     return _mbLibQueue(function () {
         mbLib.project.name = name;
-        return mbStore.putProject(mbLib.project).then(function () { _mbLibEmit(); return true; });
+        return mbStore.putProject(mbLib.project).then(function () {
+            _mbLibEmit();
+            if (typeof mbTabGuard !== 'undefined') mbTabGuard.post({ type: 'projects' });
+            return true;
+        });
     });
 }
 
@@ -630,6 +662,14 @@ function mbLibraryRenameProject(name) {
  *  by the most recent other one, or a new empty one. */
 function mbLibraryDeleteProject(pid) {
     _mbCollectSoon();
+    var busy = (typeof mbTabGuard !== 'undefined') ? mbTabGuard.heldElsewhere(pid) : Promise.resolve(false);
+    return busy.then(function (b) {
+        if (b) { showStatus(_mbLibT('mbTabDeleteBusy'), 'error'); return false; }
+        if (typeof mbTabGuard !== 'undefined') mbTabGuard.post({ type: 'projects' });
+        return _mbDeleteProjectQueued(pid);
+    });
+}
+function _mbDeleteProjectQueued(pid) {
     return _mbLibQueue(function () {
         var wasOpen = mbLib.project && mbLib.project.id === pid;
         return mbStore.deleteProject(pid).then(function () {
@@ -657,6 +697,7 @@ function mbLibraryListProjects() {
 
 /** A new module, appended and opened. `module` is complete. */
 function mbLibraryAddModule(module) {
+    if (mbLib.readOnly) { mbIsReadOnly(); return Promise.resolve(false); }
     return _mbLibQueue(function () {
         return _mbSaveNow(false).then(function () {
             _mbDemoteOpen();
@@ -674,6 +715,7 @@ function mbLibraryAddModule(module) {
 /** Remove a module from the project and from storage, then open another
  *  (or a new default one when it was the last). */
 function mbLibraryDeleteModule(mid) {
+    if (mbLib.readOnly) { mbIsReadOnly(); return Promise.resolve(false); }
     _mbCollectSoon();
     return _mbLibQueue(function () {
         var drop = function () {
@@ -693,6 +735,7 @@ function mbLibraryDeleteModule(mid) {
 /** Every module of the open project removed from storage — for Clear All
  *  and "Start manual authoring". State is the caller's to reset. */
 function mbLibraryClearModules() {
+    if (mbLib.readOnly) { mbIsReadOnly(); return Promise.resolve(false); }
     _mbCollectSoon();
     return _mbLibQueue(function () {
         mbLib.openId = null;
@@ -704,6 +747,7 @@ function mbLibraryClearModules() {
 
 /** After Clear All: one default module, everything written fresh. */
 function mbLibraryAfterClear() {
+    if (mbLib.readOnly) { mbIsReadOnly(); return Promise.resolve(false); }
     return _mbLibQueue(function () {
         mbState.modulesData = [];
         mbLib.openId = null;
@@ -842,6 +886,41 @@ function _mbMigrateLegacySnapshot() {
 }
 
 /* ══════════════════════════════════════════════════════════════
+   BACKUP MARKERS — "saved to a file since its last change?"
+   Each head remembers the revision that was last written to a package
+   (backup: { revision, at }). The module list flags a module whose card
+   has moved on since, so a coordinator can see which work exists only
+   in this browser.
+   ══════════════════════════════════════════════════════════════ */
+function mbLibraryMarkBackedUp(pid, mids) {
+    if (!mbLib.enabled) return Promise.resolve(0);
+    return _mbLibQueue(function () {
+        var isOpen = mbLib.project && mbLib.project.id === pid;
+        var getHeads = isOpen ? Promise.resolve(mids.map(function (m) { return mbLib.heads[m]; }))
+                              : mbStore.getHeads(pid).then(function (hs) {
+                                    return hs.filter(function (h) { return mids.indexOf(h.mid) !== -1; });
+                                });
+        return getHeads.then(function (heads) {
+            var at = new Date().toISOString(), n = 0;
+            var chain = Promise.resolve();
+            heads.forEach(function (h) {
+                if (!h) return;
+                h.backup = { revision: (h.card && h.card.revision) || 0, at: at };
+                n++;
+                chain = chain.then(function () { return mbStore.putModule(h, null); });
+            });
+            return chain.then(function () { _mbLibEmit(); return n; });
+        });
+    });
+}
+
+/** Has this module changed since it was last saved to a file? */
+function mbModuleNeedsBackup(head) {
+    if (!head || !head.card || (head.stats && head.stats.skeleton)) return false;
+    return (head.card.revision || 0) > ((head.backup && head.backup.revision) || 0);
+}
+
+/* ══════════════════════════════════════════════════════════════
    DACUM LIVE PRO HANDOFF
    ══════════════════════════════════════════════════════════════ */
 
@@ -893,6 +972,12 @@ function _mbDacumImportNow(exportData) {
             .then(function () { return mbStore.putShared(meta.id, _mbDefaultShared()); })
             .then(function () { return _mbOpenProjectNow(meta.id, { createDefault: false }); });
     }).then(function () {
+        if (mbLib.readOnly) {
+            /* The programme is being edited in another tab. Nothing is
+               written here; the handoff is put back so it is not lost. */
+            try { mbSetSetting(MB_KEYS.dacumImport, JSON.stringify(exportData)); } catch (e) {}
+            return mbAlert(_mbLibT('mbTabDacumBusy')).then(function () { throw { mbSkip: true }; });
+        }
         var p = mbLib.project;
         if (exportData.programId) p.programId = exportData.programId;
         if (exportData.programName) p.programName = exportData.programName;
@@ -944,6 +1029,9 @@ function _mbDacumImportNow(exportData) {
         else showStatus(_mbLibT('mbLibDacumAdded', { v0: added, v1: updated, v2: mbLib.project.name }), 'success');
         _mbLibEmit();
         return true;
+    }).catch(function (e) {
+        if (e && e.mbSkip) return false;      // read-only: nothing imported, handoff kept
+        throw e;
     });
 }
 
