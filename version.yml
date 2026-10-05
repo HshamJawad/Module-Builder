@@ -40,11 +40,12 @@ jobs:
           # the export menu, 3.6 for table captions, 3.7 for tables in the
           # author-defined sections.
           # 3.12 for the module library (one record per module), 3.13 for
-          # module packages (.mbz), pictures as Blobs and the service worker.
+          # module packages (.mbz), pictures as Blobs and the service worker,
+          # 3.14 for the tab guard, projects list, preview and programme export.
           # version.json now reads 3.7.0, and any value left behind here
           # would roll the number backwards to <old>.<run> on the next
           # push — the same failure, one minor later.
-          MAJOR_MINOR: "3.13"
+          MAJOR_MINOR: "3.14"
         run: |
           VERSION="${MAJOR_MINOR}.${GITHUB_RUN_NUMBER}"
           BUILD="$(date -u +%Y-%m-%d)"

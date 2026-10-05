@@ -3259,3 +3259,108 @@ button#lg-preview-btn:disabled {
   pointer-events: none; opacity: 0; transform: translateY(-6px); transition: opacity .15s, transform .15s;
 }
 .mb-pk-drophint.is-on { opacity: 1; transform: none; }
+
+/* ════════════════════════════════════════════════════════════
+   3.14.0 — panel views, projects list, read-only tabs, preview
+   ════════════════════════════════════════════════════════════ */
+.mb-lib-views { display: flex; gap: 0; padding: 0 16px; background: #0f766e; }
+.mb-lib-views[hidden] { display: none; }
+#mb-lib-panel .mb-lib-views button {
+  flex: 1; background: transparent !important; color: rgba(255,255,255,.75) !important;
+  border: none !important; border-bottom: 3px solid transparent !important; border-radius: 0;
+  padding: 9px 6px; font-weight: 700; font-size: .9em; cursor: pointer;
+}
+#mb-lib-panel .mb-lib-views button.is-on { color: #fff !important; border-bottom-color: #fff !important; }
+.mb-lib-pline {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-bottom: 10px;
+  font-weight: 700; color: #0f172a;
+}
+.mb-lib-pname { min-width: 0; overflow-wrap: anywhere; }
+.mb-lib-ro { font-size: .78em; font-weight: 700; color: #b45309; background: #fef3c7; padding: 2px 8px; border-radius: 99px; }
+.mb-lib-warn { color: #b45309; font-weight: 600; }
+.mb-lib-more { margin-bottom: 8px; }
+.mb-lib-more summary {
+  cursor: pointer; font-weight: 700; font-size: .9em; color: #0f766e; padding: 4px 2px; list-style-position: inside;
+}
+.mb-lib-more[open] summary { margin-bottom: 8px; }
+.mb-lib-pkg .mb-lib-btn.wide { grid-column: 1 / -1; }
+
+.mb-prj-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.mb-prj {
+  display: flex; align-items: stretch; gap: 6px;
+  background: #fff; border: 1px solid #e2e8f0; border-inline-start: 4px solid #cbd5e1; border-radius: 8px; padding: 6px;
+}
+.mb-prj.is-open { border-color: #0f766e; border-inline-start-color: #0f766e; background: #f0fdfa; }
+#mb-lib-panel .mb-prj-main {
+  flex: 1; min-width: 0; display: grid; gap: 3px; text-align: start; padding: 6px 8px;
+  background: transparent !important; border: none !important; cursor: pointer; font: inherit; color: #0f172a !important;
+}
+.mb-prj-name { font-weight: 700; overflow-wrap: anywhere; }
+.mb-prj-sub { font-size: .82em; color: #475569; overflow-wrap: anywhere; }
+.mb-prj-meta { display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: .78em; color: #64748b; }
+.mb-prj-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.mb-prj-tags:empty { display: none; }
+.mb-prj-tag { font-size: .72em; font-weight: 700; padding: 1px 8px; border-radius: 99px; }
+.mb-prj-tag.is-here { color: #0f766e; background: #ccfbf1; }
+.mb-prj-tag.is-busy { color: #b45309; background: #fef3c7; }
+.mb-prj-acts { display: flex; flex-direction: column; gap: 4px; justify-content: center; }
+.mb-prj-acts .mb-lib-btn { padding: 5px 8px; min-width: 36px; }
+
+/* Read-only tab */
+.mb-ro-banner {
+  position: fixed; z-index: 99970; inset-inline: 0; top: 56px;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 12px;
+  padding: 8px 14px; background: #fef3c7; color: #78350f; border-bottom: 1px solid #fcd34d;
+  font-weight: 600; font-size: .9em; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}
+.mb-ro-banner[hidden] { display: none; }
+.mb-ro-banner.is-flash { background: #fde68a; }
+.mb-ro-banner button {
+  padding: 5px 12px !important; border-radius: 8px; font-weight: 700; cursor: pointer;
+}
+.mb-ro-banner button[data-ro="take"] { background: #b45309 !important; border-color: #b45309 !important; color: #fff !important; }
+body.mb-readonly .container { padding-top: 44px; }
+
+/* Preview */
+.mb-prv-overlay { padding: 10px; }
+.mb-prv-box {
+  background: #fff; color: #0f172a; border-radius: 12px; width: min(1100px, 100%); height: calc(100vh - 20px);
+  display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 50px rgba(15,23,42,.3); font-size: 15px;
+}
+.mb-prv-box * { box-sizing: border-box; }
+.mb-prv-top { padding: 12px 16px; border-bottom: 1px solid #e2e8f0; }
+.mb-prv-title { font-weight: 800; font-size: 1.05em; }
+.mb-prv-sub { font-size: .85em; color: #475569; overflow-wrap: anywhere; margin-top: 2px; }
+.mb-prv-note { font-size: .8em; color: #b45309; margin-top: 4px; }
+.mb-prv-main { flex: 1; min-height: 0; display: flex; }
+.mb-prv-list { width: 240px; flex: none; overflow-y: auto; border-inline-end: 1px solid #e2e8f0; padding: 8px; display: grid; align-content: start; gap: 6px; }
+.mb-prv-box .mb-prv-mod {
+  display: grid; gap: 2px; text-align: start; padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: .85em;
+}
+.mb-prv-box .mb-prv-mod small { color: #64748b; }
+.mb-prv-overlay .mb-prv-box button.mb-prv-mod.is-on { background: #f0fdfa !important; border-color: #0f766e !important; }
+.mb-prv-doc { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.mb-prv-head { padding: 8px 14px; border-bottom: 1px solid #f1f5f9; }
+.mb-prv-mt { font-weight: 700; color: #0f766e; overflow-wrap: anywhere; }
+.mb-prv-ml { font-size: .8em; color: #64748b; }
+.mb-prv-status { font-size: .85em; color: #475569; padding: 0 14px; }
+.mb-prv-status:empty { display: none; }
+.mb-prv-frame { flex: 1; width: 100%; border: 0; background: #fff; }
+.mb-prv-btns { padding: 10px 16px; border-top: 1px solid #e2e8f0; }
+@media (max-width: 720px) {
+  .mb-prv-main { flex-direction: column; }
+  .mb-prv-list { width: auto; max-height: 30vh; border-inline-end: none; border-bottom: 1px solid #e2e8f0; }
+  .mb-ro-banner { top: 50px; }
+}
+
+/* Dialogs asked from the library panel, the import or the preview must
+   sit above them (panel 99985, package dialogs 100000). */
+.mb-dialog-overlay { z-index: 100010 !important; }
+.mb-prj-search {
+  width: 100%; min-width: 0; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px;
+  font-size: .95em; background: #fff;
+}
+.mb-prj-search:focus { outline: 2px solid #0f766e; outline-offset: 0; border-color: #0f766e; }
+.mb-pk-overlay .mb-prv-box button.mb-pk-btn.primary {
+  background: #0f766e !important; border-color: #0f766e !important; color: #fff !important;
+}
