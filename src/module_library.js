@@ -288,6 +288,8 @@ function _mbWriteStored(modS, formsS, hashes, imgBytes, card, project, fp) {
             mbLib.heads[modS.id] = head;
             mbLib.cards[modS.id] = card;
             mbLib.fps.modules[modS.id] = f.fp;
+            /* 📁 a linked folder gets this module's file rewritten. */
+            if (typeof mbFolderSync !== 'undefined') mbFolderSync.queue(modS.id);
         }
         return head;
     });
@@ -351,6 +353,10 @@ async function _mbSaveNow(force) {
         changed = true;
         await mbStore.putShared(project.id, ds.value, ds.hashes);
         mbLib.fps.shared = fs.fp;
+        /* Cover and references travel inside every package: the open
+           module's file carries the change now, the others with their
+           next change or "Write all now". */
+        if (mbLib.openId && typeof mbFolderSync !== 'undefined') mbFolderSync.queue(mbLib.openId);
     }
     mbLib.sharedHashes = ds.hashes;
 
@@ -607,7 +613,11 @@ function _mbOpenProjectNow(pid, opts) {
             });
             });
         })
-        .then(function () { _mbLibEmit(); return true; });
+        .then(function () {
+            _mbLibEmit();
+            if (typeof mbFolderSync !== 'undefined') mbFolderSync.load(pid);
+            return true;
+        });
 }
 
 /** Read the open project again from storage, without saving what is on
@@ -721,6 +731,7 @@ function mbLibraryDeleteModule(mid) {
         var drop = function () {
             mbState.modulesData = (mbState.modulesData || []).filter(function (m) { return m.id !== mid; });
             delete mbLib.heads[mid]; delete mbLib.cards[mid]; delete mbLib.fps.modules[mid];
+            if (typeof mbFolderSync !== 'undefined') mbFolderSync.queue(mid);   // its file → _deleted/
             if (mbLib.openId === mid) { mbLib.openId = null; mbState.assessmentFormsData = {}; }
             mbState.currentModuleId = null;
             var next = mbState.modulesData[0];
@@ -754,6 +765,10 @@ function mbLibraryAfterClear() {
         return _mbCreateDefaultModule().then(function () {
             mbLib.fps.shared = null;
             return _mbSaveNow(true);
+        }).then(function (r) {
+            /* The cleared modules' files move to _deleted/ in a linked folder. */
+            if (typeof mbFolderSync !== 'undefined') mbFolderSync.syncStale();
+            return r;
         });
     });
 }

@@ -214,6 +214,45 @@
         }).catch(function () { btn.hidden = true; });
     }
 
+    /* ── 📁 Folder (folder_sync.js) ─────────────────────────────── */
+    function paintFolder() {
+        if (!ui.root) return;
+        var box = ui.root.querySelector('.mb-lib-folder');
+        if (!mbLib.enabled || typeof mbFolderSync === 'undefined') { box.hidden = true; return; }
+        box.hidden = false;
+        if (!mbFolderSync.supported) {
+            box.innerHTML = '<div class="mb-fld-note">📁 ' + esc(t('mbFldUnsupported')) + '</div>';
+            return;
+        }
+        var s = mbFolderSync.state();
+        if (!s.linked) {
+            box.innerHTML = '<div class="mb-fld-text">📁 ' + esc(t('mbFldIntro')) + '</div>' +
+                '<div class="mb-lib-btns"><button type="button" class="mb-lib-btn" data-lib-do="fldLink">' + esc(t('mbFldChoose')) + '</button></div>';
+            return;
+        }
+        var status, cls = '';
+        if (s.perm !== 'granted') {
+            status = '⚠️ ' + esc(t('mbFldNeedsPermission')) + ' <button type="button" class="mb-lib-link" data-lib-do="fldAllow">' + esc(t('mbFldAllow')) + '</button>';
+            cls = 'is-warn';
+        } else if (s.error) {
+            status = '⚠️ ' + esc(t('mbFldError', { v0: s.error })) + ' <button type="button" class="mb-lib-link" data-lib-do="fldRetry">' + esc(t('mbFldRetry')) + '</button>';
+            cls = 'is-warn';
+        } else if (s.busy || s.pending) {
+            status = '⏳ ' + esc(t('mbFldWriting', { v0: s.pending + (s.busy ? 1 : 0) })) + (s.writing ? ' <bdi>' + esc(s.writing) + '</bdi>' : '');
+        } else {
+            status = '✓ ' + esc(t('mbFldUpToDate', { v0: s.files })) + (s.lastAt ? ' · 🕒 ' + esc(when(s.lastAt)) : '');
+            cls = 'is-ok';
+        }
+        box.innerHTML = '<div class="mb-fld-text">📁 <strong><bdi>' + esc(s.name) + '</bdi></strong></div>' +
+            '<div class="mb-fld-status ' + cls + '">' + status + '</div>' +
+            '<div class="mb-lib-btns">' +
+                '<button type="button" class="mb-lib-btn" data-lib-do="fldWriteAll">' + esc(t('mbFldWriteAll')) + '</button>' +
+                '<button type="button" class="mb-lib-btn" data-lib-do="fldImport">' + esc(t('mbFldImport')) + '</button>' +
+                '<button type="button" class="mb-lib-btn danger" data-lib-do="fldUnlink">' + esc(t('mbFldUnlink')) + '</button>' +
+            '</div>';
+    }
+    window.addEventListener('mb:folderchanged', function () { if (ui.open) paintFolder(); });
+
     /* ══════════════════════════════════════════════════════════
        PROJECTS
        ══════════════════════════════════════════════════════════ */
@@ -333,6 +372,7 @@
         paintProjectLine();
         paintAuthor();
         paintStorage();
+        paintFolder();
         setView(ui.view);
     }
 
@@ -372,6 +412,7 @@
                         '<div class="mb-lib-st-row"><span class="mb-lib-st-prot"></span>' +
                         '<button type="button" class="mb-lib-link mb-lib-st-btn" data-lib-do="persist" data-lib-t="mbLibStoragePersistBtn" hidden></button></div>' +
                     '</div>' +
+                    '<div class="mb-lib-folder"></div>' +
                     '<div class="mb-lib-tools">' +
                         '<input type="search" class="mb-lib-search" data-lib-ph="mbLibSearch" data-lib-aria="mbLibSearch" autocomplete="off">' +
                         '<div class="mb-lib-filters" role="group">' +
@@ -487,6 +528,21 @@
                     paintStorage();
                 });
             }
+        } else if (what === 'fldLink') {
+            mbFolderSync.link();
+        } else if (what === 'fldAllow') {
+            mbFolderSync.allow();
+        } else if (what === 'fldRetry') {
+            mbFolderSync.retry();
+        } else if (what === 'fldWriteAll') {
+            mbFolderSync.writeAll();
+        } else if (what === 'fldImport') {
+            close();
+            mbFolderSync.importFromFolder();
+        } else if (what === 'fldUnlink') {
+            mbConfirm(t('mbFldUnlinkConfirm', { v0: mbFolderSync.state().name }), { danger: true }).then(function (yes) {
+                if (yes) mbFolderSync.unlink();
+            });
         } else if (what === 'toProjects') {
             setView('projects');
         } else if (what === 'importPkg') {
