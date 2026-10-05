@@ -39,10 +39,12 @@ jobs:
           # toolbar, 3.4 for the PPTX export and the export centre, 3.5 for
           # the export menu, 3.6 for table captions, 3.7 for tables in the
           # author-defined sections.
+          # 3.12 for the module library (one record per module), 3.13 for
+          # module packages (.mbz), pictures as Blobs and the service worker.
           # version.json now reads 3.7.0, and any value left behind here
           # would roll the number backwards to <old>.<run> on the next
           # push — the same failure, one minor later.
-          MAJOR_MINOR: "3.11"
+          MAJOR_MINOR: "3.13"
         run: |
           VERSION="${MAJOR_MINOR}.${GITHUB_RUN_NUMBER}"
           BUILD="$(date -u +%Y-%m-%d)"

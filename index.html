@@ -15,12 +15,15 @@
      reach, which is how this line came to read V 2.0 while the tool was
      running 3.x. -->
 <title>Module Builder</title>
-<script src="https://cdn.jsdelivr.net/npm/docx@7.8.2/build/index.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<!-- Third-party libraries, self-hosted in vendor/ (3.13.0; see
+     vendor/README.md for sources and checksums) so the tool works offline. -->
+<script src="vendor/docx-7.8.2/index.js"></script>
+<script src="vendor/jspdf-2.5.1/jspdf.umd.min.js"></script>
+<script src="vendor/fflate-0.8.3/fflate.umd.js"></script>
 <!-- Error handler must load before any app script -->
 <script src="error-handler2.js"></script>
 <script defer src="version.js"></script>
-<link href="mb-styles.css?v=3.11.1" rel="stylesheet"/>
+<link href="mb-styles.css?v=3.13.0" rel="stylesheet"/>
 <!-- Inline favicon. Without one the browser requests /favicon.ico on
      every load and logs a 404 — harmless, but it sits in the console
      next to real errors and makes them harder to see. -->
@@ -149,6 +152,8 @@
 <span class="figma-btn-icon green">💾</span><span data-i18n="txSaveWork">Save Work</span></button>
 <button class="figma-btn" data-act="loadWork">
 <span class="figma-btn-icon blue">📂</span><span data-i18n="txLoadWork">Load Work</span></button>
+<button class="figma-btn" data-act="mbLibraryTogglePanel" id="mb-lib-toolbar-btn">
+<span class="figma-btn-icon green">📚</span><span data-i18n="mbLibToolbar">Modules</span><span class="mb-lib-open-count"></span></button>
 <!-- Export and settings moved OUT of the track and into the menu that
      sits beside the language menu, outside this scroll track. Four
      export buttons were four ways to say one thing — choose a format —
@@ -211,7 +216,7 @@
 </div>
 </div>
 <div class="container">
-<input accept=".json" data-act="handleLoadFile" data-on="change" id="load-file-input" style="display: none;" type="file"/>
+<input accept=".mbz" multiple data-act="handleLoadFile" data-on="change" id="load-file-input" style="display: none;" type="file"/>
 <!-- Export Info Message (global, above tabs) -->
 <div class="export-info" id="export-info">
 <span style="font-size: 1.3em;">ℹ️</span>
@@ -254,9 +259,12 @@
 <div style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); padding: 25px; border-radius: 12px; margin: 30px 0; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);">
 <div class="mgmt-header">
 <h3 data-i18n="mbModuleManagement" style="color: white; margin: 0; font-size: 1.3em;">📦 Module Management</h3>
+<div class="mb-lib-mgmt-btns">
+<button class="btn-action btn-lib" data-act="mbLibraryTogglePanel"><span data-i18n="mbLibOpenBtn">📚 Project modules</span><span class="mb-lib-open-count"></span></button>
 <button class="btn-action" data-act="addNewModule" data-i18n="mbAddModule" style="background: #10b981;">
                     ➕ Add Module
                 </button>
+</div>
 </div>
 <div class="mgmt-row" style="background: white; padding: 15px; border-radius: 8px;">
 <label data-i18n="mbCurrentModule" style="font-weight: 600; color: #0c4a6e; white-space: nowrap;">Current Module:</label>
@@ -1045,54 +1053,61 @@ The AI analyzes only this module's own data (Learning Outcomes, Performance Crit
            app.js           boot.
            autosave.js      last; observes a fully built page.
          ═══════════════════════════════════════════════════════════════ -->
-<script src="src/persistence.js?v=3.11.1"></script>
-<script src="src/mb-translations.js?v=3.11.1"></script>
-<script src="src/mb_state.js?v=3.11.1"></script>
-<script src="src/bilang.js?v=3.11.1"></script>
-<script src="src/uid.js?v=3.11.1"></script>
-<script src="src/image_prep.js?v=3.11.1"></script>
-<script src="src/image_paste.js?v=3.11.1"></script>
-<script src="src/dialog.js?v=3.11.1"></script>
-<script src="src/docx_bidi.js?v=3.11.1"></script>
-<script src="src/ui.js?v=3.11.1"></script>
-<script src="src/tabs.js?v=3.11.1"></script>
-<script src="src/covers.js?v=3.11.1"></script>
-<script src="src/cover_images.js?v=3.11.1"></script>
-<script src="src/workteam.js?v=3.11.1"></script>
-<script src="src/modules.js?v=3.11.1"></script>
-<script src="src/outcomes.js?v=3.11.1"></script>
-<script src="src/blocks.js?v=3.11.1"></script>
-<script src="src/learning_guide.js?v=3.11.1"></script>
-<script src="src/sheets.js?v=3.11.1"></script>
-<script src="src/content.js?v=3.11.1"></script>
-<script src="src/criteria.js?v=3.11.1"></script>
-<script src="src/assessment.js?v=3.11.1"></script>
-<script src="src/module-ai.js?v=3.11.1"></script>
-<script src="src/ta_finder.js?v=3.11.1"></script>
-<script src="src/references.js?v=3.11.1"></script>
-<script src="src/resources.js?v=3.11.1"></script>
-<script src="src/marks.js?v=3.11.1"></script>
-<script src="src/steps.js?v=3.11.1"></script>
-<script src="src/storage.js?v=3.11.1"></script>
-<script src="src/module_model.js?v=3.11.1"></script>
-<script src="src/exports_html.js?v=3.11.1"></script>
-<script src="src/font_cairo.js?v=3.11.1"></script>
-<script src="src/arabic-font.js?v=3.11.1"></script>
-<script src="src/pdf_arabic.js?v=3.11.1"></script>
-<script src="src/exports_pdf.js?v=3.11.1"></script>
-<script src="src/link_modal.js?v=3.11.1"></script>
-<script src="src/export_menu.js?v=3.11.1"></script>
-<script src="src/shortcuts.js?v=3.11.1"></script>
-<script src="src/exports_pptx.js?v=3.11.1"></script>
-<script src="src/word_settings.js?v=3.11.1"></script>
-<script src="src/export_ui.js?v=3.11.1"></script>
-<script src="src/exports_docx.js?v=3.11.1"></script>
-<script src="src/contentlang_ui.js?v=3.11.1"></script>
-<script src="src/events.js?v=3.11.1"></script>
+<script src="src/persistence.js?v=3.13.0"></script>
+<script src="src/project_store.js?v=3.13.0"></script>
+<script src="src/image_store.js?v=3.13.0"></script>
+<script src="src/mb-translations.js?v=3.13.0"></script>
+<script src="src/mb_state.js?v=3.13.0"></script>
+<script src="src/bilang.js?v=3.13.0"></script>
+<script src="src/uid.js?v=3.13.0"></script>
+<script src="src/image_prep.js?v=3.13.0"></script>
+<script src="src/image_paste.js?v=3.13.0"></script>
+<script src="src/dialog.js?v=3.13.0"></script>
+<script src="src/docx_bidi.js?v=3.13.0"></script>
+<script src="src/ui.js?v=3.13.0"></script>
+<script src="src/tabs.js?v=3.13.0"></script>
+<script src="src/covers.js?v=3.13.0"></script>
+<script src="src/cover_images.js?v=3.13.0"></script>
+<script src="src/workteam.js?v=3.13.0"></script>
+<script src="src/modules.js?v=3.13.0"></script>
+<script src="src/outcomes.js?v=3.13.0"></script>
+<script src="src/blocks.js?v=3.13.0"></script>
+<script src="src/learning_guide.js?v=3.13.0"></script>
+<script src="src/sheets.js?v=3.13.0"></script>
+<script src="src/content.js?v=3.13.0"></script>
+<script src="src/criteria.js?v=3.13.0"></script>
+<script src="src/assessment.js?v=3.13.0"></script>
+<script src="src/module-ai.js?v=3.13.0"></script>
+<script src="src/ta_finder.js?v=3.13.0"></script>
+<script src="src/references.js?v=3.13.0"></script>
+<script src="src/resources.js?v=3.13.0"></script>
+<script src="src/marks.js?v=3.13.0"></script>
+<script src="src/steps.js?v=3.13.0"></script>
+<script src="src/storage.js?v=3.13.0"></script>
+<script src="src/module_card.js?v=3.13.0"></script>
+<script src="src/module_library.js?v=3.13.0"></script>
+<script src="src/package_mbz.js?v=3.13.0"></script>
+<script src="src/package_ui.js?v=3.13.0"></script>
+<script src="src/module_library_ui.js?v=3.13.0"></script>
+<script src="src/module_model.js?v=3.13.0"></script>
+<script src="src/exports_html.js?v=3.13.0"></script>
+<script src="src/font_cairo.js?v=3.13.0"></script>
+<script src="src/arabic-font.js?v=3.13.0"></script>
+<script src="src/pdf_arabic.js?v=3.13.0"></script>
+<script src="src/exports_pdf.js?v=3.13.0"></script>
+<script src="src/link_modal.js?v=3.13.0"></script>
+<script src="src/export_menu.js?v=3.13.0"></script>
+<script src="src/shortcuts.js?v=3.13.0"></script>
+<script src="src/exports_pptx.js?v=3.13.0"></script>
+<script src="src/word_settings.js?v=3.13.0"></script>
+<script src="src/export_ui.js?v=3.13.0"></script>
+<script src="src/exports_docx.js?v=3.13.0"></script>
+<script src="src/contentlang_ui.js?v=3.13.0"></script>
+<script src="src/events.js?v=3.13.0"></script>
 <!-- Toolbar fit. Loaded after events.js so the bar's data-act handlers
      are bound before anything measures it, and it binds nothing of its
      own on those buttons — it reads widths and sets one class. -->
-<script src="src/toolbar_fit.js?v=3.11.1"></script>
+<script src="src/toolbar_fit.js?v=3.13.0"></script>
 <!-- Side-rail toggle. Inlined rather than shipped as src/sidenav.js so
      the feature has no second file to deploy: it is 30 lines, it binds
      one listener to one button, and it touches nothing the dispatch
@@ -1298,7 +1313,8 @@ The AI analyzes only this module's own data (Learning Outcomes, Performance Crit
     }
 })();
 </script>
-<script src="src/app.js?v=3.11.1"></script>
-<script src="src/autosave.js?v=3.11.1"></script>
+<script src="src/sw_register.js?v=3.13.0"></script>
+<script src="src/app.js?v=3.13.0"></script>
+<script src="src/autosave.js?v=3.13.0"></script>
 </body>
 </html>
