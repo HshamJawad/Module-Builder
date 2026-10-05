@@ -1,3 +1,13 @@
+# الإصدار 3.15.2 (٥ تشرين الأول ٢٠٢٦) — نص: إزالة ذكر ربط المعايير بمهام محددة
+
+**ملفات معدّلة:** `src/mb-translations.js` (المفتاح `mbTaIndexHint`)، `index.html` (‎?v=3.15.2)، `sw.js` (`CACHE_VERSION` ‏mb-3.15.2)، `version.json`. ‏`version.yml` يبقى "3.15".
+
+## ما تغيّر
+- **تلميح فهرس تحليل المهام (`mbTaIndexHint`) بالإنجليزية والفرنسية والعربية:** حُذف الجزء الذي يذكر ربط المعايير بمهام محددة في DACUM، لأن DACUM Live Pro 3.50.0 أزال هذه الميزة. بقي الباقي: المهمة تتبع الوحدات التي تستخدم معياراً من كفاءتها، ومعايير تحليل المهمة تتبع مهمتها.
+- **لا تغيير في المنطق:** Module Builder يقرأ `sourceTaskIds` و`performanceCriteria[].sourceTaskIds` كما تصله من DACUM.
+
+---
+
 # الإصدار 3.15.1 (٥ تشرين الأول ٢٠٢٦) — إصلاح: زر الحفظ مع المجلد، والوحدة الفارغة بعد «مسح الكل»
 
 **ملفات معدّلة:** `src/folder_sync.js`، `src/package_ui.js`، `src/module_library_ui.js`، `src/mb-translations.js`، `index.html` (‎?v=3.15.1)، `sw.js` (`CACHE_VERSION` ‏mb-3.15.1)، `version.json`. ‏`version.yml` يبقى "3.15".
