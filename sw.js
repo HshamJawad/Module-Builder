@@ -25,7 +25,7 @@
 // Playwright suite checks that every tag is listed here).
 // ============================================================
 
-const CACHE_VERSION = 'mb-3.15.2';
+const CACHE_VERSION = 'mb-3.16.0';
 const CACHE_NAME    = 'module-builder-' + CACHE_VERSION;
 const BASE          = self.registration ? self.registration.scope : '/';
 const OFFLINE_URL   = BASE + 'index.html';
@@ -59,6 +59,7 @@ const PRECACHE_URLS = [
   BASE + 'src/mb-translations.js',
   BASE + 'src/mb_state.js',
   BASE + 'src/bilang.js',
+  BASE + 'src/dacum_i18n.js',
   BASE + 'src/uid.js',
   BASE + 'src/image_prep.js',
   BASE + 'src/image_paste.js',
