@@ -105,12 +105,61 @@ function mbJumpToModule(moduleId) {
 
 let _mbTaIndexOpen = null;   // remembered for this page load
 
+/* ── Tasks left out of training in DACUM (3.17.0) ─────────────────
+   DACUM Live Pro 3.84+ sends, with each transfer, the tasks the panel
+   left out in Task Verification → Select Tasks, with their reasons
+   (module.dacumTaskSelection). The newest transfer wins: the current
+   module first, else any module that has it. Display only. */
+function mbDacumTaskSelection() {
+    const mods = mbState.modulesData || [];
+    const cur = mods.find(m => m.id === mbState.currentModuleId);
+    if (cur && cur.dacumTaskSelection) return cur.dacumTaskSelection;
+    const any = mods.find(m => m && m.dacumTaskSelection);
+    return any ? any.dacumTaskSelection : null;
+}
+
+/** True when DACUM marked this task as left out of training. */
+function mbTaskLeftOut(module, taskId) {
+    const st = ((module && module.taskAnalysisSource && module.taskAnalysisSource.sourceTasks) || []).find(t => t.id === taskId);
+    if (st && st.selected === false) return true;
+    const ts = mbDacumTaskSelection();
+    return !!(ts && (ts.excluded || []).some(x => x.taskId === taskId));
+}
+
+let _mbTselOpen = false;
+
+function _mbTaskSelectionHtml() {
+    const ts = mbDacumTaskSelection();
+    if (!ts || !(ts.excluded || []).length) return '';
+    return `
+        <details class="mb-tsel"${_mbTselOpen ? ' open' : ''}>
+            <summary>
+                <span class="mb-tsel-title">🚫 ${_mbEsc(window.i18n.t('mbTselTitle'))}</span>
+                <span class="mb-tsel-sum">${_mbEsc(window.i18n.tf('mbTselSummary', { v0: ts.excluded.length, v1: ts.total || '' }))}</span>
+            </summary>
+            <p class="mb-ta-index-hint">${_mbEsc(window.i18n.t('mbTselHint'))}</p>
+            <div class="mb-ta-index-list">
+                ${ts.excluded.map(x => `
+                    <div class="mb-ta-row">
+                        <div class="mb-ta-task"><bdi class="mb-ta-code">${_mbEsc(x.code || '')}</bdi> <span dir="auto">${_mbEsc(x.text || '')}</span></div>
+                        <div class="mb-tsel-reason" dir="auto">${_mbEsc(x.reason || window.i18n.t('mbTselNoReason'))}</div>
+                    </div>`).join('')}
+            </div>
+        </details>`;
+}
+
 function mbRenderTaskAnalysisIndex() {
     const host = document.getElementById('mb-ta-index');
     if (!host) return;
     _mbInjectTaFinderStyles();
     const rows = mbTaskAnalysisIndex();
-    if (!rows.length) { host.innerHTML = ''; return; }
+    const tselHtml = _mbTaskSelectionHtml();
+    if (!rows.length) {
+        host.innerHTML = tselHtml;
+        const d = host.querySelector('details.mb-tsel');
+        if (d) d.addEventListener('toggle', function () { _mbTselOpen = this.open; });
+        return;
+    }
     const current = (mbState.modulesData || []).find(m => m.id === mbState.currentModuleId) || null;
     const moduleCount = new Set(rows.flatMap(r => r.modules.map(m => m.id))).size;
     const open = _mbTaIndexOpen === null ? false : _mbTaIndexOpen;
@@ -124,12 +173,15 @@ function mbRenderTaskAnalysisIndex() {
             <div class="mb-ta-index-list">
                 ${rows.map(r => `
                     <div class="mb-ta-row">
-                        <div class="mb-ta-task"><bdi class="mb-ta-code">${_mbEsc(r.code)}</bdi> <span dir="auto">${_mbEsc(r.text)}</span></div>
+                        <div class="mb-ta-task"><bdi class="mb-ta-code">${_mbEsc(r.code)}</bdi> <span dir="auto">${_mbEsc(r.text)}</span>${
+                            mbTaskLeftOut(r.modules[0], r.id) ? ` <span class="mb-tsel-badge">${_mbEsc(window.i18n.t('mbTselBadge'))}</span>` : ''}</div>
                         <div class="mb-ta-mods">${r.modules.map(m => _mbModuleChip(m, current)).join('')}</div>
                     </div>`).join('')}
             </div>
-        </details>`;
-    host.querySelector('details').addEventListener('toggle', function () { _mbTaIndexOpen = this.open; });
+        </details>` + tselHtml;
+    host.querySelector('details.mb-ta-index').addEventListener('toggle', function () { _mbTaIndexOpen = this.open; });
+    const d = host.querySelector('details.mb-tsel');
+    if (d) d.addEventListener('toggle', function () { _mbTselOpen = this.open; });
 }
 
 /** The line above "Browse Task Analysis" for the current module. */
@@ -138,14 +190,18 @@ function mbTaskAnalysisModuleLine(module) {
     const total = (src.sourceTaskIds || []).length;
     if (!total) return '';
     const ids = mbAnalysedTaskIds(module);
+    /* 3.17.0: this module's tasks that DACUM left out of training. */
+    const out = (src.sourceTaskIds || []).filter(id => mbTaskLeftOut(module, id));
+    const outLine = out.length ? `<p class="mb-ta-line is-left-out">🚫 ${_mbEsc(window.i18n.tf('mbTselModuleLine', { v0: out.length }))}
+                <bdi>${_mbEsc(out.map(id => _mbTaskInfo(module, id).code).sort(_mbCodeCompare).join(_mbListSep()))}</bdi></p>` : '';
     if (ids.length) {
         const codes = ids.map(id => _mbTaskInfo(module, id).code).sort(_mbCodeCompare);
         return `<p class="mb-ta-line">🔬 ${_mbEsc(window.i18n.tf('mbTaLineSome', { v0: total, v1: ids.length }))}
-                <bdi>${_mbEsc(codes.join(_mbListSep()))}</bdi></p>`;
+                <bdi>${_mbEsc(codes.join(_mbListSep()))}</bdi></p>` + outLine;
     }
     const elsewhere = (mbState.modulesData || []).filter(m => m.id !== module.id && mbAnalysedTaskIds(m).length);
     return `<p class="mb-ta-line is-empty">🔬 ${_mbEsc(window.i18n.tf('mbTaLineNone', { v0: total }))}
-            ${elsewhere.length ? `<span class="mb-ta-line-where">${_mbEsc(window.i18n.t('mbTaLineElsewhere'))}</span> ${elsewhere.map(m => _mbModuleChip(m, null)).join('')}` : ''}</p>`;
+            ${elsewhere.length ? `<span class="mb-ta-line-where">${_mbEsc(window.i18n.t('mbTaLineElsewhere'))}</span> ${elsewhere.map(m => _mbModuleChip(m, null)).join('')}` : ''}</p>` + outLine;
 }
 
 /** " · 🔬 3" after a module name in the selectors (nothing when 0). */
@@ -181,6 +237,17 @@ function _mbInjectTaFinderStyles() {
         .mb-ta-line { margin:0 0 10px; padding:7px 10px; background:#ecfdf5; border:1px solid #a7f3d0; border-radius:8px; color:#065f46; font-size:0.86em; display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
         .mb-ta-line.is-empty { background:#fff7ed; border-color:#fed7aa; color:#9a3412; }
         .mb-ta-line-where { font-weight:600; }
+        /* 3.17.0: tasks left out of training in DACUM. */
+        .mb-tsel { background:#f8fafc; border:1px dashed #cbd5e1; border-radius:10px; margin-bottom:18px; }
+        .mb-tsel > summary { cursor:pointer; padding:10px 14px; display:flex; flex-wrap:wrap; align-items:center; gap:4px 12px; list-style:none; }
+        .mb-tsel > summary::-webkit-details-marker { display:none; }
+        .mb-tsel > summary::after { content:'▾'; margin-inline-start:auto; color:#475569; }
+        .mb-tsel[open] > summary::after { content:'▴'; }
+        .mb-tsel-title { font-weight:700; color:#475569; }
+        .mb-tsel-sum { color:#64748b; font-size:0.88em; }
+        .mb-tsel-reason { color:#92400e; font-size:0.84em; font-style:italic; }
+        .mb-tsel-badge { display:inline-block; padding:1px 8px; border-radius:999px; background:#fffbeb; border:1px solid #fcd34d; color:#92400e; font-size:0.78em; font-weight:600; white-space:nowrap; }
+        .mb-ta-line.is-left-out { background:#fffbeb; border-color:#fcd34d; color:#92400e; }
     `;
     document.head.appendChild(st);
 }

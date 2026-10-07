@@ -150,6 +150,13 @@ function _mbApplyDacumModuleFields(module, dacumModule, exportData) {
        transfer without them leaves no stale translations behind. */
     const di = (typeof mbDacumI18nFrom === 'function') ? mbDacumI18nFrom(exportData) : null;
     if (di) module.dacumI18n = di; else delete module.dacumI18n;
+    /* 3.17.0: tasks left out of training in DACUM's Task Verification
+       (DACUM Live Pro 3.84+), with their reasons — documentation only.
+       Programme-level, kept on every module like the reference data and
+       replaced on every transfer, so a transfer without it clears it. */
+    const ts = exportData.taskSelection;
+    if (ts && typeof ts === 'object' && Array.isArray(ts.excluded) && ts.excluded.length) module.dacumTaskSelection = ts;
+    else delete module.dacumTaskSelection;
 }
 
 /** A module Module Builder already holds receives a new transfer: DACUM's
