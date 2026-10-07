@@ -202,7 +202,8 @@ function _mbModuleCoverDefaults(module) {
     return {
         cvUnitTitle:  mbPlainText(module.title),
         cvModuleCode: module.moduleCode || '',
-        cvLevel:      module.level ? String(module.level) : '',
+        /* 3.18.0: TVQF/NQF level from DACUM when given, else the programme level. */
+        cvLevel:      module.nqfLevel ? String(module.nqfLevel) : (module.level ? String(module.level) : ''),
         cvHours:      cur.totalHours ? String(cur.totalHours) : '',
         cvEntryReq:   Array.isArray(cur.prerequisites) ? cur.prerequisites.join('\n') : ''
     };

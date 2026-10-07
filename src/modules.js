@@ -59,6 +59,11 @@ function _mbPrefillCoverFromDacum(exportData) {
     };
 
     if (exportData.occupation && exportData.occupation !== 'Unknown Occupation') fill('cvOccupation', exportData.occupation);
+    /* 3.18.0: the TVQF/NQF framework's name (DACUM Live Pro 3.85+, only
+       when that option is on there) — into the cover table's framework
+       row (covers.js, cvFramework), like the rows above: every language
+       side, and only while the row is empty. */
+    fill('cvFramework', exportData.qualificationsFramework);
     /* DACUM Live Pro 3.44+: job title and sector from Chart Info. */
     fill('cvJob', exportData.jobTitle);
     fill('cvSector', exportData.sector);
@@ -125,8 +130,28 @@ function _mbApplyDacumModuleFields(module, dacumModule, exportData) {
     /* Programme level (1..N) and specialisation code ("CMCN", "CM" …)
        from DACUM's Module Mapping tab. Optional: absent on exports made
        before DACUM Live Pro 3.26; every reader treats absent as unset. */
+    /* 3.18.0: the cover's Level row shows the TVQF/NQF level when DACUM
+       sends one (DACUM Live Pro 3.85+, optional there), else the
+       programme level as before. A module that already has its own cover
+       values gets the new level only if its Level row still holds the
+       value DACUM gave it — anything typed here is kept. */
+    const coverLevelOf = m => String(m.nqfLevel || (m.level ? m.level : '') || '');
+    const oldCoverLevel = coverLevelOf(module);
     const lvl = parseInt(dacumModule.level, 10);
     if (Number.isInteger(lvl) && lvl > 0) module.level = lvl; else delete module.level;
+    const nqf = String(dacumModule.nqfLevel || '').trim();
+    if (nqf) module.nqfLevel = nqf; else delete module.nqfLevel;
+    const nqfd = String(dacumModule.nqfDescriptor || '').trim();
+    if (nqfd) module.nqfDescriptor = nqfd; else delete module.nqfDescriptor;
+    const cv = module.coverValues && module.coverValues.cvLevel;
+    if (cv && typeof cv === 'object') {
+        const sides = Object.keys(cv).map(k => String(cv[k] || '').trim()).filter(Boolean);
+        const newCoverLevel = coverLevelOf(module);
+        // An emptied row was emptied on purpose: left alone.
+        if (newCoverLevel !== oldCoverLevel && sides.length && sides.every(v => v === oldCoverLevel)) {
+            Object.keys(cv).forEach(k => { if (String(cv[k] || '').trim()) cv[k] = newCoverLevel; });
+        }
+    }
     const trk = String(dacumModule.track || '').trim();
     if (trk) module.track = trk; else delete module.track;
     /* Module code ("CMCN 1-1") and short name (DACUM 3.34+), and how
