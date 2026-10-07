@@ -44,11 +44,12 @@ jobs:
           # 3.14 for the tab guard, projects list, preview and programme export,
           # 3.15 for saving to a folder on the computer, 3.16 for the
           # translations that arrive with a DACUM handoff, 3.17 for the
-          # tasks DACUM left out of training.
+          # tasks DACUM left out of training, 3.18 for the TVQF/NQF level
+          # and framework name from DACUM.
           # version.json now reads 3.7.0, and any value left behind here
           # would roll the number backwards to <old>.<run> on the next
           # push — the same failure, one minor later.
-          MAJOR_MINOR: "3.17"
+          MAJOR_MINOR: "3.18"
         run: |
           VERSION="${MAJOR_MINOR}.${GITHUB_RUN_NUMBER}"
           BUILD="$(date -u +%Y-%m-%d)"
