@@ -178,7 +178,10 @@ function mbBuildModuleModel(lang, state) {
 
     /* Flatten ONCE, here. Every exporter downstream then works with
        plain strings and never has to think about bilingual pairs. */
-    const st = (typeof biFlattenDeep === 'function') ? biFlattenDeep(raw, lang) : raw;
+    const flat = (typeof biFlattenDeep === 'function') ? biFlattenDeep(raw, lang) : raw;
+    /* 3.16.0: DACUM texts in the export language (dacum_i18n.js). Only on
+       the flattened COPY — never on the raw state passed in. */
+    const st = (flat !== raw && typeof mbLocalizeDacum === 'function') ? mbLocalizeDacum(flat, lang) : flat;
 
     const modules = _mmArr(st.modulesData);
     const currentModule = modules.find(function (m) { return m.id === st.currentModuleId; }) || modules[0] || null;

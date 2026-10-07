@@ -90,6 +90,8 @@ function _loEscape(s) {
    still shows rather than leaving a blank row in the list. */
 function loTitleText(lo) {
     var t = (typeof biGet === 'function') ? biGet(lo.title, contentLang()) : lo.title;
+    // 3.16.0: a DACUM title in the content language being edited.
+    if (typeof lo.title === 'string' && typeof mbDacumText === 'function') t = mbDacumText(t);
     return String(t == null ? '' : t);
 }
 
@@ -225,7 +227,9 @@ function updatePerformanceCriteriaPanel() {
     // Display performance criteria with edit/delete buttons
     let html = '<div style="display: flex; flex-direction: column; gap: 12px;">';
     lo.performanceCriteria.forEach((pc, index) => {
-        const criteriaText = pc.text || pc.id || pc;
+        let criteriaText = pc.text || pc.id || pc;
+        // 3.16.0: a DACUM criterion in the content language being edited.
+        if (typeof criteriaText === 'string' && typeof mbDacumText === 'function') criteriaText = mbDacumText(criteriaText);
         // pc.taskId / pc.id ("1-1") arrive from a DACUM Live Pro import
         // (see modules.js) and are simply absent for a criterion typed
         // directly here — both cases are handled the same way already.

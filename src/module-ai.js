@@ -51,12 +51,17 @@ function mbGatherModuleMappingInput() {
 
     syncLearningOutcomesFromCurrentModule();
 
+    /* 3.16.0: with translations from DACUM (module.dacumI18n), DACUM's
+       statement and criteria are given in the content language. */
+    const _di = !!(module.dacumI18n && typeof mbDacumText === 'function');
+    const _tr = (v) => (_di && typeof v === 'string') ? mbDacumText(v, contentLang()) : v;
     const learningOutcomes = (module.learningOutcomes || []).map(lo => ({
         id: lo.id,
         number: lo.number || '',
-        statement: (typeof biGetStrict === 'function' ? biGetStrict(lo.statement, contentLang()) : lo.statement) || '',
+        statement: (_di && typeof lo.statement === 'string') ? _tr(lo.statement)
+            : ((typeof biGetStrict === 'function' ? biGetStrict(lo.statement, contentLang()) : lo.statement) || ''),
         performanceCriteria: (lo.performanceCriteria || []).map(pc => ({
-            id: pc.id || '', text: pc.text || pc.id || pc || '', taskId: pc.taskId || null,
+            id: pc.id || '', text: _tr(pc.text || pc.id || pc || ''), taskId: pc.taskId || null,
             /* DACUM 3.44+: the tasks a competency criterion traces to. */
             sourceTaskIds: Array.isArray(pc.sourceTaskIds) ? pc.sourceTaskIds : []
         }))

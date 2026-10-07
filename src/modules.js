@@ -145,6 +145,11 @@ function _mbApplyDacumModuleFields(module, dacumModule, exportData) {
        never turned into outcomes or content. */
     const ref = exportData.occupationalReference;
     if (ref && typeof ref === 'object' && ref.available !== false) module.occupationalReference = ref;
+    /* 3.16.0: the other content languages of DACUM's texts (DACUM Live
+       Pro 3.79+) — see dacum_i18n.js. Replaced on every transfer, so a
+       transfer without them leaves no stale translations behind. */
+    const di = (typeof mbDacumI18nFrom === 'function') ? mbDacumI18nFrom(exportData) : null;
+    if (di) module.dacumI18n = di; else delete module.dacumI18n;
 }
 
 /** A module Module Builder already holds receives a new transfer: DACUM's

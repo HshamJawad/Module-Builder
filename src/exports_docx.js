@@ -94,7 +94,9 @@ async function exportToDocx() {
             return;
         }
     }
-    const mbState = biFlattenDeep(window.mbState, _exportLang);
+    // 3.16.0: DACUM texts in the export language (dacum_i18n.js).
+    const _flat = biFlattenDeep(window.mbState, _exportLang);
+    const mbState = (typeof mbLocalizeDacum === 'function') ? mbLocalizeDacum(_flat, _exportLang) : _flat;
 
     console.log('Export function started');
     
