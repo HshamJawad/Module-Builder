@@ -232,6 +232,7 @@ const _MB_ICON_DELETE = '<svg class="mb-ico" viewBox="0 0 24 24" fill="none" str
    every language. */
 const MB_TA_FIELD_LABELS = {
     requiredKnowledge: 'Required Knowledge', requiredSkills: 'Required Skills',
+    workerBehaviours: 'Worker Behaviours',   /* 3.19.0 — DACUM 3.92 */
     performanceSteps: 'Performance Steps', toolsEquipmentMaterials: 'Tools, Equipment & Materials',
     safetyOSH: 'Safety / OSH', conditionsWorkEnvironment: 'Conditions / Work Environment',
     decisionsCriticalPoints: 'Decisions / Critical Points', performanceCriteria: 'Performance Criteria (task-level)',
@@ -240,7 +241,7 @@ const MB_TA_FIELD_LABELS = {
 
 /* 3.11.0: the order DACUM Live Pro 3.46 shows them in — by importance. */
 const MB_TA_FIELD_ORDER = [
-    'performanceSteps', 'requiredKnowledge', 'requiredSkills',
+    'performanceSteps', 'requiredKnowledge', 'requiredSkills', 'workerBehaviours',
     'performanceCriteria', 'performanceStandard',
     'toolsEquipmentMaterials', 'safetyOSH', 'decisionsCriticalPoints',
     'conditionsWorkEnvironment', 'commonErrorsTroubleshooting'
@@ -1090,7 +1091,7 @@ function mbSwitchMappingMode(mode) {
 //   "taskAnalysis": {
 //     "duty_1_2": {
 //       "taskCode": "TASK B4",
-//       "requiredKnowledge": [...], "requiredSkills": [...],
+//       "requiredKnowledge": [...], "requiredSkills": [...], "workerBehaviours": [...],
 //       "performanceSteps": [...], "toolsEquipmentMaterials": [...],
 //       "safetyOSH": [...], "conditionsWorkEnvironment": "...",
 //       "decisionsCriticalPoints": [...], "performanceCriteria": [...],
