@@ -997,6 +997,8 @@ function _mbDacumImportNow(exportData) {
         var p = mbLib.project;
         if (exportData.programId) p.programId = exportData.programId;
         if (exportData.programName) p.programName = exportData.programName;
+        /* 3.24.0: where DACUM Live Pro runs — for "open in DACUM". */
+        if (exportData.dacumUrl) p.dacumUrl = String(exportData.dacumUrl).split('#')[0];
         if (!p.occupation && exportData.occupation && exportData.occupation !== 'Unknown Occupation') p.occupation = exportData.occupation;
 
         /* One module at a time: read it, merge, write it, let it go. */
@@ -1093,6 +1095,23 @@ function mbLibraryBoot(exportData) {
         });
     });
 }
+
+/* 3.24.0: a handoff written by DACUM Live Pro while this tab is open
+   (its "↩ Back to Module Builder") is imported at once — no reload. The
+   module and outcome on screen stay selected when they still exist. */
+window.addEventListener('storage', function (e) {
+    if (!e || e.key !== MB_KEYS.dacumImport || !e.newValue || !mbLib.booted) return;
+    var data = null;
+    try { data = JSON.parse(e.newValue); } catch (err) { return; }
+    try { mbRemoveSetting(MB_KEYS.dacumImport); } catch (err) { /* ignore */ }
+    if (!data || !data.modules || !data.modules.length) return;
+    var keepLo = mbState.currentLOId;
+    _mbLibQueue(function () { return _mbDacumImportNow(data); }).then(function () {
+        if (keepLo && (mbState.learningOutcomesData || []).some(function (l) { return l.id === keepLo; })
+            && typeof _applyLOSwitch === 'function') _applyLOSwitch(keepLo);
+        if (typeof renderSourceBrowser === 'function') renderSourceBrowser();
+    });
+});
 
 /** No IndexedDB (Safari private mode and the like): one project, in memory. */
 function _mbBootInMemory(exportData) {

@@ -199,8 +199,15 @@ function mbTaskAnalysisModuleLine(module) {
        Live Pro (SCID), the one place it is edited; sending the module
        again brings it here. */
     const pending = (src.sourceTaskIds || []).filter(id => !ids.includes(id) && !out.includes(id));
+    /* 3.24.0: each code is a button that opens the task in DACUM Live
+       Pro's Task Analysis (mbOpenTaskInDacum below). */
+    const pendingBtns = pending
+        .map(id => ({ id, code: _mbTaskInfo(module, id).code }))
+        .sort((a, b) => _mbCodeCompare(a.code, b.code))
+        .map(t => `<button type="button" class="mb-ta-go" data-act="mbOpenTaskInDacum" data-args='${_mbEsc(JSON.stringify([t.id]))}'
+                title="${_mbEsc(window.i18n.t('mbTaGoTip'))}"><bdi>${_mbEsc(t.code)}</bdi> ↗</button>`).join('');
     const pendingLine = pending.length ? `<p class="mb-ta-line is-pending">⏳ ${_mbEsc(window.i18n.tf('mbTaNotAnalysed', { v0: pending.length }))}
-                <bdi>${_mbEsc(pending.map(id => _mbTaskInfo(module, id).code).sort(_mbCodeCompare).join(_mbListSep()))}</bdi>
+                <span class="mb-ta-go-list">${pendingBtns}</span>
                 <span class="mb-ta-line-how">${_mbEsc(window.i18n.t('mbTaNotAnalysedHow'))}</span></p>` : '';
     if (ids.length) {
         const codes = ids.map(id => _mbTaskInfo(module, id).code).sort(_mbCodeCompare);
@@ -247,6 +254,10 @@ function _mbInjectTaFinderStyles() {
         .mb-ta-line-where { font-weight:600; }
         .mb-ta-line.is-pending { background:#fffbeb; border-color:#fde68a; color:#92400e; }
         .mb-ta-line-how { flex-basis:100%; font-size:0.95em; color:#78350f; }
+        .mb-ta-go-list { display:inline-flex; flex-wrap:wrap; gap:5px; }
+        button.mb-ta-go { width:auto; min-height:0; margin:0; padding:2px 9px; border-radius:999px; font-size:0.9em; font-weight:700; line-height:1.5; cursor:pointer; white-space:nowrap; }
+        #mb-source-browser button.mb-ta-go { background:#fff !important; color:#92400e !important; border:1px solid #f59e0b !important; }
+        #mb-source-browser button.mb-ta-go:hover { background:#fef3c7 !important; }
         /* 3.17.0: tasks left out of training in DACUM. */
         .mb-tsel { background:#f8fafc; border:1px dashed #cbd5e1; border-radius:10px; margin-bottom:18px; }
         .mb-tsel > summary { cursor:pointer; padding:10px 14px; display:flex; flex-wrap:wrap; align-items:center; gap:4px 12px; list-style:none; }
@@ -266,3 +277,46 @@ window.addEventListener('mb:langchange', function () {
     mbRenderTaskAnalysisIndex();
     if (typeof renderSourceBrowser === 'function') renderSourceBrowser();
 });
+
+
+/* ══════════════════════════════════════════════════════════════
+   3.24.0 — go to DACUM Live Pro and come back
+   ══════════════════════════════════════════════════════════════
+   A task not analysed yet opens DACUM Live Pro on that task's Task
+   Analysis, in the same project (programId) — reusing the DACUM tab if
+   one is open (window name "dacum-live-pro"). DACUM then shows
+   "↩ Back to Module Builder": it sends the module again and returns to
+   this tab (window name "module-builder"), which imports it at once
+   (storage listener in module_library.js) — no reload, sheets kept.
+   Both tools must be served from the same site (as the handoff itself
+   already requires: it travels in localStorage). */
+var MB_DACUM_DEFAULT_URL = 'https://hshamjawad.github.io/DACUMLivePro/';
+try { if (!window.name) window.name = 'module-builder'; } catch (e) { /* ignore */ }
+
+function _mbOpenNamedWindow(url, name) {
+    var w = null;
+    try { w = window.open('', name); } catch (e) { w = null; }
+    if (!w) { window.open(url, '_blank'); return; }
+    var blank = true, sameDoc = false;
+    try {
+        var href = String(w.location.href || '');
+        blank = !href || href === 'about:blank';
+        sameDoc = !blank && href.split('#')[0] === url.split('#')[0];
+    } catch (e) { blank = false; sameDoc = false; }   // another site: navigate it
+    if (sameDoc) w.location.hash = url.split('#')[1] || '';
+    else w.location.href = url;
+    try { w.focus(); } catch (e) { /* ignore */ }
+}
+
+function mbOpenTaskInDacum(taskId) {
+    var p = (typeof mbLib !== 'undefined' && mbLib.project) || {};
+    var m = (mbState.modulesData || []).find(function (x) { return x.id === mbState.currentModuleId; }) || {};
+    var base = String(p.dacumUrl || MB_DACUM_DEFAULT_URL).split('#')[0];
+    var q = ['mb-ta=' + encodeURIComponent(taskId)];
+    if (p.programId) q.push('project=' + encodeURIComponent(p.programId));
+    if (m.id) q.push('module=' + encodeURIComponent(m.id));
+    var title = (typeof biGet === 'function' && m.title && typeof m.title === 'object') ? biGet(m.title, (typeof contentLang === 'function' ? contentLang() : 'en')) : (m.title || '');
+    if (title) q.push('mtitle=' + encodeURIComponent(String(title).slice(0, 80)));
+    q.push('t=' + Date.now());   // a second click on the same task still fires
+    _mbOpenNamedWindow(base + '#' + q.join('&'), 'dacum-live-pro');
+}
