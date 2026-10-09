@@ -3413,3 +3413,31 @@ body.mb-readonly .container { padding-top: 44px; }
 }
 .mb-ctx-bar .mb-ctx-mod { flex: 0 1 260px; color: #0c4a6e; }
 .mb-ctx-bar .mb-ctx-lo  { flex: 1 1 300px; color: #374151; }
+
+/* ── 3.28.0: proposal cards edited in place; "📥 From Task Analysis" ── */
+#mb-structure-proposal input.mb-item-title {
+    width: 100%; box-sizing: border-box; margin: 0 0 2px; padding: 4px 8px;
+    font-weight: 600; font-size: 1em; color: #1f2937;
+    border: 1px solid transparent; border-radius: 6px; background: transparent;
+}
+#mb-structure-proposal input.mb-item-title:hover { border-color: #e5e7eb; background: #fff; }
+#mb-structure-proposal input.mb-item-title:focus { border-color: #a5b4fc; background: #fff; outline: none; }
+.mb-sel-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.mb-sel-chip { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; padding: 2px 4px 2px 9px;
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 999px; font-size: 0.8em; color: #374151; }
+.mb-sel-chip > span { overflow-wrap: anywhere; }
+.mb-sel-chip > button { width: auto; min-height: 0; margin: 0; padding: 0 6px; border: none !important;
+    background: transparent !important; color: #9ca3af !important; font-size: 0.95em; line-height: 1.6; cursor: pointer; box-shadow: none !important; }
+.mb-sel-chip > button:hover { color: #dc2626 !important; }
+.mb-pick { margin-top: 10px; padding: 12px 14px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; }
+.mb-pick-head { font-weight: 700; color: #075985; margin-bottom: 8px; }
+.mb-pick-task { background: #fff; border: 1px solid #e0f2fe; border-radius: 8px; padding: 6px 10px; margin-bottom: 8px; }
+.mb-pick-task > summary { cursor: pointer; font-weight: 700; color: #0369a1; font-size: 0.9em; }
+.mb-pick-near { font-size: 0.82em; font-weight: 600; color: #0369a1; background: #e0f2fe; border-radius: 999px; padding: 1px 8px; }
+.mb-pick-field { font-size: 0.8em; font-weight: 600; color: #4b5563; margin: 8px 0 2px; }
+.mb-pick-row { display: flex; align-items: flex-start; gap: 8px; padding: 2px; margin: 0; font-weight: 400; font-size: 0.88em; color: #374151; cursor: pointer; }
+.mb-pick-row input { width: auto; margin-top: 3px; flex-shrink: 0; }
+.mb-pick-row.is-used { color: #9ca3af; cursor: default; }
+.mb-pick-row em { font-size: 0.85em; color: #059669; font-style: normal; white-space: nowrap; }
+.mb-pick-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.mb-pick-empty { color: #6b7280; font-size: 0.88em; margin: 0; }
