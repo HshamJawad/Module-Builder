@@ -241,6 +241,9 @@ function mbRemoveProposalItem(kind, tempId) {
 // or color correctly inside it, which is why earlier buttons rendered
 // as empty boxes). Copied verbatim from outcomes.js for visual parity.
 const _MB_ICON_EDIT = '<svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4.5 19.5h4l10-10a2.1 2.1 0 0 0-3-3l-10 10z"/><path d="M14.5 6.5l3 3"/><path d="M4.5 19.5l.6-3.4"/></svg>';
+/* 3.27.0: "unassign" (return to the browser). .mb-icon-btn hides any
+   text (font-size: 0), so the "↩" it used to hold showed an empty box. */
+const _MB_ICON_UNASSIGN = '<svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>';
 const _MB_ICON_DELETE = '<svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg>';
 
 /* English fallbacks; the interface label comes from mb-translations.js
@@ -903,7 +906,7 @@ function renderAssignedItemsPanel() {
                         <option value="">${window.i18n.t('mbMoveTo')}</option>
                         ${moveOptions}
                     </select>
-                    <button type="button" class="mb-icon-btn mb-unassign-btn" title="${window.i18n.t('mbUnassign')}">↩</button>
+                    <button type="button" class="mb-icon-btn mb-unassign-btn" title="${window.i18n.t('mbUnassign')}" aria-label="${window.i18n.t('mbUnassign')}">${_MB_ICON_UNASSIGN}</button>
                 </div>
             </div>`;
     }).join('');

@@ -193,7 +193,10 @@ function _mbBlockRowHtml(host, block, lang) {
         '<button type="button" class="mb-block-table mb-icon-btn"' +
                ' data-act="addContentTable" data-args=\'' + _mbBlockEscape(JSON.stringify(['block-' + block.uid])) + '\'' +
                ' data-i18n="dgAddTable" data-i18n-attr="title"' +
-               ' title="' + _mbBlockEscape(window.i18n.t('dgAddTable')) + '">\uD83D\uDCCB</button>' +
+               ' title="' + _mbBlockEscape(window.i18n.t('dgAddTable')) + '">' +
+               /* 3.27.0: a drawn table icon — .mb-icon-btn hides text, so the
+                  📋 emoji it used to hold showed an empty box. */
+               '<svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M3.5 14.5h17M9.5 9.5v10M15 9.5v10"/></svg></button>' +
         '<button type="button" class="btn-remove mb-block-remove mb-icon-btn danger"' +
                ' data-act="' + cfg.remove + '" data-args=\'' + args + '\'' +
                ' data-i18n="mbRemoveSection" data-i18n-attr="title"' +
