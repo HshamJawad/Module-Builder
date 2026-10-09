@@ -25,7 +25,7 @@
 // Playwright suite checks that every tag is listed here).
 // ============================================================
 
-const CACHE_VERSION = 'mb-3.28.0';
+const CACHE_VERSION = 'mb-3.29.0';
 const CACHE_NAME    = 'module-builder-' + CACHE_VERSION;
 const BASE          = self.registration ? self.registration.scope : '/';
 const OFFLINE_URL   = BASE + 'index.html';
@@ -54,6 +54,7 @@ const PRECACHE_URLS = [
 
   // ── Every script index.html loads, in its order ─────────
   BASE + 'src/persistence.js',
+  BASE + 'src/history.js',
   BASE + 'src/project_store.js',
   BASE + 'src/image_store.js',
   BASE + 'src/mb-translations.js',
