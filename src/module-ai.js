@@ -69,6 +69,18 @@ function mbGatherModuleMappingInput() {
 
     const src = module.taskAnalysisSource || { sourceTaskIds: [], taskAnalysis: {} };
 
+    /* 3.26.0: per outcome, the tasks it traces to with the closest first
+       (closestTaskIds — a text hint, see _mbRankLoTasks), and the outcome
+       chosen in the bar. Additive and optional: the server may use them
+       to place each sheet under the right outcome; the user still picks
+       "Goes to" on every item before approving. */
+    learningOutcomes.forEach(lo => {
+        const ids = (src.sourceTaskIds || []).filter(id => _mbLoTaskIds(module, lo.id).has(id));
+        const rank = _mbRankLoTasks(module, lo.id, ids);
+        lo.relatedTaskIds = rank.order;
+        lo.closestTaskIds = [...rank.near];
+    });
+
     const ref = _mbOccRef(module);
     return {
         module: {
@@ -82,6 +94,7 @@ function mbGatherModuleMappingInput() {
             track: module.track || ''
         },
         learningOutcomes,
+        focusLearningOutcomeId: (module.learningOutcomes || []).some(l => l.id === mbState.currentLOId) ? mbState.currentLOId : null,
         sourceTaskIds: src.sourceTaskIds || [],
         taskAnalysis: src.taskAnalysis || {},
         /* DACUM 3.44+: code and statement of every source task, including
@@ -1414,6 +1427,14 @@ function mbSwitchMappingMode(mode) {
 //   //       criterion traces to (taskId stays null for those criteria)
 //   //   sourceTasks: [ { id, code: "TASK B4", text, dutyTitle } ] — every
 //   //       source task, including those without Task Analysis
+//   // Added in Module Builder 3.26 — optional hints, additive:
+//   //   learningOutcomes[].relatedTaskIds: the tasks the outcome traces
+//   //       to, the closest to its statement and criteria first
+//   //   learningOutcomes[].closestTaskIds: the subset that is a clear
+//   //       text match (may be empty). A hint, not a link: use it to put
+//   //       each suggestion under the right learningOutcomeIds[0]
+//   //   focusLearningOutcomeId: the outcome open in the user's bar (or
+//   //       null); suggestions for it may come first
 // }
 //
 // Response body (200, application/json) — see mbNormalizeProposal()

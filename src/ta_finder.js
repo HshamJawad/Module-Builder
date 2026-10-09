@@ -201,14 +201,30 @@ function mbTaskAnalysisModuleLine(module) {
     const pending = (src.sourceTaskIds || []).filter(id => !ids.includes(id) && !out.includes(id));
     /* 3.24.0: each code is a button that opens the task in DACUM Live
        Pro's Task Analysis (mbOpenTaskInDacum below). */
-    const pendingBtns = pending
-        .map(id => ({ id, code: _mbTaskInfo(module, id).code }))
-        .sort((a, b) => _mbCodeCompare(a.code, b.code))
-        .map(t => `<button type="button" class="mb-ta-go" data-act="mbOpenTaskInDacum" data-args='${_mbEsc(JSON.stringify([t.id]))}'
-                title="${_mbEsc(window.i18n.t('mbTaGoTip'))}"><bdi>${_mbEsc(t.code)}</bdi> ↗</button>`).join('');
-    const pendingLine = pending.length ? `<p class="mb-ta-line is-pending">⏳ ${_mbEsc(window.i18n.tf('mbTaNotAnalysed', { v0: pending.length }))}
-                <span class="mb-ta-go-list">${pendingBtns}</span>
-                <span class="mb-ta-line-how">${_mbEsc(window.i18n.t('mbTaNotAnalysedHow'))}</span></p>` : '';
+    const goBtn = (id, near) => `<button type="button" class="mb-ta-go${near ? ' is-near' : ''}" data-act="mbOpenTaskInDacum" data-args='${_mbEsc(JSON.stringify([id]))}'
+                title="${_mbEsc(window.i18n.t(near ? 'mbTaskNearLo' : 'mbTaGoTip'))}">${near ? '≈ ' : ''}<bdi>${_mbEsc(_mbTaskInfo(module, id).code)}</bdi> ↗</button>`;
+    const byCode = ids => ids.slice().sort((a, b) => _mbCodeCompare(_mbTaskInfo(module, a).code, _mbTaskInfo(module, b).code));
+    /* 3.26.0: follows the outcome chosen in the bar — its tasks first,
+       the closest to it marked ≈ and placed first (same rule as the
+       browser below); the module's other tasks folded underneath. With
+       no outcome, or one that traces to no task: the whole module. */
+    const lo = (module.learningOutcomes || []).find(l => l.id === mbState.currentLOId);
+    const loSet = (lo && typeof _mbLoTaskIds === 'function') ? _mbLoTaskIds(module, lo.id) : new Set();
+    const forLo = pending.filter(id => loSet.has(id));
+    let pendingLine = '';
+    if (pending.length && lo && forLo.length) {
+        const rank = (typeof _mbRankLoTasks === 'function') ? _mbRankLoTasks(module, lo.id, byCode(forLo)) : { order: byCode(forLo), near: new Set() };
+        const others = byCode(pending.filter(id => !loSet.has(id)));
+        pendingLine = `<div class="mb-ta-line is-pending">⏳ ${_mbEsc(window.i18n.tf('mbTaNotAnalysedLo', { v0: lo.number || '', v1: forLo.length }))}
+                <span class="mb-ta-go-list">${rank.order.map(id => goBtn(id, rank.near.has(id))).join('')}</span>
+                ${others.length ? `<details class="mb-ta-more"><summary>${_mbEsc(window.i18n.tf('mbTaNotAnalysedOthers', { v0: others.length }))}</summary>
+                    <span class="mb-ta-go-list">${others.map(id => goBtn(id, false)).join('')}</span></details>` : ''}
+                <span class="mb-ta-line-how">${_mbEsc(window.i18n.t('mbTaNotAnalysedHow'))}</span></div>`;
+    } else if (pending.length) {
+        pendingLine = `<p class="mb-ta-line is-pending">⏳ ${_mbEsc(window.i18n.tf('mbTaNotAnalysed', { v0: pending.length }))}
+                <span class="mb-ta-go-list">${byCode(pending).map(id => goBtn(id, false)).join('')}</span>
+                <span class="mb-ta-line-how">${_mbEsc(window.i18n.t('mbTaNotAnalysedHow'))}</span></p>`;
+    }
     if (ids.length) {
         const codes = ids.map(id => _mbTaskInfo(module, id).code).sort(_mbCodeCompare);
         return `<p class="mb-ta-line">🔬 ${_mbEsc(window.i18n.tf('mbTaLineSome', { v0: total, v1: ids.length }))}
@@ -258,6 +274,9 @@ function _mbInjectTaFinderStyles() {
         button.mb-ta-go { width:auto; min-height:0; margin:0; padding:2px 9px; border-radius:999px; font-size:0.9em; font-weight:700; line-height:1.5; cursor:pointer; white-space:nowrap; }
         #mb-source-browser button.mb-ta-go { background:#fff !important; color:#92400e !important; border:1px solid #f59e0b !important; }
         #mb-source-browser button.mb-ta-go:hover { background:#fef3c7 !important; }
+        #mb-source-browser button.mb-ta-go.is-near { background:#e0f2fe !important; color:#075985 !important; border-color:#38bdf8 !important; }
+        .mb-ta-more { flex-basis:100%; }
+        .mb-ta-more > summary { cursor:pointer; font-size:0.95em; font-weight:600; color:#92400e; margin:2px 0 6px; }
         /* 3.17.0: tasks left out of training in DACUM. */
         .mb-tsel { background:#f8fafc; border:1px dashed #cbd5e1; border-radius:10px; margin-bottom:18px; }
         .mb-tsel > summary { cursor:pointer; padding:10px 14px; display:flex; flex-wrap:wrap; align-items:center; gap:4px 12px; list-style:none; }
