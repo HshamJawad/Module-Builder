@@ -53,11 +53,12 @@ jobs:
           # 3.25 for the closest tasks of an outcome first, 3.26 for the
           # "not analysed yet" line by outcome and the AI hints, 3.27 for
           # the two icon buttons that showed empty, 3.28 for sheets filled
-          # from the selected items and the cards edited in place.
+          # from the selected items and the cards edited in place, 3.29
+          # for Undo / Redo and the guidance notes.
           # version.json now reads 3.7.0, and any value left behind here
           # would roll the number backwards to <old>.<run> on the next
           # push — the same failure, one minor later.
-          MAJOR_MINOR: "3.28"
+          MAJOR_MINOR: "3.29"
         run: |
           VERSION="${MAJOR_MINOR}.${GITHUB_RUN_NUMBER}"
           BUILD="$(date -u +%Y-%m-%d)"
