@@ -176,7 +176,9 @@ function mbNormalizeProposal(data, mode) {
         // read: this array is now the single source of truth for what a
         // proposal item draws from in Task Analysis.
         sourceSelections: arr(item && item.sourceSelections).map(normSelection).filter(s => s.taskId && s.field),
-        mappingType: (item && (item.mappingType === 'transformation' ? 'transformation' : 'direct'))
+        mappingType: (item && (item.mappingType === 'transformation' ? 'transformation' : 'direct')),
+        // 3.22.0: the outcome the user chose for this item (see _mbItemLoId).
+        ...(item && item.targetLoId ? { targetLoId: str(item.targetLoId) } : {})
     });
 
     return {
@@ -206,7 +208,8 @@ function mbAddManualProposalItem(kind) {
     mbState.structureProposal[key].push({
         tempId: `${prefix}-${Date.now()}-${mbState.structureProposal[key].length}`,
         title: '', rationale: '', learningOutcomeIds: [], performanceCriteriaIds: [],
-        sourceSelections: [], mappingType: 'direct'
+        sourceSelections: [], mappingType: 'direct',
+        ...(mbState.currentLOId ? { targetLoId: mbState.currentLOId } : {})
     });
     renderStructureProposal();
     renderAssignedItemsPanel();
@@ -736,7 +739,9 @@ function mbCreateFromSelection(kind) {
         tempId: `${prefix}-${Date.now()}-${mbState.structureProposal[key].length}`,
         title: autoTitle, rationale: '',
         learningOutcomeIds: inherited.loIds, performanceCriteriaIds: inherited.pcIds,
-        sourceSelections, mappingType: 'direct'
+        sourceSelections, mappingType: 'direct',
+        // 3.22.0: goes to the outcome chosen in the bar above.
+        ...(mbState.currentLOId ? { targetLoId: mbState.currentLOId } : {})
     });
 
     checked.forEach(cb => { cb.checked = false; });
@@ -974,6 +979,51 @@ async function _mbOpenItemEditor(kind, tempId) {
     });
 }
 
+/* ── Which outcome an item is built into (3.22.0) ─────────────
+   Before, approval took the first outcome the item's tasks trace to,
+   or silently the module's FIRST outcome when there was none — so a
+   sheet could land under an outcome the user never meant. Now:
+     1. the outcome the user chose for the item (the bar's outcome when
+        the item was created, or the chooser on the item's row);
+     2. else the first outcome DACUM links its items to (AI proposals);
+     3. else the outcome open in the bar.
+   Never the module's first outcome by default. */
+function _mbItemLoId(module, item) {
+    const los = (module && module.learningOutcomes) || [];
+    const has = id => id && los.some(l => l.id === id);
+    if (has(item.targetLoId)) return item.targetLoId;
+    const inh = (item.learningOutcomeIds || []).find(has);
+    if (inh) return inh;
+    return has(mbState.currentLOId) ? mbState.currentLOId : '';
+}
+
+function mbSetItemLo(kind, tempId, loId) {
+    const it = _mbFindProposalItem(kind, tempId);
+    if (!it) return;
+    if (loId) it.targetLoId = loId; else delete it.targetLoId;
+    renderStructureProposal();
+}
+
+function _mbItemLoChooser(kind, it) {
+    const module = _mbCurrentModule();
+    const los = (module && module.learningOutcomes) || [];
+    if (!los.length) return '';
+    const cur = _mbItemLoId(module, it);
+    const linked = new Set(it.learningOutcomeIds || []);
+    const opts = los.map(lo => `<option value="${escapeHtml(lo.id)}" ${lo.id === cur ? 'selected' : ''}>${escapeHtml(typeof loTitleText === 'function' ? loTitleText(lo) : (lo.number || lo.id))}${linked.has(lo.id) ? ' ✓' : ''}</option>`).join('');
+    const warn = cur && linked.size && !linked.has(cur)
+        ? `<div dir="auto" style="font-size:0.78em;color:#b45309;margin-top:3px;">⚠ ${escapeHtml(window.i18n.t('mbItemLoNotLinked'))}</div>` : '';
+    return `
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px;">
+            <span style="font-size:0.8em;font-weight:600;color:#0369a1;">📚 ${escapeHtml(window.i18n.t('mbItemGoesToLo'))}</span>
+            <select data-act="mbSetItemLo" data-on="change" data-args='["${kind}","${it.tempId}","$value"]'
+                    style="padding:3px 6px;border:1px solid #bae6fd;border-radius:6px;font-size:0.82em;max-width:100%;min-width:0;">
+                ${cur ? '' : `<option value="" selected>${escapeHtml(window.i18n.t('mbSelectLearningOutcome'))}</option>`}
+                ${opts}
+            </select>
+        </div>${warn}`;
+}
+
 function _mbProposalSection(kind, items, titleKey, addLabelKey) {
     const rows = items.map(it => {
         const sel = it.sourceSelections || [];
@@ -994,6 +1044,7 @@ function _mbProposalSection(kind, items, titleKey, addLabelKey) {
                     <div dir="auto" style="font-weight:600;color:#1f2937;">${escapeHtml(it.title || window.i18n.t('mbUntitled'))}</div>
                     ${sourceParts ? `<div style="font-size:0.8em;color:#6b7280;margin-top:3px;">${window.i18n.t('mbSources')}: ${escapeHtml(sourceParts)}</div>` : `<div style="font-size:0.8em;color:#d97706;margin-top:3px;">${window.i18n.t('mbNotLinkedYet')}</div>`}
                     ${selectedItemsList}
+                    ${_mbItemLoChooser(kind, it)}
                     ${it.rationale ? `<div dir="auto" style="font-size:0.82em;color:#9ca3af;margin-top:3px;font-style:italic;">${escapeHtml(it.rationale)}</div>` : ''}
                 </div>
                 <div style="display:flex;gap:6px;flex-shrink:0;">
@@ -1063,7 +1114,7 @@ function _mbEnsureAiMapping(module) {
 }
 
 async function _mbBuildInfoSheet(module, item, aiMapping, touchedLOs) {
-    const lo = (module.learningOutcomes || []).find(l => l.id === item.learningOutcomeIds[0]) || module.learningOutcomes[0];
+    const lo = (module.learningOutcomes || []).find(l => l.id === _mbItemLoId(module, item));
     if (!lo) return;
     mbState.currentLOId = lo.id;
     await addNewInfoSheet();
@@ -1083,7 +1134,7 @@ async function _mbBuildInfoSheet(module, item, aiMapping, touchedLOs) {
 }
 
 async function _mbBuildActivitySheet(module, item, aiMapping, touchedLOs) {
-    const lo = (module.learningOutcomes || []).find(l => l.id === item.learningOutcomeIds[0]) || module.learningOutcomes[0];
+    const lo = (module.learningOutcomes || []).find(l => l.id === _mbItemLoId(module, item));
     if (!lo) return;
     mbState.currentLOId = lo.id;
     await addNewActivitySheet();
@@ -1103,7 +1154,7 @@ async function _mbBuildActivitySheet(module, item, aiMapping, touchedLOs) {
  *  pre-fill its criteria rows from the linked Performance Criteria —
  *  never overwriting a row the user already filled in. */
 function _mbBuildAssessmentUnit(module, item, aiMapping) {
-    const loId = item.learningOutcomeIds[0];
+    const loId = _mbItemLoId(module, item);
     const lo = (module.learningOutcomes || []).find(l => l.id === loId);
     if (!lo) return false; // no LO linked — see the caller's skip-count warning
 
@@ -1148,6 +1199,10 @@ async function mbApproveAndBuild() {
 
     const total = p.informationSheets.length + p.activitySheets.length + p.assessmentUnits.length;
     if (!total) { showStatus(window.i18n.t('mbNothingToApprove'), 'error'); return; }
+    /* 3.22.0: an item with no outcome is never put under the first one. */
+    const noLo = [...p.informationSheets, ...p.activitySheets, ...p.assessmentUnits]
+        .filter(it => !_mbItemLoId(module, it)).length;
+    if (noLo) { showStatus(window.i18n.tf('mbItemsWithoutLo', { v0: noLo }), 'error'); return; }
     if (!await mbConfirm(window.i18n.tf('mbConfirmApprove', { v0: total }))) return;
 
     syncLearningOutcomesFromCurrentModule();
