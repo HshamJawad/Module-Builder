@@ -833,7 +833,7 @@ function mbCreateFromSelection(kind) {
     const key = kind === 'info' ? 'informationSheets' : kind === 'activity' ? 'activitySheets' : 'assessmentUnits';
     const prefix = kind === 'info' ? 'is' : kind === 'activity' ? 'as' : 'au';
 
-    const firstText = sourceSelections[0].itemText;
+    const firstText = _mbCleanItem(sourceSelections[0].itemText);   // 3.28.0: without the leading "1."
     const autoTitle = firstText.length > 60 ? firstText.slice(0, 57) + '…' : firstText;
 
     // Inherited automatically from whichever task(s) the checked items
