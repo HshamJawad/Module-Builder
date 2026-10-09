@@ -162,6 +162,10 @@ function _applyLOSwitch(selectedLOId) {
 
     loadCurrentLOSheets();
     updateLOSummary();
+    /* 3.23.0: the Assessment and Training Structure Mapping tabs follow
+       the outcome too. */
+    if (typeof renderAssessmentForms === 'function') renderAssessmentForms();
+    if (typeof renderSourceBrowser === 'function') renderSourceBrowser();
 }
 
 function updateLOSummary() {

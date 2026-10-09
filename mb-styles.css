@@ -3390,3 +3390,26 @@ body.mb-readonly .container { padding-top: 44px; }
 /* Beat the global silver-button rule (0,3,1). */
 .mb-fld-bar.mb-fld-bar button[data-fb="allow"] { background: #1d4ed8 !important; border-color: #1d4ed8 !important; color: #fff !important; }
 .mb-ro-banner.mb-ro-banner button[data-ro="take"] { background: #b45309 !important; border-color: #b45309 !important; color: #fff !important; }
+
+/* ── Context bar: Module + Learning Outcome (3.23.0) ──────────────
+   One shape in the Information, Activity, Assessment and Training
+   Structure Mapping tabs. Every size is fixed here (not by the text
+   inside), so the bar does not move or change size when the user goes
+   from one tab to another. */
+.mb-ctx-bar {
+    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+    border-radius: 10px; padding: 10px 14px; margin: 0 0 16px;
+    min-height: 56px; box-sizing: border-box;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    box-shadow: 0 2px 8px rgba(14,165,233,0.25);
+}
+.mb-ctx-label { font-size: 0.82em; font-weight: 700; color: #e0f2fe; white-space: nowrap; letter-spacing: 0.03em; margin: 0; }
+.mb-ctx-sep { color: rgba(255,255,255,0.6); font-size: 1.1em; font-weight: 300; flex-shrink: 0; }
+.mb-ctx-bar .mb-ctx-sel {
+    height: 36px; box-sizing: border-box; margin: 0;
+    padding: 0 10px; border: 2px solid rgba(255,255,255,0.5); border-radius: 7px;
+    font-size: 0.9em; font-weight: 600; background: white; cursor: pointer;
+    min-width: 0; width: auto; text-overflow: ellipsis;
+}
+.mb-ctx-bar .mb-ctx-mod { flex: 0 1 260px; color: #0c4a6e; }
+.mb-ctx-bar .mb-ctx-lo  { flex: 1 1 300px; color: #374151; }

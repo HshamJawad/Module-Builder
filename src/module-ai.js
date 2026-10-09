@@ -560,9 +560,11 @@ function _mbParseSelKey(key) {
  *  own selections). Shared by the standalone browser (excludeKeys = all
  *  assignments) and the item editor (excludeKeys = assignments minus
  *  this item's own) so the two never drift into different behaviour. */
-function _mbBuildSourceChecklistHtml(module, checkedKeys, namePrefix, excludeKeys) {
+function _mbBuildSourceChecklistHtml(module, checkedKeys, namePrefix, excludeKeys, onlyLo) {
     excludeKeys = excludeKeys || [];
-    const taskIds = (module.taskAnalysisSource && module.taskAnalysisSource.sourceTaskIds) || [];
+    let taskIds = (module.taskAnalysisSource && module.taskAnalysisSource.sourceTaskIds) || [];
+    /* 3.23.0: the standalone browser can show only the tasks of one outcome. */
+    if (onlyLo) { const keep = _mbLoTaskIds(module, onlyLo); taskIds = taskIds.filter(id => keep.has(id)); }
     const blocks = taskIds.map(taskId => {
         const fieldsHtml = _mbTaskFields(module, taskId).map(field => {
             const items = _mbGetFieldItems(module, taskId, field);
@@ -593,14 +595,14 @@ function _mbBuildSourceChecklistHtml(module, checkedKeys, namePrefix, excludeKey
                 ${fieldsHtml}
             </div>`;
     }).join('');
-    return (blocks + _mbBuildCcChecklistHtml(module, checkedKeys, namePrefix, excludeKeys) +
+    return (blocks + _mbBuildCcChecklistHtml(module, checkedKeys, namePrefix, excludeKeys, onlyLo) +
             _mbBuildRefChecklistHtml(module, checkedKeys, namePrefix, excludeKeys)) ||
         `<p style="color:#9ca3af;font-size:0.85em;font-style:italic;">${window.i18n.t('mbAllItemsAssigned')}</p>`;
 }
 
 /* 3.20.0: competency criteria — same rows, keys and exclude/check rules
    as the blocks above; each row also says where the criterion sits. */
-function _mbBuildCcChecklistHtml(module, checkedKeys, namePrefix, excludeKeys) {
+function _mbBuildCcChecklistHtml(module, checkedKeys, namePrefix, excludeKeys, onlyLo) {
     const groups = _mbCompGroups(module);
     if (!groups.size) return '';
     const chip = (txt, bg, fg) => `<span dir="auto" style="font-size:0.74em;background:${bg};color:${fg};border-radius:999px;padding:1px 7px;flex-shrink:0;white-space:nowrap;">${escapeHtml(txt)}</span>`;
@@ -609,6 +611,7 @@ function _mbBuildCcChecklistHtml(module, checkedKeys, namePrefix, excludeKeys) {
         const rows = list.map((e, idx) => {
             const key = _mbSelKey({ taskId: MB_CC_TASK, field, itemIndex: idx });
             if (excludeKeys.includes(key)) return '';
+            if (onlyLo && !e.loIds.includes(onlyLo)) return '';
             const near = _mbClosestTask(module, e);
             return `
                 <label style="display:flex;align-items:flex-start;gap:8px;padding:3px 2px;cursor:pointer;flex-wrap:wrap;">
@@ -677,6 +680,24 @@ function _mbBuildRefChecklistHtml(module, checkedKeys, namePrefix, excludeKeys) 
         </div>`;
 }
 
+/* 3.23.0: the tasks one outcome traces to — through its criteria: a
+   Task Analysis criterion's own task, a competency criterion's tasks. */
+function _mbLoTaskIds(module, loId) {
+    const out = new Set();
+    const lo = ((module && module.learningOutcomes) || []).find(l => l.id === loId);
+    ((lo && lo.performanceCriteria) || []).forEach(pc => {
+        if (!pc || typeof pc !== 'object') return;
+        if (pc.taskId) out.add(pc.taskId);
+        (Array.isArray(pc.sourceTaskIds) ? pc.sourceTaskIds : []).forEach(id => out.add(id));
+    });
+    return out;
+}
+
+function mbToggleMapAllTasks(on) {
+    mbState.mapAllTasks = !!on;
+    renderSourceBrowser();
+}
+
 // ── Standalone source browser: pick items, THEN create a sheet ──
 // Lives outside the proposal list (see index.html #mb-source-browser)
 // so its checkbox state survives a proposal re-render — checking a
@@ -695,12 +716,27 @@ function renderSourceBrowser() {
         host.innerHTML = '';
         return;
     }
+    /* 3.23.0: by default only the tasks of the outcome chosen in the bar
+       (the module's tasks are already the only ones listed). A tick shows
+       every task of the module. An outcome with no traced task shows all. */
+    const allIds = (module.taskAnalysisSource && module.taskAnalysisSource.sourceTaskIds) || [];
+    const curLo = (module.learningOutcomes || []).find(l => l.id === mbState.currentLOId);
+    const loTasks = curLo ? _mbLoTaskIds(module, curLo.id) : new Set();
+    const nLo = allIds.filter(id => loTasks.has(id)).length;
+    const canFilter = !!(curLo && nLo);
+    const onlyLo = canFilter && !mbState.mapAllTasks ? curLo.id : null;
+    const loFilterHtml = canFilter ? `
+            <label style="display:flex;align-items:center;gap:8px;margin:0 0 10px;padding:7px 10px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;font-size:0.86em;color:#1e3a8a;cursor:pointer;font-weight:500;">
+                <input type="checkbox" data-act="mbToggleMapAllTasks" data-on="change" data-args='["$checked"]' ${mbState.mapAllTasks ? 'checked' : ''} style="margin:0;flex-shrink:0;width:auto;">
+                <span dir="auto">${escapeHtml(window.i18n.tf(onlyLo ? 'mbMapOnlyLoTasks' : 'mbMapAllTasksOn', { v0: (curLo.number || loTitleText(curLo)), v1: nLo, v2: allIds.length }))}</span>
+            </label>` : '';
     host.innerHTML = `
         <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;margin-bottom:18px;">
             <h4 style="margin:0 0 4px;color:#374151;">${window.i18n.t('mbSourceBrowserTitle')}</h4>
             <p style="margin:0 0 10px;color:#6b7280;font-size:0.85em;">${window.i18n.t('mbSourceBrowserIntro')}</p>
             ${typeof mbTaskAnalysisModuleLine === 'function' ? mbTaskAnalysisModuleLine(module) : ''}
-            <div id="mb-source-browser-list">${_mbBuildSourceChecklistHtml(module, [], 'mbsrc', Object.keys(_mbAllAssignments()))}</div>
+            ${loFilterHtml}
+            <div id="mb-source-browser-list">${_mbBuildSourceChecklistHtml(module, [], 'mbsrc', Object.keys(_mbAllAssignments()), onlyLo)}</div>
             <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
                 <button data-act="mbCreateFromSelection" data-args='["info"]' style="background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;border-radius:6px;padding:7px 14px;font-size:0.85em;font-weight:600;cursor:pointer;">➕ ${window.i18n.t('mbCreateInfoFromSelection')}</button>
                 <button data-act="mbCreateFromSelection" data-args='["activity"]' style="background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;border-radius:6px;padding:7px 14px;font-size:0.85em;font-weight:600;cursor:pointer;">➕ ${window.i18n.t('mbCreateActivityFromSelection')}</button>

@@ -119,11 +119,22 @@ function renderAssessmentForms() {
     }
     
     container.innerHTML = '';
-    
+
+    /* 3.23.0: the tab follows the outcome chosen in its bar — only that
+       outcome's form is shown. With no outcome chosen, all forms. */
+    const focusLO = mbState.currentLOId && mbState.learningOutcomesData.some(l => l.id === mbState.currentLOId)
+        ? mbState.currentLOId : null;
+    if (focusLO && !mbState.assessmentFormsData[focusLO]) {
+        container.innerHTML = '<p style="color: #6b7280; text-align: center; padding: 20px;" data-i18n="mbNoAssessmentFormForLo">' +
+            window.i18n.t('mbNoAssessmentFormForLo') + '</p>';
+        return;
+    }
+
     mbState.learningOutcomesData.forEach((lo, index) => {
         if (!mbState.assessmentFormsData[lo.id]) {
             return;
         }
+        if (focusLO && lo.id !== focusLO) return;
         
         const formData = mbState.assessmentFormsData[lo.id];
         const formDiv = document.createElement('div');
@@ -225,13 +236,13 @@ function renderAssessmentForms() {
                 <div style="display: flex; gap: 20px;">
                     <label style="display: flex; align-items: center; gap: 8px;">
                         <input type="checkbox" ${formData.competent ? 'checked' : ''} 
-                            data-act="updateAssessmentResult" data-on="change" data-args='["${lo.id}","competent",this.checked]'
+                            data-act="updateAssessmentResult" data-on="change" data-args='["${lo.id}","competent","$checked"]'
                             style="width: 18px; height: 18px;">
                         <span><span data-i18n="expCompetent">${window.i18n.t('expCompetent')}</span></span>
                     </label>
                     <label style="display: flex; align-items: center; gap: 8px;">
                         <input type="checkbox" ${formData.notYetCompetent ? 'checked' : ''} 
-                            data-act="updateAssessmentResult" data-on="change" data-args='["${lo.id}","notYetCompetent",this.checked]'
+                            data-act="updateAssessmentResult" data-on="change" data-args='["${lo.id}","notYetCompetent","$checked"]'
                             style="width: 18px; height: 18px;">
                         <span><span data-i18n="expNotYetCompetent">${window.i18n.t('expNotYetCompetent')}</span></span>
                     </label>
@@ -285,7 +296,14 @@ async function addNewAssessmentForm() {
         return;
     }
     
-    const loWithoutForm = mbState.learningOutcomesData.find(lo => !mbState.assessmentFormsData[lo.id]);
+    /* 3.23.0: the form goes to the outcome chosen in the bar; without
+       one, to the first outcome that has no form yet (as before). */
+    const focus = mbState.learningOutcomesData.find(lo => lo.id === mbState.currentLOId);
+    if (focus && mbState.assessmentFormsData[focus.id]) {
+        await mbAlert(window.i18n.t('mbLoAlreadyHasAssessmentForm'));
+        return;
+    }
+    const loWithoutForm = focus || mbState.learningOutcomesData.find(lo => !mbState.assessmentFormsData[lo.id]);
     
     if (!loWithoutForm) {
         await mbAlert(window.i18n.t('dgAllLearningOutcomesAlreadyHave'));
