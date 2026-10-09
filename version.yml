@@ -49,11 +49,11 @@ jobs:
           # 3.20 for the criteria written in DACUM Competency Clusters,
           # 3.21 for the "not analysed yet" line, 3.22 for the outcome
           # chooser in Training Structure Mapping, 3.23 for one context bar
-          # in every tab and the outcome filter.
+          # in every tab and the outcome filter, 3.24 for "open in DACUM".
           # version.json now reads 3.7.0, and any value left behind here
           # would roll the number backwards to <old>.<run> on the next
           # push — the same failure, one minor later.
-          MAJOR_MINOR: "3.23"
+          MAJOR_MINOR: "3.24"
         run: |
           VERSION="${MAJOR_MINOR}.${GITHUB_RUN_NUMBER}"
           BUILD="$(date -u +%Y-%m-%d)"

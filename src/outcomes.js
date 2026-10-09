@@ -109,7 +109,7 @@ function renderLOSelector() {
     }
 
     // Populate and sync all three selectors
-    ['current-lo-selector', 'info-lo-selector', 'activity-lo-selector', 'mapping-lo-selector'].forEach(id => {
+    ['current-lo-selector', 'info-lo-selector', 'activity-lo-selector', 'mapping-lo-selector', 'assessment-lo-selector'].forEach(id => {
         const sel = document.getElementById(id);
         if (!sel) return;
         sel.innerHTML = optionsHtml;
@@ -127,7 +127,8 @@ function switchLearningOutcome() {
 // Called from inline selectors in Info / Activity tabs
 function switchLearningOutcomeFromTab(source) {
     const selectorId = source === 'info' ? 'info-lo-selector'
-        : source === 'mapping' ? 'mapping-lo-selector' : 'activity-lo-selector';
+        : source === 'mapping' ? 'mapping-lo-selector'
+        : source === 'assessment' ? 'assessment-lo-selector' : 'activity-lo-selector';
     const selector = document.getElementById(selectorId);
     _applyLOSwitch(selector.value);
 }
@@ -139,7 +140,7 @@ function _applyLOSwitch(selectedLOId) {
         const summary = document.getElementById('lo-sheets-summary');
         if (summary) summary.style.display = 'none';
         // Sync all to empty
-        ['current-lo-selector', 'info-lo-selector', 'activity-lo-selector', 'mapping-lo-selector'].forEach(id => {
+        ['current-lo-selector', 'info-lo-selector', 'activity-lo-selector', 'mapping-lo-selector', 'assessment-lo-selector'].forEach(id => {
             const s = document.getElementById(id);
             if (s) s.value = '';
         });
@@ -155,7 +156,7 @@ function _applyLOSwitch(selectedLOId) {
     mbState.currentLOId = selectedLOId;
 
     // Sync all selectors to this value
-    ['current-lo-selector', 'info-lo-selector', 'activity-lo-selector', 'mapping-lo-selector'].forEach(id => {
+    ['current-lo-selector', 'info-lo-selector', 'activity-lo-selector', 'mapping-lo-selector', 'assessment-lo-selector'].forEach(id => {
         const s = document.getElementById(id);
         if (s) s.value = selectedLOId;
     });
