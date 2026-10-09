@@ -45,11 +45,12 @@ jobs:
           # 3.15 for saving to a folder on the computer, 3.16 for the
           # translations that arrive with a DACUM handoff, 3.17 for the
           # tasks DACUM left out of training, 3.18 for the TVQF/NQF level
-          # and framework name from DACUM.
+          # and framework name from DACUM, 3.19 for Worker Behaviours,
+          # 3.20 for the criteria written in DACUM Competency Clusters.
           # version.json now reads 3.7.0, and any value left behind here
           # would roll the number backwards to <old>.<run> on the next
           # push — the same failure, one minor later.
-          MAJOR_MINOR: "3.19"
+          MAJOR_MINOR: "3.20"
         run: |
           VERSION="${MAJOR_MINOR}.${GITHUB_RUN_NUMBER}"
           BUILD="$(date -u +%Y-%m-%d)"

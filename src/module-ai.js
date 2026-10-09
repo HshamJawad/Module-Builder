@@ -303,6 +303,103 @@ function _mbRefCategory(module, catId) {
     return ref ? ref.categories.find(c => String(c.id) === String(catId)) || null : null;
 }
 
+/* ── Competency criteria (3.20.0) ────────────────────────────
+   A criterion written in DACUM's Competency Clusters tab — not in a
+   task's Task Analysis — arrives inside the outcome it is linked to,
+   with no taskId and with sourceTaskIds = every task of its
+   competency. When the panel skipped Task Analysis and wrote the
+   criteria at competency level (common in practice), those were the
+   ONLY criteria of the module, and the source browser, which lists
+   Task Analysis fields only, showed none of them.
+
+   They are offered under one pseudo-task, like the occupational
+   reference above, one group per competency. Each criterion is listed
+   ONCE (not under each of its tasks), shown with its number, the
+   outcome(s) it belongs to and the tasks of its competency. Picking it
+   links the sheet or assessment to those outcomes and that criterion
+   (see _mbInheritedLinksForItem). Nothing is written back to DACUM. */
+const MB_CC_TASK = '__compcrit__';
+
+function _mbPcText(pc) {
+    let t = pc && (pc.text != null ? pc.text : pc.id);
+    if (t && typeof t === 'object') {
+        const lang = (typeof contentLang === 'function') ? contentLang() : 'en';
+        t = (typeof biGet === 'function') ? biGet(t, lang) : (t[lang] || t.en || t.ar || '');
+    } else if (typeof t === 'string' && typeof mbDacumText === 'function') {
+        t = mbDacumText(t);
+    }
+    return String(t == null ? '' : t).trim();
+}
+
+/** The competency criteria of this module's outcomes, once each:
+ *  [{ comp, pcId, text, loIds, loNumbers, taskIds }], grouped by the
+ *  competency number DACUM put in the id ("3-4" → 3). */
+function _mbCompCriteria(module) {
+    const byId = new Map();
+    (module && module.learningOutcomes || []).forEach(lo => {
+        (lo.performanceCriteria || []).forEach(pc => {
+            if (!pc || typeof pc !== 'object' || pc.taskId) return;
+            if (!Array.isArray(pc.sourceTaskIds) || !pc.sourceTaskIds.length) return;
+            const pcId = String(pc.id || '');
+            const text = _mbPcText(pc);
+            if (!pcId || !text) return;
+            let e = byId.get(pcId);
+            if (!e) {
+                e = { comp: pcId.split('-')[0], pcId, text, loIds: [], loNumbers: [], taskIds: pc.sourceTaskIds.slice() };
+                byId.set(pcId, e);
+            }
+            if (!e.loIds.includes(lo.id)) { e.loIds.push(lo.id); if (lo.number) e.loNumbers.push(lo.number); }
+        });
+    });
+    return [...byId.values()];
+}
+
+function _mbCompGroups(module) {
+    const groups = new Map();
+    _mbCompCriteria(module).forEach(e => {
+        if (!groups.has(e.comp)) groups.set(e.comp, []);
+        groups.get(e.comp).push(e);
+    });
+    return groups;
+}
+
+function _mbCcText(key, vars) {
+    const lang = (window.i18n && window.i18n.getLang) ? window.i18n.getLang() : 'en';
+    const T = {
+        title: { en: 'Performance criteria written in Competency Clusters (DACUM)',
+                 fr: 'Critères de performance rédigés dans les groupes de compétences (DACUM)',
+                 ar: 'معايير الأداء المكتوبة في تجمعات الكفاءات (DACUM)' },
+        hint:  { en: 'These criteria were written for the whole competency, not in a task\'s Task Analysis. Tick them to use them in a sheet or an assessment; the outcome and criterion links follow.',
+                 fr: 'Ces critères ont été rédigés pour toute la compétence, et non dans l\'analyse d\'une tâche. Cochez-les pour les utiliser dans une fiche ou une évaluation ; les liens au résultat et au critère suivent.',
+                 ar: 'كُتبت هذه المعايير للكفاءة كاملة، لا في تحليل مهمة بعينها. اخترها لاستخدامها في ورقة أو تقييم، ويُحفظ ربطها بالمحصلة والمعيار تلقائيًا.' },
+        comp:  { en: 'Competency {c}', fr: 'Compétence {c}', ar: 'الكفاءة {c}' },
+        tasks: { en: 'Tasks of this competency: {t}', fr: 'Tâches de cette compétence : {t}', ar: 'مهام هذه الكفاءة: {t}' },
+        near:  { en: 'closest task: {t}', fr: 'tâche la plus proche : {t}', ar: 'أقرب مهمة: {t}' }
+    };
+    let out = (T[key] && (T[key][lang] || T[key].en)) || key;
+    Object.keys(vars || {}).forEach(k => { out = out.split('{' + k + '}').join(vars[k]); });
+    return out;
+}
+
+/* A hint only — never a link. The task whose statement shares the most
+   words with the criterion, shown when it clearly stands out (≥ 2 words
+   and more than any other task). The criterion still traces to every
+   task of its competency, as in DACUM. */
+function _mbClosestTask(module, e) {
+    const words = s => new Set(String(s || '').toLowerCase()
+        .split(/[^\p{L}\p{N}]+/u).filter(w => w.length >= 4));
+    const cw = words(e.text);
+    const tasks = (module.taskAnalysisSource && module.taskAnalysisSource.sourceTasks) || [];
+    let best = null, bestN = 0, second = 0;
+    e.taskIds.forEach(id => {
+        const t = tasks.find(x => x.id === id);
+        if (!t) return;
+        let n = 0; words(t.text).forEach(w => { if (cw.has(w)) n++; });
+        if (n > bestN) { second = bestN; bestN = n; best = id; } else if (n > second) second = n;
+    });
+    return (best && bestN >= 2 && bestN > second) ? best : null;
+}
+
 /** "TASK A1" — resolved from the module's own taskAnalysisSource, same
  *  source renderModuleTaskAnalysisPanel() reads, so this always matches
  *  what the reference panel above it already shows. Falls back to the
@@ -310,6 +407,7 @@ function _mbRefCategory(module, catId) {
 function _mbTaskLabel(taskId) {
     if (!taskId) return '';
     if (taskId === MB_REF_TASK) return _mbRefText('title');
+    if (taskId === MB_CC_TASK) return _mbCcText('title');
     const module = _mbCurrentModule();
     const ta = module && module.taskAnalysisSource && module.taskAnalysisSource.taskAnalysis[taskId];
     if (ta && ta.taskCode) return ta.taskCode;
@@ -320,6 +418,7 @@ function _mbTaskLabel(taskId) {
 }
 
 function _mbFieldLabel(field) {
+    if (String(field).indexOf('cc:') === 0) return _mbCcText('comp', { c: String(field).slice(3) });
     if (String(field).indexOf(MB_TA_CUSTOM) === 0) return String(field).slice(MB_TA_CUSTOM.length);
     if (MB_TA_FIELD_LABELS[field]) {
         const k = 'mbTaFld_' + field;
@@ -358,6 +457,12 @@ function _mbLoPcForTask(module, taskId) {
 function _mbInheritedLinksForItem(module, item) {
     const loIds = new Set(); const pcIds = new Set();
     (item.sourceSelections || []).forEach(sel => {
+        /* 3.20.0: a competency criterion links its own outcome(s) and itself. */
+        if (sel.taskId === MB_CC_TASK) {
+            const e = (_mbCompGroups(module).get(String(sel.field).slice(3)) || [])[sel.itemIndex];
+            if (e) { e.loIds.forEach(id => loIds.add(id)); pcIds.add(e.pcId); }
+            return;
+        }
         const derived = _mbLoPcForTask(module, sel.taskId);
         derived.loIds.forEach(id => loIds.add(id));
         derived.pcIds.forEach(id => pcIds.add(id));
@@ -400,6 +505,9 @@ function _mbFindProposalItem(kind, tempId) {
  *  one source item". Never fabricates a placeholder for an empty/absent
  *  field — it simply contributes nothing to select. */
 function _mbGetFieldItems(module, taskId, field) {
+    if (taskId === MB_CC_TASK) {
+        return (_mbCompGroups(module).get(String(field).slice(3)) || []).map(e => e.text);
+    }
     if (taskId === MB_REF_TASK) {
         const cat = _mbRefCategory(module, field);
         return cat ? (cat.items || []).map(i => String((i && i.text) || '').trim()).filter(Boolean) : [];
@@ -482,8 +590,51 @@ function _mbBuildSourceChecklistHtml(module, checkedKeys, namePrefix, excludeKey
                 ${fieldsHtml}
             </div>`;
     }).join('');
-    return (blocks + _mbBuildRefChecklistHtml(module, checkedKeys, namePrefix, excludeKeys)) ||
+    return (blocks + _mbBuildCcChecklistHtml(module, checkedKeys, namePrefix, excludeKeys) +
+            _mbBuildRefChecklistHtml(module, checkedKeys, namePrefix, excludeKeys)) ||
         `<p style="color:#9ca3af;font-size:0.85em;font-style:italic;">${window.i18n.t('mbAllItemsAssigned')}</p>`;
+}
+
+/* 3.20.0: competency criteria — same rows, keys and exclude/check rules
+   as the blocks above; each row also says where the criterion sits. */
+function _mbBuildCcChecklistHtml(module, checkedKeys, namePrefix, excludeKeys) {
+    const groups = _mbCompGroups(module);
+    if (!groups.size) return '';
+    const chip = (txt, bg, fg) => `<span dir="auto" style="font-size:0.74em;background:${bg};color:${fg};border-radius:999px;padding:1px 7px;flex-shrink:0;white-space:nowrap;">${escapeHtml(txt)}</span>`;
+    const comps = [...groups.entries()].map(([comp, list]) => {
+        const field = 'cc:' + comp;
+        const rows = list.map((e, idx) => {
+            const key = _mbSelKey({ taskId: MB_CC_TASK, field, itemIndex: idx });
+            if (excludeKeys.includes(key)) return '';
+            const near = _mbClosestTask(module, e);
+            return `
+                <label style="display:flex;align-items:flex-start;gap:8px;padding:3px 2px;cursor:pointer;flex-wrap:wrap;">
+                    <input type="checkbox" name="${namePrefix}" value="${escapeHtml(key)}"
+                           data-item-text="${escapeHtml(e.text)}" ${checkedKeys.includes(key) ? 'checked' : ''}
+                           style="margin-top:3px;flex-shrink:0;">
+                    <span dir="ltr" style="font-size:0.8em;font-weight:700;color:#7c3aed;flex-shrink:0;">${escapeHtml(e.pcId)}</span>
+                    <span dir="auto" style="font-size:0.87em;color:#374151;flex:1;min-width:180px;">${escapeHtml(e.text)}</span>
+                    ${e.loNumbers.map(n => chip(n, '#ede9fe', '#5b21b6')).join('')}
+                    ${near ? chip('≈ ' + _mbCcText('near', { t: _mbTaskLabel(near) }), '#e0f2fe', '#0369a1') : ''}
+                </label>`;
+        }).filter(Boolean).join('');
+        if (!rows) return '';
+        const sep = (window.i18n && window.i18n.getLang && window.i18n.getLang() === 'ar') ? '، ' : ', ';
+        const taskList = [...new Set(list.flatMap(e => e.taskIds))].map(id => _mbTaskLabel(id)).join(sep);
+        return `
+            <div style="margin-bottom:10px;">
+                <div dir="auto" style="font-size:0.8em;font-weight:700;color:#5b21b6;">${escapeHtml(_mbCcText('comp', { c: comp }))}</div>
+                <div dir="auto" style="font-size:0.75em;color:#6b7280;margin-bottom:3px;">${escapeHtml(_mbCcText('tasks', { t: taskList }))}</div>
+                ${rows}
+            </div>`;
+    }).join('');
+    if (!comps) return '';
+    return `
+        <div style="border:1px solid #ddd6fe;border-radius:8px;padding:10px 12px;margin-bottom:10px;background:#f5f3ff;">
+            <div dir="auto" style="font-weight:700;color:#5b21b6;font-size:0.88em;margin-bottom:2px;">🎯 ${escapeHtml(_mbCcText('title'))}</div>
+            <div dir="auto" style="font-size:0.78em;color:#4c1d95;margin-bottom:8px;">${escapeHtml(_mbCcText('hint'))}</div>
+            ${comps}
+        </div>`;
 }
 
 /* Same rows, same keys and same exclude/check rules as the Task
@@ -537,7 +688,7 @@ function renderSourceBrowser() {
     if (!host) return;
     const module = _mbCurrentModule();
     const hasTasks = !!(module && module.taskAnalysisSource && (module.taskAnalysisSource.sourceTaskIds || []).length);
-    if (!module || (!hasTasks && !_mbOccRef(module))) {
+    if (!module || (!hasTasks && !_mbOccRef(module) && !_mbCompGroups(module).size)) {
         host.innerHTML = '';
         return;
     }
@@ -968,7 +1119,7 @@ function _mbBuildAssessmentUnit(module, item, aiMapping) {
     const criteriaTexts = item.performanceCriteriaIds
         .map(pcId => (lo.performanceCriteria || []).find(pc => pc.id === pcId))
         .filter(Boolean)
-        .map(pc => pc.text)
+        .map(pc => _mbPcText(pc))
         // Granular Task Analysis items the user selected directly for this
         // assessment (Performance Standard, Common Errors, Decisions, …) —
         // section 9 of the mapping spec asks for these to be assessable
@@ -977,7 +1128,11 @@ function _mbBuildAssessmentUnit(module, item, aiMapping) {
 
     const existingCriteria = new Set(form.rows.map(r => (r.criteria || '').trim()).filter(Boolean));
     criteriaTexts.forEach(text => {
-        if (existingCriteria.has(text.trim())) return;
+        text = String(text == null ? '' : (typeof text === 'object' ? _mbPcText({ text }) : text));
+        if (!text.trim() || existingCriteria.has(text.trim())) return;
+        /* 3.20.0: a competency criterion picked in the browser is also an
+           inherited criterion of the item — one row, not two. */
+        existingCriteria.add(text.trim());
         form.rows.push({ criteria: text, activities: '', outcomes: '', verification: '', date: '' });
     });
     if (form.rows.length === 0) form.rows.push({ criteria: '', activities: '', outcomes: '', verification: '', date: '' });

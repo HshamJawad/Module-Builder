@@ -240,8 +240,14 @@ function updatePerformanceCriteriaPanel() {
         const taCode = pc && pc.taskId && module && module.taskAnalysisSource &&
             module.taskAnalysisSource.taskAnalysis[pc.taskId] &&
             module.taskAnalysisSource.taskAnalysis[pc.taskId].taskCode;
+        /* 3.20.0: a criterion written in DACUM's Competency Clusters (no
+           taskId, traced to every task of its competency) says so. */
+        const ccTag = (pc && !pc.taskId && Array.isArray(pc.sourceTaskIds) && pc.sourceTaskIds.length && pc.id)
+            ? window.i18n.tf('mbPcFromCompetency', { v0: String(pc.id).split('-')[0] }) : '';
         const sourceTag = (pc && pc.taskId)
             ? `<div style="font-size:0.78em;color:#94a3b8;margin-top:3px;">${escapeHtml(pc.id || '')}${taCode ? ' · ' + escapeHtml(taCode) : ''}</div>`
+            : ccTag
+            ? `<div dir="auto" style="font-size:0.78em;color:#7c3aed;margin-top:3px;">${escapeHtml(pc.id)} · ${escapeHtml(ccTag)}</div>`
             : '';
         html += `
             <div style="display: flex; align-items: start; gap: 10px; padding: 10px; background: #f9fafb; border-radius: 6px; border: 1px solid #e5e7eb;">
