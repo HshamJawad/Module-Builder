@@ -103,6 +103,9 @@ function mbDispatch(ev) {
        result is a Promise nobody awaits, which is correct here — this is
        the top of the stack — but an unhandled rejection would be
        invisible, so it is caught. */
+    /* 3.29.0: Undo / Redo — the module as it was before the action
+       (history.js keeps it only if the action changed something). */
+    var hist = (typeof mbHistBegin === 'function') ? mbHistBegin(name) : null;
     var out;
     try {
         out = fn.apply(el, args.concat([el, ev]));
@@ -110,6 +113,7 @@ function mbDispatch(ev) {
         console.error('Action "' + name + '" threw:', e);
         return;
     }
+    if (hist && typeof mbHistEnd === 'function') mbHistEnd(hist, out);
     if (out && typeof out.catch === 'function') {
         out.catch(function (e) { console.error('Action "' + name + '" rejected:', e); });
     }
