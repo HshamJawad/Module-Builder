@@ -565,7 +565,9 @@ function _mbBuildSourceChecklistHtml(module, checkedKeys, namePrefix, excludeKey
     let taskIds = (module.taskAnalysisSource && module.taskAnalysisSource.sourceTaskIds) || [];
     /* 3.23.0: the standalone browser can show only the tasks of one outcome. */
     if (onlyLo) { const keep = _mbLoTaskIds(module, onlyLo); taskIds = taskIds.filter(id => keep.has(id)); }
-    const blocks = taskIds.map(taskId => {
+    /* 3.25.0: tasks closest to the outcome first, the rest folded. */
+    const rank = onlyLo ? _mbRankLoTasks(module, onlyLo, taskIds) : null;
+    const block = taskId => {
         const fieldsHtml = _mbTaskFields(module, taskId).map(field => {
             const items = _mbGetFieldItems(module, taskId, field);
             if (!items.length) return '';
@@ -589,12 +591,26 @@ function _mbBuildSourceChecklistHtml(module, checkedKeys, namePrefix, excludeKey
                 </div>`;
         }).join('');
         if (!fieldsHtml) return '';
+        const near = rank && rank.near.has(taskId)
+            ? ` <span dir="auto" style="font-size:0.8em;font-weight:600;color:#0369a1;background:#e0f2fe;border-radius:999px;padding:1px 8px;">≈ ${escapeHtml(window.i18n.t('mbTaskNearLo'))}</span>` : '';
         return `
-            <div style="border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;margin-bottom:10px;background:#fff;">
-                <div style="font-weight:700;color:#0ea5e9;font-size:0.88em;margin-bottom:6px;">${escapeHtml(_mbTaskLabel(taskId))}</div>
+            <div style="border:1px solid ${near ? '#7dd3fc' : '#e5e7eb'};border-radius:8px;padding:10px 12px;margin-bottom:10px;background:#fff;">
+                <div style="font-weight:700;color:#0ea5e9;font-size:0.88em;margin-bottom:6px;">${escapeHtml(_mbTaskLabel(taskId))}${near}</div>
                 ${fieldsHtml}
             </div>`;
-    }).join('');
+    };
+    let blocks;
+    if (rank && rank.near.size) {
+        const top = rank.order.filter(id => rank.top.has(id)).map(block).join('');
+        const restHtml = rank.order.filter(id => !rank.top.has(id)).map(block).filter(Boolean);
+        blocks = top + (restHtml.length ? `
+            <details style="margin-bottom:10px;border:1px dashed #cbd5e1;border-radius:8px;background:#f8fafc;padding:6px 10px;">
+                <summary dir="auto" style="cursor:pointer;font-size:0.86em;font-weight:600;color:#475569;padding:4px 0;">${escapeHtml(window.i18n.tf('mbOtherCompTasks', { v0: restHtml.length }))}</summary>
+                <div style="margin-top:8px;">${restHtml.join('')}</div>
+            </details>` : '');
+    } else {
+        blocks = taskIds.map(block).join('');
+    }
     return (blocks + _mbBuildCcChecklistHtml(module, checkedKeys, namePrefix, excludeKeys, onlyLo) +
             _mbBuildRefChecklistHtml(module, checkedKeys, namePrefix, excludeKeys)) ||
         `<p style="color:#9ca3af;font-size:0.85em;font-style:italic;">${window.i18n.t('mbAllItemsAssigned')}</p>`;
@@ -691,6 +707,43 @@ function _mbLoTaskIds(module, loId) {
         (Array.isArray(pc.sourceTaskIds) ? pc.sourceTaskIds : []).forEach(id => out.add(id));
     });
     return out;
+}
+
+/* 3.25.0: which of an outcome's tasks come first. A task its criteria
+   name directly (a Task Analysis criterion) always does. When the
+   outcome's criteria were written in Competency Clusters (they trace to
+   every task of the competency), the tasks whose statement shares the
+   most words with the outcome and its criteria come first, marked
+   "closest"; the others are folded below, never hidden. A hint only —
+   with no clear match nothing is folded. */
+function _mbRankLoTasks(module, loId, taskIds) {
+    const lo = ((module && module.learningOutcomes) || []).find(l => l.id === loId);
+    const top = new Set(), near = new Set();
+    if (!lo) return { order: taskIds, top, near };
+    const pcs = (lo.performanceCriteria || []).filter(pc => pc && typeof pc === 'object');
+    pcs.forEach(pc => { if (pc.taskId) top.add(pc.taskId); });
+    /* Words of 3+ letters ("aid", "use" …) minus the common ones. */
+    const STOP = new Set(['the', 'and', 'for', 'are', 'with', 'from', 'that', 'this', 'into', 'all', 'its', 'per', 'any',
+        'according', 'procedures', 'procedure', 'requirements', 'standards', 'specifications', 'best', 'practices',
+        'les', 'des', 'aux', 'pour', 'dans', 'une', 'selon', 'avec', 'sur', 'par']);
+    const words = s => new Set(String(s || '').toLowerCase().split(/[^\p{L}\p{N}]+/u)
+        .filter(w => w.length >= 3 && !STOP.has(w)));
+    const loText = [lo.statement || '', (typeof lo.title === 'string' ? lo.title : _mbPcText({ text: lo.title }))]
+        .concat(pcs.map(pc => _mbPcText(pc))).join(' ');
+    const lw = words(loText);
+    const tasks = (module.taskAnalysisSource && module.taskAnalysisSource.sourceTasks) || [];
+    const score = {};
+    taskIds.forEach(id => {
+        if (top.has(id)) return;
+        const t = tasks.find(x => x.id === id);
+        let n = 0; words(t && t.text).forEach(w => { if (lw.has(w)) n++; });
+        score[id] = n;
+    });
+    const best = Math.max(0, ...Object.values(score));
+    if (best >= 2) Object.keys(score).forEach(id => { if (score[id] >= Math.max(2, best - 1)) { near.add(id); top.add(id); } });
+    if (!near.size) return { order: taskIds, top: new Set(), near };
+    const order = taskIds.slice().sort((a, b) => (top.has(b) - top.has(a)) || ((score[b] || 0) - (score[a] || 0)));
+    return { order, top, near };
 }
 
 function mbToggleMapAllTasks(on) {
