@@ -810,6 +810,7 @@ function renderSourceBrowser() {
                 <button data-act="mbCreateFromSelection" data-args='["info"]' style="background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;border-radius:6px;padding:7px 14px;font-size:0.85em;font-weight:600;cursor:pointer;">➕ ${window.i18n.t('mbCreateInfoFromSelection')}</button>
                 <button data-act="mbCreateFromSelection" data-args='["activity"]' style="background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;border-radius:6px;padding:7px 14px;font-size:0.85em;font-weight:600;cursor:pointer;">➕ ${window.i18n.t('mbCreateActivityFromSelection')}</button>
                 <button data-act="mbCreateFromSelection" data-args='["assessment"]' style="background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;border-radius:6px;padding:7px 14px;font-size:0.85em;font-weight:600;cursor:pointer;">➕ ${window.i18n.t('mbCreateAssessmentFromSelection')}</button>
+                ${_mbAddToSelectHtml()}
             </div>
         </div>`;
 }
@@ -832,7 +833,7 @@ function mbCreateFromSelection(kind) {
     const key = kind === 'info' ? 'informationSheets' : kind === 'activity' ? 'activitySheets' : 'assessmentUnits';
     const prefix = kind === 'info' ? 'is' : kind === 'activity' ? 'as' : 'au';
 
-    const firstText = sourceSelections[0].itemText;
+    const firstText = _mbCleanItem(sourceSelections[0].itemText);   // 3.28.0: without the leading "1."
     const autoTitle = firstText.length > 60 ? firstText.slice(0, 57) + '…' : firstText;
 
     // Inherited automatically from whichever task(s) the checked items
@@ -983,106 +984,11 @@ function mbMoveAssignedItem(fromKind, fromTempId, sel, toKind, toTempId) {
 }
 
 
-// This is what makes Manual Mapping (and editing an AI suggestion)
-// actually connect to Task Analysis instead of being a bare title with
-// no traceability — the gap flagged after the first hands-on test.
-async function _mbOpenItemEditor(kind, tempId) {
-    if (!mbState.structureProposal) return;
-    const item = _mbFindProposalItem(kind, tempId);
-    if (!item) return;
-
-    const module = _mbCurrentModule();
-    if (!module) return;
-    syncLearningOutcomesFromCurrentModule();
-
-    const existing = document.getElementById('mbItemEditorModal');
-    if (existing) existing.remove();
-
-    const overlay = document.createElement('div');
-    overlay.id = 'mbItemEditorModal';
-    overlay.className = 'mb-dialog-overlay';
-    overlay.setAttribute('role', 'dialog');
-    overlay.setAttribute('aria-modal', 'true');
-
-    // Items assigned to OTHER proposal items are hidden here — moving an
-    // item between sheets is a deliberate action done from the Assigned
-    // Items panel (mbMoveAssignedItem), not something that can happen by
-    // accident just by opening a different item's editor. This item's
-    // OWN selections stay visible and checked.
-    const allAssignments = _mbAllAssignments();
-    const ownKeys = (item.sourceSelections || []).map(_mbSelKey);
-    const excludeKeys = Object.keys(allAssignments).filter(k => !ownKeys.includes(k));
-
-    const renderInherited = (selections) => {
-        const inherited = _mbInheritedLinksForItem(module, { sourceSelections: selections || item.sourceSelections });
-        const loText = inherited.loIds.length
-            ? inherited.loIds.map(id => {
-                const lo = (module.learningOutcomes || []).find(l => l.id === id);
-                return lo ? (lo.number || lo.id) : id;
-              }).join(', ')
-            : window.i18n.t('mbNoneYet');
-        const pcText = inherited.pcIds.length ? inherited.pcIds.join(', ') : window.i18n.t('mbNoneYet');
-        return `${window.i18n.t('mbLinkLearningOutcomes')}: <strong>${escapeHtml(loText)}</strong> &nbsp;·&nbsp; ${window.i18n.t('mbLinkPerformanceCriteria')}: <strong>${escapeHtml(pcText)}</strong>`;
-    };
-
-    const box = document.createElement('div');
-    box.className = 'mb-dialog';
-    box.style.maxWidth = '520px';
-    box.style.maxHeight = '85vh';
-    box.style.overflowY = 'auto';
-    box.setAttribute('dir', (window.i18n && window.i18n.isRTL && window.i18n.isRTL()) ? 'rtl' : 'ltr');
-    box.innerHTML = `
-        <div style="font-weight:700;color:#1f2937;margin-bottom:10px;">${window.i18n.t('mbEditLinks')}</div>
-        <label style="display:block;font-size:0.82em;color:#6b7280;margin-bottom:4px;">${window.i18n.t('mbEnterTitle')}</label>
-        <input type="text" id="mbItemEditorTitle" value="${escapeHtml(item.title)}" dir="auto"
-               style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;margin-bottom:12px;font-size:0.92em;">
-
-        <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:8px 10px;margin-bottom:14px;font-size:0.82em;color:#0c4a6e;">
-            <div style="font-weight:600;margin-bottom:2px;">${window.i18n.t('mbInheritedLinksTitle')}</div>
-            <div id="mbItemEditorInherited">${renderInherited()}</div>
-        </div>
-
-        <div style="font-size:0.82em;font-weight:600;color:#374151;margin-bottom:4px;">${window.i18n.t('mbLinkTaItems')}</div>
-        <div id="mbItemEditorTaItems" style="margin-bottom:6px;max-height:260px;overflow-y:auto;border:1px solid #eef0f4;border-radius:8px;padding:8px;">
-            ${_mbBuildSourceChecklistHtml(module, ownKeys, 'mbedititem', excludeKeys)}
-        </div>
-
-        <div class="mb-dialog-actions" style="margin-top:14px;">
-            <button type="button" class="mb-dialog-btn mb-dialog-cancel" id="mbItemEditorCancel">${window.i18n.t('dlgCancel') || 'Cancel'}</button>
-            <button type="button" class="mb-dialog-btn mb-dialog-ok" id="mbItemEditorSave">${window.i18n.t('dlgSave') || 'Save'}</button>
-        </div>`;
-
-    overlay.appendChild(box);
-    document.body.appendChild(overlay);
-
-    // Recompute the inherited LO/PC display live as the user (un)checks
-    // items — it must never look like a stale value left over from
-    // before the edit.
-    box.querySelector('#mbItemEditorTaItems').addEventListener('change', () => {
-        const checkedNow = [...box.querySelectorAll('input[name="mbedititem"]:checked')]
-            .map(cb => ({ ..._mbParseSelKey(cb.value) }));
-        const inheritedNow = document.getElementById('mbItemEditorInherited');
-        if (inheritedNow) inheritedNow.innerHTML = renderInherited(checkedNow);
-    });
-
-    const close = () => { document.removeEventListener('keydown', onKey, true); overlay.remove(); };
-    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } }
-    document.addEventListener('keydown', onKey, true);
-    overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
-    box.querySelector('#mbItemEditorCancel').addEventListener('click', close);
-    box.querySelector('#mbItemEditorSave').addEventListener('click', () => {
-        item.title = box.querySelector('#mbItemEditorTitle').value.trim();
-        item.sourceSelections = [...box.querySelectorAll('input[name="mbedititem"]:checked')]
-            .map(cb => ({ ..._mbParseSelKey(cb.value), itemText: cb.dataset.itemText }));
-        const inherited = _mbInheritedLinksForItem(module, item);
-        item.learningOutcomeIds = inherited.loIds;
-        item.performanceCriteriaIds = inherited.pcIds;
-        close();
-        renderStructureProposal();
-        renderAssignedItemsPanel();
-        renderSourceBrowser();
-    });
-}
+/* 3.28.0: the "✏️ Edit links" modal is gone. It repeated the whole
+   source browser in a second place. An item is now edited on its own
+   card (title in place, ✕ on each selected item, "Goes to:"), items are
+   added from the browser ("➕ Add to…") and moved in Assigned / Used
+   Items — one place for each action. */
 
 /* ── Which outcome an item is built into (3.22.0) ─────────────
    Before, approval took the first outcome the item's tasks trace to,
@@ -1129,6 +1035,53 @@ function _mbItemLoChooser(kind, it) {
         </div>${warn}`;
 }
 
+function mbSetItemTitle(kind, tempId, value) {
+    const it = _mbFindProposalItem(kind, tempId);
+    if (!it) return;
+    it.title = String(value || '').trim();
+    renderAssignedItemsPanel();
+}
+
+function mbUnassignSel(kind, tempId, key) {
+    const it = _mbFindProposalItem(kind, tempId);
+    const sel = it && (it.sourceSelections || []).find(s => _mbSelKey(s) === key);
+    if (sel) mbUnassignItem(kind, tempId, sel);
+}
+
+/* 3.28.0: "➕ Add to…" in the browser — the ticked items join an
+   existing sheet / assessment of the proposal. */
+function mbAddSelectionTo(value) {
+    if (!value) return;
+    const [kind, tempId] = String(value).split('|||');
+    const it = _mbFindProposalItem(kind, tempId);
+    const list = document.getElementById('mb-source-browser-list');
+    if (!it || !list) return;
+    const checked = [...list.querySelectorAll('input[name="mbsrc"]:checked')];
+    if (!checked.length) { showStatus(window.i18n.t('mbSelectAtLeastOneItem'), 'error'); renderSourceBrowser(); return; }
+    const have = new Set((it.sourceSelections || []).map(_mbSelKey));
+    checked.forEach(cb => {
+        const sel = { ..._mbParseSelKey(cb.value), itemText: cb.dataset.itemText };
+        if (!have.has(_mbSelKey(sel))) { it.sourceSelections = [...(it.sourceSelections || []), sel]; have.add(_mbSelKey(sel)); }
+    });
+    const module = _mbCurrentModule();
+    if (module) {
+        const inh = _mbInheritedLinksForItem(module, it);
+        it.learningOutcomeIds = inh.loIds; it.performanceCriteriaIds = inh.pcIds;
+    }
+    renderStructureProposal(); renderSourceBrowser(); renderAssignedItemsPanel();
+    showStatus(window.i18n.tf('mbItemMovedTo', { v0: it.title || window.i18n.t('mbUntitled') }), 'success');
+}
+
+function _mbAddToSelectHtml() {
+    const p = mbState.structureProposal;
+    if (!p) return '';
+    const opts = [['informationSheets', 'info', 'mbProposalInfoSheets'], ['activitySheets', 'activity', 'mbActivityJobSheets'], ['assessmentUnits', 'assessment', 'mbAssessmentUnitsTitle']]
+        .flatMap(([k, kind, label]) => p[k].map(it => `<option value="${kind}|||${escapeHtml(it.tempId)}">${escapeHtml(window.i18n.t(label))}: ${escapeHtml(it.title || window.i18n.t('mbUntitled'))}</option>`));
+    if (!opts.length) return '';
+    return `<select data-act="mbAddSelectionTo" data-on="change" data-args='["$value"]' style="font-size:0.85em;padding:6px 8px;border:1px solid #c7d2fe;border-radius:6px;background:#eef2ff;color:#4338ca;font-weight:600;width:auto;">
+                <option value="">➕ ${escapeHtml(window.i18n.t('mbAddToExisting'))}</option>${opts.join('')}</select>`;
+}
+
 function _mbProposalSection(kind, items, titleKey, addLabelKey) {
     const rows = items.map(it => {
         const sel = it.sourceSelections || [];
@@ -1140,20 +1093,21 @@ function _mbProposalSection(kind, items, titleKey, addLabelKey) {
             ...taskLabels,
             ...fieldLabels
         ].filter(Boolean).join(' | ');
+        /* 3.28.0: each selected item on the card, with ✕ to return it. */
         const selectedItemsList = sel.length
-            ? `<div dir="auto" style="font-size:0.8em;color:#6b7280;margin-top:3px;">${sel.map(s => escapeHtml(s.itemText)).join(' • ')}</div>`
-            : '';
+            ? `<div class="mb-sel-chips">${sel.map(s => `<span class="mb-sel-chip"><span dir="auto">${escapeHtml(s.itemText)}</span><button type="button" data-act="mbUnassignSel" data-args='${escapeHtml(JSON.stringify([kind, it.tempId, _mbSelKey(s)]))}' title="${escapeHtml(window.i18n.t('mbUnassign'))}" aria-label="${escapeHtml(window.i18n.t('mbUnassign'))}">✕</button></span>`).join('')}</div>`
+            : `<div style="font-size:0.8em;color:#6b7280;margin-top:4px;">${escapeHtml(window.i18n.t('mbCardHowToAdd'))}</div>`;
         return `
             <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:10px 12px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:8px;">
                 <div style="flex:1;min-width:0;">
-                    <div dir="auto" style="font-weight:600;color:#1f2937;">${escapeHtml(it.title || window.i18n.t('mbUntitled'))}</div>
+                    <input type="text" class="mb-item-title" dir="auto" value="${escapeHtml(it.title || '')}" placeholder="${escapeHtml(window.i18n.t('mbUntitled'))}"
+                           title="${escapeHtml(window.i18n.t('mbEditTitleTip'))}" data-act="mbSetItemTitle" data-on="change" data-args='["${kind}","${it.tempId}","$value"]'>
                     ${sourceParts ? `<div style="font-size:0.8em;color:#6b7280;margin-top:3px;">${window.i18n.t('mbSources')}: ${escapeHtml(sourceParts)}</div>` : `<div style="font-size:0.8em;color:#d97706;margin-top:3px;">${window.i18n.t('mbNotLinkedYet')}</div>`}
                     ${selectedItemsList}
                     ${_mbItemLoChooser(kind, it)}
                     ${it.rationale ? `<div dir="auto" style="font-size:0.82em;color:#9ca3af;margin-top:3px;font-style:italic;">${escapeHtml(it.rationale)}</div>` : ''}
                 </div>
                 <div style="display:flex;gap:6px;flex-shrink:0;">
-                    <button data-act="_mbOpenItemEditor" data-args='["${kind}","${it.tempId}"]' class="mb-icon-btn" title="${window.i18n.t('mbEditLinks')}">${_MB_ICON_EDIT}</button>
                     <button data-act="mbRemoveProposalItem" data-args='["${kind}","${it.tempId}"]' class="mb-icon-btn danger" title="${window.i18n.t('mbDelete')}">${_MB_ICON_DELETE}</button>
                 </div>
             </div>`;
@@ -1172,6 +1126,9 @@ function _mbProposalSection(kind, items, titleKey, addLabelKey) {
 }
 
 function renderStructureProposal() {
+    /* 3.28.0: keep the browser's "➕ Add to…" list in step. */
+    const addTo = document.querySelector('#mb-source-browser select[data-act="mbAddSelectionTo"]');
+    if (addTo) addTo.outerHTML = _mbAddToSelectHtml() || '<span></span>';
     const host = document.getElementById('mb-structure-proposal');
     if (!host) return;
     const p = mbState.structureProposal;
@@ -1196,6 +1153,138 @@ function renderStructureProposal() {
                 ✓ ${window.i18n.t('mbApproveAndBuild')}
             </button>
         </div>`;
+}
+
+// ── Filling a sheet from Task Analysis items (3.28.0) ─────────
+// Used by Approve & Build and by the "📥 From Task Analysis" picker in
+// the Information and Activity tabs. Everything lands as ordinary,
+// editable rows; an item already on the sheet is not added twice.
+function _mbCleanItem(t) { return String(t == null ? '' : t).replace(/^\s*\d+\s*[.)\-–]\s*/, '').trim(); }
+function _mbNorm(t) { return _mbCleanItem(t).toLowerCase().replace(/[.\s]+$/, ''); }
+
+function mbFillInfoSheet(sheet, texts) {
+    if (!sheet) return 0;
+    const lang = contentLang();
+    if (!Array.isArray(sheet.contentSections)) sheet.contentSections = [];
+    const have = new Set(sheet.contentSections.map(c => _mbNorm(biGetStrict(c.heading, lang))));
+    let n = 0;
+    texts.forEach(t => {
+        const h = _mbCleanItem(t);
+        if (!h || have.has(_mbNorm(h))) return;
+        const sec = { contentId: '', marks: [], tables: [], uid: mbUid() };
+        biPut(sec, 'heading', h); biPut(sec, 'text', '');
+        sheet.contentSections.push(sec); have.add(_mbNorm(h)); n++;
+    });
+    return n;
+}
+
+/* Where an item goes on an activity / job sheet. */
+function _mbActivityPlace(field, taskId) {
+    if (taskId === MB_CC_TASK || field === 'performanceCriteria' || field === 'performanceStandard') return 'criteria';
+    if (field === 'toolsEquipmentMaterials') return 'resources';
+    return 'steps';
+}
+
+function mbFillActivitySheet(sheet, entries, pcTexts) {
+    if (!sheet) return 0;
+    const lang = contentLang();
+    ['steps', 'resources', 'criteria'].forEach(k => { if (!Array.isArray(sheet[k])) sheet[k] = []; });
+    const has = {
+        steps: new Set(sheet.steps.map(x => _mbNorm(biGetStrict(x.text, lang)))),
+        resources: new Set(sheet.resources.map(x => _mbNorm(biGetStrict(x.name, lang)))),
+        criteria: new Set(sheet.criteria.map(x => _mbNorm(biGetStrict(x, lang))))
+    };
+    let n = 0;
+    const add = (place, text) => {
+        const t = _mbCleanItem(text);
+        if (!t || has[place].has(_mbNorm(t))) return;
+        has[place].add(_mbNorm(t)); n++;
+        if (place === 'steps') { const o = { stepId: '', marks: [], tables: [], uid: mbUid() }; biPut(o, 'text', t); sheet.steps.push(o); }
+        else if (place === 'resources') { const o = { quantity: '', uid: mbUid() }; biPut(o, 'name', t); sheet.resources.push(o); }
+        else { const o = biNew(); o[lang] = t; o.uid = mbUid(); sheet.criteria.push(o); sheet.includeCriteria = true; }
+    };
+    entries.forEach(e => add(_mbActivityPlace(e.field, e.taskId), e.text));
+    (pcTexts || []).forEach(t => add('criteria', t));
+    return n;
+}
+
+/* ── "📥 From Task Analysis" in the Information / Activity tabs ──
+   The items of the tasks of the outcome open in the bar (closest first,
+   same rule as the browser), plus that outcome's competency criteria.
+   An item already on the sheet is shown ticked-off and cannot be added
+   again. Picked items join the sheet on screen. */
+function mbOpenTaPicker(kind) {
+    const host = document.getElementById('mb-ta-pick-' + kind);
+    if (!host) return;
+    if (host.innerHTML) { host.innerHTML = ''; return; }   // second click closes
+    const module = _mbCurrentModule();
+    const lo = module && (module.learningOutcomes || []).find(l => l.id === mbState.currentLOId);
+    if (!module || !lo) { showStatus(window.i18n.t('dgPleaseSelectALearningOutcome'), 'error'); return; }
+    if (typeof saveCurrentSheetToLO === 'function') saveCurrentSheetToLO();
+    const lang = contentLang();
+    const sheet = kind === 'info' ? (lo.infoSheets || [])[mbState.currentInfoSheetIndex] : (lo.activitySheets || [])[mbState.currentActivitySheetIndex];
+    const on = new Set();
+    if (sheet && kind === 'info') (sheet.contentSections || []).forEach(c => on.add(_mbNorm(biGetStrict(c.heading, lang))));
+    if (sheet && kind === 'activity') {
+        (sheet.steps || []).forEach(x => on.add(_mbNorm(biGetStrict(x.text, lang))));
+        (sheet.resources || []).forEach(x => on.add(_mbNorm(biGetStrict(x.name, lang))));
+        (sheet.criteria || []).forEach(x => on.add(_mbNorm(biGetStrict(x, lang))));
+    }
+    const all = (module.taskAnalysisSource && module.taskAnalysisSource.sourceTaskIds) || [];
+    const loTasks = _mbLoTaskIds(module, lo.id);
+    const ids = all.filter(id => loTasks.has(id));
+    const rank = _mbRankLoTasks(module, lo.id, ids.length ? ids : all);
+    const row = (val, text) => {
+        const used = on.has(_mbNorm(text));
+        return `<label class="mb-pick-row${used ? ' is-used' : ''}"><input type="checkbox" value="${escapeHtml(val)}" data-text="${escapeHtml(text)}" ${used ? 'disabled' : ''}>
+                <span dir="auto">${escapeHtml(_mbCleanItem(text))}</span>${used ? `<em>${escapeHtml(window.i18n.t('mbPickOnSheet'))}</em>` : ''}</label>`;
+    };
+    const groups = rank.order.map(tid => {
+        const fields = _mbTaskFields(module, tid).map(f => {
+            const items = _mbGetFieldItems(module, tid, f);
+            if (!items.length) return '';
+            return `<div class="mb-pick-field">${escapeHtml(_mbFieldLabel(f))}</div>` + items.map(t => row(f + '|||' + tid, t)).join('');
+        }).join('');
+        if (!fields) return '';
+        const near = rank.near.has(tid) ? ` <span class="mb-pick-near">≈ ${escapeHtml(window.i18n.t('mbTaskNearLo'))}</span>` : '';
+        return `<details class="mb-pick-task" ${rank.near.has(tid) || rank.order.length === 1 ? 'open' : ''}><summary>${escapeHtml(_mbTaskLabel(tid))}${near}</summary>${fields}</details>`;
+    }).join('');
+    const cc = _mbCompCriteria(module).filter(e => e.loIds.includes(lo.id));
+    const ccHtml = cc.length ? `<details class="mb-pick-task" open><summary>🎯 ${escapeHtml(_mbCcText('title'))}</summary>${cc.map(e => row('cc|||' + MB_CC_TASK, e.text)).join('')}</details>` : '';
+    host.innerHTML = `
+        <div class="mb-pick">
+            <div class="mb-pick-head" dir="auto">📥 ${escapeHtml(window.i18n.tf('mbPickTitle', { v0: lo.number || '' }))}</div>
+            ${(groups + ccHtml) || `<p class="mb-pick-empty">${escapeHtml(window.i18n.t('mbPickNothing'))}</p>`}
+            <div class="mb-pick-btns">
+                <button type="button" class="btn-add" data-act="mbApplyTaPicker" data-args='["${kind}"]'>➕ ${escapeHtml(window.i18n.t(kind === 'info' ? 'mbPickAddInfo' : 'mbPickAddActivity'))}</button>
+                <button type="button" class="btn-add" data-act="mbOpenTaPicker" data-args='["${kind}"]' style="background:#f1f5f9;color:#475569;">${escapeHtml(window.i18n.t('mbPickClose'))}</button>
+            </div>
+        </div>`;
+}
+
+async function mbApplyTaPicker(kind) {
+    const host = document.getElementById('mb-ta-pick-' + kind);
+    if (!host) return;
+    const picked = [...host.querySelectorAll('input[type=checkbox]:checked')].map(cb => {
+        const [field, taskId] = cb.value.split('|||');
+        return { field, taskId, text: cb.dataset.text };
+    });
+    if (!picked.length) { showStatus(window.i18n.t('mbSelectAtLeastOneItem'), 'error'); return; }
+    const lo = mbState.learningOutcomesData.find(l => l.id === mbState.currentLOId);
+    if (!lo) return;
+    saveCurrentSheetToLO();
+    let n = 0;
+    if (kind === 'info') {
+        if (!(lo.infoSheets || [])[mbState.currentInfoSheetIndex]) await addNewInfoSheet();
+        n = mbFillInfoSheet(lo.infoSheets[mbState.currentInfoSheetIndex], picked.map(p => p.text));
+        saveCurrentModuleLOData(); loadInfoSheetAtIndex(lo, mbState.currentInfoSheetIndex);
+    } else {
+        if (!(lo.activitySheets || [])[mbState.currentActivitySheetIndex]) await addNewActivitySheet();
+        n = mbFillActivitySheet(lo.activitySheets[mbState.currentActivitySheetIndex], picked, []);
+        saveCurrentModuleLOData(); loadActivitySheetAtIndex(lo, mbState.currentActivitySheetIndex);
+    }
+    host.innerHTML = '';
+    showStatus(window.i18n.tf('mbPickAdded', { v0: n }), 'success');
 }
 
 // ── Approval: proposal → real sheets ─────────────────────────
@@ -1233,6 +1322,12 @@ async function _mbBuildInfoSheet(module, item, aiMapping, touchedLOs) {
     const newIndex = lo.infoSheets.length - 1;
     const newSheet = lo.infoSheets[newIndex];
     if (newSheet && item.title) biPut(newSheet, 'title', item.title);
+    /* 3.28.0: the selected items become the sheet's content sections. */
+    if (newSheet) {
+        mbFillInfoSheet(newSheet, (item.sourceSelections || []).map(s => s.itemText));
+        mbState.currentInfoSheetIndex = newIndex;
+        loadInfoSheetAtIndex(lo, newIndex);   // the screen matches the data before the next save reads it
+    }
     if (newSheet) newSheet._aiSource = { learningOutcomeIds: item.learningOutcomeIds, performanceCriteriaIds: item.performanceCriteriaIds, sourceSelections: item.sourceSelections, mappingType: item.mappingType };
     aiMapping.builtTempIds.push(item.tempId);
     if (touchedLOs) { if (!touchedLOs[lo.id]) touchedLOs[lo.id] = {}; touchedLOs[lo.id].infoIndex = newIndex; }
@@ -1246,6 +1341,15 @@ async function _mbBuildActivitySheet(module, item, aiMapping, touchedLOs) {
     const newIndex = lo.activitySheets.length - 1;
     const newSheet = lo.activitySheets[newIndex];
     if (newSheet && item.title) biPut(newSheet, 'title', item.title);
+    /* 3.28.0: steps, resources and criteria from the selected items,
+       plus the performance criteria the item is linked to. */
+    if (newSheet) {
+        const pcTexts = (item.performanceCriteriaIds || [])
+            .map(id => (lo.performanceCriteria || []).find(pc => pc && pc.id === id)).filter(Boolean).map(_mbPcText);
+        mbFillActivitySheet(newSheet, (item.sourceSelections || []).map(s => ({ field: s.field, taskId: s.taskId, text: s.itemText })), pcTexts);
+        mbState.currentActivitySheetIndex = newIndex;
+        loadActivitySheetAtIndex(lo, newIndex);
+    }
     if (newSheet) newSheet._aiSource = { learningOutcomeIds: item.learningOutcomeIds, performanceCriteriaIds: item.performanceCriteriaIds, sourceSelections: item.sourceSelections, mappingType: item.mappingType };
     aiMapping.builtTempIds.push(item.tempId);
     if (touchedLOs) { if (!touchedLOs[lo.id]) touchedLOs[lo.id] = {}; touchedLOs[lo.id].activityIndex = newIndex; }
@@ -1370,7 +1474,7 @@ async function mbApproveAndBuild() {
 
 // ── Mode switch (AI-assisted / Manual / Hybrid) ─────────────────
 // "Hybrid" is simply: run AI-assisted, then keep editing manually —
-// mbAddManualProposalItem/mbRemoveProposalItem/_mbOpenItemEditor
+// mbAddManualProposalItem/mbRemoveProposalItem/mbSetItemTitle/mbUnassignSel
 // already operate on whatever proposal is currently loaded, whether it
 // came from the AI or from mbStartManualMapping(). No separate code
 // path is needed for it.
