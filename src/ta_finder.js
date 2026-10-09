@@ -194,14 +194,22 @@ function mbTaskAnalysisModuleLine(module) {
     const out = (src.sourceTaskIds || []).filter(id => mbTaskLeftOut(module, id));
     const outLine = out.length ? `<p class="mb-ta-line is-left-out">🚫 ${_mbEsc(window.i18n.tf('mbTselModuleLine', { v0: out.length }))}
                 <bdi>${_mbEsc(out.map(id => _mbTaskInfo(module, id).code).sort(_mbCodeCompare).join(_mbListSep()))}</bdi></p>` : '';
+    /* 3.21.0: tasks of this module (selected for training) with no Task
+       Analysis yet — and where to do it. Task Analysis is kept in DACUM
+       Live Pro (SCID), the one place it is edited; sending the module
+       again brings it here. */
+    const pending = (src.sourceTaskIds || []).filter(id => !ids.includes(id) && !out.includes(id));
+    const pendingLine = pending.length ? `<p class="mb-ta-line is-pending">⏳ ${_mbEsc(window.i18n.tf('mbTaNotAnalysed', { v0: pending.length }))}
+                <bdi>${_mbEsc(pending.map(id => _mbTaskInfo(module, id).code).sort(_mbCodeCompare).join(_mbListSep()))}</bdi>
+                <span class="mb-ta-line-how">${_mbEsc(window.i18n.t('mbTaNotAnalysedHow'))}</span></p>` : '';
     if (ids.length) {
         const codes = ids.map(id => _mbTaskInfo(module, id).code).sort(_mbCodeCompare);
         return `<p class="mb-ta-line">🔬 ${_mbEsc(window.i18n.tf('mbTaLineSome', { v0: total, v1: ids.length }))}
-                <bdi>${_mbEsc(codes.join(_mbListSep()))}</bdi></p>` + outLine;
+                <bdi>${_mbEsc(codes.join(_mbListSep()))}</bdi></p>` + pendingLine + outLine;
     }
     const elsewhere = (mbState.modulesData || []).filter(m => m.id !== module.id && mbAnalysedTaskIds(m).length);
     return `<p class="mb-ta-line is-empty">🔬 ${_mbEsc(window.i18n.tf('mbTaLineNone', { v0: total }))}
-            ${elsewhere.length ? `<span class="mb-ta-line-where">${_mbEsc(window.i18n.t('mbTaLineElsewhere'))}</span> ${elsewhere.map(m => _mbModuleChip(m, null)).join('')}` : ''}</p>` + outLine;
+            ${elsewhere.length ? `<span class="mb-ta-line-where">${_mbEsc(window.i18n.t('mbTaLineElsewhere'))}</span> ${elsewhere.map(m => _mbModuleChip(m, null)).join('')}` : ''}</p>` + pendingLine + outLine;
 }
 
 /** " · 🔬 3" after a module name in the selectors (nothing when 0). */
@@ -237,6 +245,8 @@ function _mbInjectTaFinderStyles() {
         .mb-ta-line { margin:0 0 10px; padding:7px 10px; background:#ecfdf5; border:1px solid #a7f3d0; border-radius:8px; color:#065f46; font-size:0.86em; display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
         .mb-ta-line.is-empty { background:#fff7ed; border-color:#fed7aa; color:#9a3412; }
         .mb-ta-line-where { font-weight:600; }
+        .mb-ta-line.is-pending { background:#fffbeb; border-color:#fde68a; color:#92400e; }
+        .mb-ta-line-how { flex-basis:100%; font-size:0.95em; color:#78350f; }
         /* 3.17.0: tasks left out of training in DACUM. */
         .mb-tsel { background:#f8fafc; border:1px dashed #cbd5e1; border-radius:10px; margin-bottom:18px; }
         .mb-tsel > summary { cursor:pointer; padding:10px 14px; display:flex; flex-wrap:wrap; align-items:center; gap:4px 12px; list-style:none; }
