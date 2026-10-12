@@ -56,11 +56,12 @@ jobs:
           # from the selected items and the cards edited in place, 3.29
           # for Undo / Redo and the guidance notes, 3.30 for the content
           # map in Training Structure Mapping, 3.31 for its "see also"
-          # references in the app and the exports.
+          # references in the app and the exports, 3.32 for task criteria
+          # on the activity checklist and the outcome criteria in the form.
           # version.json now reads 3.7.0, and any value left behind here
           # would roll the number backwards to <old>.<run> on the next
           # push — the same failure, one minor later.
-          MAJOR_MINOR: "3.31"
+          MAJOR_MINOR: "3.32"
         run: |
           VERSION="${MAJOR_MINOR}.${GITHUB_RUN_NUMBER}"
           BUILD="$(date -u +%Y-%m-%d)"
