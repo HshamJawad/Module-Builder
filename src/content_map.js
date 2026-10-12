@@ -51,7 +51,11 @@ var MB_CM_DEST_BY_FIELD = {
     requiredKnowledge: 'info', safetyOSH: 'info', conditionsWorkEnvironment: 'info',
     decisionsCriticalPoints: 'info', commonErrorsTroubleshooting: 'info',
     performanceSteps: 'activity', requiredSkills: 'activity', toolsEquipmentMaterials: 'activity',
-    performanceCriteria: 'assessment', performanceStandard: 'assessment', workerBehaviours: 'assessment'
+    /* 3.32.0: a task's own criteria, its standard and the behaviours
+       observed go to the checklist of the task's activity sheet. The
+       assessment form takes the OUTCOME's criteria as DACUM sent them
+       (see _cmMissingPcs), to be reworded there as assessment criteria. */
+    performanceCriteria: 'activity', performanceStandard: 'activity', workerBehaviours: 'activity'
 };
 var MB_CM_DESTS = ['info', 'activity', 'assessment', 'none'];
 var MB_CM_ICON = { info: '📄', activity: '🛠️', assessment: '✅', none: '—' };
@@ -159,9 +163,26 @@ function _cmWrittenIndex(module) {
                 var c = r && r.criteria;
                 add(byText, _mbNorm(typeof c === 'string' ? c : str(c)), place);
             });
+            /* 3.32.0: rows reworded in the form are still known by link. */
+            ((form._aiSource && form._aiSource.keys) || []).forEach(function (k) { add(byKey, k, place); });
         }
     });
     return { byText: byText, byKey: byKey };
+}
+
+/** The outcome's criteria (as DACUM sent them) not in its assessment
+ *  form yet — neither recorded there by link nor present in words. */
+function _cmMissingPcs(module, lo) {
+    var pcs = (lo.performanceCriteria || []).filter(function (pc) { return pc && typeof pc === 'object' && pc.id && _mbPcText(pc); });
+    if (!pcs.length) return [];
+    var form = (mbState.assessmentFormsData || {})[lo.id];
+    var done = new Set((form && form._aiSource && form._aiSource.pcIds) || []);
+    var lang = contentLang();
+    var words = new Set(((form && form.rows) || []).map(function (r) {
+        var c = r && r.criteria;
+        return _mbNorm(typeof c === 'string' ? c : (typeof biGetStrict === 'function' ? biGetStrict(c, lang) : ''));
+    }));
+    return pcs.filter(function (pc) { return !done.has(pc.id) && !words.has(_mbNorm(_mbPcText(pc))); });
 }
 
 function _cmStore(module) {
@@ -230,7 +251,13 @@ function mbContentMapRows(module) {
         });
         r.places = places;
         r.draft = drafts[r.key] || null;
-        r.issue = places.length > 1 || (r.dest !== 'none' && (!r.lo || (r.same && !places.length && !r.draft)));
+        /* 3.32.0: a criterion on its activity sheet's checklist AND in the
+           assessment form is one writing of each kind, not a repetition. */
+        var nSheets = places.filter(function (p) { return p.kind !== 'assessment'; }).length;
+        var nForms = places.length - nSheets;
+        r.twice = nSheets > 1 || nForms > 1;
+        r.done = r.dest === 'none' || places.some(function (p) { return p.kind === r.dest; });
+        r.issue = r.twice || (r.dest !== 'none' && (!r.lo || (r.same && !places.length && !r.draft)));
         _cmRowRefs(r);
     });
     return rows;
@@ -352,12 +379,17 @@ function _cmStatusHtml(r) {
     var chip = function (cls, txt, tip) {
         return '<span class="mb-cm-st ' + cls + '" dir="auto" title="' + escapeHtml(tip || txt) + '">' + escapeHtml(txt) + '</span>';
     };
-    if (r.places.length > 1) {
+    if (r.twice) {
         var all = r.places.map(_cmPlaceText).join(' • ');
         return chip('is-warn', _cmT('mbCmStTwice', { v0: r.places.length }), all) +
             '<span class="mb-cm-where" dir="auto">' + escapeHtml(all) + '</span>';
     }
-    if (r.places.length === 1) return chip('is-done', '✓ ' + _cmPlaceText(r.places[0])) + _cmRefsHtml(r);
+    if (r.places.length) {
+        var more = (!r.done && !r.draft && r.lo)
+            ? chip('is-new', '＋ ' + _cmT('mbCmStAddTo', { v0: _cmT('mbCmDest_' + r.dest) })) : '';
+        if (!r.done && r.draft) more = chip('is-draft', '📝 ' + _cmT('mbCmStDraft', { v0: r.draft.title }));
+        return chip('is-done', '✓ ' + r.places.map(_cmPlaceText).join(' + ')) + more + _cmRefsHtml(r);
+    }
     if (r.draft) return chip('is-draft', '📝 ' + _cmT('mbCmStDraft', { v0: r.draft.title }));
     if (r.dest === 'none') {
         return r.same ? chip('is-same', '＝ ' + _cmT('mbCmStSame', { v0: _mbTaskLabel(r.same.taskId) })) : chip('is-none', _cmT('mbCmStNotNeeded'));
@@ -419,8 +451,11 @@ function mbRenderContentMap() {
     rows.forEach(function (r) {
         count[r.dest] = (count[r.dest] || 0) + 1;
         if (r.issue) issues++;
-        if (r.dest !== 'none' && r.lo && !r.places.length && !r.draft) todo++;
+        /* A competency criterion for the assessment is counted with its
+           outcome's criteria below. */
+        if (r.dest !== 'none' && r.lo && !r.done && !r.draft && !(r.taskId === MB_CC_TASK && r.dest === 'assessment')) todo++;
     });
+    los.forEach(function (lo) { todo += _cmMissingPcs(module, lo).length; });
     var sum = MB_CM_DESTS.map(function (d) {
         return '<span class="mb-cm-sum" title="' + escapeHtml(_cmT('mbCmDest_' + d)) + '">' + MB_CM_ICON[d] + ' ' + count[d] + '</span>';
     }).join('') + (issues ? '<span class="mb-cm-sum is-warn" title="' + escapeHtml(_cmT('mbCmFilterIssues')) + '">⚠ ' + issues + '</span>' : '');
@@ -560,10 +595,14 @@ async function mbCmReset() {
 function mbCmGroup() {
     var module = _mbCurrentModule();
     if (!module) return;
-    var rows = mbContentMapRows(module).filter(function (r) {
-        return r.dest !== 'none' && r.lo && !r.places.length && !r.draft;
+    var all = mbContentMapRows(module);
+    var rows = all.filter(function (r) {
+        return r.dest !== 'none' && r.lo && !r.done && !r.draft;
     });
-    if (!rows.length) { showStatus(_cmT('mbCmNothingToGroup'), 'info'); return; }
+    var los0 = _cmLos(module);
+    var missing = {};
+    los0.forEach(function (lo) { var m = _cmMissingPcs(module, lo); if (m.length) missing[lo.id] = m; });
+    if (!rows.length && !Object.keys(missing).length) { showStatus(_cmT('mbCmNothingToGroup'), 'info'); return; }
     if (!mbState.structureProposal) mbStartManualMapping();
     var p = mbState.structureProposal;
     var listOf = { info: 'informationSheets', activity: 'activitySheets', assessment: 'assessmentUnits' };
@@ -576,11 +615,29 @@ function mbCmGroup() {
         if (!groups.has(gk)) groups.set(gk, { lo: r.lo, dest: r.dest, taskId: r.taskId, rows: [] });
         groups.get(gk).rows.push(r);
     });
+    /* 3.32.0: every outcome's assessment takes its criteria as DACUM
+       sent them — those not in its form yet. */
+    Object.keys(missing).forEach(function (loId) {
+        var gk = loId + '|assessment|';
+        if (!groups.has(gk)) groups.set(gk, { lo: loId, dest: 'assessment', taskId: '', rows: [] });
+        groups.get(gk).pcIds = missing[loId].map(function (pc) { return pc.id; });
+    });
     var made = 0, joined = 0, n = 0;
     groups.forEach(function (g, gk) {
         var list = p[listOf[g.dest]];
         var item = list.find(function (it) { return it.cmGroup === gk; });
         var sels = g.rows.map(function (r) { return { taskId: r.taskId, field: r.field, itemIndex: r.itemIndex, itemText: r.text }; });
+        /* 3.32.0: the task already has a sheet of this kind in this
+           outcome — the items join it instead of starting another. */
+        var into = null;
+        if (g.dest !== 'assessment') {
+            all.some(function (r) {
+                if (r.taskId !== g.taskId) return false;
+                var pl = r.places.find(function (q) { return q.kind === g.dest && q.lo.id === g.lo; });
+                if (pl) into = pl;
+                return !!pl;
+            });
+        }
         if (item) {
             item.sourceSelections = (item.sourceSelections || []).concat(sels);
             joined++;
@@ -593,26 +650,32 @@ function mbCmGroup() {
             } else if (g.rows.every(function (r) { return r.taskLo && r.taskLo !== g.lo; })) {
                 /* Items moved here from another outcome's task: the task's
                    statement would name the wrong subject — the first item does. */
-                title = _mbCleanItem(g.rows[0].text);
+                title = _mbCleanItem(String(g.rows[0].text).replace(/\s+/g, ' '));
             } else {
                 var t = tasks.find(function (x) { return x.id === g.taskId; });
-                title = _mbCleanItem((t && t.text) || _mbTaskLabel(g.taskId));
+                title = _mbCleanItem(String((t && t.text) || _mbTaskLabel(g.taskId)).replace(/\s+/g, ' '));
             }
             item = {
                 tempId: prefix[g.dest] + '-cm-' + Date.now() + '-' + (n++),
-                title: title, rationale: '', learningOutcomeIds: [], performanceCriteriaIds: [],
+                title: into ? (into.title || title) : title, rationale: '', learningOutcomeIds: [], performanceCriteriaIds: [],
                 sourceSelections: sels, mappingType: 'direct', targetLoId: g.lo, cmGroup: gk
             };
+            if (into) item.cmSheet = into.n - 1;
             list.push(item);
             made++;
         }
         var inh = _mbInheritedLinksForItem(module, item);
-        item.learningOutcomeIds = inh.loIds; item.performanceCriteriaIds = inh.pcIds;
+        item.learningOutcomeIds = inh.loIds;
+        item.performanceCriteriaIds = g.dest === 'assessment'
+            ? [...new Set((item.performanceCriteriaIds || []).concat(g.pcIds || []))]
+            : inh.pcIds;
+        if (g.dest === 'assessment' && !item.learningOutcomeIds.includes(g.lo)) item.learningOutcomeIds.push(g.lo);
     });
     renderStructureProposal();
     renderSourceBrowser();
     renderAssignedItemsPanel();
-    showStatus(_cmT('mbCmGrouped', { v0: made + joined, v1: rows.length }), 'success');
+    var nPc = Object.keys(missing).reduce(function (a, k) { return a + missing[k].length; }, 0);
+    showStatus(_cmT('mbCmGrouped', { v0: made + joined, v1: rows.length + nPc }), 'success');
     var target = document.getElementById('mb-structure-proposal');
     if (target && target.scrollIntoView) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }

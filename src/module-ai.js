@@ -1016,6 +1016,7 @@ function mbSetItemLo(kind, tempId, loId) {
     const it = _mbFindProposalItem(kind, tempId);
     if (!it) return;
     if (loId) it.targetLoId = loId; else delete it.targetLoId;
+    delete it.cmSheet;   // 3.32.0: the sheet it was to join belongs to the old outcome
     renderStructureProposal();
 }
 
@@ -1107,6 +1108,7 @@ function _mbProposalSection(kind, items, titleKey, addLabelKey) {
                     <input type="text" class="mb-item-title" dir="auto" value="${escapeHtml(it.title || '')}" placeholder="${escapeHtml(window.i18n.t('mbUntitled'))}"
                            title="${escapeHtml(window.i18n.t('mbEditTitleTip'))}" data-act="mbSetItemTitle" data-on="change" data-args='["${kind}","${it.tempId}","$value"]'>
                     ${sourceParts ? `<div style="font-size:0.8em;color:#6b7280;margin-top:3px;">${window.i18n.t('mbSources')}: ${escapeHtml(sourceParts)}</div>` : `<div style="font-size:0.8em;color:#d97706;margin-top:3px;">${window.i18n.t('mbNotLinkedYet')}</div>`}
+                    ${typeof it.cmSheet === 'number' ? `<div dir="auto" style="font-size:0.8em;color:#0369a1;margin-top:3px;">➕ ${escapeHtml(window.i18n.t('mbCmJoinsSheet'))}</div>` : ''}
                     ${selectedItemsList}
                     ${_mbItemLoChooser(kind, it)}
                     ${it.rationale ? `<div dir="auto" style="font-size:0.82em;color:#9ca3af;margin-top:3px;font-style:italic;">${escapeHtml(it.rationale)}</div>` : ''}
@@ -1184,7 +1186,7 @@ function mbFillInfoSheet(sheet, texts) {
 
 /* Where an item goes on an activity / job sheet. */
 function _mbActivityPlace(field, taskId) {
-    if (taskId === MB_CC_TASK || field === 'performanceCriteria' || field === 'performanceStandard') return 'criteria';
+    if (taskId === MB_CC_TASK || field === 'performanceCriteria' || field === 'performanceStandard' || field === 'workerBehaviours') return 'criteria';
     if (field === 'toolsEquipmentMaterials') return 'resources';
     return 'steps';
 }
@@ -1329,6 +1331,19 @@ async function _mbBuildInfoSheet(module, item, aiMapping, touchedLOs) {
     const lo = (module.learningOutcomes || []).find(l => l.id === _mbItemLoId(module, item));
     if (!lo) return;
     _mbFocusLo(lo);
+    /* 3.32.0: items for a task that already has its sheet join it. */
+    if (typeof item.cmSheet === 'number' && (lo.infoSheets || [])[item.cmSheet]) {
+        if (typeof saveCurrentSheetToLO === 'function') saveCurrentSheetToLO();
+        const sh = lo.infoSheets[item.cmSheet];
+        mbFillInfoSheet(sh, (item.sourceSelections || []).map(s => s.itemText));
+        sh._aiSource = sh._aiSource || { sourceSelections: [] };
+        sh._aiSource.sourceSelections = (sh._aiSource.sourceSelections || []).concat(item.sourceSelections || []);
+        mbState.currentInfoSheetIndex = item.cmSheet;
+        loadInfoSheetAtIndex(lo, item.cmSheet);
+        aiMapping.builtTempIds.push(item.tempId);
+        if (touchedLOs) { if (!touchedLOs[lo.id]) touchedLOs[lo.id] = {}; touchedLOs[lo.id].infoIndex = item.cmSheet; }
+        return;
+    }
     await addNewInfoSheet();
     // addNewInfoSheet() already painted the new sheet's (still-empty)
     // title into the on-screen form before this line runs — that is why
@@ -1355,6 +1370,18 @@ async function _mbBuildActivitySheet(module, item, aiMapping, touchedLOs) {
     const lo = (module.learningOutcomes || []).find(l => l.id === _mbItemLoId(module, item));
     if (!lo) return;
     _mbFocusLo(lo);
+    if (typeof item.cmSheet === 'number' && (lo.activitySheets || [])[item.cmSheet]) {
+        if (typeof saveCurrentSheetToLO === 'function') saveCurrentSheetToLO();
+        const sh = lo.activitySheets[item.cmSheet];
+        mbFillActivitySheet(sh, (item.sourceSelections || []).map(s => ({ field: s.field, taskId: s.taskId, text: s.itemText })), []);
+        sh._aiSource = sh._aiSource || { sourceSelections: [] };
+        sh._aiSource.sourceSelections = (sh._aiSource.sourceSelections || []).concat(item.sourceSelections || []);
+        mbState.currentActivitySheetIndex = item.cmSheet;
+        loadActivitySheetAtIndex(lo, item.cmSheet);
+        aiMapping.builtTempIds.push(item.tempId);
+        if (touchedLOs) { if (!touchedLOs[lo.id]) touchedLOs[lo.id] = {}; touchedLOs[lo.id].activityIndex = item.cmSheet; }
+        return;
+    }
     await addNewActivitySheet();
     const newIndex = lo.activitySheets.length - 1;
     const newSheet = lo.activitySheets[newIndex];
@@ -1393,8 +1420,15 @@ function _mbBuildAssessmentUnit(module, item, aiMapping) {
         };
     }
     const form = mbState.assessmentFormsData[lo.id];
+    /* 3.32.0: what the form received, by link — the rows are meant to be
+       reworded as assessment criteria, and a reworded row must neither
+       come back on the next approval nor read as "not written yet". */
+    if (!form._aiSource || typeof form._aiSource !== 'object') form._aiSource = { pcIds: [], keys: [] };
+    const gotPc = new Set(form._aiSource.pcIds || []);
+    const gotKey = new Set(form._aiSource.keys || []);
 
     const criteriaTexts = item.performanceCriteriaIds
+        .filter(pcId => !gotPc.has(pcId))
         .map(pcId => (lo.performanceCriteria || []).find(pc => pc.id === pcId))
         .filter(Boolean)
         .map(pc => _mbPcText(pc))
@@ -1402,9 +1436,11 @@ function _mbBuildAssessmentUnit(module, item, aiMapping) {
         // assessment (Performance Standard, Common Errors, Decisions, …) —
         // section 9 of the mapping spec asks for these to be assessable
         // too, not only PC-linked criteria.
-        .concat((item.sourceSelections || []).map(s => s.itemText));
+        .concat((item.sourceSelections || []).filter(s => !gotKey.has(_mbSelKey(s))).map(s => s.itemText))
+        /* 3.31.1: without the "1." a Task Analysis list carries. */
+        .map(t => (typeof t === 'string' ? _mbCleanItem(t) : t));
 
-    const existingCriteria = new Set(form.rows.map(r => (r.criteria || '').trim()).filter(Boolean));
+    const existingCriteria = new Set(form.rows.map(r => _mbCleanItem(r.criteria || '')).filter(Boolean));
     criteriaTexts.forEach(text => {
         text = String(text == null ? '' : (typeof text === 'object' ? _mbPcText({ text }) : text));
         if (!text.trim() || existingCriteria.has(text.trim())) return;
@@ -1414,6 +1450,10 @@ function _mbBuildAssessmentUnit(module, item, aiMapping) {
         form.rows.push({ criteria: text, activities: '', outcomes: '', verification: '', date: '' });
     });
     if (form.rows.length === 0) form.rows.push({ criteria: '', activities: '', outcomes: '', verification: '', date: '' });
+    (item.performanceCriteriaIds || []).forEach(id => { if ((lo.performanceCriteria || []).some(pc => pc && pc.id === id)) gotPc.add(id); });
+    (item.sourceSelections || []).forEach(s => gotKey.add(_mbSelKey(s)));
+    form._aiSource.pcIds = [...gotPc];
+    form._aiSource.keys = [...gotKey];
 
     aiMapping.builtTempIds.push(item.tempId);
     return true;
