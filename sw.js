@@ -25,7 +25,7 @@
 // Playwright suite checks that every tag is listed here).
 // ============================================================
 
-const CACHE_VERSION = 'mb-3.29.0';
+const CACHE_VERSION = 'mb-3.31.0';
 const CACHE_NAME    = 'module-builder-' + CACHE_VERSION;
 const BASE          = self.registration ? self.registration.scope : '/';
 const OFFLINE_URL   = BASE + 'index.html';
@@ -80,6 +80,7 @@ const PRECACHE_URLS = [
   BASE + 'src/criteria.js',
   BASE + 'src/assessment.js',
   BASE + 'src/module-ai.js',
+  BASE + 'src/content_map.js',
   BASE + 'src/ta_finder.js',
   BASE + 'src/references.js',
   BASE + 'src/resources.js',
