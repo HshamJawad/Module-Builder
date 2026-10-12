@@ -468,6 +468,11 @@ function _pdfBuild(pdf, model, lang) {
             if (b.body) w.text(b.body);
             _pdfBlockTables(w, b, S);
         });
+        /* 3.31.0: items of this outcome written in another one. */
+        if (o.seeAlso && o.seeAlso.length && typeof mbSeeAlsoLabel === 'function') {
+            w.label(mbSeeAlsoLabel('head', lang));
+            o.seeAlso.forEach(function (x) { w.text('• ' + x.line.replace(/[\u200E\u200F]/g, ''), { indent: 5 }); });
+        }
 
         o.infoSheets.forEach(function (sh) {
             w.newPage();

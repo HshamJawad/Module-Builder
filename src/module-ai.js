@@ -777,6 +777,8 @@ function renderSourceBrowser() {
     /* 3.10.0: the project-wide "Where is the Task Analysis?" index above
        this tab is repainted with it (ta_finder.js). */
     if (typeof mbRenderTaskAnalysisIndex === 'function') mbRenderTaskAnalysisIndex();
+    /* 3.30.0: the content map above it reads the same state. */
+    if (typeof mbRenderContentMap === 'function') mbRenderContentMap();
     const host = document.getElementById('mb-source-browser');
     if (!host) return;
     const module = _mbCurrentModule();
@@ -867,6 +869,8 @@ function mbCreateFromSelection(kind) {
 // modules.js (reassignPCToLO), just applied to Task Analysis items
 // instead of Performance Criteria.
 function renderAssignedItemsPanel() {
+    /* 3.30.0: "📝 draft" in the content map follows the proposal. */
+    if (typeof mbRenderContentMap === 'function') mbRenderContentMap();
     const host = document.getElementById('mb-assigned-items');
     if (!host) return;
     if (!mbState.structureProposal) { host.innerHTML = ''; return; }
@@ -1307,10 +1311,24 @@ function _mbEnsureAiMapping(module) {
     return module.aiMapping;
 }
 
+/* 3.30.0: open another outcome the way the bar does. The sheet forms
+   on screen belong to the outcome open so far: they are saved to it
+   first, then replaced by this outcome's own sheets. Setting
+   currentLOId alone left the previous outcome's sheet on screen, and the
+   next save (inside addNewInfoSheet / addNewActivitySheet) wrote it into
+   this outcome — an approval spanning several outcomes copied sheets
+   between them. */
+function _mbFocusLo(lo) {
+    if (!lo || mbState.currentLOId === lo.id) return;
+    if (typeof saveCurrentSheetToLO === 'function') saveCurrentSheetToLO();
+    mbState.currentLOId = lo.id;
+    if (typeof loadCurrentLOSheets === 'function') loadCurrentLOSheets();
+}
+
 async function _mbBuildInfoSheet(module, item, aiMapping, touchedLOs) {
     const lo = (module.learningOutcomes || []).find(l => l.id === _mbItemLoId(module, item));
     if (!lo) return;
-    mbState.currentLOId = lo.id;
+    _mbFocusLo(lo);
     await addNewInfoSheet();
     // addNewInfoSheet() already painted the new sheet's (still-empty)
     // title into the on-screen form before this line runs — that is why
@@ -1336,7 +1354,7 @@ async function _mbBuildInfoSheet(module, item, aiMapping, touchedLOs) {
 async function _mbBuildActivitySheet(module, item, aiMapping, touchedLOs) {
     const lo = (module.learningOutcomes || []).find(l => l.id === _mbItemLoId(module, item));
     if (!lo) return;
-    mbState.currentLOId = lo.id;
+    _mbFocusLo(lo);
     await addNewActivitySheet();
     const newIndex = lo.activitySheets.length - 1;
     const newSheet = lo.activitySheets[newIndex];
@@ -1445,10 +1463,11 @@ async function mbApproveAndBuild() {
     // addNewActivitySheet() drew BEFORE biPut() set it above. Loading
     // the specific new index directly is what actually fixes the
     // Information Sheet title not appearing after approval.
-    mbState.currentLOId = originalLOId;
+    const lo = module.learningOutcomes.find(l => l.id === originalLOId);
+    const moved = mbState.currentLOId !== originalLOId;
+    if (lo) _mbFocusLo(lo); else mbState.currentLOId = originalLOId;
     renderLOSelector();
     const touched = touchedLOs[originalLOId];
-    const lo = module.learningOutcomes.find(l => l.id === originalLOId);
     if (lo && touched && typeof touched.infoIndex === 'number') {
         mbState.currentInfoSheetIndex = touched.infoIndex;
         loadInfoSheetAtIndex(lo, touched.infoIndex);
@@ -1457,7 +1476,7 @@ async function mbApproveAndBuild() {
         mbState.currentActivitySheetIndex = touched.activityIndex;
         loadActivitySheetAtIndex(lo, touched.activityIndex);
     }
-    if (!touched && typeof loadCurrentLOSheets === 'function') loadCurrentLOSheets();
+    if (!touched && !moved && typeof loadCurrentLOSheets === 'function') loadCurrentLOSheets();
 
     saveCurrentModuleLOData();
     updateLOSummary();

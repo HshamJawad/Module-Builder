@@ -1714,6 +1714,8 @@ async function exportToDocx() {
         };
 
         // Loop ALL LOs in order: LO heading → all info sheets → all activity sheets
+        let _seeRefs = null;
+        if (typeof mbContentMapRefs === 'function') { try { _seeRefs = mbContentMapRefs(_mbCurrentModule()); } catch (e) { _seeRefs = null; } }
         mbState.learningOutcomesData.forEach((lo, loIndex) => {
             /* An outcome with no sheets gets no heading page.
                The loops below skip an untitled info or activity sheet,
@@ -1727,13 +1729,24 @@ async function exportToDocx() {
             const loHasSheets =
                 (lo.infoSheets     || []).some(sh => (sh.title || '').trim()) ||
                 (lo.activitySheets || []).some(sh => (sh.title || '').trim());
-            if (!loHasSheets) return;
+            /* 3.31.0: items of this outcome written in another one ("see
+               also", content map). An outcome whose items all live in
+               other outcomes' sheets still gets its page, with those lines. */
+            let seeAlso = [];
+            if (_seeRefs) { try { seeAlso = mbSeeAlsoFor(lo.id, _exportLang, mbState.learningOutcomesData, _seeRefs); } catch (e) { seeAlso = []; } }
+            if (!loHasSheets && !seeAlso.length) return;
 
             const loHdTitle = lo.title || '';
             const loHdText = _mbTitledAlready(loHdTitle, 'expLearningOutcomeN')
                 ? loHdTitle
                 : _mbTf('expLearningOutcomeN', { v0: loIndex + 1, v1: loHdTitle });
             const loHdCh = [new Paragraph({ children: [new TextRun({ text: loHdText, size: _wsSection(), bold: true, color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 400, before: 200 } })];
+            if (seeAlso.length) {
+                loHdCh.push(new Paragraph({ children: [new TextRun({ text: mbSeeAlsoLabel('head', _exportLang), size: _wsBody(), bold: true, rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { before: 120, after: 120 } }));
+                seeAlso.forEach(x => {
+                    loHdCh.push(new Paragraph({ children: [new TextRun({ text: '• ' + x.line, size: _wsBody(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 80 } }));
+                });
+            }
             sections.push({ properties: { bidi: _mbRtl() }, children: loHdCh });
 
             if (mbState.includeLearningGuide) {

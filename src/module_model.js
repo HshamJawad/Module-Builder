@@ -239,10 +239,25 @@ function mbBuildModuleModel(lang, state) {
         }
     };
 
+    /* 3.31.0: "see also" — the sheets of other outcomes this outcome
+       uses (content map, content_map.js). Read from the live module, so
+       only when the model is built from it. */
+    let seeRefs = null;
+    if (raw === (typeof window !== 'undefined' ? window.mbState : null) && typeof mbContentMapRefs === 'function') {
+        try { seeRefs = mbContentMapRefs(_mbCurrentModule()); } catch (e) { seeRefs = null; }
+    }
+    const seeAlsoOf = function (lo) {
+        if (!seeRefs || !lo) return [];
+        try { return mbSeeAlsoFor(lo.id, lang, _mmArr(st.learningOutcomesData), seeRefs); } catch (e) { return []; }
+    };
+
     _mmArr(st.learningOutcomesData).forEach(function (lo, loIndex) {
         /* Same gate as the Word export. An outcome that fails it does
-           not appear at all — not as an empty heading, not as a stub. */
-        if (!mmOutcomeHasContent(lo)) return;
+           not appear at all — not as an empty heading, not as a stub.
+           3.31.0: one whose items are all written in other outcomes
+           still appears, with its "see also" lines. */
+        const seeAlso = seeAlsoOf(lo);
+        if (!mmOutcomeHasContent(lo) && !seeAlso.length) return;
 
         const out = {
             index: loIndex + 1,
@@ -259,7 +274,8 @@ function mbBuildModuleModel(lang, state) {
                 })
                 .filter(function (b) { return b.title.trim() || b.body.trim() || b.tables.length; }),
             infoSheets: [],
-            activitySheets: []
+            activitySheets: [],
+            seeAlso: seeAlso
         };
 
         _mmArr(lo.infoSheets).forEach(function (sh, si) {

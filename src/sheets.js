@@ -567,6 +567,8 @@ function loadActivitySheetAtIndex(lo, index) {
 
 // ── Info sheet navigation helpers ──────────────────────────────
 function updateInfoSheetNav(lo) {
+    /* 3.31.0: what this outcome uses from other outcomes' sheets. */
+    if (typeof mbRenderSeeAlso === 'function') mbRenderSeeAlso('info');
     const nav = document.getElementById('info-sheet-nav');
     if (!nav) return;
     const total = lo && lo.infoSheets ? lo.infoSheets.length : 0;
@@ -735,6 +737,8 @@ async function removeCurrentInfoSheet() {
 
 // ── Activity sheet navigation helpers ──────────────────────────
 function updateActivitySheetNav(lo) {
+    /* 3.31.0: what this outcome uses from other outcomes' sheets. */
+    if (typeof mbRenderSeeAlso === 'function') mbRenderSeeAlso('activity');
     const nav = document.getElementById('activity-sheet-nav');
     if (!nav) return;
     const total = lo && lo.activitySheets ? lo.activitySheets.length : 0;

@@ -26,7 +26,7 @@ var MB_HIST_MAX = 40;
 var mbHist = { undo: [], redo: [], moduleId: null, field: null };
 
 /* Actions that never change the module — no snapshot taken for them. */
-var MB_HIST_SKIP = /^(switch|prev|next|mbSwitch|mbToggle|mbOpen|mbJump|mbUndo|mbRedo|export|saveWork|loadWork|mbLibrary|toggle|show|mbExp|mbLang|setLang|clearAll|mbAnalyze|mbAddManual|mbRemoveProposal|mbCreateFromSelection|mbAddSelectionTo|mbSetItem|mbUnassign|mbStartManual|_mb)/;
+var MB_HIST_SKIP = /^(switch|prev|next|mbSwitch|mbToggle|mbOpen|mbJump|mbUndo|mbRedo|export|saveWork|loadWork|mbLibrary|toggle|show|mbExp|mbLang|setLang|clearAll|mbAnalyze|mbAddManual|mbRemoveProposal|mbCreateFromSelection|mbAddSelectionTo|mbSetItem|mbUnassign|mbStartManual|mbCm|_mb)/;
 
 function _mbHistLabels() {
     var lang = (window.i18n && window.i18n.getLang) ? window.i18n.getLang() : 'en';
