@@ -573,6 +573,12 @@ function _mbTf(key, vars) {
  * The prefix is taken as everything before the first placeholder that
  * carries the user's own text.
  */
+/** An outcome's title without the "LO1: " DACUM puts in front of it —
+ *  the exports print "Learning Outcome 1:" there already (3.35.0). */
+function mbLoPlainTitle(t) {
+    return String(t === null || t === undefined ? '' : t).replace(/^\s*L\.?\s*O\.?\s*\d+\s*[:.\-\u2013]\s*/i, '');
+}
+
 function _mbTitledAlready(text, key) {
     var s = String(text === null || text === undefined ? '' : text).trim();
     if (!s || !window.i18n) return false;

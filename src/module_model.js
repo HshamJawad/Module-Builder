@@ -262,7 +262,9 @@ function mbBuildModuleModel(lang, state) {
         const out = {
             index: loIndex + 1,
             id: lo.id,
-            title: _mmStr(lo.title),
+            /* 3.35.0: "LO1: …" as DACUM numbers outcomes — the exports
+               print "Learning Outcome 1:" in front already. */
+            title: _mmStr(lo.title).replace(/^\s*L\.?\s*O\.?\s*\d+\s*[:.\-\u2013]\s*/i, ''),
             description: _mmStr(lo.description),
             criteria: _mmArr(lo.performanceCriteria)
                 .map(function (c) { return _mmStr(c && (c.text !== undefined ? c.text : c)); })

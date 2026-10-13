@@ -302,7 +302,7 @@ function mbBuildLearningGuideModel(lo, loIndex, lang) {
         title:           _lgT('lgTitle', lang),
         colActivities:   _lgT('lgColActivities', lang),
         colInstructions: _lgT('lgColInstructions', lang),
-        outcomeTitle:    _lgText(lo.title, lang),
+        outcomeTitle:    _lgText(lo.title, lang).replace(/^\s*L\.?\s*O\.?\s*\d+\s*[:.\-\u2013]\s*/i, ''),
         sections:        sections
     };
 }
