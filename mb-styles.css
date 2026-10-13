@@ -1890,6 +1890,15 @@ html[dir="rtl"] .mb-dialog-actions { justify-content: flex-end; }
         min-height: 40px;
     }
     .tabs .tab:last-child.active { color: var(--mb-accent); }
+    /* 3.38.0: Settings opens a dialog, it is not a page — it sits at the
+       foot with Help, which then follows it directly. */
+    .tabs .tab.mb-nav-settings {
+        margin-top: auto;
+        color: var(--mb-nav-ink-soft);
+        font-size: 0.88em;
+        min-height: 40px;
+    }
+    .tabs .tab.mb-nav-settings + .tab:last-child { margin-top: 0; }
 
     /* The panel no longer needs the strip's clearance. */
     .tab-content.active { border-radius: 14px; }

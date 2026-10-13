@@ -35,3 +35,16 @@ test('every asset index.html loads is precached by sw.js', async () => {
   expect(missing).toEqual([]);
   for (const u of precached) if (u && !u.endsWith('/')) expect(fs.existsSync(path.join(root, u)), u).toBe(true);
 });
+
+// 3.38.0: Settings in the side navigation too, above Help, in every language.
+test('side navigation: ⚙️ Settings opens the settings dialog', async ({ page }) => {
+  const errors = await openApp(page);
+  const btn = page.locator('#mb-sidenav #mb-settings-nav');
+  await expect(btn).toBeVisible();
+  await btn.click();
+  await expect(page.locator('#ws-overlay')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await page.evaluate(() => window.i18n.setLang('ar'));
+  await expect(btn).toHaveText('⚙️ الإعدادات');
+  expect(errors).toEqual([]);
+});
