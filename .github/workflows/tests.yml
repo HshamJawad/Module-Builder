@@ -1,0 +1,44 @@
+name: Tests
+
+# Behaviour tests (tests/): the app is opened in a real browser, a DACUM
+# Live Pro handoff is put where DACUM puts it, and the paths users depend
+# on are exercised. Nothing here calls the AI backend.
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: tests
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install test tools
+        run: npm ci
+
+      - name: Install the browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Run the tests
+        run: npx playwright test
+
+      - name: Keep the report when something fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: |
+            tests/playwright-report
+            tests/test-results
+          retention-days: 7

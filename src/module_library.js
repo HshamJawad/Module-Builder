@@ -93,7 +93,8 @@ function mbCollectShared() {
         referencesData:         mbState.referencesData   || [],
         refIdCounter:           mbState.refIdCounter     || 1,
         tvqfBasic:              mbState.tvqfBasic        || {},
-        tvqfExtended:           mbState.tvqfExtended     || {}
+        tvqfExtended:           mbState.tvqfExtended     || {},
+        cmDefaults:             mbState.cmDefaults       || {}
     };
 }
 
@@ -111,7 +112,7 @@ function _mbDefaultShared() {
         introAdditionalDetails: biNew(), introBlocks: [], includeLearningGuide: false,
         assessmentContent: biNew(),
         referencesTitle: null, referencesData: [{ id: 1, value: '' }], refIdCounter: 1,
-        tvqfBasic: {}, tvqfExtended: {}
+        tvqfBasic: {}, tvqfExtended: {}, cmDefaults: {}
     };
 }
 
@@ -161,7 +162,9 @@ function mbApplyProjectShared(data) {
            what migrates a retired framework card onto the rows. */
         mbState.tvqfBasic    = data.tvqfBasic    || {};
         mbState.tvqfExtended = data.tvqfExtended || {};
+        mbState.cmDefaults = (data.cmDefaults && typeof data.cmDefaults === 'object') ? data.cmDefaults : {};
         if (typeof renderCoverTable === 'function') renderCoverTable();
+        if (typeof mbSpRefresh === 'function') mbSpRefresh();
     } catch (err) {
         console.warn('[Library] shared data apply error:', err);
     }
@@ -205,7 +208,12 @@ function _mbModuleCoverDefaults(module) {
         /* 3.18.0: TVQF/NQF level from DACUM when given, else the programme level. */
         cvLevel:      module.nqfLevel ? String(module.nqfLevel) : (module.level ? String(module.level) : ''),
         cvHours:      cur.totalHours ? String(cur.totalHours) : '',
-        cvEntryReq:   Array.isArray(cur.prerequisites) ? cur.prerequisites.join('\n') : ''
+        /* 3.33.0: the prerequisite modules, then the basic skills needed
+           on entry and the programme's entry qualifications (DACUM 3.104). */
+        cvEntryReq:   [].concat(Array.isArray(cur.prerequisites) ? cur.prerequisites : [],
+                                Array.isArray(cur.entrySkills) ? cur.entrySkills : [],
+                                (module.dacumProgramme && Array.isArray(module.dacumProgramme.entryQualifications)) ? module.dacumProgramme.entryQualifications : [])
+                          .map(function (x) { return String(x || '').trim(); }).filter(Boolean).join('\n')
     };
 }
 
@@ -419,6 +427,7 @@ function _mbRenderOpenModule() {
     if (typeof renderSourceBrowser === 'function') renderSourceBrowser();
     if (typeof renderAssignedItemsPanel === 'function') renderAssignedItemsPanel();
     if (typeof mbRenderTaskAnalysisIndex === 'function') mbRenderTaskAnalysisIndex();
+    if (typeof mbSpRefresh === 'function') mbSpRefresh();   // 3.33.0
 }
 
 /** Swap the open module for its light copy. Its record is already saved. */

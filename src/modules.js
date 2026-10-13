@@ -182,6 +182,18 @@ function _mbApplyDacumModuleFields(module, dacumModule, exportData) {
     const ts = exportData.taskSelection;
     if (ts && typeof ts === 'object' && Array.isArray(ts.excluded) && ts.excluded.length) module.dacumTaskSelection = ts;
     else delete module.dacumTaskSelection;
+    /* 3.33.0 — DACUM Live Pro 3.104: the module's category (Basic,
+       Common, Core, Elective or the programme's own, with the label
+       DACUM shows) and the programme's requirements and course
+       information. Replaced on every transfer. The module's entry
+       skills and resource lists travel inside `curriculum` above. */
+    const cat = dacumModule.category;
+    if (cat && typeof cat === 'object' && String(cat.id || '').trim()) {
+        module.category = { id: String(cat.id), label: String(cat.label || cat.id) };
+    } else delete module.category;
+    const pr = exportData.programmeRequirements;
+    if (pr && typeof pr === 'object' && Object.keys(pr).length) module.dacumProgramme = pr;
+    else delete module.dacumProgramme;
 }
 
 /** A module Module Builder already holds receives a new transfer: DACUM's
@@ -238,7 +250,8 @@ function mbModuleLabel(m) {
     let ref = num;
     if (code) ref = m.labelMode === 'number' ? (num || code) : (m.labelMode === 'both' && num ? `${num} · ${code}` : code);
     // A code already carries track and level ("CMCN 1-1"), so the tag is not repeated.
-    return (ref ? ref + ' — ' : '') + m.title + (code ? '' : mbModuleTag(m));
+    const cat = m.category && m.category.label ? ` · ${m.category.label}` : '';   // 3.33.0
+    return (ref ? ref + ' — ' : '') + m.title + (code ? '' : mbModuleTag(m)) + cat;
 }
 
 // Helper function to sync mbState.learningOutcomesData with current module

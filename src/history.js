@@ -26,7 +26,10 @@ var MB_HIST_MAX = 40;
 var mbHist = { undo: [], redo: [], moduleId: null, field: null };
 
 /* Actions that never change the module — no snapshot taken for them. */
-var MB_HIST_SKIP = /^(switch|prev|next|mbSwitch|mbToggle|mbOpen|mbJump|mbUndo|mbRedo|export|saveWork|loadWork|mbLibrary|toggle|show|mbExp|mbLang|setLang|clearAll|mbAnalyze|mbAddManual|mbRemoveProposal|mbCreateFromSelection|mbAddSelectionTo|mbSetItem|mbUnassign|mbStartManual|mbCm|_mb)/;
+var MB_HIST_SKIP = /^(switch|prev|next|mbSwitch|mbToggle|mbOpen|mbJump|mbUndo|mbRedo|export|saveWork|loadWork|mbLibrary|toggle|show|mbExp|mbLang|setLang|clearAll|mbAnalyze|mbAddManual|mbRemoveProposal|mbCreateFromSelection|mbAddSelectionTo|mbSetItem|mbUnassign|mbStartManual|mbCmToggle|mbCmFilter|mbSpView|mbSpCheck|mbSpOpen|mbCov|_mb)/;
+/* 3.33.0: the suggested-content panels (mbSp…) and the distribution of
+   the items (module.contentMap) are part of every step, so approving,
+   editing, moving or building an item is undone like any other change. */
 
 function _mbHistLabels() {
     var lang = (window.i18n && window.i18n.getLang) ? window.i18n.getLang() : 'en';
@@ -37,7 +40,7 @@ function _mbHistLabels() {
               addNewInfoSheet: 'add an information sheet', addNewActivitySheet: 'add an activity sheet',
               deleteAssessmentRow: 'delete an assessment row', addAssessmentRow: 'add an assessment row', clearAssessmentRows: 'clear the assessment rows',
               clearAssessmentForm: 'clear an assessment form', deleteAssessmentForm: 'delete an assessment form', addNewAssessmentForm: 'add an assessment form',
-              mbApproveAndBuild: 'Approve & Build', mbApplyTaPicker: 'add from Task Analysis', other: 'the last change',
+              mbSpApprove: 'approve an item', mbSpUnapprove: 'withdraw an approval', mbSpEdit: 'edit an item', mbSpRemove: 'remove an item', mbSpMove: 'move an item', mbSpAlso: 'send an item to another sheet', mbSpSetLo: 'change an item’s outcome', mbSpBuild: 'build sheets', mbSpAddToOpen: 'add to the open sheet', mbSpApproveAll: 'approve the items', mbApproveAndBuild: 'Approve & Build', mbApplyTaPicker: 'add from Task Analysis', other: 'the last change',
               undone: 'Undone: {v0}', redone: 'Redone: {v0}', nothingUndo: 'Nothing to undo', nothingRedo: 'Nothing to redo',
               undoTip: 'Undo (Ctrl+Z)', redoTip: 'Redo (Ctrl+Y)', undo: 'Undo', redo: 'Redo' },
         fr: { typing: 'saisie', removeContentSection: 'supprimer une section', addContentSection: 'ajouter une section',
@@ -46,7 +49,7 @@ function _mbHistLabels() {
               addNewInfoSheet: 'ajouter une fiche d’information', addNewActivitySheet: 'ajouter une fiche d’activité',
               deleteAssessmentRow: 'supprimer une ligne d’évaluation', addAssessmentRow: 'ajouter une ligne d’évaluation', clearAssessmentRows: 'vider les lignes d’évaluation',
               clearAssessmentForm: 'vider un formulaire d’évaluation', deleteAssessmentForm: 'supprimer un formulaire d’évaluation', addNewAssessmentForm: 'ajouter un formulaire d’évaluation',
-              mbApproveAndBuild: 'Approuver et construire', mbApplyTaPicker: 'ajout depuis l’analyse des tâches', other: 'la dernière modification',
+              mbSpApprove: 'approuver un élément', mbSpUnapprove: 'retirer une approbation', mbSpEdit: 'modifier un élément', mbSpRemove: 'retirer un élément', mbSpMove: 'déplacer un élément', mbSpAlso: 'envoyer un élément vers une autre fiche', mbSpSetLo: 'changer le résultat d’un élément', mbSpBuild: 'construire des fiches', mbSpAddToOpen: 'ajouter à la fiche ouverte', mbSpApproveAll: 'approuver les éléments', mbApproveAndBuild: 'Approuver et construire', mbApplyTaPicker: 'ajout depuis l’analyse des tâches', other: 'la dernière modification',
               undone: 'Annulé : {v0}', redone: 'Rétabli : {v0}', nothingUndo: 'Rien à annuler', nothingRedo: 'Rien à rétablir',
               undoTip: 'Annuler (Ctrl+Z)', redoTip: 'Rétablir (Ctrl+Y)', undo: 'Annuler', redo: 'Rétablir' },
         ar: { typing: 'الكتابة', removeContentSection: 'حذف قسم محتوى', addContentSection: 'إضافة قسم محتوى',
@@ -55,7 +58,7 @@ function _mbHistLabels() {
               addNewInfoSheet: 'إضافة ورقة معلومات', addNewActivitySheet: 'إضافة ورقة نشاط',
               deleteAssessmentRow: 'حذف صف تقييم', addAssessmentRow: 'إضافة صف تقييم', clearAssessmentRows: 'مسح صفوف التقييم',
               clearAssessmentForm: 'مسح استمارة تقييم', deleteAssessmentForm: 'حذف استمارة تقييم', addNewAssessmentForm: 'إضافة استمارة تقييم',
-              mbApproveAndBuild: 'الاعتماد والبناء', mbApplyTaPicker: 'الإضافة من تحليل المهام', other: 'آخر تغيير',
+              mbSpApprove: 'المصادقة على بند', mbSpUnapprove: 'سحب مصادقة', mbSpEdit: 'تعديل بند', mbSpRemove: 'حذف بند', mbSpMove: 'نقل بند', mbSpAlso: 'إرسال بند إلى ورقة أخرى', mbSpSetLo: 'تغيير محصلة بند', mbSpBuild: 'بناء الأوراق', mbSpAddToOpen: 'الإضافة إلى الورقة المفتوحة', mbSpApproveAll: 'المصادقة على البنود', mbApproveAndBuild: 'الاعتماد والبناء', mbApplyTaPicker: 'الإضافة من تحليل المهام', other: 'آخر تغيير',
               undone: 'تم التراجع: {v0}', redone: 'تمت الإعادة: {v0}', nothingUndo: 'لا شيء للتراجع عنه', nothingRedo: 'لا شيء لإعادته',
               undoTip: 'تراجع (Ctrl+Z)', redoTip: 'إعادة (Ctrl+Y)', undo: 'تراجع', redo: 'إعادة' }
     };
@@ -79,7 +82,9 @@ function _mbHistSameModule() {
 function _mbHistData() {
     try { if (typeof saveCurrentSheetToLO === 'function') saveCurrentSheetToLO(); } catch (e) { /* ignore */ }
     try { if (typeof saveCurrentModuleLOData === 'function') saveCurrentModuleLOData(); } catch (e) { /* ignore */ }
-    return JSON.stringify({ los: mbState.learningOutcomesData || [], forms: mbState.assessmentFormsData || {} });
+    var m = (mbState.modulesData || []).find(function (x) { return x.id === mbState.currentModuleId; });
+    return JSON.stringify({ los: mbState.learningOutcomesData || [], forms: mbState.assessmentFormsData || {},
+                            map: (m && m.contentMap) || null });
 }
 function _mbHistView() {
     return { lo: mbState.currentLOId, is: mbState.currentInfoSheetIndex || 0, as: mbState.currentActivitySheetIndex || 0 };
@@ -141,6 +146,8 @@ function _mbHistApply(step) {
     mbState.learningOutcomesData = d.los || [];
     if (typeof saveCurrentModuleLOData === 'function') saveCurrentModuleLOData();
     mbState.assessmentFormsData = d.forms || {};
+    var mod = (mbState.modulesData || []).find(function (x) { return x.id === mbState.currentModuleId; });
+    if (mod) { if (d.map) mod.contentMap = d.map; else delete mod.contentMap; }
     var los = mbState.learningOutcomesData;
     mbState.currentLOId = los.some(function (l) { return l.id === v.lo; }) ? v.lo : (los[0] ? los[0].id : null);
     if (typeof renderLOSelector === 'function') renderLOSelector();
@@ -158,6 +165,7 @@ function _mbHistApply(step) {
     if (typeof renderAssessmentForms === 'function') renderAssessmentForms();
     if (typeof renderSourceBrowser === 'function') renderSourceBrowser();
     if (typeof updateModuleSummary === 'function') updateModuleSummary();
+    if (typeof mbSpRefresh === 'function') mbSpRefresh();
 }
 
 function mbUndo() {

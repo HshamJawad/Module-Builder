@@ -151,6 +151,12 @@ var mbState = {
     tvqfBasic: {},
     tvqfExtended: {},
 
+    /* 3.33.0: the project's own default destinations by field group,
+       { performanceSteps: ['activity'], … } — only the groups the user
+       changed in Distribution settings (content_map.js MB_CM_DEFAULTS
+       for the rest). Shared by every module of the project. */
+    cmDefaults: {},
+
     /* Author-added introduction sections:
            [{ uid, title: { en, ar }, body: { en, ar } }]
        Not in MB_PROJECT_TEXT below — those four are one textarea each
