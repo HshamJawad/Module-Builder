@@ -48,3 +48,31 @@ test('side navigation: ⚙️ Settings opens the settings dialog', async ({ page
   await expect(btn).toHaveText('⚙️ الإعدادات');
   expect(errors).toEqual([]);
 });
+
+// 3.39.0: the dialog is the tool's Settings; Export is a tab of it with
+// Word & PDF, HTML and PowerPoint inside; the Export menu opens it there.
+test('Settings dialog: titled Settings, Export is a tab with its own tabs', async ({ page }) => {
+  const errors = await openApp(page);
+  await page.locator('#mb-settings-nav').click();
+  const ov = page.locator('#ws-overlay');
+  await expect(ov.locator('#ws-head')).toHaveText('⚙️ Settings');
+  await expect(ov.locator('.ws-nav-btn')).toHaveText(['📤Export', '🌐Language', '⌨️Shortcuts']);
+  await expect(ov.locator('.ws-sub-btn')).toHaveCount(3);
+  await expect(ov.locator('.ws-sub[data-pane="doc"]')).toBeVisible();
+  await ov.locator('.ws-sub-btn[data-ws-sub="pptx"]').click();
+  await expect(ov.locator('.ws-sub[data-pane="pptx"]')).toBeVisible();
+  await expect(ov.locator('.ws-sub[data-pane="doc"]')).toBeHidden();
+  await ov.locator('.ws-nav-btn[data-ws-pane="keys"]').click();
+  await expect(ov.locator('[data-pane="keys"]')).toContainText('Settings');
+  await ov.locator('#ws-close').click();
+  await expect(ov).toHaveCount(0);
+  // from the Export menu: straight to the Export tab
+  await page.locator('#mb-exp-trigger').click();
+  await page.locator('#word-settings-btn').click();
+  await expect(page.locator('#ws-overlay .ws-nav-btn.is-on')).toHaveAttribute('data-ws-pane', 'export');
+  await page.keyboard.press('Escape');
+  await page.evaluate(() => window.i18n.setLang('ar'));
+  await page.locator('#mb-settings-nav').click();
+  await expect(page.locator('#ws-head')).toHaveText('⚙️ الإعدادات');
+  expect(errors).toEqual([]);
+});

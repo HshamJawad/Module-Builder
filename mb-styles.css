@@ -3656,3 +3656,15 @@ html[dir="rtl"] .mb-sp[open] > summary::before { transform: rotate(-90deg); }
 .mb-sp-langbar p { margin: 0 0 6px; }
 .mb-sp-langbar-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
 .mb-sp-langbar-acts span { font-size: 0.95em; color: #92400e; }
+
+/* 3.39.0: Settings — the selected tab (rail and Export's own tabs) has
+   to read as selected; the global button rule above flattens it. */
+#ws-overlay button.ws-nav-btn.is-on,
+#ws-overlay button.ws-sub-btn.is-on {
+    background: #e0e7ff !important;
+    border-color: #6366f1 !important;
+    color: #3730a3 !important;
+    box-shadow: inset 0 0 0 1px #6366f1 !important;
+    font-weight: 600;
+}
+#ws-overlay button.ws-sub-btn { border-radius: 999px; }
