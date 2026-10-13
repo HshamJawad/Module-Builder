@@ -118,3 +118,30 @@ test('tasks shared by several outcomes are suggested by their words', async ({ p
   expect(out).toEqual({ t1: 'a', t2: 'c', t3: '', t4: 'b' });
   expect(errors).toEqual([]);
 });
+
+// 3.40.0: the rows of the Training Resources table and of the
+// Performance Criteria Check List have their own size (12 pt by default),
+// set in Settings → Export → Word & PDF.
+test('Word: resources and checklist rows at their own size, 12 pt by default', async ({ page }) => {
+  const errors = await openApp(page, { handoff: fixture('dacum-handoff.json'), contentLang: 'en' });
+  await buildAll(page, 'activity');
+  const sizeOf = async (text) => {
+    const xml = await page.evaluate(async () => {
+      let got = null;
+      window.mbExportSink = { take: (b) => { got = b; return Promise.resolve(); }, skip: () => {}, fail: (e) => { throw e; } };
+      try { await exportToDocx(); } finally { window.mbExportSink = null; }
+      return new TextDecoder().decode(fflate.unzipSync(new Uint8Array(await got.arrayBuffer()))['word/document.xml']);
+    });
+    const runs = xml.split('<w:r>').filter(r => r.includes('>' + text + '<'));
+    return runs.map(r => (r.match(/<w:sz w:val="(\d+)"/) || [])[1]);
+  };
+  const crit = await openModule(page, m => m.learningOutcomes.flatMap(l => l.activitySheets || []).flatMap(s => s.criteria || []).map(c => (c && c.en) || c).find(c => typeof c === 'string' && c && !/[&<>'"]/.test(c)));
+  expect(await sizeOf('Screwdriver set')).toEqual(['24']);
+  expect((await sizeOf(crit))[0]).toBe('24');
+  await page.evaluate(() => wsWriteSettings(Object.assign(wsReadSettings(), { resourcesSize: 14, checklistSize: 16 })));
+  expect(await sizeOf('Screwdriver set')).toEqual(['28']);
+  expect((await sizeOf(crit))[0]).toBe('32');
+  await page.locator('#mb-settings-nav').click();
+  await expect(page.locator('#ws-overlay select[data-ws-size="checklistSize"]')).toHaveValue('16');
+  expect(errors).toEqual([]);
+});
