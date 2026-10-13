@@ -30,7 +30,7 @@ var MB_SHORTCUTS = [
     { id: 'pptx',     combo: { ctrl: true, shift: true, key: 'p' }, action: 'mbExportToPptx',
       label: { en: 'Export to PowerPoint', fr: 'Exporter en PowerPoint', ar: 'تصدير إلى باوربوينت' } },
     { id: 'settings', combo: { ctrl: true, key: ',' }, action: 'openWordSettings',
-      label: { en: 'Export settings',      fr: 'Réglages d\u2019export',  ar: 'إعدادات التصدير' } },
+      label: { en: 'Settings',             fr: 'Paramètres',              ar: 'الإعدادات' } },
     /* Not bound here — the dialogs bind their own Escape and always
        have. Listed because a shortcuts pane that omits the one key
        everybody tries first is not a shortcuts pane. */

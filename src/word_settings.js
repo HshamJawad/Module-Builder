@@ -74,7 +74,7 @@
    in a 124 KB dictionary. */
 var _WS_STRINGS = {
     en: {
-        wsButton:        'Settings',
+        wsButton:        'Export settings',
         wsTitle:         'Word Export Settings',
         wsIntro:         'These settings control the appearance of the exported Word file only. They are shared across all languages and stay until you change them.',
         wsColors:        'Colours',
@@ -118,7 +118,7 @@ var _WS_STRINGS = {
         wsPt:            'pt'
     },
     fr: {
-        wsButton:        'Paramètres',
+        wsButton:        'Réglages d\u2019export',
         wsTitle:         'Paramètres d\u2019export Word',
         wsIntro:         'Ces paramètres contrôlent uniquement l\u2019apparence du fichier Word exporté. Ils sont communs à toutes les langues et restent en place jusqu\u2019à ce que vous les changiez.',
         wsColors:        'Couleurs',
@@ -162,7 +162,7 @@ var _WS_STRINGS = {
         wsPt:            'pt'
     },
     ar: {
-        wsButton:        'الإعدادات',
+        wsButton:        'إعدادات التصدير',
         wsTitle:         'إعدادات تصدير Word',
         wsIntro:         'هذه الإعدادات تتحكم بشكل ملف Word المُصدَّر فقط. مشتركة بين كل اللغات وتبقى حتى تغيّرها.',
         wsColors:        'الألوان',
@@ -213,7 +213,8 @@ var _WS_STRINGS = {
    changes again the diff is one block per language rather than thirty
    scattered lines. */
 Object.assign(_WS_STRINGS.en, {
-    wsCenterTitle: 'Export Settings',
+    wsCenterTitle: 'Settings',
+    navExport: 'Export',
     navDoc:  'Word & PDF',
     navHtml: 'HTML',
     navPptx: 'PowerPoint',
@@ -225,7 +226,8 @@ Object.assign(_WS_STRINGS.en, {
     wsKeysNote:  'Every shortcut needs Ctrl (⌘ on a Mac), so none of them can fire while you are typing. Ctrl + S works inside a field too.'
 });
 Object.assign(_WS_STRINGS.fr, {
-    wsCenterTitle: 'Réglages d\u2019export',
+    wsCenterTitle: 'Paramètres',
+    navExport: 'Export',
     navDoc:  'Word et PDF',
     navHtml: 'HTML',
     navPptx: 'PowerPoint',
@@ -237,7 +239,8 @@ Object.assign(_WS_STRINGS.fr, {
     wsKeysNote:  'Chaque raccourci exige Ctrl (⌘ sur Mac) : aucun ne peut se déclencher pendant la saisie. Ctrl + S fonctionne aussi dans un champ.'
 });
 Object.assign(_WS_STRINGS.ar, {
-    wsCenterTitle: 'إعدادات التصدير',
+    wsCenterTitle: 'الإعدادات',
+    navExport: 'التصدير',
     navDoc:  'Word و PDF',
     navHtml: 'HTML',
     navPptx: 'باوربوينت',
@@ -474,7 +477,7 @@ var _pxSaved  = null;
    so. Not a parameter: events.js appends the element and the event to
    every action's arguments, so a positional flag on openWordSettings
    would arrive truthy on an ordinary toolbar click. */
-var _wsPane   = 'doc';
+var _wsPane   = 'export';
 var _wsKeep   = false;
 
 function _wsSizeSelect(field, value) {
@@ -603,6 +606,16 @@ function _wsEnsureStyle() {
         '#ws-overlay .ws-panes{flex:1;min-width:0;overflow-y:auto;padding:18px 22px;}',
         '#ws-overlay .ws-pane{display:none;}',
         '#ws-overlay .ws-pane.is-on{display:block;}',
+        /* 3.39.0: the tabs inside Export. */
+        '#ws-overlay .ws-subnav{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 16px;',
+        'padding-bottom:10px;border-bottom:1px solid #e2e8f0;}',
+        '#ws-overlay .ws-sub-btn{padding:7px 14px;border:1px solid #e2e8f0;border-radius:999px;',
+        'background:#fff;color:#334155;font:inherit;font-size:.9em;cursor:pointer;}',
+        '#ws-overlay .ws-sub-btn:hover{border-color:#c7d2fe;background:#f8faff;}',
+        '#ws-overlay .ws-sub-btn.is-on{border-color:#6366f1;background:#eef2ff;color:#3730a3;',
+        'font-weight:600;box-shadow:inset 0 0 0 1px #6366f1;}',
+        '#ws-overlay .ws-sub{display:none;}',
+        '#ws-overlay .ws-sub.is-on{display:block;}',
 
         /* Controls that the panes introduce. */
         '#ws-overlay .ws-unit{color:#64748b;font-size:.9em;margin-inline-start:8px;}',
@@ -665,13 +678,43 @@ function _wsEnsureStyle() {
 
 /* The rail. One array, so a pane cannot exist without a button or a
    button without a pane. */
+/* 3.39.0: the dialog is the tool's Settings. Export is one tab of it,
+   with Word & PDF, HTML and PowerPoint as its own tabs inside; more
+   tabs for the tool itself go in this array. */
 var WS_PANES = [
-    { id: 'doc',  icon: '\uD83D\uDCC4', key: 'navDoc'  },
-    { id: 'html', icon: '\uD83D\uDDA5\uFE0F', key: 'navHtml' },
-    { id: 'pptx', icon: '\uD83D\uDCCA', key: 'navPptx' },
+    { id: 'export', icon: '\uD83D\uDCE4', key: 'navExport' },
     { id: 'lang', icon: '\uD83C\uDF10', key: 'navLang' },
     { id: 'keys', icon: '\u2328\uFE0F', key: 'navKeys' }
 ];
+var WS_EXPORT_SUBS = [
+    { id: 'doc',  icon: '\uD83D\uDCC4', key: 'navDoc'  },
+    { id: 'html', icon: '\uD83D\uDDA5\uFE0F', key: 'navHtml' },
+    { id: 'pptx', icon: '\uD83D\uDCCA', key: 'navPptx' }
+];
+var _wsExpSub = 'doc';
+function _wsPaneExport() {
+    var bar = WS_EXPORT_SUBS.map(function (p) {
+        return '<button type="button" class="ws-sub-btn' + (p.id === _wsExpSub ? ' is-on' : '') +
+               '" data-ws-sub="' + p.id + '" role="tab" aria-selected="' + (p.id === _wsExpSub ? 'true' : 'false') + '">' +
+               '<span aria-hidden="true">' + p.icon + '</span> ' + _wsT(p.key) + '</button>';
+    }).join('');
+    var subs = WS_EXPORT_SUBS.map(function (p) {
+        return '<div class="ws-sub' + (p.id === _wsExpSub ? ' is-on' : '') + '" data-pane="' + p.id + '" role="tabpanel">' +
+               _wsPaneHTMLFor(p.id) + '</div>';
+    }).join('');
+    return '<div class="ws-subnav" role="tablist" aria-label="' + _wsT('navExport') + '">' + bar + '</div>' + subs;
+}
+function _wsShowSub(id) {
+    _wsExpSub = id;
+    var ov = document.getElementById('ws-overlay');
+    if (!ov) return;
+    ov.querySelectorAll('.ws-sub').forEach(function (p) { p.classList.toggle('is-on', p.getAttribute('data-pane') === id); });
+    ov.querySelectorAll('.ws-sub-btn').forEach(function (b) {
+        var on = b.getAttribute('data-ws-sub') === id;
+        b.classList.toggle('is-on', on);
+        b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+}
 
 /* ── Panes ──────────────────────────────────────────────────
    Each returns markup and nothing else. The document and HTML panes are
@@ -765,6 +808,7 @@ function _wsPaneKeys() {
 }
 
 function _wsPaneHTMLFor(id) {
+    if (id === 'export') return _wsPaneExport();
     if (id === 'doc')  return _wsPaneDoc();
     if (id === 'html') return _wsPaneHtml();
     if (id === 'pptx') return _wsPanePptx();
@@ -800,8 +844,12 @@ function _wsReopen(pane) {
     openWordSettings();
 }
 
-function openWordSettings() {
+function openWordSettings(pane) {
     if (document.getElementById('ws-overlay')) return;
+    /* A tab to open on ("export", or one of its own tabs "doc" …), when
+       the caller names one; events.js adds the element and the event
+       after it, which are ignored. */
+    var want = typeof pane === 'string' ? pane : '';
 
     /* A reopen carries the drafts across; an ordinary open reads them
        fresh from storage. */
@@ -810,8 +858,12 @@ function openWordSettings() {
         _wsSaved = Object.assign({}, _wsDraft);
         _pxDraft = (typeof pxReadSettings === 'function') ? pxReadSettings() : null;
         _pxSaved = _pxDraft ? JSON.parse(JSON.stringify(_pxDraft)) : null;
-        _wsPane  = _wsKeep ? _wsPane : 'doc';
+        _wsPane  = _wsKeep ? _wsPane : WS_PANES[0].id;
     }
+    if (want) _wsPane = want;
+    /* An export tab named on its own opens Export on it. */
+    if (WS_EXPORT_SUBS.some(function (p) { return p.id === _wsPane; })) { _wsExpSub = _wsPane; _wsPane = 'export'; }
+    if (!WS_PANES.some(function (p) { return p.id === _wsPane; })) _wsPane = WS_PANES[0].id;
     _wsKeep = false;
     _wsArmed = false;
 
@@ -938,6 +990,8 @@ function openWordSettings() {
         /* Rail. */
         var navBtn = e.target && e.target.closest ? e.target.closest('[data-ws-pane]') : null;
         if (navBtn) { _wsShowPane(navBtn.getAttribute('data-ws-pane')); return; }
+        var subBtn = e.target && e.target.closest ? e.target.closest('[data-ws-sub]') : null;
+        if (subBtn) { _wsShowSub(subBtn.getAttribute('data-ws-sub')); return; }
 
         /* Language. The menu in the toolbar is the one implementation;
            this clicks it, then rebuilds the dialog in the new language
