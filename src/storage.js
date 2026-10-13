@@ -207,6 +207,7 @@ async function clearAll() {
            accreditation dates on the next render. */
         mbState.tvqfBasic = {};
         mbState.tvqfExtended = {};
+        mbState.cmDefaults = {};
 
         // ── Instructional marks ───────────────────────────────────
         document.querySelectorAll('.marks-container').forEach(c => { c.innerHTML = ''; });

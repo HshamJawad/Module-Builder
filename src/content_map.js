@@ -45,6 +45,24 @@
 // written yet into draft items of the Training Structure proposal — one
 // per outcome + destination + task (one assessment per outcome) — and
 // the existing flow takes over: titles, moves, ✓ Approve & Build.
+//
+// 3.33.0 — ONE ITEM, SEVERAL SHEET KINDS
+//   An item may go to more than one kind of sheet (a decision is
+//   explained on the information sheet, checked inside the activity and
+//   a critical row of the assessment). Each row carries `dests`, the
+//   list of kinds, from the field's default (MB_CM_DEFAULTS, or the
+//   project's own in Distribution settings) unless the user changed it.
+//   `dest` stays the first of them ('none' when empty) for the readers
+//   written before.
+//   Stored per row, only when different from the suggestion:
+//     d  : [kinds]        the destinations chosen
+//     ok : [kinds]        approved in the panel of that kind
+//     x  : 'text'         the item as edited in a panel
+//   "Built" is never stored: it is read from the sheets and forms, so a
+//   deleted sheet brings its items back to "approved".
+//   The criteria of each outcome (as DACUM sent them) are rows too
+//   (taskId MB_LO_PC), for the assessment only.
+//   An old map (v1, one `dest`) reads as that single destination.
 // ============================================================
 
 var MB_CM_DEST_BY_FIELD = {
@@ -59,6 +77,54 @@ var MB_CM_DEST_BY_FIELD = {
 };
 var MB_CM_DESTS = ['info', 'activity', 'assessment', 'none'];
 var MB_CM_ICON = { info: '📄', activity: '🛠️', assessment: '✅', none: '—' };
+
+/* 3.33.0: the kinds of sheet an item goes to, by field. "basic" stands
+   for the four basic-skill fields, "custom" for the sections added in
+   DACUM, "cc" for competency criteria, "lopc" for the outcome criteria. */
+var MB_CM_KINDS = ['info', 'activity', 'assessment'];
+var MB_LO_PC = '__lopc__';
+var MB_CM_BASIC = ['basicReading', 'basicWriting', 'basicMath', 'basicScience'];
+var MB_CM_DEFAULTS = {
+    performanceSteps: ['activity'],
+    requiredSkills: ['activity'],
+    requiredKnowledge: ['info'],
+    decisionsCriticalPoints: ['info', 'activity', 'assessment'],
+    basicReading: ['info'], basicWriting: ['info'], basicMath: ['info', 'activity'], basicScience: ['info'],
+    safetyOSH: ['info', 'activity', 'assessment'],
+    toolsEquipmentMaterials: ['info', 'activity'],
+    commonErrorsTroubleshooting: ['info', 'activity'],
+    workerBehaviours: ['activity', 'assessment'],
+    performanceCriteria: ['assessment', 'activity'],
+    performanceStandard: ['assessment', 'activity'],
+    conditionsWorkEnvironment: ['activity', 'assessment'],
+    custom: ['info'],
+    cc: ['assessment'],
+    lopc: ['assessment']
+};
+/* The fields Distribution settings lists, in this order. */
+var MB_CM_DEFAULT_FIELDS = ['performanceSteps', 'requiredSkills', 'requiredKnowledge', 'decisionsCriticalPoints',
+    'basicReading', 'basicWriting', 'basicMath', 'basicScience', 'safetyOSH', 'toolsEquipmentMaterials',
+    'commonErrorsTroubleshooting', 'workerBehaviours', 'performanceCriteria', 'performanceStandard',
+    'conditionsWorkEnvironment', 'custom', 'cc', 'lopc'];
+
+function _cmFieldGroup(field, taskId) {
+    if (taskId === MB_LO_PC) return 'lopc';
+    if (taskId === MB_CC_TASK || String(field).indexOf('cc:') === 0) return 'cc';
+    if (String(field).indexOf(MB_TA_CUSTOM) === 0) return 'custom';
+    return field;
+}
+function _cmCleanKinds(v) {
+    return Array.isArray(v) ? MB_CM_KINDS.filter(function (k) { return v.indexOf(k) !== -1; }) : null;
+}
+/** The project's default kinds for a field group (Distribution settings). */
+function mbCmDefaultKinds(group) {
+    var own = mbState.cmDefaults && _cmCleanKinds(mbState.cmDefaults[group]);
+    if (own) return own;
+    return (MB_CM_DEFAULTS[group] || ['info']).slice();
+}
+function _cmSameKinds(a, b) {
+    return a.length === b.length && a.every(function (k) { return b.indexOf(k) !== -1; });
+}
 
 function _cmT(k, vars) {
     return vars ? window.i18n.tf(k, vars) : window.i18n.t(k);
@@ -76,9 +142,7 @@ function _cmLoLabel(lo) {
 }
 
 function _cmDefaultDest(field, taskId) {
-    if (taskId === MB_CC_TASK) return 'assessment';
-    if (String(field).indexOf(MB_TA_CUSTOM) === 0) return 'info';
-    return MB_CM_DEST_BY_FIELD[field] || 'info';
+    return mbCmDefaultKinds(_cmFieldGroup(field, taskId))[0] || 'none';
 }
 
 var _CM_STOP = new Set(['the', 'and', 'for', 'are', 'with', 'from', 'that', 'this', 'into', 'all', 'its', 'per', 'any',
@@ -132,7 +196,7 @@ function _cmOwnerOfCriterion(module, taskId, text) {
 /** Where the module's items are already written. */
 function _cmWrittenIndex(module) {
     var lang = contentLang();
-    var byText = new Map(), byKey = new Map();
+    var byText = new Map(), byKey = new Map(), byPc = new Map();
     var add = function (map, k, place) {
         if (!k) return;
         var arr = map.get(k);
@@ -165,9 +229,10 @@ function _cmWrittenIndex(module) {
             });
             /* 3.32.0: rows reworded in the form are still known by link. */
             ((form._aiSource && form._aiSource.keys) || []).forEach(function (k) { add(byKey, k, place); });
+            ((form._aiSource && form._aiSource.pcIds) || []).forEach(function (k) { add(byPc, k, place); });
         }
     });
-    return { byText: byText, byKey: byKey };
+    return { byText: byText, byKey: byKey, byPc: byPc };
 }
 
 /** The outcome's criteria (as DACUM sent them) not in its assessment
@@ -186,8 +251,9 @@ function _cmMissingPcs(module, lo) {
 }
 
 function _cmStore(module) {
-    if (!module.contentMap || typeof module.contentMap !== 'object') module.contentMap = { v: 1, rows: {} };
+    if (!module.contentMap || typeof module.contentMap !== 'object') module.contentMap = { v: 2, rows: {} };
     if (!module.contentMap.rows || typeof module.contentMap.rows !== 'object') module.contentMap.rows = {};
+    module.contentMap.v = 2;
     return module.contentMap;
 }
 
@@ -209,25 +275,43 @@ function mbContentMapRows(module) {
     });
     var saved = (module.contentMap && module.contentMap.rows) || {};
     var firstByText = new Map();
+    /* 3.33.0: a Task Analysis criterion that an outcome lists itself
+       reaches the assessment as that outcome's criterion — not twice. */
+    var loPcTexts = new Set();
+    _cmLos(module).forEach(function (lo) {
+        (lo.performanceCriteria || []).forEach(function (pc) {
+            if (pc && typeof pc === 'object') { var t = _mbNorm(_mbPcText(pc)); if (t) loPcTexts.add(t); }
+        });
+    });
     var rows = [];
-    var push = function (taskId, field, idx, text, sugLo) {
+    var push = function (taskId, field, idx, text, sugLo, extra) {
         var key = _mbSelKey({ taskId: taskId, field: field, itemIndex: idx });
         var norm = _mbNorm(text);
-        var same = firstByText.get(norm);
-        if (!same && norm) firstByText.set(norm, { key: key, taskId: taskId });
-        var sugDest = same ? 'none' : _cmDefaultDest(field, taskId);
+        var same = taskId === MB_LO_PC ? null : firstByText.get(norm);
+        if (!same && norm && taskId !== MB_LO_PC) firstByText.set(norm, { key: key, taskId: taskId });
+        var sugDests = same ? [] : mbCmDefaultKinds(_cmFieldGroup(field, taskId));
+        if (field === 'performanceCriteria' && taskId !== MB_LO_PC && loPcTexts.has(norm)) {
+            sugDests = sugDests.filter(function (k) { return k !== 'assessment'; });
+        }
         var s = saved[key];
         var mine = !!(s && s.t === text);
-        var lo = (mine && s.lo !== undefined) ? s.lo : sugLo;
-        var dest = (mine && s.dest) ? s.dest : sugDest;
+        var lo = (mine && s.lo !== undefined && taskId !== MB_LO_PC) ? s.lo : sugLo;
+        var dests = sugDests;
+        if (mine && Array.isArray(s.d)) dests = _cmCleanKinds(s.d);
+        else if (mine && s.dest) dests = s.dest === 'none' ? [] : _cmCleanKinds([s.dest]);   // v1 map
         var arr = function (v) { return Array.isArray(v) ? v.filter(function (x) { return typeof x === 'string'; }) : []; };
-        rows.push({ key: key, taskId: taskId, field: field, itemIndex: idx, text: text,
-                    lo: lo, dest: dest, sugLo: sugLo, sugDest: sugDest,
-                    taskLo: taskId === MB_CC_TASK ? '' : (owner[taskId] || ''),
+        var ok = mine ? _cmCleanKinds(arr(s.ok)).filter(function (k) { return dests.indexOf(k) !== -1; }) : [];
+        var edited = mine && typeof s.x === 'string' && s.x.trim() && s.x !== text ? s.x : '';
+        var row = { key: key, taskId: taskId, field: field, itemIndex: idx, text: text,
+                    lo: lo, dests: dests, dest: dests[0] || 'none', sugLo: sugLo, sugDests: sugDests,
+                    sugDest: sugDests[0] || 'none', ok: ok, edited: edited, useText: edited || text,
+                    taskLo: (taskId === MB_CC_TASK || taskId === MB_LO_PC) ? '' : (owner[taskId] || ''),
                     directLos: direct[taskId] || [],
                     refAdd: mine ? arr(s.ra) : [], refDel: mine ? arr(s.rd) : [],
-                    mine: mine && (lo !== sugLo || dest !== sugDest || arr(s.ra).length > 0 || arr(s.rd).length > 0),
-                    same: same || null });
+                    mine: mine && (lo !== sugLo || !_cmSameKinds(dests, sugDests) || arr(s.ra).length > 0 || arr(s.rd).length > 0 || !!edited),
+                    same: same || null };
+        if (extra) Object.keys(extra).forEach(function (k) { row[k] = extra[k]; });
+        rows.push(row);
     };
     taskIds.forEach(function (tid) {
         _mbTaskFields(module, tid).forEach(function (field) {
@@ -241,23 +325,40 @@ function mbContentMapRows(module) {
     _mbCompGroups(module).forEach(function (list, comp) {
         list.forEach(function (e, idx) { push(MB_CC_TASK, 'cc:' + comp, idx, e.text, e.loIds[0] || ''); });
     });
+    /* 3.33.0: each outcome's criteria, as DACUM sent them — assessment. */
+    _cmLos(module).forEach(function (lo) {
+        (lo.performanceCriteria || []).forEach(function (pc, i) {
+            if (!pc || typeof pc !== 'object' || !pc.id) return;
+            var t = _mbPcText(pc);
+            if (t) push(MB_LO_PC, 'lo:' + lo.id, i, t, lo.id, { pcId: pc.id });
+        });
+    });
     /* Status. */
     var idx = _cmWrittenIndex(module);
     var drafts = _mbAllAssignments();
     rows.forEach(function (r) {
         var places = (idx.byKey.get(r.key) || []).slice();
-        (idx.byText.get(_mbNorm(r.text)) || []).forEach(function (p) {
-            if (!places.some(function (q) { return q.id === p.id; })) places.push(p);
+        if (r.taskId === MB_LO_PC) {
+            (idx.byPc.get(r.pcId) || []).forEach(function (p) { if (!places.some(function (q) { return q.id === p.id; })) places.push(p); });
+        }
+        [r.text, r.edited].forEach(function (t) {
+            if (!t) return;
+            (idx.byText.get(_mbNorm(t)) || []).forEach(function (p) {
+                if (!places.some(function (q) { return q.id === p.id; })) places.push(p);
+            });
         });
+        /* An outcome criterion belongs to its own outcome's form only. */
+        if (r.taskId === MB_LO_PC) places = places.filter(function (p) { return p.lo.id === r.lo; });
         r.places = places;
         r.draft = drafts[r.key] || null;
-        /* 3.32.0: a criterion on its activity sheet's checklist AND in the
-           assessment form is one writing of each kind, not a repetition. */
-        var nSheets = places.filter(function (p) { return p.kind !== 'assessment'; }).length;
-        var nForms = places.length - nSheets;
-        r.twice = nSheets > 1 || nForms > 1;
-        r.done = r.dest === 'none' || places.some(function (p) { return p.kind === r.dest; });
-        r.issue = r.twice || (r.dest !== 'none' && (!r.lo || (r.same && !places.length && !r.draft)));
+        /* 3.33.0: written twice = twice in the same kind of sheet. One
+           information sheet, one activity sheet and one form for the same
+           item is the distribution itself, not a repetition. */
+        var nKind = function (k) { return places.filter(function (p) { return p.kind === k; }).length; };
+        r.twice = r.taskId !== MB_LO_PC && (nKind('info') > 1 || nKind('activity') > 1 || nKind('assessment') > 1);
+        r.built = MB_CM_KINDS.filter(function (k) { return places.some(function (p) { return p.kind === k; }); });
+        r.done = r.dests.every(function (k) { return r.built.indexOf(k) !== -1; });
+        r.issue = r.twice || (r.dests.length > 0 && (!r.lo || (r.same && !places.length && !r.draft)));
         _cmRowRefs(r);
     });
     return rows;
@@ -352,6 +453,9 @@ function mbSeeAlsoFor(loId, lang, los, refs) {
 /* In the Information / Activity tab: what this outcome uses from the
    sheets of other outcomes. */
 function mbRenderSeeAlso(kind) {
+    /* 3.33.0: a sheet was loaded (or added, or removed) — its tab's
+       suggested-content panel follows. */
+    if (typeof _spRenderKind === 'function') { try { _spRenderKind(kind); } catch (e) { console.warn('[Suggested]', e); } }
     var host = document.getElementById('mb-seealso-' + kind);
     if (!host) return;
     var module = _mbCurrentModule();
@@ -538,13 +642,29 @@ function _cmPut(module, row, prop, value) {
     var s = store.rows[row.key];
     if (!s || s.t !== row.text) s = store.rows[row.key] = { t: row.text };
     s[prop] = value;
-    if (prop === 'lo' || prop === 'dest') {
-        var sug = prop === 'lo' ? row.sugLo : row.sugDest;
-        if (value === sug) delete s[prop];
+    if (prop === 'dest') {                           // v1 single choice → list
+        delete s.dest;
+        s.d = value === 'none' ? [] : [value];
+        prop = 'd'; value = s.d;
+    }
+    if (prop === 'lo') {
+        if (value === row.sugLo) delete s.lo;
+    } else if (prop === 'd') {
+        s.d = _cmCleanKinds(value) || [];
+        /* An approved item keeps its destinations even if the defaults change. */
+        if (_cmSameKinds(s.d, row.sugDests) && !(s.ok && s.ok.length)) delete s.d;
+        if (Array.isArray(s.ok)) { s.ok = s.ok.filter(function (k) { return (s.d || row.sugDests).indexOf(k) !== -1; }); if (!s.ok.length) delete s.ok; }
+    } else if (prop === 'ok') {
+        s.ok = _cmCleanKinds(value) || [];
+        if (!s.ok.length) delete s.ok;
+        else if (!Array.isArray(s.d)) s.d = row.dests.slice();
+    } else if (prop === 'x') {
+        if (typeof value !== 'string' || !value.trim() || value === row.text) delete s.x;
     } else if (!Array.isArray(value) || !value.length) {
         delete s[prop];
     }
-    if (s.lo === undefined && s.dest === undefined && s.ra === undefined && s.rd === undefined) delete store.rows[row.key];
+    if (s.lo === undefined && s.d === undefined && s.ok === undefined && s.x === undefined &&
+        s.ra === undefined && s.rd === undefined) delete store.rows[row.key];
 }
 
 function mbCmSet(key, prop, value) {
@@ -596,8 +716,14 @@ function mbCmGroup() {
     var module = _mbCurrentModule();
     if (!module) return;
     var all = mbContentMapRows(module);
-    var rows = all.filter(function (r) {
-        return r.dest !== 'none' && r.lo && !r.done && !r.draft;
+    /* 3.33.0: one entry per kind still to write (an item may go to
+       several); the outcome criteria come through `missing` below. */
+    var rows = [];
+    all.forEach(function (r) {
+        if (r.taskId === MB_LO_PC || !r.lo || r.draft) return;
+        r.dests.forEach(function (k) {
+            if (r.built.indexOf(k) === -1) rows.push(Object.assign({}, r, { dest: k }));
+        });
     });
     var los0 = _cmLos(module);
     var missing = {};

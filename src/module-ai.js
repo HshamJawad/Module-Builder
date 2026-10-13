@@ -254,13 +254,17 @@ const MB_TA_FIELD_LABELS = {
     workerBehaviours: 'Worker Behaviours',   /* 3.19.0 — DACUM 3.92 */
     performanceSteps: 'Performance Steps', toolsEquipmentMaterials: 'Tools, Equipment & Materials',
     safetyOSH: 'Safety / OSH', conditionsWorkEnvironment: 'Conditions / Work Environment',
-    decisionsCriticalPoints: 'Decisions / Critical Points', performanceCriteria: 'Performance Criteria (task-level)',
-    performanceStandard: 'Performance Standard', commonErrorsTroubleshooting: 'Common Errors / Troubleshooting'
+    decisionsCriticalPoints: 'Decisions, Cues & Consequences', performanceCriteria: 'Performance Criteria (task-level)',
+    performanceStandard: 'Performance Standard', commonErrorsTroubleshooting: 'Common Errors / Troubleshooting',
+    /* 3.33.0 — DACUM 3.100: the basic skills the task needs. */
+    basicReading: 'Basic skills — Reading', basicWriting: 'Basic skills — Writing',
+    basicMath: 'Basic skills — Mathematics', basicScience: 'Basic skills — Applied science'
 };
 
 /* 3.11.0: the order DACUM Live Pro 3.46 shows them in — by importance. */
 const MB_TA_FIELD_ORDER = [
     'performanceSteps', 'requiredKnowledge', 'requiredSkills', 'workerBehaviours',
+    'basicReading', 'basicWriting', 'basicMath', 'basicScience',   // 3.33.0 — DACUM 3.100
     'performanceCriteria', 'performanceStandard',
     'toolsEquipmentMaterials', 'safetyOSH', 'decisionsCriticalPoints',
     'conditionsWorkEnvironment', 'commonErrorsTroubleshooting'
@@ -281,6 +285,22 @@ function _mbTaskFields(module, taskId) {
         .filter(sec => sec && String(sec.title || '').trim())
         .map(sec => MB_TA_CUSTOM + String(sec.title).trim());
     return MB_TA_FIELD_ORDER.concat(custom);
+}
+
+/** 3.33.0 — DACUM 3.100 sends each decision with its cue, the
+ *  consequence of a wrong decision and, optionally, how an expert
+ *  handles it (decisionTable); decisionsCriticalPoints stays the plain
+ *  list. The row of item `idx`, matched by its words, or null. */
+function mbTaDecision(module, taskId, idx) {
+    const ta = module && module.taskAnalysisSource && module.taskAnalysisSource.taskAnalysis[taskId];
+    const table = ta && Array.isArray(ta.decisionTable) ? ta.decisionTable : [];
+    if (!table.length) return null;
+    const text = _mbGetFieldItems(module, taskId, 'decisionsCriticalPoints')[idx];
+    const n = _mbNorm(text);
+    const row = table.find(d => d && _mbNorm(d.decision) === n) || null;
+    if (!row) return null;
+    const str = v => String(v == null ? '' : v).trim();
+    return { decision: str(row.decision), cue: str(row.cue), error: str(row.error), expert: str(row.expert) };
 }
 
 function _mbCurrentModule() {
