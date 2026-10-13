@@ -57,9 +57,32 @@ test('assessment form: each task criterion names the job sheet where it is pract
   await buildAll(page, 'assessment');
   const rows = await page.evaluate(() => Object.values(mbState.assessmentFormsData).flatMap(f => f.rows)
     .map(r => ({ c: r.criteria && r.criteria.en, a: r.activities })));
-  const safety = rows.find(r => r.c === 'Mandatory: Disconnect power');
-  expect(safety.a).toMatch(/^\d+-\d+$/);
+  const pc = rows.find(r => r.c === 'Unit is inspected against the checklist');
+  expect(pc.a).toMatch(/^\d+-\d+$/);
   const nums = await openModule(page, m => m.learningOutcomes.flatMap(l => (l.activitySheets || []).map(s => s.sheetNumber)));
-  expect(nums).toContain(safety.a);
+  expect(nums).toContain(pc.a);
+  // 3.36.0: criteria only — no safety, decisions or behaviours by default
+  expect(rows.map(r => r.c).filter(c => /^(Mandatory|Critical|Observed|Conditions):/.test(c || ''))).toEqual([]);
+  expect(errors).toEqual([]);
+});
+
+// 3.36.0: outcomes whose criteria were written for a whole competency
+// all trace to the same tasks. Each task goes to the outcome it matches
+// best in words; one that matches none is left for the user to choose.
+test('tasks shared by several outcomes are suggested by their words', async ({ page }) => {
+  const errors = await openApp(page);
+  const out = await page.evaluate(() => {
+    const ids = ['t1', 't2', 't3', 't4'];
+    const pc = (id, text) => ({ id, text, sourceTaskIds: ids });
+    const m = { id: 'x', learningOutcomes: [
+      { id: 'a', statement: 'Create text documents using MS Word or similar', performanceCriteria: [pc('1', 'Text document is created using Microsoft Office or similar')] },
+      { id: 'b', statement: 'Create presentations using PowerPoint', performanceCriteria: [pc('2', 'Presentation is created using Microsoft PowerPoint')] },
+      { id: 'c', statement: 'Use the internet and email to exchange information', performanceCriteria: [pc('3', 'Emails are sent and received')] }],
+      taskAnalysisSource: { sourceTaskIds: ids, taskAnalysis: { t4: { performanceSteps: ['Open PowerPoint and add slides'] } },
+        sourceTasks: [{ id: 't1', text: 'Use Microsoft Office to write documents' }, { id: 't2', text: 'Browse the internet and communicate by email' },
+          { id: 't3', text: 'Work in a team' }, { id: 't4', text: 'Prepare a short talk' }] } };
+    return _cmOwnerByTask(m, ids);
+  });
+  expect(out).toEqual({ t1: 'a', t2: 'c', t3: '', t4: 'b' });
   expect(errors).toEqual([]);
 });

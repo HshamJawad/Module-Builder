@@ -88,15 +88,20 @@ var MB_CM_DEFAULTS = {
     performanceSteps: ['activity'],
     requiredSkills: ['activity'],
     requiredKnowledge: ['info'],
-    decisionsCriticalPoints: ['info', 'activity', 'assessment'],
+    /* 3.36.0: the assessment form holds the criteria only — the
+       outcome's own and those of its tasks. Safety, decisions, behaviours,
+       the standard and the conditions stay on the job sheet, where
+       they are practised; Distribution settings can send them to the
+       form too. */
+    decisionsCriticalPoints: ['info', 'activity'],
     basicReading: ['info'], basicWriting: ['info'], basicMath: ['info', 'activity'], basicScience: ['info'],
-    safetyOSH: ['info', 'activity', 'assessment'],
+    safetyOSH: ['info', 'activity'],
     toolsEquipmentMaterials: ['info', 'activity'],
     commonErrorsTroubleshooting: ['info', 'activity'],
-    workerBehaviours: ['activity', 'assessment'],
+    workerBehaviours: ['activity'],
     performanceCriteria: ['assessment', 'activity'],
-    performanceStandard: ['assessment', 'activity'],
-    conditionsWorkEnvironment: ['activity', 'assessment'],
+    performanceStandard: ['activity'],
+    conditionsWorkEnvironment: ['activity'],
     custom: ['info'],
     cc: ['assessment'],
     lopc: ['assessment']
@@ -154,7 +159,34 @@ function _cmWords(s) {
         .filter(function (w) { return w.length >= 3 && !_CM_STOP.has(w); }));
 }
 
-/** taskId → suggested owner outcome id ('' when none traces to it). */
+/* 3.36.0: word stems, so "documents" meets "document" and
+   "installation" meets "installed". */
+function _cmStems(s) {
+    var out = new Set();
+    _cmWords(s).forEach(function (w) { out.add(w.length > 5 ? w.slice(0, 5) : w); });
+    return out;
+}
+/* The words of a task: its statement, then — counted less — what its
+   Task Analysis says (steps, knowledge, tools, criteria …). */
+function _cmTaskText(module, tid) {
+    var ta = module.taskAnalysisSource && module.taskAnalysisSource.taskAnalysis && module.taskAnalysisSource.taskAnalysis[tid];
+    if (!ta) return '';
+    var parts = [];
+    Object.keys(ta).forEach(function (k) {
+        var v = ta[k];
+        if (typeof v === 'string' && k !== 'taskCode') parts.push(v);
+        else if (Array.isArray(v)) v.forEach(function (x) { if (typeof x === 'string') parts.push(x); });
+    });
+    return parts.join(' ');
+}
+
+/** taskId → suggested owner outcome id ('' when none traces to it).
+ *  3.36.0: when several outcomes trace to the same tasks (their criteria
+ *  were written for a whole competency), each task goes to the outcome
+ *  whose statement and criteria share the most words with it — words
+ *  shared by every outcome count least. A task that matches none of
+ *  them is left without an outcome, for the user to choose, instead of
+ *  falling into the first one. */
 function _cmOwnerByTask(module, taskIds) {
     var los = _cmLos(module);
     var tasks = (module.taskAnalysisSource && module.taskAnalysisSource.sourceTasks) || [];
@@ -162,20 +194,29 @@ function _cmOwnerByTask(module, taskIds) {
         var pcs = (lo.performanceCriteria || []).filter(function (pc) { return pc && typeof pc === 'object'; });
         var text = [lo.statement || '', typeof lo.title === 'string' ? lo.title : loTitleText(lo)]
             .concat(pcs.map(_mbPcText)).join(' ');
-        return { lo: lo, words: _cmWords(text), traced: _mbLoTaskIds(module, lo.id),
+        return { lo: lo, stems: _cmStems(text), traced: _mbLoTaskIds(module, lo.id),
                  direct: new Set(pcs.filter(function (pc) { return pc.taskId; }).map(function (pc) { return pc.taskId; })) };
     });
+    var df = {};
+    loInfo.forEach(function (li) { li.stems.forEach(function (w) { df[w] = (df[w] || 0) + 1; }); });
     var out = {};
     taskIds.forEach(function (tid) {
         var t = tasks.find(function (x) { return x.id === tid; });
-        var tw = _cmWords(t && t.text);
-        var best = '', bestScore = -1;
-        loInfo.forEach(function (li) {
-            if (!li.traced.has(tid)) return;
-            var n = 0; tw.forEach(function (w) { if (li.words.has(w)) n++; });
+        var own = _cmStems(t && t.text);
+        var more = _cmStems(_cmTaskText(module, tid));
+        var cand = loInfo.filter(function (li) { return li.traced.has(tid); });
+        var best = '', bestScore = 0;
+        cand.forEach(function (li) {
+            var n = 0;
+            li.stems.forEach(function (w) {
+                var idf = 1 / df[w];
+                if (own.has(w)) n += idf;
+                else if (more.has(w)) n += idf * 0.25;
+            });
             var score = (li.direct.has(tid) ? 1000 : 0) + n;
-            if (score > bestScore) { bestScore = score; best = li.lo.id; }
+            if (score > bestScore + 1e-9) { bestScore = score; best = li.lo.id; }
         });
+        if (!best && cand.length === 1) best = cand[0].lo.id;
         if (!best && los.length === 1) best = los[0].id;
         out[tid] = best;
     });

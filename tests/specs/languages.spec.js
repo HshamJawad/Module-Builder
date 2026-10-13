@@ -21,6 +21,8 @@ async function build(page, kind, texts) {
 test('Arabic content, English DACUM texts with an Arabic version: every side in its own language', async ({ page }) => {
   const errors = await openApp(page, { handoff: AR, contentLang: 'ar' });
   expect(await openModule(page, m => m.dacumLang)).toBe('en');
+  // safety sent to the form too, as Distribution settings allows (3.36.0: not by default)
+  await page.evaluate(() => { mbState.cmDefaults = { safetyOSH: ['info', 'activity', 'assessment'] }; mbSpRefresh(); });
 
   await tab(page, 'activity');
   await expect(row(page, 'activity', 'تجهيز مكان العمل')).toBeVisible();          // shown in Arabic
