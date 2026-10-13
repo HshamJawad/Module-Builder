@@ -89,6 +89,8 @@ var _WS_STRINGS = {
         wsCoverSize:     'Cover table size',
         wsTableSize:     'Resources and checklist table size',
         wsUserTableSize: 'Content-card table size',
+        wsResourcesSize: 'Training resources table — content',
+        wsChecklistSize: 'Performance criteria checklist — content',
         wsFixedNote:     'Mark boxes keep their own size and theme colours.',
         wsPdfFont:       'Export font',
         wsPdfFontNote:   'Auto keeps the current behaviour: Arial for Arabic and Calibri for Latin in Word, Cairo in PDF. Choosing a family applies it to both. Arial and Calibri are downloaded only when selected.',
@@ -133,6 +135,8 @@ var _WS_STRINGS = {
         wsCoverSize:     'Taille du tableau de couverture',
         wsTableSize:     'Taille des tableaux de ressources et de checklist',
         wsUserTableSize: 'Taille des tableaux dans les cartes de contenu',
+        wsResourcesSize: 'Tableau des ressources de formation — contenu',
+        wsChecklistSize: 'Liste de vérification des critères — contenu',
         wsFixedNote:     'Les encadrés gardent leur taille et leurs couleurs de thème.',
         wsPdfFont:       'Police d\u2019export',
         wsPdfFontNote:   'Auto conserve le comportement actuel : Arial pour l\u2019arabe et Calibri pour le latin dans Word, Cairo en PDF. Choisir une police l\u2019applique aux deux. Arial et Calibri ne sont t\u00e9l\u00e9charg\u00e9s que si vous les s\u00e9lectionnez.',
@@ -177,6 +181,8 @@ var _WS_STRINGS = {
         wsCoverSize:     'حجم جدول الغلاف',
         wsTableSize:     'حجم جداول الموارد وقائمة التحقق',
         wsUserTableSize: 'حجم جداول بطاقات المحتوى',
+        wsResourcesSize: 'جدول موارد التدريب — المحتوى',
+        wsChecklistSize: 'قائمة فحص معايير الأداء — المحتوى',
         wsFixedNote:     'صناديق الملاحظات تحتفظ بحجمها وألوان ثيمتها.',
         wsPdfFont:       'خط التصدير',
         wsPdfFontNote:   '«Auto» يُبقي السلوك الحالي: Arial للعربية وCalibri للاتينية في Word، وCairo في PDF. واختيار خط يطبّقه على الاثنين. وArial وCalibri لا يُنزَّلان إلا عند اختيارهما.',
@@ -292,6 +298,8 @@ var WS_DEFAULTS = {
     coverSize:        18,        /* exports_docx.js size: 36 */
     tableSize:        14,        /* exports_docx.js size: 28 (tables) */
     userTableSize:    11,        /* exports_docx.js size: 22 */
+    resourcesSize:    12,        /* 3.40.0: rows of the Training Resources table */
+    checklistSize:    12,        /* 3.40.0: rows of the Performance Criteria Check List */
     headingColor:     '0070C0',
     tableHeaderColor: '0070C0',
     /* Arabic PDF face. Not a Word setting — Word embeds nothing and
@@ -320,7 +328,7 @@ var WS_PDF_FONTS = ['Auto', 'Cairo', 'Arial', 'Calibri'];
    reset and the read path can never drift apart. */
 var WS_SIZE_FIELDS = [
     'titleSize', 'sectionSize', 'subSize', 'bodySize',
-    'coverSize', 'tableSize', 'userTableSize'
+    'coverSize', 'tableSize', 'userTableSize', 'resourcesSize', 'checklistSize'
 ];
 
 var WS_MIN_PT = 11;
@@ -430,6 +438,8 @@ function _wsTitle()     { return _wsGet().titleSize   * 2; }
 function _wsCover()     { return _wsGet().coverSize     * 2; }
 function _wsTable()     { return _wsGet().tableSize     * 2; }
 function _wsUserTable() { return _wsGet().userTableSize * 2; }
+function _wsResources() { return _wsGet().resourcesSize * 2; }
+function _wsChecklist() { return _wsGet().checklistSize * 2; }
 function _wsSection()   { return _wsGet().sectionSize * 2; }
 function _wsSub()       { return _wsGet().subSize     * 2; }
 function _wsBody()      { return _wsGet().bodySize    * 2; }
@@ -739,6 +749,8 @@ function _wsPaneDoc() {
         '<div class="ws-row"><label>' + _wsT('wsCoverSize')     + '</label>' + _wsSizeSelect('coverSize',     _wsDraft.coverSize)     + '</div>' +
         '<div class="ws-row"><label>' + _wsT('wsTableSize')     + '</label>' + _wsSizeSelect('tableSize',     _wsDraft.tableSize)     + '</div>' +
         '<div class="ws-row"><label>' + _wsT('wsUserTableSize') + '</label>' + _wsSizeSelect('userTableSize', _wsDraft.userTableSize) + '</div>' +
+        '<div class="ws-row"><label>' + _wsT('wsResourcesSize') + '</label>' + _wsSizeSelect('resourcesSize', _wsDraft.resourcesSize) + '</div>' +
+        '<div class="ws-row"><label>' + _wsT('wsChecklistSize') + '</label>' + _wsSizeSelect('checklistSize', _wsDraft.checklistSize) + '</div>' +
         '<p class="ws-note ws-note-sm">\u2139\uFE0F ' + _wsT('wsFixedNote') + '</p>' +
 
         '<div class="ws-row"><label>' + _wsT('wsPdfFont') + '</label>' +
