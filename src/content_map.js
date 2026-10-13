@@ -88,8 +88,8 @@ var MB_CM_DEFAULTS = {
     performanceSteps: ['activity'],
     requiredSkills: ['activity'],
     requiredKnowledge: ['info'],
-    /* 3.36.0: the assessment form holds the criteria only — the
-       outcome's own and those of its tasks. Safety, decisions, behaviours,
+    /* 3.36.0 / 3.37.0: the assessment form holds the outcome's own
+       criteria (lopc, cc). The tasks' criteria, safety, decisions, behaviours,
        the standard and the conditions stay on the job sheet, where
        they are practised; Distribution settings can send them to the
        form too. */
@@ -99,7 +99,7 @@ var MB_CM_DEFAULTS = {
     toolsEquipmentMaterials: ['info', 'activity'],
     commonErrorsTroubleshooting: ['info', 'activity'],
     workerBehaviours: ['activity'],
-    performanceCriteria: ['assessment', 'activity'],
+    performanceCriteria: ['activity'],
     performanceStandard: ['activity'],
     conditionsWorkEnvironment: ['activity'],
     custom: ['info'],
@@ -299,10 +299,82 @@ function _cmMissingPcs(module, lo) {
 }
 
 function _cmStore(module) {
-    if (!module.contentMap || typeof module.contentMap !== 'object') module.contentMap = { v: 2, rows: {} };
+    if (!module.contentMap || typeof module.contentMap !== 'object') module.contentMap = { v: 3, rows: {} };
     if (!module.contentMap.rows || typeof module.contentMap.rows !== 'object') module.contentMap.rows = {};
-    module.contentMap.v = 2;
+    _cmMigrate(module);
     return module.contentMap;
+}
+
+/* 3.37.0: the assessment form holds the outcome's own criteria. Before,
+   these fields went to it too, and approving an item kept that choice:
+   an item approved with those defaults still went to the form. */
+var MB_CM_OLD_DEFAULTS = {
+    decisionsCriticalPoints: ['info', 'activity', 'assessment'], safetyOSH: ['info', 'activity', 'assessment'],
+    workerBehaviours: ['activity', 'assessment'], performanceCriteria: ['assessment', 'activity'],
+    performanceStandard: ['assessment', 'activity'], conditionsWorkEnvironment: ['activity', 'assessment']
+};
+/** Map v2 → v3: an item that went to the assessment form only because
+ *  of the old defaults follows the new ones; one the user sent there
+ *  stays. The rows the tool wrote for it in a form are taken out when
+ *  the module is next open (_cmCleanForms) — unless edited. */
+function _cmMigrate(module) {
+    var cm = module.contentMap;
+    if (!cm || typeof cm !== 'object' || cm.v >= 3) return;
+    var own = mbState.cmDefaults || {};
+    var drop = [];
+    Object.keys(cm.rows || {}).forEach(function (key) {
+        var s = cm.rows[key];
+        if (!s || !Array.isArray(s.d)) return;
+        var sel = _mbParseSelKey(key);
+        var g = _cmFieldGroup(sel.field, sel.taskId);
+        var old = MB_CM_OLD_DEFAULTS[g];
+        if (!old || _cmCleanKinds(own[g]) || !_cmSameKinds(_cmCleanKinds(s.d) || [], old)) return;
+        delete s.d;
+        var now = MB_CM_DEFAULTS[g] || [];
+        if (Array.isArray(s.ok)) { s.ok = s.ok.filter(function (k) { return now.indexOf(k) !== -1; }); if (!s.ok.length) delete s.ok; }
+        if (now.indexOf('assessment') === -1) drop.push(key);
+        if (s.lo === undefined && s.ok === undefined && s.x === undefined && s.ra === undefined && s.rd === undefined) delete cm.rows[key];
+    });
+    if (drop.length) cm.dropFromForms = drop;
+    cm.v = 3;
+}
+/** The form rows the tool wrote for items that no longer go to the
+ *  assessment, left as written (nothing typed in the other columns). */
+function _cmCleanForms(module, rows) {
+    var cm = module.contentMap;
+    if (!cm || !Array.isArray(cm.dropFromForms) || module.id !== mbState.currentModuleId) return;
+    var drop = new Set(cm.dropFromForms);
+    delete cm.dropFromForms;
+    var forms = mbState.assessmentFormsData || {};
+    var texts = new Set();
+    rows.forEach(function (r) {
+        if (!drop.has(r.key) || typeof _spEntryIn !== 'function') return;
+        (typeof BILANG_CODES !== 'undefined' ? BILANG_CODES : ['en', 'ar', 'fr']).forEach(function (c) {
+            var e = _spEntryIn(module, r, 'assessment', c);
+            if (e && e.text) texts.add(_mbNorm(e.text));
+        });
+    });
+    var sides = function (v) {
+        if (typeof v === 'string') return v.trim() ? [v] : [];
+        return v && typeof v === 'object' ? Object.keys(v).filter(function (k) { return typeof v[k] === 'string' && v[k].trim(); }).map(function (k) { return v[k]; }) : [];
+    };
+    var n = 0;
+    Object.keys(forms).forEach(function (loId) {
+        var f = forms[loId];
+        if (!f || !Array.isArray(f.rows)) return;
+        f.rows = f.rows.filter(function (row) {
+            var mine = sides(row.criteria);
+            var ours = mine.length && mine.every(function (t) { return texts.has(_mbNorm(t)); });
+            var untouched = !String(row.outcomes || '').trim() && !String(row.verification || '').trim() && !String(row.date || '').trim();
+            if (ours && untouched) { n++; return false; }
+            return true;
+        });
+        if (f._aiSource && Array.isArray(f._aiSource.keys)) f._aiSource.keys = f._aiSource.keys.filter(function (k) { return !drop.has(k); });
+    });
+    if (n) {
+        if (typeof renderAssessmentForms === 'function') { try { renderAssessmentForms(); } catch (e) { /* not on screen yet */ } }
+        if (typeof mbLibrarySave === 'function') setTimeout(function () { mbLibrarySave(); }, 0);
+    }
 }
 
 /** Every row of the map, suggestion and choice applied, in reading order. */
@@ -321,6 +393,7 @@ function mbContentMapRows(module) {
             if (direct[pc.taskId].indexOf(lo.id) === -1) direct[pc.taskId].push(lo.id);
         });
     });
+    if (module.contentMap) _cmMigrate(module);
     var saved = (module.contentMap && module.contentMap.rows) || {};
     var firstByText = new Map();
     /* 3.33.0: a Task Analysis criterion that an outcome lists itself
@@ -382,6 +455,7 @@ function mbContentMapRows(module) {
             if (t) push(MB_LO_PC, 'lo:' + lo.id, i, t, lo.id, { pcId: pc.id });
         });
     });
+    if (module.contentMap && module.contentMap.dropFromForms) _cmCleanForms(module, rows);
     /* Status. */
     var idx = _cmWrittenIndex(module);
     var drafts = _mbAllAssignments();

@@ -145,7 +145,7 @@ function renderAssessmentForms() {
             <div style="background: #667eea; color: white; padding: 15px; border-radius: 6px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
                 <div>
                     <h4 style="margin: 0; font-size: 1.2em;"><span data-i18n="expAssessmentUnit">${window.i18n.t('expAssessmentUnit')}</span></h4>
-                    <p style="margin: 5px 0 0 0; font-size: 1em; font-weight: 600;" dir="auto">${window.i18n.tf('expLearningOutcomeN', { v0: index + 1, v1: _mbAsmTitle(lo) })}</p>
+                    <p style="margin: 5px 0 0 0; font-size: 1em; font-weight: 600;" dir="auto">${window.i18n.tf('expLearningOutcomeN', { v0: index + 1, v1: mbLoPlainTitle(_mbAsmTitle(lo)) })}</p>
                 </div>
                 <div style="display: flex; gap: 10px;">
                     <button data-act="clearAssessmentForm" data-args='["${lo.id}"]' 

@@ -51,18 +51,50 @@ test('Word: topic headings printed, lines kept, no "LO1:" after "Learning Outcom
   expect(errors).toEqual([]);
 });
 
-test('assessment form: each task criterion names the job sheet where it is practised', async ({ page }) => {
+test('assessment form: the outcome\'s own criteria, each naming the job sheets of the outcome', async ({ page }) => {
   const errors = await openApp(page, { handoff: fixture('dacum-handoff.json'), contentLang: 'en' });
   await buildAll(page, 'activity');
   await buildAll(page, 'assessment');
-  const rows = await page.evaluate(() => Object.values(mbState.assessmentFormsData).flatMap(f => f.rows)
-    .map(r => ({ c: r.criteria && r.criteria.en, a: r.activities })));
-  const pc = rows.find(r => r.c === 'Unit is inspected against the checklist');
-  expect(pc.a).toMatch(/^\d+-\d+$/);
-  const nums = await openModule(page, m => m.learningOutcomes.flatMap(l => (l.activitySheets || []).map(s => s.sheetNumber)));
-  expect(nums).toContain(pc.a);
-  // 3.36.0: criteria only — no safety, decisions or behaviours by default
-  expect(rows.map(r => r.c).filter(c => /^(Mandatory|Critical|Observed|Conditions):/.test(c || ''))).toEqual([]);
+  const out = await page.evaluate(() => mbState.learningOutcomesData.map(lo => ({
+    pcs: (lo.performanceCriteria || []).map(_mbPcText),
+    acts: (lo.activitySheets || []).filter(_mbActivitySheetHasContent).map(s => s.sheetNumber),
+    rows: ((mbState.assessmentFormsData[lo.id] || {}).rows || []).map(r => ({ c: r.criteria && (r.criteria.en || r.criteria), a: r.activities })) })));
+  for (const lo of out) {
+    expect(lo.rows.map(r => r.c)).toEqual(lo.pcs);                       // 3.37.0: nothing else
+    if (lo.acts.length) for (const r of lo.rows) expect(r.a).toBe(lo.acts.join(', '));
+  }
+  expect(out.some(lo => lo.acts.length && lo.rows.length)).toBe(true);
+  expect(errors).toEqual([]);
+});
+
+// 3.37.0: a module approved with the old defaults: its items follow the
+// new ones, and the rows the tool wrote for them in the form go — not
+// a row the user worked on, nor one the user sent there.
+test('older module: items approved for the form under the old defaults leave it', async ({ page }) => {
+  const errors = await openApp(page, { handoff: fixture('dacum-handoff.json'), contentLang: 'en' });
+  await buildAll(page, 'activity');
+  const res = await page.evaluate(() => {
+    const m = mbState.modulesData.find(x => x.id === mbState.currentModuleId);
+    const rows = mbContentMapRows(m);
+    const safety = rows.find(r => r.field === 'safetyOSH');
+    const crit = rows.find(r => r.field === 'performanceCriteria' && r.taskId === 'duty_1_1');
+    const beh = rows.find(r => r.field === 'workerBehaviours');
+    // as 3.35.0 saved them
+    m.contentMap.v = 2;
+    m.contentMap.rows[safety.key] = { t: safety.text, d: ['info', 'activity', 'assessment'], ok: ['info', 'activity', 'assessment'] };
+    m.contentMap.rows[crit.key] = { t: crit.text, d: ['assessment', 'activity'], ok: ['assessment', 'activity'] };
+    m.contentMap.rows[beh.key] = { t: beh.text, d: ['assessment'], ok: ['assessment'] };   // the user's own choice
+    const f = _spEnsureForm(safety.lo);
+    f.rows = [{ criteria: { en: 'Mandatory: ' + safety.text }, activities: '1-1', outcomes: '', verification: '', date: '' },
+              { criteria: { en: crit.text }, activities: '1-1', outcomes: 'Observation', verification: '', date: '' },
+              { criteria: { en: 'Observed: ' + beh.text }, activities: '', outcomes: '', verification: '', date: '' }];
+    const after = mbContentMapRows(m);
+    return { v: m.contentMap.v, form: f.rows.map(r => r.criteria.en),
+      dests: [safety, crit, beh].map(x => after.find(r => r.key === x.key).dests) };
+  });
+  expect(res.v).toBe(3);
+  expect(res.dests).toEqual([['info', 'activity'], ['activity'], ['assessment']]);
+  expect(res.form).toEqual([expect.stringContaining('inspected'), expect.stringMatching(/^Observed: /)]);
   expect(errors).toEqual([]);
 });
 

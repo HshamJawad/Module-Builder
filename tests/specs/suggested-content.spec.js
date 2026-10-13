@@ -106,8 +106,9 @@ test('approve and build: one sheet per task, shown below, reusing the empty shee
     .map(r => typeof r.criteria === 'string' ? r.criteria : r.criteria.en));
   expect(form.slice(0, 3)).toEqual(['Work is checked against specifications 1', 'Work is checked against specifications 4',
     'Work is checked against specifications 3']);
-  expect(form).toContain('Unit is inspected against the checklist');      // the task's own criterion
-  expect(form).not.toContain('Critical: Repair or replace in duty_1_1');   // 3.36.0: criteria only
+  // 3.37.0: the outcome's own criteria only — the tasks' criteria are on the job sheets
+  expect(form).not.toContain('Unit is inspected against the checklist');
+  expect(form).not.toContain('Critical: Repair or replace in duty_1_1');
   expect(form).not.toContain('Mandatory: Disconnect power');
   expect(form.filter(t => t === '').length).toBe(0);
 

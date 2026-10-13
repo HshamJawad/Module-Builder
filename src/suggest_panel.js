@@ -737,7 +737,23 @@ function _spWrite(module, rows, kind, into) {
                 }
                 return acts[taskId];
             };
-            out.items += _spFillForm(form, list.map(function (r) { var e = _spEntry(module, r, kind); e.acts = actsOf(r.taskId); return e; }));
+            /* 3.37.0: an outcome criterion — the job sheets of its task
+               when it names one, else every job sheet of the outcome. */
+            var loObj = los.find(function (l) { return l.id === loId; });
+            var allActs = ((loObj && loObj.activitySheets) || []).map(function (sh, i) {
+                return (_mbActivitySheetHasContent(sh) && (sh.sheetNumber || getAutoSheetNumber(los.indexOf(loObj), i))) || '';
+            }).filter(Boolean).join(', ');
+            var actsFor = function (r) {
+                if (r.taskId !== MB_LO_PC) return actsOf(r.taskId);
+                var pc = ((loObj && loObj.performanceCriteria) || []).find(function (x) { return x && x.id === r.pcId; });
+                return (pc && pc.taskId && actsOf(pc.taskId)) || allActs;
+            };
+            out.items += _spFillForm(form, list.map(function (r) { var e = _spEntry(module, r, kind); e.acts = actsFor(r); return e; }));
+            /* The blank rows a new form starts with are not left under
+               the criteria written (3.37.0). */
+            form.rows = form.rows.filter(function (row) {
+                return String(_spRowText(row) || '').trim() || row.activities || row.outcomes || row.verification || row.date;
+            });
             list.forEach(function (r) {
                 if (r.taskId === MB_LO_PC) { if (form._aiSource.pcIds.indexOf(r.pcId) === -1) form._aiSource.pcIds.push(r.pcId); }
                 else { var k = _mbSelKey(r); if (form._aiSource.keys.indexOf(k) === -1) form._aiSource.keys.push(k); }
