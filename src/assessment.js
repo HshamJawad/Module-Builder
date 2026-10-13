@@ -181,7 +181,7 @@ function renderAssessmentForms() {
             formHTML += `
                 <tr>
                     <td style="border: 1px solid #d1d5db; padding: 8px;">
-                        <input type="text" value="${escapeHtml(row.criteria || '')}" 
+                        <input type="text" value="${escapeHtml(_mbAsmCriteria(row.criteria))}" placeholder="${escapeHtml(_mbAsmCriteriaHint(row.criteria))}" dir="auto" 
                             data-act="updateAssessmentCell" data-on="change" data-args='["${lo.id}",${rowIndex},"criteria","$value"]'
                             style="width: 100%; border: 1px solid #e5e7eb; padding: 6px; border-radius: 4px; font-size: 0.9em;">
                     </td>
@@ -359,8 +359,24 @@ async function deleteAssessmentForm(loId) {
 
 function updateAssessmentCell(loId, rowIndex, field, value) {
     if (mbState.assessmentFormsData[loId] && mbState.assessmentFormsData[loId].rows[rowIndex]) {
-        mbState.assessmentFormsData[loId].rows[rowIndex][field] = value;
+        var row = mbState.assessmentFormsData[loId].rows[rowIndex];
+        /* 3.34.0: a criterion written from "Suggested content" holds one
+           side per language; typing changes the content language's side. */
+        if (field === 'criteria' && typeof biIs === 'function' && biIs(row.criteria)) row.criteria[contentLang()] = value;
+        else row[field] = value;
     }
+}
+
+/* 3.34.0: the criterion cell — a plain string (typed here before), or a
+   { en, ar, fr } value shown on the content language's side; an empty
+   side shows the other language as a hint, never as the value. */
+function _mbAsmCriteria(v) {
+    if (typeof v === 'string') return v;
+    return (typeof biGetStrict === 'function' && v) ? biGetStrict(v, contentLang()) : '';
+}
+function _mbAsmCriteriaHint(v) {
+    if (!v || typeof v === 'string' || typeof biGet !== 'function') return '';
+    return biGetStrict(v, contentLang()) ? '' : biGet(v, contentLang());
 }
 
 function updateAssessmentResult(loId, field, value) {

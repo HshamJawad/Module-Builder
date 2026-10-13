@@ -1,0 +1,539 @@
+{
+  "contentLanguage": "en",
+  "source": "DACUM Live Pro v1.0",
+  "exportDate": "2026-10-13T10:09:06.232Z",
+  "handoffVersion": 2,
+  "programId": "project_1791886142791_vfxp1",
+  "dacumUrl": "http://127.0.0.1:4173/index.html",
+  "programName": "Sample",
+  "dacumVersion": "3.104.0",
+  "occupation": "Maintenance Technician",
+  "occupationTitle": "Maintenance Technician",
+  "jobTitle": "Computer Maintenance Technician",
+  "sector": "",
+  "labelMode": "code",
+  "modules": [
+    {
+      "moduleId": "module_1",
+      "moduleNumber": "M1",
+      "moduleCode": "CMT 1",
+      "shortName": "Core",
+      "moduleTitle": "Implementing Core Work",
+      "level": null,
+      "track": "",
+      "learningOutcomes": [
+        {
+          "loId": "lo_1",
+          "number": "LO1",
+          "statement": "Perform outcome 0",
+          "performanceCriteria": [
+            {
+              "id": "1-2",
+              "text": "Work is checked against specifications 1",
+              "taskId": null,
+              "sourceTaskIds": [
+                "duty_1_1",
+                "duty_1_2",
+                "duty_1_3",
+                "duty_1_4",
+                "duty_2_1",
+                "duty_2_2"
+              ]
+            },
+            {
+              "id": "1-5",
+              "text": "Work is checked against specifications 4",
+              "taskId": null,
+              "sourceTaskIds": [
+                "duty_1_1",
+                "duty_1_2",
+                "duty_1_3",
+                "duty_1_4",
+                "duty_2_1",
+                "duty_2_2"
+              ]
+            },
+            {
+              "id": "2-3",
+              "text": "Work is checked against specifications 3",
+              "taskId": null,
+              "sourceTaskIds": [
+                "duty_2_3",
+                "duty_2_4",
+                "duty_3_1",
+                "duty_3_2",
+                "duty_3_3",
+                "duty_3_4"
+              ]
+            }
+          ]
+        },
+        {
+          "loId": "lo_2",
+          "number": "LO2",
+          "statement": "Perform outcome 1",
+          "performanceCriteria": [
+            {
+              "id": "1-3",
+              "text": "Work is checked against specifications 2",
+              "taskId": null,
+              "sourceTaskIds": [
+                "duty_1_1",
+                "duty_1_2",
+                "duty_1_3",
+                "duty_1_4",
+                "duty_2_1",
+                "duty_2_2"
+              ]
+            },
+            {
+              "id": "2-1",
+              "text": "Work is checked against specifications 1",
+              "taskId": null,
+              "sourceTaskIds": [
+                "duty_2_3",
+                "duty_2_4",
+                "duty_3_1",
+                "duty_3_2",
+                "duty_3_3",
+                "duty_3_4"
+              ]
+            },
+            {
+              "id": "2-4",
+              "text": "Work is checked against specifications 4",
+              "taskId": null,
+              "sourceTaskIds": [
+                "duty_2_3",
+                "duty_2_4",
+                "duty_3_1",
+                "duty_3_2",
+                "duty_3_3",
+                "duty_3_4"
+              ]
+            }
+          ]
+        },
+        {
+          "loId": "lo_3",
+          "number": "LO3",
+          "statement": "Perform outcome 2",
+          "performanceCriteria": [
+            {
+              "id": "1-4",
+              "text": "Work is checked against specifications 3",
+              "taskId": null,
+              "sourceTaskIds": [
+                "duty_1_1",
+                "duty_1_2",
+                "duty_1_3",
+                "duty_1_4",
+                "duty_2_1",
+                "duty_2_2"
+              ]
+            },
+            {
+              "id": "2-2",
+              "text": "Work is checked against specifications 2",
+              "taskId": null,
+              "sourceTaskIds": [
+                "duty_2_3",
+                "duty_2_4",
+                "duty_3_1",
+                "duty_3_2",
+                "duty_3_3",
+                "duty_3_4"
+              ]
+            }
+          ]
+        }
+      ],
+      "sourceTaskIds": [
+        "duty_1_1",
+        "duty_1_2",
+        "duty_1_3",
+        "duty_1_4",
+        "duty_2_1",
+        "duty_2_2",
+        "duty_2_3",
+        "duty_2_4",
+        "duty_3_1",
+        "duty_3_2",
+        "duty_3_3",
+        "duty_3_4"
+      ],
+      "taskAnalysis": {
+        "duty_1_1": {
+          "taskCode": "TASK A1",
+          "performanceSteps": [
+            "Prepare the workspace",
+            "Inspect the unit",
+            "Clean the contacts"
+          ],
+          "requiredKnowledge": [
+            "Component layout"
+          ],
+          "requiredSkills": [
+            "Use a screwdriver"
+          ],
+          "toolsEquipmentMaterials": [
+            "Screwdriver set"
+          ],
+          "safetyOSH": [
+            "Disconnect power"
+          ],
+          "conditionsWorkEnvironment": "Service workshop",
+          "decisionsCriticalPoints": [
+            "Repair or replace the part"
+          ],
+          "performanceCriteria": [
+            "Unit is inspected against the checklist"
+          ],
+          "performanceStandard": "All checklist items verified.",
+          "commonErrorsTroubleshooting": [],
+          "basicReading": [
+            "Read the job card"
+          ],
+          "basicMath": [
+            "Calculate the repair time"
+          ],
+          "decisionTable": [
+            {
+              "decision": "Repair or replace the part",
+              "cue": "Visible wear",
+              "error": "Repeat failure",
+              "expert": "Checks the history first"
+            }
+          ],
+          "basicWriting": [],
+          "basicScience": [],
+          "workerBehaviours": []
+        }
+      },
+      "sourceTasks": [
+        {
+          "id": "duty_1_1",
+          "code": "TASK A1",
+          "text": "Perform task A1",
+          "dutyTitle": "Duty A"
+        },
+        {
+          "id": "duty_1_2",
+          "code": "TASK A2",
+          "text": "Perform task A2",
+          "dutyTitle": "Duty A"
+        },
+        {
+          "id": "duty_1_3",
+          "code": "TASK A3",
+          "text": "Perform task A3",
+          "dutyTitle": "Duty A"
+        },
+        {
+          "id": "duty_1_4",
+          "code": "TASK A4",
+          "text": "Perform task A4",
+          "dutyTitle": "Duty A"
+        },
+        {
+          "id": "duty_2_1",
+          "code": "TASK B1",
+          "text": "Perform task B1",
+          "dutyTitle": "Duty B"
+        },
+        {
+          "id": "duty_2_2",
+          "code": "TASK B2",
+          "text": "Perform task B2",
+          "dutyTitle": "Duty B"
+        },
+        {
+          "id": "duty_2_3",
+          "code": "TASK B3",
+          "text": "Perform task B3",
+          "dutyTitle": "Duty B"
+        },
+        {
+          "id": "duty_2_4",
+          "code": "TASK B4",
+          "text": "Perform task B4",
+          "dutyTitle": "Duty B"
+        },
+        {
+          "id": "duty_3_1",
+          "code": "TASK C1",
+          "text": "Perform task C1",
+          "dutyTitle": "Duty C"
+        },
+        {
+          "id": "duty_3_2",
+          "code": "TASK C2",
+          "text": "Perform task C2",
+          "dutyTitle": "Duty C"
+        },
+        {
+          "id": "duty_3_3",
+          "code": "TASK C3",
+          "text": "Perform task C3",
+          "dutyTitle": "Duty C"
+        },
+        {
+          "id": "duty_3_4",
+          "code": "TASK C4",
+          "text": "Perform task C4",
+          "dutyTitle": "Duty C"
+        }
+      ],
+      "curriculum": null
+    }
+  ],
+  "occupationalReference": {
+    "type": "Verified Occupational Reference Data",
+    "source": "DACUM Live Pro — Supplementary Occupational Verification",
+    "usage": "reference-only: not to be converted automatically into learning outcomes",
+    "separateFromTaskPriority": true,
+    "available": false,
+    "message": "No supplementary verification data",
+    "categories": []
+  },
+  "contentLanguages": {
+    "v": 1,
+    "original": "en",
+    "shown": "en",
+    "tables": [
+      {
+        "lang": "ar",
+        "pairs": [
+          [
+            "Maintenance Technician",
+            "ع Maintenance Technician"
+          ],
+          [
+            "Computer Maintenance Technician",
+            "ع Computer Maintenance Technician"
+          ],
+          [
+            "Repairs and maintains desktop and laptop computers in a service workshop.",
+            "ع Repairs and maintains desktop and laptop computers in a service workshop."
+          ],
+          [
+            "knowledge item 1",
+            "ع knowledge item 1"
+          ],
+          [
+            "knowledge item 2",
+            "ع knowledge item 2"
+          ],
+          [
+            "skills item 1",
+            "ع skills item 1"
+          ],
+          [
+            "skills item 2",
+            "ع skills item 2"
+          ],
+          [
+            "behaviors item 1",
+            "ع behaviors item 1"
+          ],
+          [
+            "behaviors item 2",
+            "ع behaviors item 2"
+          ],
+          [
+            "tools item 1",
+            "ع tools item 1"
+          ],
+          [
+            "tools item 2",
+            "ع tools item 2"
+          ],
+          [
+            "trends item 1",
+            "ع trends item 1"
+          ],
+          [
+            "trends item 2",
+            "ع trends item 2"
+          ],
+          [
+            "PC - Personal Computer",
+            "ع PC - Personal Computer"
+          ],
+          [
+            "Entry Level: Assistant",
+            "ع Entry Level: Assistant"
+          ],
+          [
+            "Duty A",
+            "ع Duty A"
+          ],
+          [
+            "Perform task A1",
+            "أداء المهمة A1"
+          ],
+          [
+            "Perform task A2",
+            "ع Perform task A2"
+          ],
+          [
+            "Perform task A3",
+            "ع Perform task A3"
+          ],
+          [
+            "Perform task A4",
+            "ع Perform task A4"
+          ],
+          [
+            "Duty B",
+            "ع Duty B"
+          ],
+          [
+            "Perform task B1",
+            "ع Perform task B1"
+          ],
+          [
+            "Perform task B2",
+            "ع Perform task B2"
+          ],
+          [
+            "Perform task B3",
+            "ع Perform task B3"
+          ],
+          [
+            "Perform task B4",
+            "ع Perform task B4"
+          ],
+          [
+            "Duty C",
+            "ع Duty C"
+          ],
+          [
+            "Perform task C1",
+            "ع Perform task C1"
+          ],
+          [
+            "Perform task C2",
+            "ع Perform task C2"
+          ],
+          [
+            "Perform task C3",
+            "ع Perform task C3"
+          ],
+          [
+            "Perform task C4",
+            "ع Perform task C4"
+          ],
+          [
+            "Prepare the workspace",
+            "تجهيز مكان العمل"
+          ],
+          [
+            "Inspect the unit",
+            "فحص الوحدة"
+          ],
+          [
+            "Component layout",
+            "توزيع المكونات"
+          ],
+          [
+            "Use a screwdriver",
+            "استخدام مفك البراغي"
+          ],
+          [
+            "Screwdriver set",
+            "طقم مفكات"
+          ],
+          [
+            "Disconnect power",
+            "فصل التيار الكهربائي"
+          ],
+          [
+            "Service workshop",
+            "ورشة الصيانة"
+          ],
+          [
+            "Repair or replace the part",
+            "إصلاح القطعة أو استبدالها"
+          ],
+          [
+            "Unit is inspected against the checklist",
+            "تُفحص الوحدة وفق قائمة التحقق"
+          ],
+          [
+            "All checklist items verified.",
+            "التحقق من جميع بنود القائمة."
+          ],
+          [
+            "Read the job card",
+            "قراءة بطاقة العمل"
+          ],
+          [
+            "Calculate the repair time",
+            "حساب زمن الإصلاح"
+          ],
+          [
+            "Visible wear",
+            "تآكل ظاهر"
+          ],
+          [
+            "Repeat failure",
+            "تكرار العطل"
+          ],
+          [
+            "Checks the history first",
+            "يراجع سجل الصيانة أولاً"
+          ],
+          [
+            "Maintain hardware components",
+            "ع Maintain hardware components"
+          ],
+          [
+            "Applies across workshop and on-site settings.",
+            "ع Applies across workshop and on-site settings."
+          ],
+          [
+            "Work is checked against specifications 1",
+            "ع Work is checked against specifications 1"
+          ],
+          [
+            "Work is checked against specifications 2",
+            "ع Work is checked against specifications 2"
+          ],
+          [
+            "Work is checked against specifications 3",
+            "ع Work is checked against specifications 3"
+          ],
+          [
+            "Work is checked against specifications 4",
+            "ع Work is checked against specifications 4"
+          ],
+          [
+            "Configure software systems",
+            "ع Configure software systems"
+          ],
+          [
+            "Perform outcome 0",
+            "ع Perform outcome 0"
+          ],
+          [
+            "Perform outcome 1",
+            "ع Perform outcome 1"
+          ],
+          [
+            "Perform outcome 2",
+            "ع Perform outcome 2"
+          ],
+          [
+            "Implementing Core Work",
+            "ع Implementing Core Work"
+          ],
+          [
+            "Groups the core outcomes.",
+            "ع Groups the core outcomes."
+          ]
+        ]
+      }
+    ]
+  }
+}

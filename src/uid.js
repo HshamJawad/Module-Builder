@@ -144,6 +144,24 @@ function biMergeArrayById(stored, incoming, fields) {
     });
 }
 
+/**
+ * 3.34.0: a row whose box is empty in the language being edited is still
+ * a row when its stored item has text in another language. The
+ * collectors used to skip every empty box — and a row they skip is a
+ * row the merge drops — so switching the content language deleted every
+ * step, resource, criterion or section not yet written in it.
+ */
+function mbRowHasOtherSide(stored, uid, field) {
+    if (!uid || !Array.isArray(stored)) return false;
+    var item = stored.find(function (x) { return x && typeof x === 'object' && x.uid === uid; });
+    if (!item) return false;
+    var v = field ? item[field] : item;
+    if (typeof v === 'string') return !!v.trim();
+    if (!v || typeof v !== 'object') return false;
+    return (typeof BILANG_CODES !== 'undefined' ? BILANG_CODES : ['en', 'ar', 'fr'])
+        .some(function (c) { return typeof v[c] === 'string' && v[c].trim(); });
+}
+
 /** The bare-pair version, for activity criteria. */
 function biMergeStringsById(stored, incoming) {
     stored = Array.isArray(stored) ? stored : [];

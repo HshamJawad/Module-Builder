@@ -3639,3 +3639,11 @@ html[dir="rtl"] .mb-sp[open] > summary::before { transform: rotate(-90deg); }
     .mb-cov-row, .mb-cov-def { grid-template-columns: minmax(0, 1fr) repeat(3, 40px); gap: 4px; padding: 5px 8px; }
     .mb-cov-kl { display: none; }        /* the icons name the columns; the legend explains them */
 }
+
+/* ── 3.34.0: one language per text ───────────────────────────── */
+.mb-sp-text.is-other-lang { color: #6b7280; }
+.mb-sp-lang { display: inline-block; margin-inline-start: 4px; padding: 0 6px; border-radius: 6px; font-size: 0.7em; font-weight: 800; letter-spacing: .04em; color: #92400e; background: #fef3c7; border: 1px solid #fcd34d; cursor: help; vertical-align: middle; direction: ltr; }
+.mb-sp-langbar { margin: 0 0 10px; padding: 8px 12px; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 10px; color: #78350f; font-size: 0.84em; line-height: 1.6; }
+.mb-sp-langbar p { margin: 0 0 6px; }
+.mb-sp-langbar-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.mb-sp-langbar-acts span { font-size: 0.95em; color: #92400e; }

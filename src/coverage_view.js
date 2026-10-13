@@ -101,7 +101,7 @@ function _covHtml() {
                     (r.taskId === MB_LO_PC ? _covT('mbSpSrcLoPc') : _mbFieldLabel(r.field)) +
                     (lo ? ' · ' + _cmLoLabel(lo) : ' · ⚠ ' + _covT('mbSpNeedsLo'));
                 return '<div class="mb-cov-row' + (r.dests.length ? '' : ' is-none') + '">' +
-                    '<span class="mb-cov-item"><span dir="auto">' + _covEsc(_mbCleanItem(r.useText)) + '</span>' +
+                    '<span class="mb-cov-item"><span dir="auto">' + _covEsc(_spShownText(module, r).text) + '</span>' +
                     '<small dir="auto">' + _covEsc(meta) + (r.same ? ' · ＝ ' + _covEsc(_covT('mbCmStSame', { v0: _mbTaskLabel(r.same.taskId) })) : '') +
                     (r.twice ? ' · ⚠ ' + _covEsc(_covT('mbCmStTwice', { v0: r.places.length })) : '') + '</small></span>' +
                     MB_CM_KINDS.map(function (k) { return _covCell(r, k); }).join('') + '</div>';

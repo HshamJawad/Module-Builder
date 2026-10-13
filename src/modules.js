@@ -175,6 +175,12 @@ function _mbApplyDacumModuleFields(module, dacumModule, exportData) {
        transfer without them leaves no stale translations behind. */
     const di = (typeof mbDacumI18nFrom === 'function') ? mbDacumI18nFrom(exportData) : null;
     if (di) module.dacumI18n = di; else delete module.dacumI18n;
+    /* 3.34.0: the language DACUM's texts are in (DACUM Live Pro 3.105+).
+       Each text is written on the side of its own language; see
+       mbDacumLang() in dacum_i18n.js for older handoffs. */
+    const dl = String(exportData.contentLanguage || '').trim();
+    if (dl && (typeof BILANG_CODES === 'undefined' || BILANG_CODES.indexOf(dl) !== -1)) module.dacumLang = dl;
+    else delete module.dacumLang;
     /* 3.17.0: tasks left out of training in DACUM's Task Verification
        (DACUM Live Pro 3.84+), with their reasons — documentation only.
        Programme-level, kept on every module like the reference data and
