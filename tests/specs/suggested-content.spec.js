@@ -100,7 +100,9 @@ test('approve and build: one sheet per task, shown below, reusing the empty shee
   await tab(page, 'assessment');
   await panel(page, 'assessment').locator('[data-act="mbSpApproveMany"]').click();
   await panel(page, 'assessment').locator('[data-act="mbSpBuild"][data-args*="all"]').click();
-  const form = await page.evaluate(() => mbState.assessmentFormsData[mbState.currentLOId].rows.map(r => r.criteria));
+  // 3.34.0: each criterion is a { en, ar, fr } value (English only here)
+  const form = await page.evaluate(() => mbState.assessmentFormsData[mbState.currentLOId].rows
+    .map(r => typeof r.criteria === 'string' ? r.criteria : r.criteria.en));
   expect(form.slice(0, 3)).toEqual(['Work is checked against specifications 1', 'Work is checked against specifications 4',
     'Work is checked against specifications 3']);
   expect(form).toContain('Critical: Repair or replace in duty_1_1');

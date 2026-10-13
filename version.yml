@@ -58,11 +58,12 @@ jobs:
           # map in Training Structure Mapping, 3.31 for its "see also"
           # references in the app and the exports, 3.32 for task criteria
           # on the activity checklist and the outcome criteria in the form,
-          # 3.33 for the suggested content in the sheet tabs and coverage.
+          # 3.33 for the suggested content in the sheet tabs and coverage,
+          # 3.34 for one language per text (DACUM texts on their own side).
           # version.json now reads 3.7.0, and any value left behind here
           # would roll the number backwards to <old>.<run> on the next
           # push — the same failure, one minor later.
-          MAJOR_MINOR: "3.33"
+          MAJOR_MINOR: "3.34"
         run: |
           VERSION="${MAJOR_MINOR}.${GITHUB_RUN_NUMBER}"
           BUILD="$(date -u +%Y-%m-%d)"

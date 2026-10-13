@@ -1460,7 +1460,7 @@ function _mbBuildAssessmentUnit(module, item, aiMapping) {
         /* 3.31.1: without the "1." a Task Analysis list carries. */
         .map(t => (typeof t === 'string' ? _mbCleanItem(t) : t));
 
-    const existingCriteria = new Set(form.rows.map(r => _mbCleanItem(r.criteria || '')).filter(Boolean));
+    const existingCriteria = new Set(form.rows.map(r => _mbCleanItem(typeof r.criteria === 'string' ? r.criteria : biGet(r.criteria, contentLang()))).filter(Boolean));
     criteriaTexts.forEach(text => {
         text = String(text == null ? '' : (typeof text === 'object' ? _mbPcText({ text }) : text));
         if (!text.trim() || existingCriteria.has(text.trim())) return;

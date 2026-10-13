@@ -154,7 +154,9 @@ function saveCurrentSheetToLO() {
         /* A renamed but still-empty card is kept. Dropping it would throw
            away the name the moment the author typed it and moved on to
            fill the box in later. */
-        if (content.value.trim() || tables.length || marks.length || heading.trim()) {
+        if (content.value.trim() || tables.length || marks.length || heading.trim() ||
+            mbRowHasOtherSide(storedInfo.contentSections, mbRowUid(content), 'text') ||
+            mbRowHasOtherSide(storedInfo.contentSections, mbRowUid(content), 'heading')) {
             incomingSections.push({ text: content.value, heading, contentId: cid, marks, tables,
                                     uid: mbRowUid(content) });
         }
@@ -224,7 +226,7 @@ function saveCurrentSheetToLO() {
     const incomingResources = [];
     document.querySelectorAll('.resource-name').forEach((resource) => {
         const qtyEl = document.querySelector(`[data-quantity-id="${resource.dataset.resourceId}"]`);
-        if (resource.value.trim()) {
+        if (resource.value.trim() || mbRowHasOtherSide(storedAct.resources, mbRowUid(resource), 'name')) {
             incomingResources.push({ name: resource.value, quantity: qtyEl ? qtyEl.value : '',
                                      uid: mbRowUid(resource) });
         }
@@ -234,7 +236,7 @@ function saveCurrentSheetToLO() {
     // Collect steps
     const incomingSteps = [];
     document.querySelectorAll('[data-step-id]').forEach((step) => {
-        if (step.value.trim()) {
+        if (step.value.trim() || mbRowHasOtherSide(storedAct.steps, mbRowUid(step), 'text')) {
             const sid = step.dataset.stepId;
             incomingSteps.push({ text: step.value, stepId: sid, marks: collectMarks(`step-marks-${sid}`),
                 tables: collectContentTables(`step-${sid}`),
@@ -256,7 +258,7 @@ function saveCurrentSheetToLO() {
        selector to inputs collects exactly the rows this function was
        always meant to read. */
     document.querySelectorAll('input.criteria-text').forEach(item => {
-        if (typeof item.value === 'string' && item.value.trim()) {
+        if (typeof item.value === 'string' && (item.value.trim() || mbRowHasOtherSide(storedAct.criteria, mbRowUid(item), null))) {
             incomingCriteria.push({ text: item.value, uid: mbRowUid(item) });
         }
     });

@@ -203,17 +203,25 @@ function _cmWrittenIndex(module) {
         if (!arr) { arr = []; map.set(k, arr); }
         if (!arr.some(function (p) { return p.id === place.id; })) arr.push(place);
     };
-    var str = function (v) { return (typeof biGetStrict === 'function') ? biGetStrict(v, lang) : (typeof v === 'string' ? v : ''); };
+    /* 3.34.0: every language side counts — an item written on its
+       English side only is written. */
+    var sides = function (v) {
+        if (typeof v === 'string') return [v];
+        if (!v || typeof v !== 'object') return [];
+        return Object.keys(v).filter(function (k) { return typeof v[k] === 'string' && v[k].trim() && k !== 'uid'; })
+            .map(function (k) { return v[k]; });
+    };
+    var addAll = function (map, v, place) { sides(v).forEach(function (t) { add(map, _mbNorm(t), place); }); };
     _cmLos(module).forEach(function (lo) {
         (lo.infoSheets || []).forEach(function (sh, i) {
             var place = { id: 'i|' + lo.id + '|' + i, kind: 'info', lo: lo, n: i + 1, title: biGet(sh.title, lang) || '' };
-            (sh.contentSections || []).forEach(function (c) { add(byText, _mbNorm(str(c.heading)), place); });
+            (sh.contentSections || []).forEach(function (c) { addAll(byText, c.heading, place); });
             ((sh._aiSource && sh._aiSource.sourceSelections) || []).forEach(function (s) { add(byKey, _mbSelKey(s), place); });
         });
         (lo.activitySheets || []).forEach(function (sh, i) {
             var place = { id: 'a|' + lo.id + '|' + i, kind: 'activity', lo: lo, n: i + 1, title: biGet(sh.title, lang) || '' };
-            (sh.steps || []).forEach(function (x) { add(byText, _mbNorm(str(x.text)), place); });
-            (sh.resources || []).forEach(function (x) { add(byText, _mbNorm(str(x.name)), place); });
+            (sh.steps || []).forEach(function (x) { addAll(byText, x.text, place); });
+            (sh.resources || []).forEach(function (x) { addAll(byText, x.name, place); });
             /* The sheet's criteria checklist repeats the outcome's criteria
                on purpose (practice against what is assessed): it is not a
                second writing of them. A criterion sent to this sheet from
@@ -223,10 +231,7 @@ function _cmWrittenIndex(module) {
         var form = (mbState.assessmentFormsData || {})[lo.id];
         if (form && Array.isArray(form.rows)) {
             var place = { id: 's|' + lo.id, kind: 'assessment', lo: lo, n: 0, title: '' };
-            form.rows.forEach(function (r) {
-                var c = r && r.criteria;
-                add(byText, _mbNorm(typeof c === 'string' ? c : str(c)), place);
-            });
+            form.rows.forEach(function (r) { addAll(byText, r && r.criteria, place); });
             /* 3.32.0: rows reworded in the form are still known by link. */
             ((form._aiSource && form._aiSource.keys) || []).forEach(function (k) { add(byKey, k, place); });
             ((form._aiSource && form._aiSource.pcIds) || []).forEach(function (k) { add(byPc, k, place); });
@@ -243,10 +248,12 @@ function _cmMissingPcs(module, lo) {
     var form = (mbState.assessmentFormsData || {})[lo.id];
     var done = new Set((form && form._aiSource && form._aiSource.pcIds) || []);
     var lang = contentLang();
-    var words = new Set(((form && form.rows) || []).map(function (r) {
+    var words = new Set();
+    ((form && form.rows) || []).forEach(function (r) {
         var c = r && r.criteria;
-        return _mbNorm(typeof c === 'string' ? c : (typeof biGetStrict === 'function' ? biGetStrict(c, lang) : ''));
-    }));
+        if (typeof c === 'string') words.add(_mbNorm(c));
+        else if (c && typeof c === 'object') Object.keys(c).forEach(function (k) { if (typeof c[k] === 'string') words.add(_mbNorm(c[k])); });
+    });
     return pcs.filter(function (pc) { return !done.has(pc.id) && !words.has(_mbNorm(_mbPcText(pc))); });
 }
 
@@ -302,9 +309,10 @@ function mbContentMapRows(module) {
         var arr = function (v) { return Array.isArray(v) ? v.filter(function (x) { return typeof x === 'string'; }) : []; };
         var ok = mine ? _cmCleanKinds(arr(s.ok)).filter(function (k) { return dests.indexOf(k) !== -1; }) : [];
         var edited = mine && typeof s.x === 'string' && s.x.trim() && s.x !== text ? s.x : '';
+        var editLang = edited && typeof s.xl === 'string' ? s.xl : '';   // 3.34.0: the language it was written in
         var row = { key: key, taskId: taskId, field: field, itemIndex: idx, text: text,
                     lo: lo, dests: dests, dest: dests[0] || 'none', sugLo: sugLo, sugDests: sugDests,
-                    sugDest: sugDests[0] || 'none', ok: ok, edited: edited, useText: edited || text,
+                    sugDest: sugDests[0] || 'none', ok: ok, edited: edited, editLang: editLang, useText: edited || text,
                     taskLo: (taskId === MB_CC_TASK || taskId === MB_LO_PC) ? '' : (owner[taskId] || ''),
                     directLos: direct[taskId] || [],
                     refAdd: mine ? arr(s.ra) : [], refDel: mine ? arr(s.rd) : [],
@@ -659,7 +667,9 @@ function _cmPut(module, row, prop, value) {
         if (!s.ok.length) delete s.ok;
         else if (!Array.isArray(s.d)) s.d = row.dests.slice();
     } else if (prop === 'x') {
-        if (typeof value !== 'string' || !value.trim() || value === row.text) delete s.x;
+        if (typeof value !== 'string' || !value.trim() || value === row.text) { delete s.x; delete s.xl; }
+    } else if (prop === 'xl') {
+        if (typeof value !== 'string' || !value || s.x === undefined) delete s.xl;
     } else if (!Array.isArray(value) || !value.length) {
         delete s[prop];
     }

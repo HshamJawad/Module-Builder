@@ -36,7 +36,8 @@ var MB_DI18N_PREFIX = /^(\s*(?:[•\-*○●▪◦·]\s*)?(?:\d+[.)]\s*)?)/;
 var MB_DI18N_SKIP = {
     id: 1, moduleId: 1, loId: 1, dacumLoId: 1, taskId: 1, sourceTaskIds: 1,
     moduleCode: 1, shortName: 1, moduleNumber: 1, number: 1, track: 1,
-    taskCode: 1, code: 1, source: 1, dacumI18n: 1, labelMode: 1
+    taskCode: 1, code: 1, source: 1, dacumI18n: 1, labelMode: 1,
+    mbI18n: 1, dacumLang: 1
 };
 
 /** The record to keep on a module, from a handoff (or null). */
@@ -54,10 +55,14 @@ function mbDacumI18nFrom(exportData) {
     return { v: 1, original: String(cl.original || ''), shown: String(cl.shown || ''), tables: tables };
 }
 
-/** shown text → text in `lang`, from every module of `modules`. */
+/** shown text → text in `lang`, from every module of `modules`.
+ *  3.34.0: then the translations made here (module.mbI18n — "✨
+ *  Translate" in the suggested-content panels), for texts DACUM did not
+ *  translate. DACUM's own come first. */
 function _mbDacumMap(modules, lang) {
     var map = new Map();
-    (Array.isArray(modules) ? modules : []).forEach(function (m) {
+    var list = Array.isArray(modules) ? modules : [];
+    list.forEach(function (m) {
         var r = m && m.dacumI18n;
         if (!r || !Array.isArray(r.tables) || r.shown === lang) return;
         r.tables.forEach(function (t) {
@@ -65,10 +70,49 @@ function _mbDacumMap(modules, lang) {
             t.pairs.forEach(function (p) { if (!map.has(p[0])) map.set(p[0], p[1]); });
         });
     });
+    list.forEach(function (m) {
+        var own = m && m.mbI18n && m.mbI18n[lang];
+        if (!own || typeof own !== 'object' || mbDacumLang(m) === lang) return;
+        Object.keys(own).forEach(function (k) { if (!map.has(k) && typeof own[k] === 'string') map.set(k, own[k]); });
+    });
     return map;
 }
 
-function _mbDacumStr(v, map) {
+/* ── 3.34.0: the language DACUM's texts are in ──────────────────
+   DACUM Live Pro 3.105+ says so (contentLanguage); before that the
+   translations record says which version was shown; with neither, the
+   script of the texts decides (Arabic letters → 'ar', else English). */
+function mbDacumLang(module) {
+    var codes = (typeof BILANG_CODES !== 'undefined') ? BILANG_CODES : ['en', 'ar', 'fr'];
+    if (!module) return 'en';
+    if (codes.indexOf(module.dacumLang) !== -1) return module.dacumLang;
+    var r = module.dacumI18n;
+    if (r && codes.indexOf(r.shown) !== -1) return r.shown;
+    var sample = [String(module.title || '')];
+    (module.learningOutcomes || []).forEach(function (lo) { sample.push(String(lo.statement || '')); });
+    var ta = (module.taskAnalysisSource && module.taskAnalysisSource.taskAnalysis) || {};
+    Object.keys(ta).slice(0, 5).forEach(function (k) { sample.push((ta[k].performanceSteps || []).join(' ')); });
+    var t = sample.join(' ');
+    var ar = (t.match(/[\u0600-\u06FF]/g) || []).length;
+    var lat = (t.match(/[A-Za-z\u00C0-\u017F]/g) || []).length;
+    if (ar > lat) return 'ar';
+    if (/[àâçéèêëîïôûùüÿœæ]/i.test(t) && (t.match(/\b(le|la|les|des|du|et)\b/gi) || []).length > 3) return 'fr';
+    return 'en';
+}
+
+/** A DACUM text of `module` in `lang`; null when it has no version in
+ *  that language yet (never the text of another language). */
+function mbDacumTextIn(module, text, lang) {
+    if (typeof text !== 'string' || !text) return text;
+    if (lang === mbDacumLang(module)) return text;
+    var st = (typeof window !== 'undefined' && window.mbState) || null;
+    var map = _mbDacumMap(st && st.modulesData, lang);
+    if (!map.size) return null;
+    var out = _mbDacumStr(text, map, lang);
+    return out !== text ? out : null;
+}
+
+function _mbDacumStr(v, map, lang) {
     if (!v || !map.size) return v;
     if (map.has(v)) return map.get(v);
     var m = MB_DI18N_PREFIX.exec(v);
@@ -77,26 +121,36 @@ function _mbDacumStr(v, map) {
     var tail = /\s*$/.exec(rest)[0];
     var core = rest.slice(0, rest.length - tail.length);
     if (map.has(core)) return p + map.get(core) + tail;
+    /* 3.34.0: "Safety: <text>" written by the suggested-content panels —
+       the label goes into the language too. */
+    var lab2 = /^([^:\n]{1,40}):\s+([\s\S]+)$/.exec(v);
+    if (lab2 && lang && typeof mbSpLabelIn === 'function') {
+        var tl = mbSpLabelIn(lab2[1], lang);
+        if (tl !== null) {
+            var body = map.has(lab2[2]) ? map.get(lab2[2]) : _mbDacumStr(lab2[2], map, lang);
+            if (body !== lab2[2]) return tl + ': ' + body;
+        }
+    }
     /* "LO1: <statement>" — the outcome title Module Builder builds. */
     var lab = /^([^\s:]{1,12}:\s+)([\s\S]+)$/.exec(v);
     if (lab && map.has(lab[2])) return lab[1] + map.get(lab[2]);
     if (v.indexOf('\n') !== -1) {
         var ch = false;
-        var out = v.split('\n').map(function (l) { var r = _mbDacumStr(l, map); if (r !== l) ch = true; return r; });
+        var out = v.split('\n').map(function (l) { var r = _mbDacumStr(l, map, lang); if (r !== l) ch = true; return r; });
         return ch ? out.join('\n') : v;
     }
     return v;
 }
 
-function _mbDacumWalk(node, map, key) {
+function _mbDacumWalk(node, map, key, lang) {
     if (key && MB_DI18N_SKIP[key]) return node;
-    if (typeof node === 'string') return _mbDacumStr(node, map);
+    if (typeof node === 'string') return _mbDacumStr(node, map, lang);
     if (Array.isArray(node)) {
-        for (var i = 0; i < node.length; i++) node[i] = _mbDacumWalk(node[i], map, null);
+        for (var i = 0; i < node.length; i++) node[i] = _mbDacumWalk(node[i], map, null, lang);
         return node;
     }
     if (node && typeof node === 'object') {
-        Object.keys(node).forEach(function (k) { node[k] = _mbDacumWalk(node[k], map, k); });
+        Object.keys(node).forEach(function (k) { node[k] = _mbDacumWalk(node[k], map, k, lang); });
     }
     return node;
 }
@@ -109,7 +163,7 @@ function mbLocalizeDacum(st, lang) {
     if (!st || typeof st !== 'object') return st;
     var map = _mbDacumMap(st.modulesData, lang);
     if (!map.size) return st;
-    return _mbDacumWalk(st, map, null);
+    return _mbDacumWalk(st, map, null, lang);
 }
 
 /** One DACUM text in `lang` (default: the content language being
@@ -119,5 +173,5 @@ function mbDacumText(text, lang) {
     var l = lang || ((typeof contentLang === 'function') ? contentLang() : 'en');
     var st = (typeof window !== 'undefined' && window.mbState) || null;
     var map = _mbDacumMap(st && st.modulesData, l);
-    return map.size ? _mbDacumStr(text, map) : text;
+    return map.size ? _mbDacumStr(text, map, l) : text;
 }
