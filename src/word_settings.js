@@ -111,6 +111,8 @@ var _WS_STRINGS = {
         wsPvBody:        'By the end of this outcome the trainee will be able to…',
         wsPvTable:       'Material / Equipment',
         wsPvUserCell:    'Table cell',
+        wsPvResources:   'Training resources: Screwdriver set — 1',
+        wsPvChecklist:   'Checklist: The work area is left clean and safe.',
         wsPvTableCell:   'Screwdriver set',
         wsReset:         'Reset to default',
         wsClose:         'Close',
@@ -157,6 +159,8 @@ var _WS_STRINGS = {
         wsPvBody:        'À la fin de ce résultat, l\u2019apprenant sera capable de…',
         wsPvTable:       'Matériel / Équipement',
         wsPvUserCell:    'Cellule de tableau',
+        wsPvResources:   'Ressources : Jeu de tournevis — 1',
+        wsPvChecklist:   'Liste : La zone de travail est laissée propre et sûre.',
         wsPvTableCell:   'Jeu de tournevis',
         wsReset:         'Réinitialiser',
         wsClose:         'Fermer',
@@ -203,6 +207,8 @@ var _WS_STRINGS = {
         wsPvBody:        'في نهاية هذا الناتج سيكون المتدرّب قادراً على…',
         wsPvTable:       'المادة / التجهيزات',
         wsPvUserCell:    'خلية جدول',
+        wsPvResources:   'موارد التدريب: طقم مفكات — 1',
+        wsPvChecklist:   'قائمة الفحص: تُترك منطقة العمل نظيفة وآمنة.',
         wsPvTableCell:   'طقم مفكات',
         wsReset:         'إعادة للوضع الافتراضي',
         wsClose:         'إغلاق',
@@ -526,7 +532,9 @@ function _wsPreviewHTML(s) {
         '<div class="ws-pv-line" style="font-size:' + s.bodySize    + 'pt">' + _wsT('wsPvBody') + '</div>' +
         '<div class="ws-pv-th" style="background:' + fill + ';color:' + onFill + '">' + _wsT('wsPvTable') + '</div>' +
         '<div class="ws-pv-line" style="font-size:' + s.tableSize     + 'pt;margin-top:6px">' + _wsT('wsPvTableCell') + '</div>' +
-        '<div class="ws-pv-line" style="font-size:' + s.userTableSize + 'pt">' + _wsT('wsPvUserCell') + '</div>';
+        '<div class="ws-pv-line" style="font-size:' + s.userTableSize + 'pt">' + _wsT('wsPvUserCell') + '</div>' +
+        '<div class="ws-pv-line" style="font-size:' + s.resourcesSize + 'pt">' + _wsT('wsPvResources') + '</div>' +
+        '<div class="ws-pv-line" style="font-size:' + s.checklistSize + 'pt">' + _wsT('wsPvChecklist') + '</div>';
 }
 
 function _wsRepaintPreview() {
@@ -592,7 +600,7 @@ function _wsEnsureStyle() {
            between Language (six lines) and Word (a preview and twelve
            rows). */
         '#ws-overlay .ws-modal{max-width:900px;width:min(94vw,900px);',
-        'height:min(86vh,720px);display:flex;flex-direction:column;}',
+        'height:min(92vh,840px);max-height:94vh;display:flex;flex-direction:column;}',
 
         '#ws-overlay .ws-shell{display:flex;flex:1;min-height:0;}',
 
@@ -741,6 +749,10 @@ function _wsPaneDoc() {
           '<div class="ws-swatches" id="ws-sw-table">' + _wsSwatches('tableHeaderColor', _wsDraft.tableHeaderColor) + '</div></div>' +
         '<p class="ws-note ws-note-sm">\u2139\uFE0F ' + _wsT('wsContrastNote') + '</p>' +
 
+        /* 3.41.0: the preview right under the colours, so a change is seen at once. */
+        '<h4 class="ws-group">\uD83D\uDC41\uFE0F ' + _wsT('wsPreview') + '</h4>' +
+        '<div class="ws-preview" id="ws-preview">' + _wsPreviewHTML(_wsDraft) + '</div>' +
+
         '<h4 class="ws-group">\uD83D\uDD24 ' + _wsT('wsSizes') + '</h4>' +
         '<div class="ws-row"><label>' + _wsT('wsTitleSize')   + '</label>' + _wsSizeSelect('titleSize',   _wsDraft.titleSize)   + '</div>' +
         '<div class="ws-row"><label>' + _wsT('wsSectionSize') + '</label>' + _wsSizeSelect('sectionSize', _wsDraft.sectionSize) + '</div>' +
@@ -761,8 +773,7 @@ function _wsPaneDoc() {
           '</select></div>' +
         '<p class="ws-note ws-note-sm">\u2139\uFE0F ' + _wsT('wsPdfFontNote') + '</p>' +
 
-        '<h4 class="ws-group">\uD83D\uDC41\uFE0F ' + _wsT('wsPreview') + '</h4>' +
-        '<div class="ws-preview" id="ws-preview">' + _wsPreviewHTML(_wsDraft) + '</div>';
+        '';
 }
 
 function _wsPaneHtml() {
