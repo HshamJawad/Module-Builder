@@ -1104,7 +1104,7 @@ async function exportToDocx() {
             mbState.learningOutcomesData.forEach((lo, index) => {
                 // Learning Outcome number and title
                 const loNumber = index + 1;
-                const loTitle = lo.title || '';
+                const loTitle = mbLoPlainTitle(lo.title || '');
                 /* Same guard the assessment forms already used, applied
                    here too. It matters far more in French than it ever
                    did in English: the DEFAULT outcome name and the
@@ -1547,11 +1547,12 @@ async function exportToDocx() {
                 };
                 info.contentSections.forEach((cs) => {
                     if (!cs.text || !cs.text.trim()) {
-                        // still export tables even if text is empty
-                        if (cs.tables && cs.tables.length) {
-                            _pushCsHeading(cs);
-                            cs.tables.forEach(t => _pushUserTable(t, ch));
-                        }
+                        /* 3.35.0: a section with a heading and no text yet
+                           is a topic of the sheet (a knowledge item sent by
+                           DACUM): its heading is printed. Only a section with
+                           neither heading, text nor table is left out. */
+                        _pushCsHeading(cs);
+                        if (cs.tables && cs.tables.length) cs.tables.forEach(t => _pushUserTable(t, ch));
                         return;
                     }
                     _pushCsHeading(cs);
@@ -1559,7 +1560,7 @@ async function exportToDocx() {
                     const csid = cs.contentId;
                     let imgs = (info.contentSectionImages && info.contentSectionImages[csid]) || [];
                     if (!Array.isArray(imgs)) imgs = [imgs];
-                    const row1 = [new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: pt, size: _wsBody(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl() })], width: { size: 4536, type: WidthType.DXA }, margins: { top: 150, bottom: 150, left: 150, right: 150 }, verticalAlign: 'center' })];
+                    const row1 = [new TableCell({ children: String(pt).split('\n').filter((l, i, a) => l.trim() || a.length === 1).map(l => new Paragraph({ children: [new TextRun({ text: l, size: _wsBody(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 80 } })), width: { size: 4536, type: WidthType.DXA }, margins: { top: 150, bottom: 150, left: 150, right: 150 }, verticalAlign: 'center' })];
                     if (imgs.length > 0) { try { row1.push(new TableCell({ children: [new Paragraph({ children: [_mkImgRun(imgs[0])], alignment: AlignmentType.CENTER })], width: { size: 4536, type: WidthType.DXA }, margins: { top: 150, bottom: 150, left: 150, right: 150 }, verticalAlign: 'center' })); } catch(e) { row1.push(new TableCell({ children: [new Paragraph({ text: '' })], width: { size: 4536, type: WidthType.DXA } })); } }
                     else { row1.push(new TableCell({ children: [new Paragraph({ text: '' })], width: { size: 4536, type: WidthType.DXA } })); }
                     const tRows = [new TableRow({ children: row1 })];
@@ -1736,7 +1737,7 @@ async function exportToDocx() {
             if (_seeRefs) { try { seeAlso = mbSeeAlsoFor(lo.id, _exportLang, mbState.learningOutcomesData, _seeRefs); } catch (e) { seeAlso = []; } }
             if (!loHasSheets && !seeAlso.length) return;
 
-            const loHdTitle = lo.title || '';
+            const loHdTitle = mbLoPlainTitle(lo.title || '');
             const loHdText = _mbTitledAlready(loHdTitle, 'expLearningOutcomeN')
                 ? loHdTitle
                 : _mbTf('expLearningOutcomeN', { v0: loIndex + 1, v1: loHdTitle });
@@ -1873,7 +1874,7 @@ async function exportToDocx() {
                     }));
                     
                     // Learning Outcome Title - prevent duplication
-                    const loTitle = lo.title || '';
+                    const loTitle = mbLoPlainTitle(lo.title || '');
                     /* The duplication guard only knew the ENGLISH prefix, so
                        an Arabic title that already begins with «محصلة التعلم 1:»
                        was not recognised and got the prefix a second time.

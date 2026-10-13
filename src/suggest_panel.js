@@ -415,7 +415,10 @@ function mbSpSetLo(kind, key, loId) {
 
 var MB_SP_LABEL_KEYS = ['mbSpSafety', 'mbSpConditions', 'mbSpCheckpoint', 'mbSpCalc', 'mbSpWatch', 'mbSpCritical',
     'mbSpMandatory', 'mbSpObserve', 'mbSpCue', 'mbSpConsequence', 'mbSpExpert', 'mbSpSupportSkills',
-    'mbSpBasic_basicReading', 'mbSpBasic_basicWriting', 'mbSpBasic_basicMath', 'mbSpBasic_basicScience'];
+    'mbSpBasic_basicReading', 'mbSpBasic_basicWriting', 'mbSpBasic_basicMath', 'mbSpBasic_basicScience',
+    'mbSpHead_tools', 'mbSpHead_safety', 'mbSpHead_errors'];
+/* Fields written on an information sheet as ONE section listing them. */
+var MB_SP_INFO_LISTS = { toolsEquipmentMaterials: 'mbSpHead_tools', safetyOSH: 'mbSpHead_safety', commonErrorsTroubleshooting: 'mbSpHead_errors' };
 function _spCodes() { return (typeof BILANG_CODES !== 'undefined') ? BILANG_CODES : ['en', 'ar', 'fr']; }
 function _spL(k, lang) { return (window.i18n && window.i18n.tIn) ? window.i18n.tIn(k, lang) : _spT(k); }
 
@@ -493,6 +496,12 @@ function _spEntryIn(module, r, kind, lang) {
     if (kind === 'info') {
         if (MB_CM_BASIC.indexOf(g) !== -1) {
             return { place: 'section', heading: _spL('mbSpSupportSkills', lang), body: tag('mbSpBasic_' + g, text), merge: true };
+        }
+        /* 3.35.0: tools, safety rules and common errors are lists, not
+           topics to write about — one section each, an item per line,
+           instead of a heading with no text for every tool. */
+        if (MB_SP_INFO_LISTS[g]) {
+            return { place: 'section', heading: _spL(MB_SP_INFO_LISTS[g], lang), body: text, merge: true };
         }
         if (dec) {
             var lines = [];
@@ -643,8 +652,8 @@ function _spFillForm(form, entries) {
         n++;
         var v = _spBi(e, 'text');
         var empty = form.rows.find(function (r) { return !String(_spRowText(r) || '').trim() && !r.activities && !r.outcomes && !r.verification; });
-        if (empty) empty.criteria = v;
-        else form.rows.push({ criteria: v, activities: '', outcomes: '', verification: '', date: '' });
+        if (empty) { empty.criteria = v; if (e.acts) empty.activities = e.acts; }
+        else form.rows.push({ criteria: v, activities: e.acts || '', outcomes: '', verification: '', date: '' });
     });
     return n;
 }
@@ -708,7 +717,27 @@ function _spWrite(module, rows, kind, into) {
             var rank = function (r) { return r.taskId === MB_LO_PC ? 0 : r.taskId === MB_CC_TASK ? 1 : 2; };
             var list = byLo[loId].map(function (r, i) { return { r: r, i: i }; })
                 .sort(function (a, b) { return rank(a.r) - rank(b.r) || a.i - b.i; }).map(function (x) { return x.r; });
-            out.items += _spFillForm(form, list.map(function (r) { return _spEntry(module, r, kind); }));
+            /* 3.35.0: the job sheets where each task is practised in this
+               outcome fill "Name and number of learning activities". */
+            var all = _spRows(module), acts = {};
+            var actsOf = function (taskId) {
+                if (!taskId || taskId === MB_LO_PC || taskId === MB_CC_TASK) return '';
+                if (acts[taskId] === undefined) {
+                    var nums = [];
+                    all.forEach(function (x) {
+                        if (x.taskId !== taskId) return;
+                        x.places.forEach(function (p) {
+                            if (p.kind !== 'activity' || p.lo.id !== loId) return;
+                            var sh = (p.lo.activitySheets || [])[p.n - 1];
+                            var num = (sh && sh.sheetNumber) || String(p.n);
+                            if (nums.indexOf(num) === -1) nums.push(num);
+                        });
+                    });
+                    acts[taskId] = nums.join(', ');
+                }
+                return acts[taskId];
+            };
+            out.items += _spFillForm(form, list.map(function (r) { var e = _spEntry(module, r, kind); e.acts = actsOf(r.taskId); return e; }));
             list.forEach(function (r) {
                 if (r.taskId === MB_LO_PC) { if (form._aiSource.pcIds.indexOf(r.pcId) === -1) form._aiSource.pcIds.push(r.pcId); }
                 else { var k = _mbSelKey(r); if (form._aiSource.keys.indexOf(k) === -1) form._aiSource.keys.push(k); }
@@ -762,6 +791,15 @@ function _spWrite(module, rows, kind, into) {
  *  right under the panel. */
 function _spShow(kind, focus) {
     if (typeof saveCurrentModuleLOData === 'function') saveCurrentModuleLOData();
+    /* The sheet on screen may just have been written. Show it again
+       from the data BEFORE anything saves the screen back — switching
+       outcome does — or its new title is overwritten by the old, empty
+       field (3.35.0, seen on the first sheet of a pilot module). */
+    var cur = mbState.learningOutcomesData.find(function (l) { return l.id === mbState.currentLOId; });
+    if (cur) {
+        if (kind === 'info' && cur.infoSheets && cur.infoSheets[mbState.currentInfoSheetIndex]) loadInfoSheetAtIndex(cur, mbState.currentInfoSheetIndex);
+        if (kind === 'activity' && cur.activitySheets && cur.activitySheets[mbState.currentActivitySheetIndex]) loadActivitySheetAtIndex(cur, mbState.currentActivitySheetIndex);
+    }
     if (focus && focus.loId && focus.loId !== mbState.currentLOId && typeof _applyLOSwitch === 'function') {
         _applyLOSwitch(focus.loId);
     }

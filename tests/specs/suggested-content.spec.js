@@ -39,11 +39,12 @@ test('everything DACUM sends arrives: basic skills, decisions table, category, e
   const by = f => rows.filter(r => r.field === f);
   expect(by('basicReading')[0].dests).toEqual(['info']);
   expect(by('basicMath')[0].dests).toEqual(['info', 'activity']);
-  expect(by('decisionsCriticalPoints')[0].dests).toEqual(['info', 'activity', 'assessment']);
-  expect(by('safetyOSH')[0].dests).toEqual(['info', 'activity', 'assessment']);
+  // 3.36.0: the assessment form takes criteria only
+  expect(by('decisionsCriticalPoints')[0].dests).toEqual(['info', 'activity']);
+  expect(by('safetyOSH')[0].dests).toEqual(['info', 'activity']);
   expect(by('performanceSteps')[0].dests).toEqual(['activity']);
   expect(by('requiredKnowledge')[0].dests).toEqual(['info']);
-  expect(by('conditionsWorkEnvironment')[0].dests).toEqual(['activity', 'assessment']);
+  expect(by('conditionsWorkEnvironment')[0].dests).toEqual(['activity']);
   expect(rows.filter(r => r.key.startsWith('__lopc__')).length).toBe(8);   // the outcomes' criteria
   expect(errors).toEqual([]);
 });
@@ -105,8 +106,9 @@ test('approve and build: one sheet per task, shown below, reusing the empty shee
     .map(r => typeof r.criteria === 'string' ? r.criteria : r.criteria.en));
   expect(form.slice(0, 3)).toEqual(['Work is checked against specifications 1', 'Work is checked against specifications 4',
     'Work is checked against specifications 3']);
-  expect(form).toContain('Critical: Repair or replace in duty_1_1');
-  expect(form).toContain('Mandatory: Disconnect power');
+  expect(form).toContain('Unit is inspected against the checklist');      // the task's own criterion
+  expect(form).not.toContain('Critical: Repair or replace in duty_1_1');   // 3.36.0: criteria only
+  expect(form).not.toContain('Mandatory: Disconnect power');
   expect(form.filter(t => t === '').length).toBe(0);
 
   // saved with the module: after a reload the items are still built
