@@ -34,6 +34,11 @@ document.addEventListener('DOMContentLoaded', function() {
     addResource(); addResource();
     addStep();
     addContentSection(); // Add first content section
+
+    /* 3.42.0: the glossary heading in the content language from the
+       start; a restored project repaints it from mbApplyProjectShared. */
+    if (typeof renderGlossary === 'function') renderGlossary();
+    if (typeof mbRenderSheetKindSelect === 'function') mbRenderSheetKindSelect(mbDefaultSheetKind());
 });
 
 /* Content-language switch: painted last, after every renderer exists. */

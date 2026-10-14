@@ -84,6 +84,7 @@ function clearAllForms() {
     document.getElementById('title').value = '';
     document.getElementById('objective').value = '';
     document.getElementById('duration').value = '0';
+    if (typeof mbRenderSheetKindSelect === 'function') mbRenderSheetKindSelect(mbDefaultSheetKind());   // 3.42.0
     document.getElementById('activity-link-subject').value = '';
     document.getElementById('activity-link-url').value = '';
     document.getElementById('activity-qr-preview').innerHTML = '';

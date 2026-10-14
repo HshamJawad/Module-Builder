@@ -51,7 +51,7 @@ var _HX_STRINGS = {
         colOutcomes: 'Outcomes', colVerification: 'Verification', colDate: 'Date',
         result: 'Result', competent: 'Competent', notYet: 'Not Yet Competent',
         trainer: 'Trainer', learner: 'Learner',
-        references: 'References', print: 'Print', progress: 'read',
+        references: 'References', glossary: 'Glossary of Terms', print: 'Print', progress: 'read',
         name: 'Name', task: 'Task / Role', location: 'Work Location',
         generated: 'Generated', backTop: 'Top'
     },
@@ -74,7 +74,7 @@ var _HX_STRINGS = {
         colOutcomes: 'Résultats', colVerification: 'Vérification', colDate: 'Date',
         result: 'Résultat', competent: 'Compétent', notYet: 'Pas encore compétent',
         trainer: 'Formateur', learner: 'Apprenant',
-        references: 'Références', print: 'Imprimer', progress: 'lu',
+        references: 'Références', glossary: 'Glossaire', print: 'Imprimer', progress: 'lu',
         name: 'Nom', task: 'Tâche / Rôle', location: 'Lieu de travail',
         generated: 'Généré le', backTop: 'Haut'
     },
@@ -97,7 +97,7 @@ var _HX_STRINGS = {
         colOutcomes: 'النواتج', colVerification: 'التحقّق', colDate: 'التاريخ',
         result: 'النتيجة', competent: 'جدير', notYet: 'غير جدير بعد',
         trainer: 'المدرّب', learner: 'المتدرّب',
-        references: 'المراجع', print: 'طباعة', progress: 'مقروء',
+        references: 'المراجع', glossary: 'مسرد المصطلحات', print: 'طباعة', progress: 'مقروء',
         name: 'الاسم', task: 'المهمة / الدور', location: 'موقع العمل',
         generated: 'أُنشئ في', backTop: 'الأعلى'
     }
@@ -342,8 +342,9 @@ function mbBuildModuleHtml(model, opts) {
                      _hxText(sh.answersKey.content) + '</p>';
             }
 
-            add(sid, t('infoSheet') + ' ' + sh.number,
-                _hxSection(sid, t('infoSheet') + ' ' + sh.number, sh.title, h));
+            var infoLbl = sh.label || t('infoSheet');   // 3.42.0
+            add(sid, infoLbl + ' ' + sh.number,
+                _hxSection(sid, infoLbl + ' ' + sh.number, sh.title, h));
         });
 
         (inc('activitySheets') ? o.activitySheets : []).forEach(function (sh, i) {
@@ -388,8 +389,9 @@ function mbBuildModuleHtml(model, opts) {
                 h += '</div>';
             }
 
-            add(aid, t('activitySheet') + ' ' + sh.number,
-                _hxSection(aid, t('activitySheet') + ' ' + sh.number, sh.title, h));
+            var actLbl = sh.label || t('activitySheet');   // 3.42.0
+            add(aid, actLbl + ' ' + sh.number,
+                _hxSection(aid, actLbl + ' ' + sh.number, sh.title, h));
         });
     });
 
@@ -415,6 +417,12 @@ function mbBuildModuleHtml(model, opts) {
             return h + '</div>';
         }).join('');
         add('assessment', t('assessment'), _hxSection('assessment', t('portfolio'), t('assessment'), as));
+    }
+
+    /* 3.42.0: Glossary of Terms, before the references. */
+    if (model.glossary && model.glossary.tables.length && inc('glossary')) {
+        var gTitle = model.glossary.title || t('glossary');
+        add('glossary', gTitle, _hxSection('glossary', '', gTitle, _hxTables(model.glossary.tables)));
     }
 
     if (model.references.items.length && inc('references')) {

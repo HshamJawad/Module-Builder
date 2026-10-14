@@ -92,6 +92,7 @@ function mbCollectShared() {
         referencesTitle:        mbState.referencesTitle  || null,
         referencesData:         mbState.referencesData   || [],
         refIdCounter:           mbState.refIdCounter     || 1,
+        glossary:               mbState.glossary         || null,
         tvqfBasic:              mbState.tvqfBasic        || {},
         tvqfExtended:           mbState.tvqfExtended     || {},
         cmDefaults:             mbState.cmDefaults       || {}
@@ -112,6 +113,7 @@ function _mbDefaultShared() {
         introAdditionalDetails: biNew(), introBlocks: [], includeLearningGuide: false,
         assessmentContent: biNew(),
         referencesTitle: null, referencesData: [{ id: 1, value: '' }], refIdCounter: 1,
+        glossary: { title: null, tables: [] },
         tvqfBasic: {}, tvqfExtended: {}, cmDefaults: {}
     };
 }
@@ -157,6 +159,11 @@ function mbApplyProjectShared(data) {
         mbState.refIdCounter    = data.refIdCounter || 1;
         if (typeof mbSeedReferencesTitle === 'function') mbSeedReferencesTitle();
         if (typeof renderReferences === 'function') renderReferences();
+
+        /* 3.42.0: the glossary — an older project has none. */
+        mbState.glossary = (typeof mbNormalizeGlossary === 'function')
+            ? mbNormalizeGlossary(data.glossary) : (data.glossary || { title: null, tables: [] });
+        if (typeof renderGlossary === 'function') renderGlossary();
 
         /* Read before the cover table is drawn: renderCoverTable() is
            what migrates a retired framework card onto the rows. */
@@ -249,6 +256,7 @@ function _mbLibFlush() {
         if (typeof saveCoverData === 'function') saveCoverData();
         if (typeof saveWorkTeamData === 'function') saveWorkTeamData();
         if (typeof syncProjectTextFromDOM === 'function') syncProjectTextFromDOM();
+        if (typeof mbCollectGlossary === 'function') mbCollectGlossary();
     } catch (e) { console.warn('[Library] flush error:', e); }
 }
 

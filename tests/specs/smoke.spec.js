@@ -56,7 +56,7 @@ test('Settings dialog: titled Settings, Export is a tab with its own tabs', asyn
   await page.locator('#mb-settings-nav').click();
   const ov = page.locator('#ws-overlay');
   await expect(ov.locator('#ws-head')).toHaveText('⚙️ Settings');
-  await expect(ov.locator('.ws-nav-btn')).toHaveText(['📤Export', '🌐Language', '⌨️Shortcuts']);
+  await expect(ov.locator('.ws-nav-btn')).toHaveText(['📤Export', '🌐Language', '🧰Misc', '⌨️Shortcuts']);   // 3.42.0: Misc
   await expect(ov.locator('.ws-sub-btn')).toHaveCount(3);
   await expect(ov.locator('.ws-sub[data-pane="doc"]')).toBeVisible();
   await ov.locator('.ws-sub-btn[data-ws-sub="pptx"]').click();

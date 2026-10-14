@@ -41,6 +41,7 @@ async function clearForm() {
         document.getElementById('objective-lead').value = window.i18n.tIn('mbActivityObjectiveLead', contentLang());
         document.getElementById('objective').value = '';
         document.getElementById('duration').value = '0';
+        if (typeof mbRenderSheetKindSelect === 'function') mbRenderSheetKindSelect(mbDefaultSheetKind());   // 3.42.0
         document.getElementById('resources-container').innerHTML = '';
         document.getElementById('steps-container').innerHTML = '';
         document.getElementById('activity-link-subject').value = '';
@@ -167,6 +168,7 @@ async function clearAll() {
         document.getElementById('objective-lead').value = window.i18n.tIn('mbActivityObjectiveLead', contentLang());
         document.getElementById('objective').value = '';
         document.getElementById('duration').value = '0';
+        if (typeof mbRenderSheetKindSelect === 'function') mbRenderSheetKindSelect(mbDefaultSheetKind());   // 3.42.0
         document.getElementById('activity-link-subject').value = '';
         document.getElementById('activity-link-url').value = '';
         document.getElementById('activity-qr-preview').innerHTML = '';
@@ -199,6 +201,8 @@ async function clearAll() {
         mbState.referencesData = [{ id: 1, value: '' }];
         mbState.refIdCounter = 1;
         renderReferences();
+        mbState.glossary = { title: null, tables: [] };   // 3.42.0
+        if (typeof renderGlossary === 'function') renderGlossary();
 
         /* ── Retired framework card ────────────────────────────────
            Cleared, not rendered: there is no card left to render, and

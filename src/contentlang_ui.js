@@ -75,6 +75,8 @@ function switchContentLang(code) {
     applyProjectTextToDOM();
     if (typeof renderCoverTable   === 'function') renderCoverTable();
     if (typeof renderWorkTeam     === 'function') renderWorkTeam();
+    if (typeof _mbGlossaryPaintTitle === 'function') _mbGlossaryPaintTitle();   // 3.42.0
+    if (typeof mbRenderSheetKindSelect === 'function') mbRenderSheetKindSelect();
     if (typeof renderModuleSelector === 'function') renderModuleSelector();
     if (typeof renderLOSelector     === 'function') renderLOSelector();
     if (typeof updatePerformanceCriteriaPanel === 'function') updatePerformanceCriteriaPanel();

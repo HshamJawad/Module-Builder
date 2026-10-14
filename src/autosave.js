@@ -235,6 +235,7 @@
                 (d.teamMembers || []).length > 0 ||
                 (d.introBlocks || []).length > 0 ||
                 (d.referencesData || []).some(r => _txt(r && r.value)) ||
+                (typeof mbGlossaryHasContent === 'function' && mbGlossaryHasContent(d.glossary)) ||
                 Object.keys(d.assessmentFormsData || {}).length > 0 ||
                 !!_txt(d.coversAdditionalInfo) || !!_txt(d.introAdditionalDetails);
         }

@@ -201,6 +201,10 @@ function saveCurrentSheetToLO() {
     const activityData = Object.assign({}, storedAct, {
         sheetNumber: document.getElementById('sheet-number').value,
         duration: document.getElementById('duration').value,
+        /* 3.42.0: Activity / Task / Job / Operation sheet (sheet_kinds.js). */
+        sheetType: (typeof mbSheetKind === 'function')
+            ? mbSheetKind((document.getElementById('activity-sheet-type') || {}).value || storedAct.sheetType)
+            : (storedAct.sheetType || 'activity'),
         linkSubject: document.getElementById('activity-link-subject').value,
         linkUrl: document.getElementById('activity-link-url').value,
         /* '' means "decide from the URL"; 'video' or 'page' is an
@@ -439,6 +443,7 @@ function loadActivitySheetAtIndex(lo, index) {
         document.getElementById('objective-lead').value = biGetStrict(activity.objectiveLead, contentLang());
         document.getElementById('objective').value = biGetStrict(activity.objective, contentLang());
         document.getElementById('duration').value = activity.duration || '0';
+        if (typeof mbRenderSheetKindSelect === 'function') mbRenderSheetKindSelect(activity.sheetType || 'activity');   // 3.42.0
         document.getElementById('activity-link-subject').value = activity.linkSubject || '';
         var _ltactivity = document.getElementById('activity-link-type');
         if (_ltactivity) _ltactivity.value = activity.linkType || '';
@@ -550,6 +555,7 @@ function loadActivitySheetAtIndex(lo, index) {
         document.getElementById('objective-lead').value = window.i18n.tIn('mbActivityObjectiveLead', contentLang());
         document.getElementById('objective').value = '';
         document.getElementById('duration').value = '0';
+        if (typeof mbRenderSheetKindSelect === 'function') mbRenderSheetKindSelect(mbDefaultSheetKind());   // 3.42.0
         document.getElementById('activity-link-subject').value = '';
         document.getElementById('activity-link-url').value = '';
         document.getElementById('activity-qr-preview').innerHTML = '';
@@ -644,6 +650,7 @@ function ensureFirstActivitySheet() {
         lo.activitySheets = [{
             sheetNumber: getAutoSheetNumber(loIndex, 0),
             title: '', objective: '', duration: '0',
+            sheetType: (typeof mbDefaultSheetKind === 'function') ? mbDefaultSheetKind() : 'activity',   // 3.42.0
             linkSubject: '', linkUrl: '', qrImage: null,
             resources: [], steps: [], images: {},
             includeCriteria: false,
@@ -762,6 +769,7 @@ async function addNewActivitySheet() {
     const autoNum = getAutoSheetNumber(loIndex, newSheetIndex);
     lo.activitySheets.push({
         sheetNumber: autoNum, title: '', objective: '', duration: '0',
+        sheetType: (typeof mbDefaultSheetKind === 'function') ? mbDefaultSheetKind() : 'activity',   // 3.42.0
         linkSubject: '', linkUrl: '', qrImage: null,
         resources: [], steps: [], images: {},
         includeCriteria: false,
@@ -809,6 +817,7 @@ async function removeCurrentActivitySheet() {
         document.getElementById('objective-lead').value = window.i18n.tIn('mbActivityObjectiveLead', contentLang());
         document.getElementById('objective').value = '';
         document.getElementById('duration').value = '0';
+        if (typeof mbRenderSheetKindSelect === 'function') mbRenderSheetKindSelect(mbDefaultSheetKind());   // 3.42.0
         document.getElementById('activity-link-subject').value = '';
         document.getElementById('activity-link-url').value = '';
         document.getElementById('activity-qr-preview').innerHTML = '';
