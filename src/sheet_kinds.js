@@ -108,9 +108,111 @@ function mbRenderSheetKindSelect(value) {
         return '<option value="' + k + '"' + (k === cur ? ' selected' : '') + '>' + name + '</option>';
     }).join('');
     sel.value = cur;
+    /* 3.44.0: the open sheet's title field follows its type. */
+    if (typeof mbRepaintSheetNames === 'function') mbRepaintSheetNames();
 }
 
 if (typeof window !== 'undefined') {
     window.addEventListener('mb:langchange', function () { mbRenderSheetKindSelect(); });
     window.addEventListener('mb:settingschange', function () { mbRenderSheetKindSelect(); });
+}
+
+/* ── The names in the INTERFACE (3.44.0) ──────────────────────
+   A name typed in Settings → Misc for the interface language replaces
+   the sheet's name on the tabs, the side navigation, the sheet's own
+   labels and buttons, and its short messages — so the tool says
+   «المعرفة» where the file says «المعرفة». A box left empty changes
+   nothing. Applied by i18n.t() (mb-translations.js), so every label
+   built from the dictionary follows, and repainted on a settings change.
+
+   The interface strings are rebuilt from templates rather than by
+   replacing words inside the dictionary's sentences: «ورقة معلومات» and
+   «la fiche d'information» carry grammar a user's name would not fit.
+
+   Information sheet: its own name. Activity sheet: the name of the type
+   a new sheet starts as (Settings → Misc) — each sheet may be another
+   type — except the title field of the open sheet, which follows that
+   sheet's own type. */
+var _MB_SN_TPL = {
+    en: {
+        name: '{L}', list: '{I} {L}:', proceed: 'Proceed to {L} →', title: '{L} title:',
+        enterTitle: 'Enter the title…', prev: 'Previous {L}', next: 'Next {L}', add: '➕ Add {L}',
+        added: '{L} {v0} added!', removed: '{L} removed!', cleared: '{L} cleared!', none: 'No {L} to remove.'
+    },
+    fr: {
+        name: '{L}', list: '{I} {L} :', proceed: 'Passer à : {L} →', title: 'Titre — {L} :',
+        enterTitle: 'Saisissez le titre…', prev: 'Précédent : {L}', next: 'Suivant : {L}', add: '➕ Ajouter : {L}',
+        added: 'Ajouté : {L} {v0} !', removed: 'Supprimé : {L} !', cleared: 'Vidé : {L} !', none: 'Rien à supprimer : {L}.'
+    },
+    ar: {
+        name: '{L}', list: '{I} {L}:', proceed: 'المتابعة إلى {L} ←',
+        title: 'عنوان {L}:', enterTitle: 'أدخل العنوان…',
+        prev: 'السابق: {L}', next: 'التالي: {L}', add: '➕ إضافة {L}',
+        added: 'أُضيف: {L} {v0}!', removed: 'أُزيل: {L}!', cleared: 'تم مسح: {L}!',
+        none: 'لا يوجد ما يُزال: {L}.'
+    }
+};
+
+/* key → [which sheet, which template, icon for lists] */
+var _MB_SN_KEYS = {
+    mbInformationSheet: ['info', 'name'], mbInformationSheets: ['info', 'list', '📄'],
+    mbProceedToInformationSheet: ['info', 'proceed'], mbInformationSheetTitle: ['info', 'title'],
+    mbEnterInformationSheetTitle: ['info', 'enterTitle'], mbPreviousInfoSheet: ['info', 'prev'],
+    mbNextInfoSheet: ['info', 'next'], mbAddInfoSheet: ['info', 'add'], dgInformationSheetCleared: ['info', 'cleared'],
+    mbCmDest_info: ['info', 'name'], mbSpKind_info: ['info', 'name'],
+    mbActivityJobSheet: ['activity', 'name'], mbActivityJobSheet2: ['activity', 'name'],
+    mbActivitySheets: ['activity', 'list', '⚡'], mbProceedToActivityJobSheet: ['activity', 'proceed'],
+    mbPreviousActivitySheet: ['activity', 'prev'], mbNextActivitySheet: ['activity', 'next'],
+    mbAddActivitySheet: ['activity', 'add'], mbActivitySheetTitle: ['open', 'title'],
+    mbEnterActivitySheetTitle: ['open', 'enterTitle'], dgActivitySheetAdded: ['activity', 'added'],
+    dgActivitySheetRemoved: ['activity', 'removed'], dgActivitySheetCleared: ['activity', 'cleared'],
+    dgNoActivitySheetToRemove: ['activity', 'none'], mbCmDest_activity: ['activity', 'name'],
+    mbSpKind_activity: ['activity', 'name']
+};
+
+/** The interface name for 'info', 'activity' (the default type) or
+    'open' (the activity sheet on screen), or '' to keep the dictionary's. */
+function mbSheetUiName(which, lang) {
+    if (which === 'info') return mbSheetLabelCustom('info', lang);
+    var kind = mbDefaultSheetKind();
+    if (which === 'open') {
+        var sel = (typeof document !== 'undefined') ? document.getElementById('activity-sheet-type') : null;
+        if (sel && sel.value) kind = mbSheetKind(sel.value);
+    }
+    var own = mbSheetLabelCustom(kind, lang);
+    if (own) return own;
+    return kind === 'activity' ? '' : mbSheetLabel(kind, lang);
+}
+
+/** Called by i18n.t(): the dictionary's text, or the user's name in its place. */
+function mbSheetNameOverlay(key, lang, text) {
+    var spec = _MB_SN_KEYS[key];
+    if (!spec) return text;
+    var L = mbSheetUiName(spec[0], lang);
+    if (!L) return text;
+    var tpl = (_MB_SN_TPL[lang] || _MB_SN_TPL.en)[spec[1]];
+    return tpl.replace('{L}', L).replace('{I}', spec[2] || '');
+}
+
+/** Repaint every element labelled by one of these keys. */
+function mbRepaintSheetNames() {
+    if (!window.i18n || typeof document === 'undefined') return;
+    Object.keys(_MB_SN_KEYS).forEach(function (key) {
+        document.querySelectorAll('[data-i18n="' + key + '"],[data-i18n-title="' + key + '"],[data-i18n-placeholder="' + key + '"]').forEach(function (el) {
+            var txt = window.i18n.t(key);
+            if (el.getAttribute('data-i18n') === key) {
+                var attr = el.getAttribute('data-i18n-attr');
+                if (attr) el.setAttribute(attr, txt); else el.textContent = txt;
+            }
+            if (el.getAttribute('data-i18n-title') === key) el.setAttribute('title', txt);
+            if (el.getAttribute('data-i18n-placeholder') === key) el.setAttribute('placeholder', txt);
+        });
+    });
+}
+
+if (typeof window !== 'undefined') {
+    window.addEventListener('mb:settingschange', function () { mbRepaintSheetNames(); });
+    document.addEventListener('change', function (e) {
+        if (e.target && e.target.id === 'activity-sheet-type') mbRepaintSheetNames();
+    });
 }

@@ -3027,9 +3027,13 @@
 
   function t(key) {
     var lang = TRANSLATIONS[_current] || TRANSLATIONS.en;
-    if (lang[key] !== undefined)            return lang[key];
-    if (TRANSLATIONS.en[key] !== undefined) return TRANSLATIONS.en[key];
-    return key;
+    var v = (lang[key] !== undefined) ? lang[key]
+          : (TRANSLATIONS.en[key] !== undefined ? TRANSLATIONS.en[key] : key);
+    /* 3.44.0: sheet names typed in Settings → Misc (sheet_kinds.js). */
+    if (typeof mbSheetNameOverlay === 'function') {
+      try { v = mbSheetNameOverlay(key, _current, v); } catch (e) { /* settings not ready */ }
+    }
+    return v;
   }
 
   function tf(key, vars) {
