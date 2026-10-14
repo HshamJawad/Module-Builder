@@ -69,6 +69,9 @@ var mbState = {
     referencesTitle: null,
     referencesData: [{ id: 1, value: '' }],
     refIdCounter: 1,
+    /* 3.42.0: Glossary of Terms — glossary.js. Title seeded like the
+       references heading; tables shared across languages. */
+    glossary: { title: null, tables: [] },
 
     /* ── Cover table ────────────────────────────────────────────
        These labels are DATA, not interface. The user renames them, and

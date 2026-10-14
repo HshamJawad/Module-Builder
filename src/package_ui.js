@@ -367,6 +367,14 @@
             }
             added++;
         });
+        /* 3.42.0: a glossary is taken only when this project has none —
+           two glossaries are not merged row by row. */
+        var gl = part.references && part.references.glossary;
+        if (gl && typeof mbGlossaryHasContent === 'function' && mbGlossaryHasContent(gl) &&
+            !mbGlossaryHasContent(dst.glossary)) {
+            dst.glossary = JSON.parse(JSON.stringify(gl));
+            added++;
+        }
         var team = (part.team && part.team.teamMembers) || [];
         if (!Array.isArray(dst.teamMembers)) dst.teamMembers = [];
         var names = new Set(dst.teamMembers.map(function (m) { return norm(m && m.name); }));

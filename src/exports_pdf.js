@@ -61,7 +61,7 @@ var _PDF_STRINGS = {
         colOutcomes: 'Outcomes', colVerification: 'Verification', colDate: 'Date',
         result: 'Result', competent: 'Competent', notYet: 'Not Yet Competent',
         trainer: 'Trainer', learner: 'Learner', signature: 'Signature',
-        references: 'References', team: 'Work Team', intro: 'Introduction',
+        references: 'References', glossary: 'Glossary of Terms', team: 'Work Team', intro: 'Introduction',
         name: 'Name', task: 'Task / Role', location: 'Work Location'
     },
     fr: {
@@ -83,7 +83,7 @@ var _PDF_STRINGS = {
         colOutcomes: 'Résultats', colVerification: 'Vérification', colDate: 'Date',
         result: 'Résultat', competent: 'Compétent', notYet: 'Pas encore compétent',
         trainer: 'Formateur', learner: 'Apprenant', signature: 'Signature',
-        references: 'Références', team: 'Équipe de travail', intro: 'Introduction',
+        references: 'Références', glossary: 'Glossaire', team: 'Équipe de travail', intro: 'Introduction',
         name: 'Nom', task: 'Tâche / Rôle', location: 'Lieu de travail'
     },
     ar: {
@@ -105,7 +105,7 @@ var _PDF_STRINGS = {
         colOutcomes: 'النواتج', colVerification: 'التحقّق', colDate: 'التاريخ',
         result: 'النتيجة', competent: 'جدير', notYet: 'غير جدير بعد',
         trainer: 'المدرّب', learner: 'المتدرّب', signature: 'التوقيع',
-        references: 'المراجع', team: 'فريق العمل', intro: 'التقديم',
+        references: 'المراجع', glossary: 'مسرد المصطلحات', team: 'فريق العمل', intro: 'التقديم',
         name: 'الاسم', task: 'المهمة / الدور', location: 'موقع العمل'
     }
 };
@@ -476,7 +476,7 @@ function _pdfBuild(pdf, model, lang) {
 
         o.infoSheets.forEach(function (sh) {
             w.newPage();
-            w.heading(t('infoSheet') + ' ' + sh.number + ': ' + sh.title, 3);
+            w.heading((sh.label || t('infoSheet')) + ' ' + sh.number + ': ' + sh.title, 3);
             if (sh.objectiveLead) w.text(sh.objectiveLead);
             if (sh.objective) { w.label(t('objective')); w.text(sh.objective, { indent: 4 }); }
 
@@ -519,7 +519,7 @@ function _pdfBuild(pdf, model, lang) {
 
         o.activitySheets.forEach(function (sh) {
             w.newPage();
-            w.heading(t('activitySheet') + ' ' + sh.number + ': ' + sh.title, 3);
+            w.heading((sh.label || t('activitySheet')) + ' ' + sh.number + ': ' + sh.title, 3);
             if (sh.objectiveLead) w.text(sh.objectiveLead);
             if (sh.objective) { w.label(t('objective')); w.text(sh.objective, { indent: 4 }); }
             if (sh.duration) w.text(t('duration') + ': ' + sh.duration + ' ' + t('minutes'), { bold: true });
@@ -584,6 +584,21 @@ function _pdfBuild(pdf, model, lang) {
                 [t('trainer'), f.teacherName, t('signature') + ': ______________', f.teacherDate],
                 [t('learner'), f.learnerName, t('signature') + ': ______________', f.learnerDate]
             ], [w.CW * 0.16, w.CW * 0.3, w.CW * 0.36, w.CW * 0.18], { size: S.body });
+        });
+    }
+
+    /* 3.42.0: Glossary of Terms — its own page, before the references. */
+    if (model.glossary && model.glossary.tables.length) {
+        w.newPage();
+        w.heading(model.glossary.title || t('glossary'), 2);
+        model.glossary.tables.forEach(function (tb) {
+            if (tb.title) w.label(tb.title);
+            if (tb.subtitle) w.text(tb.subtitle);
+            if (!tb.cells.length) return;
+            var cols = tb.cells[0].length || 1;
+            var cw = [];
+            for (var i = 0; i < cols; i++) cw.push(w.CW / cols);
+            w.table(tb.cells[0], tb.cells.slice(1), cw, { size: S.utable });
         });
     }
 

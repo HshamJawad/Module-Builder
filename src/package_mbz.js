@@ -45,7 +45,8 @@ function mbPackageProjectPart(shared) {
         references: {
             referencesTitle: shared.referencesTitle || null,
             referencesData:  shared.referencesData || [],
-            refIdCounter:    shared.refIdCounter || 1
+            refIdCounter:    shared.refIdCounter || 1,
+            glossary:        shared.glossary || null      // 3.42.0
         },
         team: {
             teamMembers:         shared.teamMembers || [],

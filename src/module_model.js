@@ -175,6 +175,9 @@ function _mmImages(bag, id) {
 function mbBuildModuleModel(lang, state) {
     const raw = state || (typeof window !== 'undefined' ? window.mbState : null);
     if (!raw) return null;
+    /* 3.42.0: the glossary's cells are collected on a short debounce;
+       an export pressed right after typing reads them from the screen. */
+    if (!state && typeof mbCollectGlossary === 'function') { try { mbCollectGlossary(); } catch (e) { /* tab absent */ } }
 
     /* Flatten ONCE, here. Every exporter downstream then works with
        plain strings and never has to think about bilingual pairs. */
@@ -231,6 +234,11 @@ function mbBuildModuleModel(lang, state) {
         outcomes: [],
         assessment: [],
 
+        /* 3.42.0: Glossary of Terms — exported before the references. */
+        glossary: {
+            title: _mmStr(st.glossary && st.glossary.title),
+            tables: _mmTables(st.glossary && st.glossary.tables)
+        },
         references: {
             title: _mmStr(st.referencesTitle),
             items: _mmArr(st.referencesData)
@@ -285,6 +293,8 @@ function mbBuildModuleModel(lang, state) {
             const number = _mmSheetNumber(sh, loIndex, si);
             out.infoSheets.push({
                 number: number,
+                /* 3.42.0: '' = the exporter's own wording (sheet_kinds.js). */
+                label: (typeof mbSheetLabelExplicit === 'function') ? mbSheetLabelExplicit('info', lang) : '',
                 title: _mmStr(sh.title),
                 objectiveLead: _mmStr(sh.objectiveLead),
                 objective: _mmStr(sh.objective),
@@ -326,8 +336,16 @@ function mbBuildModuleModel(lang, state) {
         _mmArr(lo.activitySheets).forEach(function (sh, si) {
             if (!mmSheetHasContent(sh)) return;
             const number = _mmSheetNumber(sh, loIndex, si);
+            const kind = (typeof mbSheetKind === 'function') ? mbSheetKind(sh.sheetType) : 'activity';
+            /* 3.42.0: «completed within the required time», added after
+               the author's rows when the sheet has a duration. Not added
+               to an empty checklist: it would create a checklist the
+               author never started. */
+            const timeRow = (typeof mbTimeCriterion === 'function') ? mbTimeCriterion(sh.duration, lang) : '';
             out.activitySheets.push({
                 number: number,
+                type: kind,
+                label: (typeof mbSheetLabelExplicit === 'function') ? mbSheetLabelExplicit(kind, lang) : '',
                 title: _mmStr(sh.title),
                 objectiveLead: _mmStr(sh.objectiveLead),
                 objective: _mmStr(sh.objective),
@@ -363,9 +381,13 @@ function mbBuildModuleModel(lang, state) {
                     title: _mmStr(sh.criteriaTitle),
                     instruction: _mmStr(sh.criteriaInstruction),
                     footer: _mmStr(sh.criteriaFooter),
-                    rows: _mmArr(sh.criteria)
-                        .map(function (c) { return _mmStr(c && (c.text !== undefined ? c.text : c)); })
-                        .filter(function (t) { return t.trim(); })
+                    rows: (function () {
+                        const rows = _mmArr(sh.criteria)
+                            .map(function (c) { return _mmStr(c && (c.text !== undefined ? c.text : c)); })
+                            .filter(function (t) { return t.trim(); });
+                        if (rows.length && timeRow) rows.push(timeRow);
+                        return rows;
+                    })()
                 },
                 qr: (st.activityQRImage || _mmStr(sh.linkSubject).trim() || _mmStr(sh.linkUrl).trim())
                     ? { image: st.activityQRImage || null,

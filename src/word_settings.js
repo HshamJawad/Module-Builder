@@ -235,7 +235,16 @@ Object.assign(_WS_STRINGS.en, {
     wsLangTitle: 'Interface and export language',
     wsLangNote:  'This changes the tool, the exported document and this dialog at once. Your unsaved settings below are kept.',
     wsKeysTitle: 'Keyboard shortcuts',
-    wsKeysNote:  'Every shortcut needs Ctrl (⌘ on a Mac), so none of them can fire while you are typing. Ctrl + S works inside a field too.'
+    wsKeysNote:  'Every shortcut needs Ctrl (⌘ on a Mac), so none of them can fire while you are typing. Ctrl + S works inside a field too.',
+    /* 3.42.0 — Misc */
+    navMisc: 'Misc',
+    wsMiscSheetsTitle: 'Sheet names',
+    wsMiscSheetsNote: 'The names printed in the exported files, per language. Leave a box empty to keep the default (shown in grey). Each activity sheet picks its type under its title.',
+    wsMiscType: 'Type',
+    wsMiscDefaultKind: 'Type of a new activity sheet',
+    wsMiscChecklistTitle: 'Performance criteria checklist',
+    wsMiscChecklistTime: 'Add “completed within the required time” to the checklist of every activity sheet that has a duration',
+    wsSec_glossary: 'Glossary of Terms'
 });
 Object.assign(_WS_STRINGS.fr, {
     wsCenterTitle: 'Paramètres',
@@ -248,7 +257,15 @@ Object.assign(_WS_STRINGS.fr, {
     wsLangTitle: 'Langue de l\u2019interface et des exports',
     wsLangNote:  'Ceci change l\u2019outil, le document exporté et cette fenêtre en même temps. Vos réglages non enregistrés sont conservés.',
     wsKeysTitle: 'Raccourcis clavier',
-    wsKeysNote:  'Chaque raccourci exige Ctrl (⌘ sur Mac) : aucun ne peut se déclencher pendant la saisie. Ctrl + S fonctionne aussi dans un champ.'
+    wsKeysNote:  'Chaque raccourci exige Ctrl (⌘ sur Mac) : aucun ne peut se déclencher pendant la saisie. Ctrl + S fonctionne aussi dans un champ.',
+    navMisc: 'Divers',
+    wsMiscSheetsTitle: 'Noms des fiches',
+    wsMiscSheetsNote: 'Les noms imprimés dans les fichiers exportés, par langue. Laissez une case vide pour garder le nom par défaut (en gris). Chaque fiche d\u2019activité choisit son type sous son titre.',
+    wsMiscType: 'Type',
+    wsMiscDefaultKind: 'Type d\u2019une nouvelle fiche d\u2019activité',
+    wsMiscChecklistTitle: 'Liste de vérification des critères de performance',
+    wsMiscChecklistTime: 'Ajouter « réalisé dans le temps imparti » à la liste de chaque fiche d\u2019activité qui a une durée',
+    wsSec_glossary: 'Glossaire'
 });
 Object.assign(_WS_STRINGS.ar, {
     wsCenterTitle: 'الإعدادات',
@@ -261,7 +278,15 @@ Object.assign(_WS_STRINGS.ar, {
     wsLangTitle: 'لغة الواجهة والتصدير',
     wsLangNote:  'هذا يغيّر الأداة والمستند المُصدَّر وهذه النافذة معاً. وإعداداتك غير المحفوظة تبقى كما هي.',
     wsKeysTitle: 'اختصارات لوحة المفاتيح',
-    wsKeysNote:  'كل اختصار يتطلّب Ctrl (أو ⌘ على ماك)، فلا يمكن أن ينطلق أثناء الكتابة. وCtrl + S يعمل داخل الحقول أيضاً.'
+    wsKeysNote:  'كل اختصار يتطلّب Ctrl (أو ⌘ على ماك)، فلا يمكن أن ينطلق أثناء الكتابة. وCtrl + S يعمل داخل الحقول أيضاً.',
+    navMisc: 'متنوع',
+    wsMiscSheetsTitle: 'أسماء الأوراق',
+    wsMiscSheetsNote: 'الأسماء التي تُطبع في الملفات المصدَّرة، لكل لغة. اترك الخانة فارغة لإبقاء الاسم الافتراضي (الظاهر بالرمادي). وتختار كل ورقة نشاط نوعها تحت عنوانها.',
+    wsMiscType: 'النوع',
+    wsMiscDefaultKind: 'نوع ورقة النشاط الجديدة',
+    wsMiscChecklistTitle: 'قائمة تدقيق معايير الأداء',
+    wsMiscChecklistTime: 'إضافة بند «إنجاز النشاط ضمن الوقت المحدد» إلى قائمة كل ورقة نشاط لها مدة',
+    wsSec_glossary: 'مسرد المصطلحات'
 });
 
 function _wsT(key) {
@@ -322,11 +347,33 @@ var WS_DEFAULTS = {
        before. Covers are deliberately absent: a full-bleed cover image
        is a print artefact, and the HTML package opens straight into the
        content. */
-    htmlSections:     null   /* null = everything; otherwise an array of ids */
+    htmlSections:     null,  /* null = everything; otherwise an array of ids */
+    /* 3.42.0 — Misc (sheet_kinds.js). Names: '' = the dictionary's. */
+    sheetLabels:      null,  /* null = no names typed; else { en: { info, activity, … }, fr, ar } */
+    defaultSheetKind: 'activity',
+    checklistTime:    true
 };
 
 var WS_HTML_SECTIONS = ['overview', 'intro', 'outcomes', 'infoSheets',
-                        'activitySheets', 'assessment', 'references'];
+                        'activitySheets', 'assessment', 'glossary', 'references'];
+
+/* 3.42.0: the names a user may type, validated on read like every field. */
+var WS_LABEL_LANGS = ['en', 'fr', 'ar'];
+var WS_LABEL_KINDS = ['info', 'activity', 'task', 'job', 'operation'];
+function _wsValidLabels(o) {
+    if (!o || typeof o !== 'object') return null;
+    var out = {}, any = false;
+    WS_LABEL_LANGS.forEach(function (l) {
+        var side = (o[l] && typeof o[l] === 'object') ? o[l] : {};
+        out[l] = {};
+        WS_LABEL_KINDS.forEach(function (k) {
+            var v = typeof side[k] === 'string' ? side[k].slice(0, 80) : '';
+            out[l][k] = v;
+            if (v.trim()) any = true;
+        });
+    });
+    return any ? out : null;
+}
 
 var WS_PDF_FONTS = ['Auto', 'Cairo', 'Arial', 'Calibri'];
 
@@ -384,7 +431,11 @@ function wsReadSettings() {
            never a silently empty one. */
         htmlSections: Array.isArray(o.htmlSections)
             ? o.htmlSections.filter(function (x) { return WS_HTML_SECTIONS.indexOf(x) !== -1; })
-            : null
+            : null,
+        sheetLabels: _wsValidLabels(o.sheetLabels),
+        defaultSheetKind: (['activity', 'task', 'job', 'operation'].indexOf(o.defaultSheetKind) !== -1)
+            ? o.defaultSheetKind : WS_DEFAULTS.defaultSheetKind,
+        checklistTime: o.checklistTime !== false
     };
     WS_SIZE_FIELDS.forEach(function (f) {
         out[f] = _wsValidSize(o[f], WS_DEFAULTS[f]);
@@ -575,6 +626,8 @@ function _wsSave() {
     var save = document.getElementById('ws-save');
     if (save) save.disabled = true;
     _wsSetMsg('\u2713 ' + _wsT('wsSaved'), 'ok');
+    /* 3.42.0: the activity-sheet type list repaints its names. */
+    try { window.dispatchEvent(new CustomEvent('mb:settingschange')); } catch (e) { /* old browser */ }
 }
 
 /* ── The shell's own stylesheet ─────────────────────────────
@@ -689,7 +742,16 @@ function _wsEnsureStyle() {
         'border-inline-end:none;border-bottom:1px solid #e2e8f0;padding:10px;}',
         '#ws-overlay .ws-nav-btn{width:auto;white-space:nowrap;}',
         '#ws-overlay .ws-nav-btn span:not(.ws-nav-ico){display:none;}',
-        '#ws-overlay .ws-nav-btn.is-on span:not(.ws-nav-ico){display:inline;}}'
+        '#ws-overlay .ws-nav-btn.is-on span:not(.ws-nav-ico){display:inline;}}',
+        /* 3.42.0 — Misc: the sheet-names grid scrolls on its own on a
+           phone rather than widening the dialog. */
+        '#ws-overlay .ws-misc-scroll{overflow-x:auto;margin:0 0 14px;}',
+        '#ws-overlay .ws-misc-table{border-collapse:collapse;width:100%;min-width:520px;font-size:.9em;}',
+        '#ws-overlay .ws-misc-table th,#ws-overlay .ws-misc-table td{padding:5px 6px;border-bottom:1px solid #eef2f7;text-align:start;}',
+        '#ws-overlay .ws-misc-table thead th{color:#475569;font-weight:700;font-size:.85em;}',
+        '#ws-overlay .ws-misc-table tbody th{color:#334155;font-weight:600;white-space:nowrap;}',
+        '#ws-overlay .ws-misc-input{width:100%;box-sizing:border-box;padding:6px 8px;border:1.5px solid #d1d5db;border-radius:6px;font:inherit;}',
+        '#ws-overlay .ws-misc-input::placeholder{color:#9ca3af;}'
     ].join('');
     document.head.appendChild(s);
 }
@@ -702,6 +764,7 @@ function _wsEnsureStyle() {
 var WS_PANES = [
     { id: 'export', icon: '\uD83D\uDCE4', key: 'navExport' },
     { id: 'lang', icon: '\uD83C\uDF10', key: 'navLang' },
+    { id: 'misc', icon: '\uD83E\uDDF0', key: 'navMisc' },   /* 3.42.0 */
     { id: 'keys', icon: '\u2328\uFE0F', key: 'navKeys' }
 ];
 var WS_EXPORT_SUBS = [
@@ -837,7 +900,66 @@ function _wsPaneHTMLFor(id) {
     if (id === 'pptx') return _wsPanePptx();
     if (id === 'lang') return _wsPaneLang();
     if (id === 'keys') return _wsPaneKeys();
+    if (id === 'misc') return _wsPaneMisc();
     return '';
+}
+
+/* 3.42.0 — Misc: sheet names per language, the type of a new activity
+   sheet, and the time row of the checklist. Draft fields like every
+   other pane: nothing applies until Save. */
+function _wsMiscEsc(v) {
+    return String(v == null ? '' : v).replace(/[&<>"]/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+}
+var WS_SK_KEYS = { info: 'skInfo', activity: 'skActivity', task: 'skTask', job: 'skJob', operation: 'skOperation' };
+function _wsSkDefault(kind, lang) {
+    return (window.i18n && window.i18n.tIn) ? window.i18n.tIn(WS_SK_KEYS[kind], lang) : kind;
+}
+function _wsPaneMisc() {
+    var ui = (window.i18n && window.i18n.getLang) ? window.i18n.getLang() : 'en';
+    var names = { en: 'English', fr: 'Fran\u00e7ais', ar: '\u0627\u0644\u0639\u0631\u0628\u064a\u0629' };
+    var labels = _wsDraft.sheetLabels || {};
+    var head = '<tr><th>' + _wsT('wsMiscType') + '</th>' + WS_LABEL_LANGS.map(function (l) {
+        return '<th>' + names[l] + '</th>';
+    }).join('') + '</tr>';
+    var body = WS_LABEL_KINDS.map(function (k) {
+        return '<tr><th scope="row">' + _wsMiscEsc(_wsSkDefault(k, ui)) + '</th>' + WS_LABEL_LANGS.map(function (l) {
+            var v = (labels[l] && labels[l][k]) || '';
+            return '<td><input type="text" class="ws-misc-input" maxlength="80"' +
+                   ' dir="' + (l === 'ar' ? 'rtl' : 'ltr') + '" lang="' + l + '"' +
+                   ' data-ws-label="' + l + ':' + k + '" value="' + _wsMiscEsc(v) + '"' +
+                   ' placeholder="' + _wsMiscEsc(_wsSkDefault(k, l)) + '"' +
+                   ' aria-label="' + _wsMiscEsc(_wsSkDefault(k, ui) + ' — ' + names[l]) + '"></td>';
+        }).join('') + '</tr>';
+    }).join('');
+    var kinds = ['activity', 'task', 'job', 'operation'].map(function (k) {
+        return '<option value="' + k + '"' + (k === _wsDraft.defaultSheetKind ? ' selected' : '') + '>' +
+               _wsMiscEsc(_wsSkDefault(k, ui)) + '</option>';
+    }).join('');
+    return '' +
+        '<h4 class="ws-group">\uD83C\uDFF7\uFE0F ' + _wsT('wsMiscSheetsTitle') + '</h4>' +
+        '<p class="ws-note ws-note-sm">\u2139\uFE0F ' + _wsT('wsMiscSheetsNote') + '</p>' +
+        '<div class="ws-misc-scroll"><table class="ws-misc-table">' +
+          '<thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>' +
+        '<div class="ws-row"><label for="ws-misc-kind">' + _wsT('wsMiscDefaultKind') + '</label>' +
+          '<select class="ws-select" id="ws-misc-kind" data-ws-misc="defaultSheetKind">' + kinds + '</select></div>' +
+        '<h4 class="ws-group">\u2705 ' + _wsT('wsMiscChecklistTitle') + '</h4>' +
+        '<div class="ws-checks"><label class="ws-check"><input type="checkbox" data-ws-misc="checklistTime"' +
+          (_wsDraft.checklistTime !== false ? ' checked' : '') + '><span>' + _wsT('wsMiscChecklistTime') + '</span></label></div>';
+}
+
+/** One typed name into the draft — a NEW object each time, because
+    _wsSaved is a shallow copy and editing in place would make the
+    saved copy change with the draft and Save would never light up. */
+function _wsMiscSetLabel(lang, kind, value) {
+    var cur = _wsDraft.sheetLabels ? JSON.parse(JSON.stringify(_wsDraft.sheetLabels)) : {};
+    WS_LABEL_LANGS.forEach(function (l) {
+        if (!cur[l]) cur[l] = {};
+        WS_LABEL_KINDS.forEach(function (k) { if (typeof cur[l][k] !== 'string') cur[l][k] = ''; });
+    });
+    cur[lang][kind] = String(value || '').slice(0, 80);
+    _wsDraft.sheetLabels = _wsValidLabels(cur);
 }
 
 function _wsShowPane(id) {
@@ -973,12 +1095,23 @@ function openWordSettings(pane) {
            preserving, unlike the pane the user is standing on. */
         var pp = ov.querySelector('[data-pane="pptx"]');
         if (pp) pp.innerHTML = _wsPanePptx();
+        var mp = ov.querySelector('[data-pane="misc"]');
+        if (mp) mp.innerHTML = _wsPaneMisc();
     });
 
     ov.addEventListener('change', function (e) {
         /* PPTX first: its fields carry their own attributes and the
            function reports whether the event was one of its own. */
         if (_pxDraft && typeof mbPptxPaneChange === 'function' && mbPptxPaneChange(e, _pxDraft)) {
+            _wsTouch();
+            return;
+        }
+        /* 3.42.0 — Misc. */
+        var miscField = e.target && e.target.getAttribute && e.target.getAttribute('data-ws-misc');
+        if (miscField === 'checklistTime') { _wsDraft.checklistTime = !!e.target.checked; _wsTouch(); return; }
+        if (miscField === 'defaultSheetKind') {
+            _wsDraft.defaultSheetKind = (['activity', 'task', 'job', 'operation'].indexOf(e.target.value) !== -1)
+                ? e.target.value : WS_DEFAULTS.defaultSheetKind;
             _wsTouch();
             return;
         }
@@ -1006,6 +1139,14 @@ function openWordSettings(pane) {
         var f = e.target && e.target.getAttribute && e.target.getAttribute('data-ws-size');
         if (!f) return;
         _wsDraft[f] = _wsValidSize(e.target.value, WS_DEFAULTS[f]);
+        _wsTouch();
+    });
+
+    ov.addEventListener('input', function (e) {
+        var lk = e.target && e.target.getAttribute && e.target.getAttribute('data-ws-label');
+        if (!lk) return;
+        var parts = lk.split(':');
+        _wsMiscSetLabel(parts[0], parts[1], e.target.value);
         _wsTouch();
     });
 

@@ -22,6 +22,7 @@ async function exportToDocx() {
        hoisted into this function's temporal dead zone, so a bare
        reference here throws ReferenceError before the export starts. */
     if (typeof syncProjectTextFromDOM === 'function') syncProjectTextFromDOM();
+    if (typeof mbCollectGlossary === 'function') mbCollectGlossary();   // 3.42.0
     if (window.mbState.currentLOId && typeof saveCurrentSheetToLO === 'function') saveCurrentSheetToLO();
     /* Resolve the document language BEFORE flattening, because the
        flatten side and the direction must be the same decision. An
@@ -1513,12 +1514,18 @@ async function exportToDocx() {
             });
         };
 
+        /* 3.42.0: sheet headings follow the type and the names set in
+           Settings → Misc; untouched, they are today's templates. */
+        const _sheetHeadText = (kind, num, title, tplKey) => {
+            const own = (typeof mbSheetLabelExplicit === 'function') ? mbSheetLabelExplicit(kind, _mbLang()) : '';
+            return own ? mbSheetHeading(own, num, title) : _mbTf(tplKey, { v0: num, v1: title });
+        };
         const buildInfoCh = (info, loIndex, sheetIndex) => {
             const { Table, TableRow, TableCell, WidthType, BorderStyle } = mbDocxLib();
             const ch = [];
             const num = info.sheetNumber || getAutoSheetNumber(loIndex, sheetIndex);
             if (info.title && info.title.trim()) {
-                ch.push(new Paragraph({ children: [new TextRun({ text: _mbTf('expInfoSheetTitled', { v0: num, v1: info.title }), size: _wsBody(), bold: true, color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 400 } }));
+                ch.push(new Paragraph({ children: [new TextRun({ text: _sheetHeadText('info', num, info.title, 'expInfoSheetTitled'), size: _wsBody(), bold: true, color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 400 } }));
             }
             if (info.objective && info.objective.trim()) {
                 ch.push(new Paragraph({ children: [new TextRun({ text: _mbT('expObjective'), bold: true, size: _wsBody(), color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 200 } }));
@@ -1606,7 +1613,7 @@ async function exportToDocx() {
             const ch = [];
             const num = activity.sheetNumber || getAutoSheetNumber(loIndex, sheetIndex);
             if (activity.title && activity.title.trim()) {
-                ch.push(new Paragraph({ children: [new TextRun({ text: _mbTf('expActivitySheetTitled', { v0: num, v1: activity.title }), size: _wsBody(), bold: true, color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 400 } }));
+                ch.push(new Paragraph({ children: [new TextRun({ text: _sheetHeadText((typeof mbSheetKind === 'function') ? mbSheetKind(activity.sheetType) : 'activity', num, activity.title, 'expActivitySheetTitled'), size: _wsBody(), bold: true, color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 400 } }));
             }
             if (activity.objective && activity.objective.trim()) {
                 ch.push(new Paragraph({ children: [new TextRun({ text: _mbT('expObjective'), bold: true, size: _wsBody(), color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 200 } }));
@@ -1670,6 +1677,13 @@ async function exportToDocx() {
 
             // ── Performance Criteria — as separate section (new page) ──
             const validCriteria = (activity.criteria || []).filter(c => c && c.trim());
+            /* 3.42.0: «within the required time», after the author's rows
+               (sheet_kinds.js). Never on its own: an empty checklist stays
+               absent. */
+            if (validCriteria.length && typeof mbTimeCriterion === 'function') {
+                const timeRow = mbTimeCriterion(activity.duration, _mbLang());
+                if (timeRow) validCriteria.push(timeRow);
+            }
             if (validCriteria.length > 0) {
                 /* The user's own wording wins; our own boilerplate — even
                    when an older build stored it as a value — is re-emitted
@@ -2085,6 +2099,21 @@ async function exportToDocx() {
             }
         }
 
+
+        // ── Glossary of Terms (3.42.0) — its own page, before the references ──
+        if (typeof mbGlossaryHasContent === 'function' && mbGlossaryHasContent(mbState.glossary)) {
+            const glCh = [];
+            glCh.push(new Paragraph({
+                children: [new TextRun({
+                    text: (mbState.glossary.title || _mbT('expGlossary')),
+                    size: _wsSection(), bold: true, color: _wsHeadColor(), rightToLeft: _mbRtl()
+                })],
+                alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(),
+                spacing: { after: 400 }
+            }));
+            (mbState.glossary.tables || []).forEach(t => _pushUserTable(t, glCh));
+            sections.push({ properties: { bidi: _mbRtl() }, children: glCh });
+        }
 
         // ── References page ──────────────────────────────────────────
         syncReferencesFromDOM();
