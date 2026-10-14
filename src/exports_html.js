@@ -287,6 +287,7 @@ function mbBuildModuleHtml(model, opts) {
     model.outcomes.forEach(function (o) {
         if (!inc('outcomes') && !inc('infoSheets') && !inc('activitySheets')) return;
         var oid = 'lo-' + o.index;
+        var secN = 0;   // 3.43.0: placed outcome sections
         var inner = '';
         if (o.description) inner += '<p>' + _hxText(o.description) + '</p>';
         if (o.criteria.length) {
@@ -310,7 +311,7 @@ function mbBuildModuleHtml(model, opts) {
             add(oid, t('outcome') + ' ' + o.index, _hxSection(oid, t('outcome') + ' ' + o.index, o.title, inner));
         }
 
-        (inc('infoSheets') ? o.infoSheets : []).forEach(function (sh, i) {
+        var renderInfo = function (sh, i) {   // 3.43.0: called in document order
             var sid = oid + '-info-' + (i + 1);
             var h = '';
             if (sh.objectiveLead) h += '<p class="mx-lead">' + _hxText(sh.objectiveLead) + '</p>';
@@ -345,9 +346,9 @@ function mbBuildModuleHtml(model, opts) {
             var infoLbl = sh.label || t('infoSheet');   // 3.42.0
             add(sid, infoLbl + ' ' + sh.number,
                 _hxSection(sid, infoLbl + ' ' + sh.number, sh.title, h));
-        });
+        };
 
-        (inc('activitySheets') ? o.activitySheets : []).forEach(function (sh, i) {
+        var renderAct = function (sh, i) {
             var aid = oid + '-act-' + (i + 1);
             var h = '';
             var meta = [];
@@ -392,6 +393,22 @@ function mbBuildModuleHtml(model, opts) {
             var actLbl = sh.label || t('activitySheet');   // 3.42.0
             add(aid, actLbl + ' ' + sh.number,
                 _hxSection(aid, actLbl + ' ' + sh.number, sh.title, h));
+        };
+
+        /* 3.43.0: the outcome in document order (lo_sequence.js). The
+           anchors keep their per-type position, so "see also" links and
+           the table of contents still find each sheet. */
+        (o.sequence || []).forEach(function (it) {
+            if (it.kind === 'info') {
+                if (inc('infoSheets')) renderInfo(it.sheet, o.infoSheets.indexOf(it.sheet));
+            } else if (it.kind === 'activity') {
+                if (inc('activitySheets')) renderAct(it.sheet, o.activitySheets.indexOf(it.sheet));
+            } else if (inc('outcomes')) {
+                var b = it.block, bid = oid + '-sec-' + (++secN);
+                var bh = (b.body ? '<p>' + _hxText(b.body) + '</p>' : '') + _hxTables(b.tables);
+                var bTitle = (b.number ? b.number + ' ' : '') + (b.title || '');
+                add(bid, bTitle || t('outcome') + ' ' + o.index, _hxSection(bid, t('outcome') + ' ' + o.index, bTitle, bh));
+            }
         });
     });
 

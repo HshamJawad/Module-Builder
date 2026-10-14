@@ -474,7 +474,7 @@ function _pdfBuild(pdf, model, lang) {
             o.seeAlso.forEach(function (x) { w.text('• ' + x.line.replace(/[\u200E\u200F]/g, ''), { indent: 5 }); });
         }
 
-        o.infoSheets.forEach(function (sh) {
+        var renderInfo = function (sh) {   // 3.43.0: called in document order
             w.newPage();
             w.heading((sh.label || t('infoSheet')) + ' ' + sh.number + ': ' + sh.title, 3);
             if (sh.objectiveLead) w.text(sh.objectiveLead);
@@ -515,9 +515,9 @@ function _pdfBuild(pdf, model, lang) {
                 w.heading(t('answersKey') + ' ' + sh.answersKey.number, 3);
                 w.text(sh.answersKey.content);
             }
-        });
+        };
 
-        o.activitySheets.forEach(function (sh) {
+        var renderAct = function (sh) {
             w.newPage();
             w.heading((sh.label || t('activitySheet')) + ' ' + sh.number + ': ' + sh.title, 3);
             if (sh.objectiveLead) w.text(sh.objectiveLead);
@@ -560,6 +560,22 @@ function _pdfBuild(pdf, model, lang) {
                     [w.CW * 0.08, w.CW * 0.62, w.CW * 0.15, w.CW * 0.15], { size: S.table });
                 if (sh.criteria.footer) w.text(sh.criteria.footer);
             }
+        };
+
+        /* 3.43.0: the outcome in document order (lo_sequence.js). A
+           section placed at the start sits on the outcome's page; one at
+           the end, and every sheet, starts a page of its own. */
+        var renderBlock = function (b) {
+            if (b.place === 'after') w.newPage();
+            var head = (b.number ? b.number + ' ' : '') + (b.title || '');
+            if (head.trim()) w.heading(head, 3);
+            if (b.body) w.text(b.body);
+            _pdfBlockTables(w, b, S);
+        };
+        (o.sequence || []).forEach(function (it) {
+            if (it.kind === 'info') renderInfo(it.sheet);
+            else if (it.kind === 'activity') renderAct(it.sheet);
+            else renderBlock(it.block);
         });
     });
 

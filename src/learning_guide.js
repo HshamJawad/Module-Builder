@@ -236,7 +236,9 @@ function mbBuildLearningGuideModel(lo, loIndex, lang) {
         var auto = (typeof getAutoSheetNumber === 'function')
             ? getAutoSheetNumber(loIndex, i)
             : (loIndex + 1) + '-' + (i + 1);
-        selfNums.push(_lgText(s.selfCheckNumber, lang) || _lgText(s.sheetNumber, lang) || auto);
+        selfNums.push((typeof mbSeqSubNumber === 'function')
+            ? mbSeqSubNumber(lo, loIndex, i, _lgText(s.selfCheckNumber, lang))   // 3.43.0
+            : (_lgText(s.selfCheckNumber, lang) || _lgText(s.sheetNumber, lang) || auto));
     });
 
     if (!infoSheets.length && !actSheets.length && !selfNums.length) return null;
@@ -260,7 +262,8 @@ function mbBuildLearningGuideModel(lo, loIndex, lang) {
                 var auto = (typeof getAutoSheetNumber === 'function')
                     ? getAutoSheetNumber(loIndex, idx)
                     : (loIndex + 1) + '-' + (idx + 1);
-                var num = _lgText(s.sheetNumber, lang) || auto;
+                var num = (typeof mbSeqNumber === 'function') ? mbSeqNumber(lo, loIndex, 'info', idx)
+                    : (_lgText(s.sheetNumber, lang) || auto);   // 3.43.0
                 /* 3.42.0: a name set in Settings → Misc wins (sheet_kinds.js). */
                 var own = (typeof mbSheetLabelExplicit === 'function') ? mbSheetLabelExplicit('info', lang) : '';
                 if (own) return mbSheetHeading(own, num, _lgText(s.title, lang));
@@ -295,7 +298,8 @@ function mbBuildLearningGuideModel(lo, loIndex, lang) {
                 var auto = (typeof getAutoSheetNumber === 'function')
                     ? getAutoSheetNumber(loIndex, idx)
                     : (loIndex + 1) + '-' + (idx + 1);
-                var num = _lgText(s.sheetNumber, lang) || auto;
+                var num = (typeof mbSeqNumber === 'function') ? mbSeqNumber(lo, loIndex, 'activity', idx)
+                    : (_lgText(s.sheetNumber, lang) || auto);   // 3.43.0
                 /* 3.42.0: the sheet's type and the names in Settings → Misc. */
                 var kind = (typeof mbSheetKind === 'function') ? mbSheetKind(s.sheetType) : 'activity';
                 var own = (typeof mbSheetLabelExplicit === 'function') ? mbSheetLabelExplicit(kind, lang) : '';

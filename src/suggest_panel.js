@@ -729,7 +729,9 @@ function _spWrite(module, rows, kind, into) {
                         x.places.forEach(function (p) {
                             if (p.kind !== 'activity' || p.lo.id !== loId) return;
                             var sh = (p.lo.activitySheets || [])[p.n - 1];
-                            var num = (sh && sh.sheetNumber) || String(p.n);
+                            var num = (sh && typeof mbSeqNumber === 'function')   // 3.43.0
+                                ? mbSeqNumber(p.lo, los.findIndex(function (l) { return l && l.id === p.lo.id; }), 'activity', p.n - 1)
+                                : ((sh && sh.sheetNumber) || String(p.n));
                             if (nums.indexOf(num) === -1) nums.push(num);
                         });
                     });
@@ -741,7 +743,9 @@ function _spWrite(module, rows, kind, into) {
                when it names one, else every job sheet of the outcome. */
             var loObj = los.find(function (l) { return l.id === loId; });
             var allActs = ((loObj && loObj.activitySheets) || []).map(function (sh, i) {
-                return (_mbActivitySheetHasContent(sh) && (sh.sheetNumber || getAutoSheetNumber(los.indexOf(loObj), i))) || '';
+                return (_mbActivitySheetHasContent(sh) && ((typeof mbSeqNumber === 'function')   // 3.43.0
+                    ? mbSeqNumber(loObj, los.indexOf(loObj), 'activity', i)
+                    : (sh.sheetNumber || getAutoSheetNumber(los.indexOf(loObj), i)))) || '';
             }).filter(Boolean).join(', ');
             var actsFor = function (r) {
                 if (r.taskId !== MB_LO_PC) return actsOf(r.taskId);

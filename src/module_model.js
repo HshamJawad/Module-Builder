@@ -277,7 +277,11 @@ function mbBuildModuleModel(lang, state) {
             criteria: _mmArr(lo.performanceCriteria)
                 .map(function (c) { return _mmStr(c && (c.text !== undefined ? c.text : c)); })
                 .filter(function (t) { return t.trim(); }),
+            /* 3.43.0: only the sections printed on the overview; those
+               placed at the start or the end of the outcome are in
+               `sequence` (lo_sequence.js). */
             blocks: _mmArr(lo.blocks)
+                .filter(function (b) { return typeof mbBlockPlace !== 'function' || mbBlockPlace(b) === 'overview'; })
                 .map(function (b) {
                     return { title: _mmStr(b && b.title), body: _mmStr(b && b.body),
                              tables: _mmTables(b && b.tables) };
@@ -290,8 +294,9 @@ function mbBuildModuleModel(lang, state) {
 
         _mmArr(lo.infoSheets).forEach(function (sh, si) {
             if (!mmSheetHasContent(sh)) return;
-            const number = _mmSheetNumber(sh, loIndex, si);
+            const number = (typeof mbSeqNumber === 'function') ? mbSeqNumber(lo, loIndex, 'info', si) : _mmSheetNumber(sh, loIndex, si);
             out.infoSheets.push({
+                srcIndex: si,
                 number: number,
                 /* 3.42.0: '' = the exporter's own wording (sheet_kinds.js). */
                 label: (typeof mbSheetLabelExplicit === 'function') ? mbSheetLabelExplicit('info', lang) : '',
@@ -315,10 +320,10 @@ function mbBuildModuleModel(lang, state) {
                    questions — an empty self-check tells the trainee to
                    answer questions that are not in the document. */
                 selfCheck: _mmStr(sh.selfCheckContent).trim()
-                    ? { number: _mmStr(sh.selfCheckNumber) || number, content: _mmStr(sh.selfCheckContent) }
+                    ? { number: (typeof mbSeqSubNumber === 'function') ? mbSeqSubNumber(lo, loIndex, si, sh.selfCheckNumber) : (_mmStr(sh.selfCheckNumber) || number), content: _mmStr(sh.selfCheckContent) }
                     : null,
                 answersKey: _mmStr(sh.answersKeyContent).trim()
-                    ? { number: _mmStr(sh.answersKeyNumber) || number, content: _mmStr(sh.answersKeyContent) }
+                    ? { number: (typeof mbSeqSubNumber === 'function') ? mbSeqSubNumber(lo, loIndex, si, sh.answersKeyNumber) : (_mmStr(sh.answersKeyNumber) || number), content: _mmStr(sh.answersKeyContent) }
                     : null,
                 /* The QR IMAGE is global to the tool (mbState.infoQRImage),
                    while the link text belongs to the individual sheet.
@@ -335,7 +340,7 @@ function mbBuildModuleModel(lang, state) {
 
         _mmArr(lo.activitySheets).forEach(function (sh, si) {
             if (!mmSheetHasContent(sh)) return;
-            const number = _mmSheetNumber(sh, loIndex, si);
+            const number = (typeof mbSeqNumber === 'function') ? mbSeqNumber(lo, loIndex, 'activity', si) : _mmSheetNumber(sh, loIndex, si);
             const kind = (typeof mbSheetKind === 'function') ? mbSheetKind(sh.sheetType) : 'activity';
             /* 3.42.0: «completed within the required time», added after
                the author's rows when the sheet has a duration. Not added
@@ -343,6 +348,7 @@ function mbBuildModuleModel(lang, state) {
                author never started. */
             const timeRow = (typeof mbTimeCriterion === 'function') ? mbTimeCriterion(sh.duration, lang) : '';
             out.activitySheets.push({
+                srcIndex: si,
                 number: number,
                 type: kind,
                 label: (typeof mbSheetLabelExplicit === 'function') ? mbSheetLabelExplicit(kind, lang) : '',
@@ -396,6 +402,29 @@ function mbBuildModuleModel(lang, state) {
                         linkType: _mmStr(sh.linkType) }
                     : null
             });
+        });
+
+        /* 3.43.0: the outcome in document order — what the exporters walk.
+           Default settings give the old order: information sheets, then
+           activity sheets, and no placed sections. */
+        out.sequence = [];
+        const seq = (typeof mbLoSequence === 'function') ? mbLoSequence(lo)
+            : out.infoSheets.map(function (x) { return { kind: 'info', index: x.srcIndex }; })
+                .concat(out.activitySheets.map(function (x) { return { kind: 'activity', index: x.srcIndex }; }));
+        seq.forEach(function (it) {
+            if (it.kind === 'info') {
+                const sh = out.infoSheets.find(function (x) { return x.srcIndex === it.index; });
+                if (sh) out.sequence.push({ kind: 'info', sheet: sh });
+            } else if (it.kind === 'activity') {
+                const sh = out.activitySheets.find(function (x) { return x.srcIndex === it.index; });
+                if (sh) out.sequence.push({ kind: 'activity', sheet: sh });
+            } else {
+                const b = it.block;
+                const blk = { title: _mmStr(b && b.title), body: _mmStr(b && b.body), tables: _mmTables(b && b.tables),
+                              place: it.place,
+                              number: (typeof mbSeqBlockNumber === 'function') ? mbSeqBlockNumber(lo, loIndex, b) : '' };
+                if (blk.title.trim() || blk.body.trim() || blk.tables.length) out.sequence.push({ kind: 'block', block: blk });
+            }
         });
 
         model.outcomes.push(out);

@@ -575,6 +575,8 @@ function loadActivitySheetAtIndex(lo, index) {
 
 // ── Info sheet navigation helpers ──────────────────────────────
 function updateInfoSheetNav(lo) {
+    /* 3.43.0: the number field after the sheet's values are in (lo_sequence.js). */
+    if (typeof mbSeqPaintNumberFields === 'function') setTimeout(mbSeqPaintNumberFields, 0);
     /* 3.31.0: what this outcome uses from other outcomes' sheets. */
     if (typeof mbRenderSeeAlso === 'function') mbRenderSeeAlso('info');
     const nav = document.getElementById('info-sheet-nav');
@@ -746,6 +748,7 @@ async function removeCurrentInfoSheet() {
 
 // ── Activity sheet navigation helpers ──────────────────────────
 function updateActivitySheetNav(lo) {
+    if (typeof mbSeqPaintNumberFields === 'function') setTimeout(mbSeqPaintNumberFields, 0);   // 3.43.0
     /* 3.31.0: what this outcome uses from other outcomes' sheets. */
     if (typeof mbRenderSeeAlso === 'function') mbRenderSeeAlso('activity');
     const nav = document.getElementById('activity-sheet-nav');
