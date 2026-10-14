@@ -3668,3 +3668,10 @@ html[dir="rtl"] .mb-sp[open] > summary::before { transform: rotate(-90deg); }
     font-weight: 600;
 }
 #ws-overlay button.ws-sub-btn { border-radius: 999px; }
+
+/* 3.43.0 — lo_sequence.js: the «Comes after» row hides with [hidden]
+   despite its inline display:flex; a computed sheet number reads as such. */
+#activity-after-row[hidden] { display: none !important; }
+input.mb-seq-auto { background: #f1f5f9 !important; color: #475569; cursor: default; }
+.mb-block-place { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 6px 0 8px; font-size: .88em; color: #475569; }
+.mb-block-place select { padding: 5px 8px; border: 1.5px solid #d1d5db; border-radius: 6px; background: #fff; font: inherit; }

@@ -1160,7 +1160,9 @@ async function exportToDocx() {
                 /* Author-defined sections for this outcome. They sit
                    between the description and the performance criteria —
                    the same order the card shows on screen. */
-                mbBlocksFilled(lo.blocks).forEach(block => {
+                /* 3.43.0: sections placed at the start or the end of the
+                   outcome print there instead (lo_sequence.js). */
+                mbBlocksFilled(lo.blocks).filter(b => typeof mbBlockPlace !== 'function' || mbBlockPlace(b) === 'overview').forEach(block => {
                     const blockTitle = (block.title || '').trim();
                     if (blockTitle) {
                         overviewChildren.push(new Paragraph({
@@ -1523,7 +1525,9 @@ async function exportToDocx() {
         const buildInfoCh = (info, loIndex, sheetIndex) => {
             const { Table, TableRow, TableCell, WidthType, BorderStyle } = mbDocxLib();
             const ch = [];
-            const num = info.sheetNumber || getAutoSheetNumber(loIndex, sheetIndex);
+            const _loSeq = mbState.learningOutcomesData[loIndex];   // 3.43.0
+            const num = (typeof mbSeqNumber === 'function') ? mbSeqNumber(_loSeq, loIndex, 'info', sheetIndex)
+                : (info.sheetNumber || getAutoSheetNumber(loIndex, sheetIndex));
             if (info.title && info.title.trim()) {
                 ch.push(new Paragraph({ children: [new TextRun({ text: _sheetHeadText('info', num, info.title, 'expInfoSheetTitled'), size: _wsBody(), bold: true, color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 400 } }));
             }
@@ -1591,14 +1595,14 @@ async function exportToDocx() {
                 }
             }
             if (info.selfCheckContent && info.selfCheckContent.trim()) {
-                const scNum = info.selfCheckNumber || num;
+                const scNum = (typeof mbSeqSubNumber === 'function') ? mbSeqSubNumber(_loSeq, loIndex, sheetIndex, info.selfCheckNumber) : (info.selfCheckNumber || num);
                 const scCh = [];
                 scCh.push(new Paragraph({ children: [new TextRun({ text: _mbTf('expSelfCheck', { v0: scNum }), bold: true, size: _wsBody(), color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 400 } }));
                 info.selfCheckContent.split('\n').forEach(line => { if (line.trim()) scCh.push(new Paragraph({ children: [new TextRun({ text: line, size: _wsBody(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 150 } })); });
                 ch.__selfCheckSection = scCh;
             }
             if (info.answersKeyContent && info.answersKeyContent.trim()) {
-                const akNum = info.answersKeyNumber || num;
+                const akNum = (typeof mbSeqSubNumber === 'function') ? mbSeqSubNumber(_loSeq, loIndex, sheetIndex, info.answersKeyNumber) : (info.answersKeyNumber || num);
                 const akCh = [];
                 akCh.push(new Paragraph({ children: [new TextRun({ text: _mbTf('expAnswersKey', { v0: akNum }), bold: true, size: _wsBody(), color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 400 } }));
                 info.answersKeyContent.split('\n').forEach(line => { if (line.trim()) akCh.push(new Paragraph({ children: [new TextRun({ text: line, size: _wsBody(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 150 } })); });
@@ -1611,7 +1615,8 @@ async function exportToDocx() {
         const buildActCh = (activity, loIndex, sheetIndex) => {
             const { Table, TableRow, TableCell, WidthType, BorderStyle } = mbDocxLib();
             const ch = [];
-            const num = activity.sheetNumber || getAutoSheetNumber(loIndex, sheetIndex);
+            const num = (typeof mbSeqNumber === 'function') ? mbSeqNumber(mbState.learningOutcomesData[loIndex], loIndex, 'activity', sheetIndex)
+                : (activity.sheetNumber || getAutoSheetNumber(loIndex, sheetIndex));   // 3.43.0
             if (activity.title && activity.title.trim()) {
                 ch.push(new Paragraph({ children: [new TextRun({ text: _sheetHeadText((typeof mbSheetKind === 'function') ? mbSheetKind(activity.sheetType) : 'activity', num, activity.title, 'expActivitySheetTitled'), size: _wsBody(), bold: true, color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 400 } }));
             }
@@ -1762,6 +1767,20 @@ async function exportToDocx() {
                     loHdCh.push(new Paragraph({ children: [new TextRun({ text: '• ' + x.line, size: _wsBody(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 80 } }));
                 });
             }
+            /* 3.43.0: sections placed at the start of the outcome, on its page. */
+            if (typeof mbLoSequence === 'function') {
+                mbLoSequence(lo).forEach(it => {
+                    if (it.kind !== 'block' || it.place !== 'before' || !mbBlocksFilled([it.block]).length) return;
+                    const n = (typeof mbSeqBlockNumber === 'function') ? mbSeqBlockNumber(lo, loIndex, it.block) : '';
+                    const head = ((n ? n + ' ' : '') + (it.block.title || '')).trim();
+                    if (head) loHdCh.push(new Paragraph({ children: [new TextRun({ text: head, size: _wsBody(), bold: true, color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 300, before: 300 } }));
+                    (it.block.body || '').split('\n').forEach(line => {
+                        if (!line.trim()) return;
+                        loHdCh.push(new Paragraph({ children: [new TextRun({ text: line, size: _wsBody(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 150 } }));
+                    });
+                    (it.block.tables || []).forEach(t => _pushUserTable(t, loHdCh));
+                });
+            }
             sections.push({ properties: { bidi: _mbRtl() }, children: loHdCh });
 
             if (mbState.includeLearningGuide) {
@@ -1774,22 +1793,48 @@ async function exportToDocx() {
                 }
             }
 
-            (lo.infoSheets || []).forEach((info, si) => {
-                if (!info.title || !info.title.trim()) return;
+            /* 3.43.0: the outcome in document order (lo_sequence.js). With
+               the default settings this is every information sheet, then
+               every activity sheet — the order this export always had. */
+            const _seqItems = (typeof mbLoSequence === 'function') ? mbLoSequence(lo)
+                : (lo.infoSheets || []).map((x, i) => ({ kind: 'info', index: i }))
+                    .concat((lo.activitySheets || []).map((x, i) => ({ kind: 'activity', index: i })));
+            const _blockCh = (block) => {
+                const ch = [];
+                const n = (typeof mbSeqBlockNumber === 'function') ? mbSeqBlockNumber(lo, loIndex, block) : '';
+                const head = ((n ? n + ' ' : '') + (block.title || '')).trim();
+                if (head) ch.push(new Paragraph({ children: [new TextRun({ text: head, size: _wsBody(), bold: true, color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 300, before: 200 } }));
+                (block.body || '').split('\n').forEach(line => {
+                    if (!line.trim()) return;
+                    ch.push(new Paragraph({ children: [new TextRun({ text: line, size: _wsBody(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 150 } }));
+                });
+                (block.tables || []).forEach(t => _pushUserTable(t, ch));
+                return ch;
+            };
+            const _infoOut = (si) => {
+                const info = (lo.infoSheets || [])[si];
+                if (!info || !info.title || !info.title.trim()) return;
                 const ch = buildInfoCh(info, loIndex, si);
                 if (ch.length > 0) sections.push({ properties: { bidi: _mbRtl() }, children: ch });
                 // Self-check AFTER info sheet
                 if (ch.__selfCheckSection) sections.push({ properties: { bidi: _mbRtl() }, children: ch.__selfCheckSection });
                 // Answers-Key AFTER self-check
                 if (ch.__answersKeySection) sections.push({ properties: { bidi: _mbRtl() }, children: ch.__answersKeySection });
-            });
-
-            (lo.activitySheets || []).forEach((activity, si) => {
-                if (!activity.title || !activity.title.trim()) return;
+            };
+            const _actOut = (si) => {
+                const activity = (lo.activitySheets || [])[si];
+                if (!activity || !activity.title || !activity.title.trim()) return;
                 const ch = buildActCh(activity, loIndex, si);
                 if (ch.length > 0) sections.push({ properties: { bidi: _mbRtl() }, children: ch });
                 // Criteria as separate page AFTER activity sheet
                 if (ch.__criteriaSection) sections.push({ properties: { bidi: _mbRtl() }, children: ch.__criteriaSection });
+            };
+            _seqItems.forEach(it => {
+                if (it.kind === 'info') _infoOut(it.index);
+                else if (it.kind === 'activity') _actOut(it.index);
+                else if (it.place === 'after' && mbBlocksFilled([it.block]).length) {
+                    sections.push({ properties: { bidi: _mbRtl() }, children: _blockCh(it.block) });
+                }
             });
         });
 

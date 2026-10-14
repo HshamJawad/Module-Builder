@@ -60,11 +60,12 @@ jobs:
           # on the activity checklist and the outcome criteria in the form,
           # 3.33 for the suggested content in the sheet tabs and coverage,
           # 3.34 for one language per text (DACUM texts on their own side).
-          # 3.42 for the glossary, sheet types and the checklist time row.
+          # 3.42 for the glossary, sheet types and the checklist time row,
+          # 3.43 for the order and numbering inside a learning outcome.
           # version.json now reads 3.7.0, and any value left behind here
           # would roll the number backwards to <old>.<run> on the next
           # push — the same failure, one minor later.
-          MAJOR_MINOR: "3.42"
+          MAJOR_MINOR: "3.43"
         run: |
           VERSION="${MAJOR_MINOR}.${GITHUB_RUN_NUMBER}"
           BUILD="$(date -u +%Y-%m-%d)"

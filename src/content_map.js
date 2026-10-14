@@ -558,7 +558,8 @@ function mbSeeAlsoFor(loId, lang, los, refs) {
         var sh = sheets[e.index];
         var title = sh ? strOf(sh.title).trim() : '';
         if (!title) return;
-        var number = strOf(sh.sheetNumber) || (typeof getAutoSheetNumber === 'function' ? getAutoSheetNumber(loIndex, e.index) : String(e.index + 1));
+        var number = (typeof mbSeqNumber === 'function') ? mbSeqNumber(lo, loIndex, e.kind === 'info' ? 'info' : 'activity', e.index)   // 3.43.0
+            : (strOf(sh.sheetNumber) || (typeof getAutoSheetNumber === 'function' ? getAutoSheetNumber(loIndex, e.index) : String(e.index + 1)));
         var sheetPos = 0;
         for (var i = 0; i < e.index; i++) if (strOf(sheets[i] && sheets[i].title).trim()) sheetPos++;
         var items = e.items.map(function (t) {

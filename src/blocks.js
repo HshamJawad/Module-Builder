@@ -203,6 +203,10 @@ function _mbBlockRowHtml(host, block, lang) {
                ' title="' + _mbBlockEscape(window.i18n.t('mbRemoveSection')) + '">' +
                '<svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg></button>' +
       '</div>' +
+      /* 3.43.0: an outcome section chooses where it is printed
+         (lo_sequence.js) — the overview page as before, or the start or
+         the end of the outcome, e.g. «Introduction» and «Reflection». */
+      (host === 'lo' ? _mbBlockPlaceHtml(block) : '') +
       '<textarea class="mb-block-body" rows="6" dir="auto"' +
                ' data-act="mbBlockEdit" data-on="input"' +
                ' data-args=\'' + _mbBlockEscape(JSON.stringify([host, block.uid, 'body'])) + '\'' +
@@ -211,6 +215,34 @@ function _mbBlockRowHtml(host, block, lang) {
                '>' + _mbBlockEscape(body) + '</textarea>' +
       '<div class="mb-block-tables" id="content-tables-block-' + _mbBlockEscape(block.uid) + '"></div>' +
     '</div>';
+}
+
+function _mbBlockPlaceHtml(block) {
+    var cur = (typeof mbBlockPlace === 'function') ? mbBlockPlace(block) : 'overview';
+    var opt = function (v, key) {
+        return '<option value="' + v + '"' + (v === cur ? ' selected' : '') + '>' +
+               _mbBlockEscape(window.i18n.t(key)) + '</option>';
+    };
+    return '<label class="mb-block-place"><span>' + _mbBlockEscape(window.i18n.t('mbPlaceLabel')) + '</span>' +
+           '<select data-act="mbBlockSetPlace" data-on="change"' +
+           ' data-args=\'' + _mbBlockEscape(JSON.stringify([block.uid, '$value'])) + '\'>' +
+           opt('overview', 'mbPlaceOverview') + opt('before', 'mbPlaceBefore') + opt('after', 'mbPlaceAfter') +
+           '</select></label>';
+}
+
+/** 3.43.0: where an outcome section is printed. */
+function mbBlockSetPlace(uid, value) {
+    var list = mbBlockList('lo');
+    if (!list) return;
+    for (var i = 0; i < list.length; i++) {
+        if (list[i].uid !== uid) continue;
+        if (value === 'before' || value === 'after') list[i].place = value;
+        else delete list[i].place;
+        break;
+    }
+    if (typeof saveCurrentModuleLOData === 'function') saveCurrentModuleLOData();
+    if (typeof mbSeqPaintNumberFields === 'function') mbSeqPaintNumberFields();
+    if (typeof mbTouch === 'function') { try { mbTouch(); } catch (e) { /* autosave absent */ } }
 }
 
 /** Read every table widget in a host's rows back onto its block.

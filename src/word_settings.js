@@ -244,7 +244,13 @@ Object.assign(_WS_STRINGS.en, {
     wsMiscDefaultKind: 'Type of a new activity sheet',
     wsMiscChecklistTitle: 'Performance criteria checklist',
     wsMiscChecklistTime: 'Add “completed within the required time” to the checklist of every activity sheet that has a duration',
-    wsSec_glossary: 'Glossary of Terms'
+    wsSec_glossary: 'Glossary of Terms',
+    wsMiscSeqTitle: 'Order and numbering inside a learning outcome',
+    wsMiscSeqNote: 'For guides written as one sequence — e.g. 1-1 Introduction, 1-2 Knowledge, 1-3 Learning Activity, … 1-6 Reflection. An outcome section prints at the start or the end of its outcome when you choose that on the section itself.',
+    wsMiscOrder: 'Order of the sheets',
+    wsMiscOrderByType: 'By type: all information sheets, then all activity sheets',
+    wsMiscOrderInter: 'Interleaved: each information sheet followed by its activity sheets',
+    wsMiscUnified: 'One number sequence per learning outcome (sections at its start and end included). The numbers are computed; the sheet number fields become read-only.'
 });
 Object.assign(_WS_STRINGS.fr, {
     wsCenterTitle: 'Paramètres',
@@ -265,7 +271,13 @@ Object.assign(_WS_STRINGS.fr, {
     wsMiscDefaultKind: 'Type d\u2019une nouvelle fiche d\u2019activité',
     wsMiscChecklistTitle: 'Liste de vérification des critères de performance',
     wsMiscChecklistTime: 'Ajouter « réalisé dans le temps imparti » à la liste de chaque fiche d\u2019activité qui a une durée',
-    wsSec_glossary: 'Glossaire'
+    wsSec_glossary: 'Glossaire',
+    wsMiscSeqTitle: 'Ordre et numérotation dans un résultat d\u2019apprentissage',
+    wsMiscSeqNote: 'Pour les guides écrits en une seule suite — p. ex. 1-1 Introduction, 1-2 Connaissances, 1-3 Activité d\u2019apprentissage, … 1-6 Réflexion. Une section d\u2019un résultat s\u2019imprime à son début ou à sa fin si vous le choisissez sur la section elle-même.',
+    wsMiscOrder: 'Ordre des fiches',
+    wsMiscOrderByType: 'Par type : toutes les fiches d\u2019information, puis toutes les fiches d\u2019activité',
+    wsMiscOrderInter: 'Alterné : chaque fiche d\u2019information suivie de ses fiches d\u2019activité',
+    wsMiscUnified: 'Une seule suite de numéros par résultat d\u2019apprentissage (sections du début et de la fin comprises). Les numéros sont calculés ; les champs de numéro deviennent en lecture seule.'
 });
 Object.assign(_WS_STRINGS.ar, {
     wsCenterTitle: 'الإعدادات',
@@ -286,7 +298,13 @@ Object.assign(_WS_STRINGS.ar, {
     wsMiscDefaultKind: 'نوع ورقة النشاط الجديدة',
     wsMiscChecklistTitle: 'قائمة تدقيق معايير الأداء',
     wsMiscChecklistTime: 'إضافة بند «إنجاز النشاط ضمن الوقت المحدد» إلى قائمة كل ورقة نشاط لها مدة',
-    wsSec_glossary: 'مسرد المصطلحات'
+    wsSec_glossary: 'مسرد المصطلحات',
+    wsMiscSeqTitle: 'الترتيب والترقيم داخل محصلة التعلم',
+    wsMiscSeqNote: 'للأدلة المكتوبة تسلسلاً واحداً — مثل 1-1 مقدمة، 1-2 معرفة، 1-3 نشاط تعليمي، … 1-6 تأمل. ويُطبع قسم المحصلة في بدايتها أو نهايتها إذا اخترت ذلك في القسم نفسه.',
+    wsMiscOrder: 'ترتيب الأوراق',
+    wsMiscOrderByType: 'حسب النوع: كل أوراق المعلومات ثم كل أوراق النشاط',
+    wsMiscOrderInter: 'متداخل: كل ورقة معلومات تليها أوراق نشاطها',
+    wsMiscUnified: 'تسلسل أرقام واحد لكل محصلة تعلم (يشمل أقسام بدايتها ونهايتها). تُحسب الأرقام تلقائياً، وتصبح حقول رقم الورقة للقراءة فقط.'
 });
 
 function _wsT(key) {
@@ -351,7 +369,10 @@ var WS_DEFAULTS = {
     /* 3.42.0 — Misc (sheet_kinds.js). Names: '' = the dictionary's. */
     sheetLabels:      null,  /* null = no names typed; else { en: { info, activity, … }, fr, ar } */
     defaultSheetKind: 'activity',
-    checklistTime:    true
+    checklistTime:    true,
+    /* 3.43.0 — lo_sequence.js */
+    sheetOrder:       'byType',   /* 'byType' | 'interleaved' */
+    unifiedNumbering: false
 };
 
 var WS_HTML_SECTIONS = ['overview', 'intro', 'outcomes', 'infoSheets',
@@ -435,7 +456,9 @@ function wsReadSettings() {
         sheetLabels: _wsValidLabels(o.sheetLabels),
         defaultSheetKind: (['activity', 'task', 'job', 'operation'].indexOf(o.defaultSheetKind) !== -1)
             ? o.defaultSheetKind : WS_DEFAULTS.defaultSheetKind,
-        checklistTime: o.checklistTime !== false
+        checklistTime: o.checklistTime !== false,
+        sheetOrder: (o.sheetOrder === 'interleaved') ? 'interleaved' : 'byType',
+        unifiedNumbering: o.unifiedNumbering === true
     };
     WS_SIZE_FIELDS.forEach(function (f) {
         out[f] = _wsValidSize(o[f], WS_DEFAULTS[f]);
@@ -944,6 +967,16 @@ function _wsPaneMisc() {
           '<thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>' +
         '<div class="ws-row"><label for="ws-misc-kind">' + _wsT('wsMiscDefaultKind') + '</label>' +
           '<select class="ws-select" id="ws-misc-kind" data-ws-misc="defaultSheetKind">' + kinds + '</select></div>' +
+        /* 3.43.0: the order and numbering inside a learning outcome. */
+        '<h4 class="ws-group">\uD83D\uDD22 ' + _wsT('wsMiscSeqTitle') + '</h4>' +
+        '<p class="ws-note ws-note-sm">\u2139\uFE0F ' + _wsT('wsMiscSeqNote') + '</p>' +
+        '<div class="ws-row"><label for="ws-misc-order">' + _wsT('wsMiscOrder') + '</label>' +
+          '<select class="ws-select" id="ws-misc-order" data-ws-misc="sheetOrder">' +
+            '<option value="byType"' + (_wsDraft.sheetOrder !== 'interleaved' ? ' selected' : '') + '>' + _wsT('wsMiscOrderByType') + '</option>' +
+            '<option value="interleaved"' + (_wsDraft.sheetOrder === 'interleaved' ? ' selected' : '') + '>' + _wsT('wsMiscOrderInter') + '</option>' +
+          '</select></div>' +
+        '<div class="ws-checks"><label class="ws-check"><input type="checkbox" data-ws-misc="unifiedNumbering"' +
+          (_wsDraft.unifiedNumbering === true ? ' checked' : '') + '><span>' + _wsT('wsMiscUnified') + '</span></label></div>' +
         '<h4 class="ws-group">\u2705 ' + _wsT('wsMiscChecklistTitle') + '</h4>' +
         '<div class="ws-checks"><label class="ws-check"><input type="checkbox" data-ws-misc="checklistTime"' +
           (_wsDraft.checklistTime !== false ? ' checked' : '') + '><span>' + _wsT('wsMiscChecklistTime') + '</span></label></div>';
@@ -1109,6 +1142,12 @@ function openWordSettings(pane) {
         /* 3.42.0 — Misc. */
         var miscField = e.target && e.target.getAttribute && e.target.getAttribute('data-ws-misc');
         if (miscField === 'checklistTime') { _wsDraft.checklistTime = !!e.target.checked; _wsTouch(); return; }
+        if (miscField === 'unifiedNumbering') { _wsDraft.unifiedNumbering = !!e.target.checked; _wsTouch(); return; }
+        if (miscField === 'sheetOrder') {
+            _wsDraft.sheetOrder = (e.target.value === 'interleaved') ? 'interleaved' : 'byType';
+            _wsTouch();
+            return;
+        }
         if (miscField === 'defaultSheetKind') {
             _wsDraft.defaultSheetKind = (['activity', 'task', 'job', 'operation'].indexOf(e.target.value) !== -1)
                 ? e.target.value : WS_DEFAULTS.defaultSheetKind;
