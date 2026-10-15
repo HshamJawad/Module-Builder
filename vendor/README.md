@@ -2,7 +2,7 @@
 
 Copied unmodified from the official npm registry packages (3.13.0). Each
 npm tarball's sha512 was checked against the registry's published
-`dist.integrity` before extraction. All four are MIT licensed; each
+`dist.integrity` before extraction. docx, jsPDF, fflate and pptxgenjs are MIT licensed, pdf.js (3.45.0) Apache-2.0; each
 folder keeps the package's LICENSE file (docx also ships its bundled
 third-party notices in `index.js.LICENSE.txt`).
 
@@ -20,6 +20,9 @@ never depends on a third-party server being reachable.
 |  | replaces `https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js` | | |
 | `vendor/pptxgenjs-3.12.0/pptxgen.bundle.js` | pptxgenjs@3.12.0 → dist/pptxgen.bundle.js | 468 KB | `cd078ca9e91c6f9e061ee0a3c310d6ff157c3a71b1dea7f40fd53818017266ff` |
 |  | replaces `https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js` (still loaded on demand) | | |
+| `vendor/pdfjs-3.11.174/pdf.min.js` | pdfjs-dist@3.11.174 → build/pdf.min.js | 320 KB | `5b5799e6f8c680663207ac5b42ee14eed2a406fa7af48f50c154f0c0b1566946` |
+| `vendor/pdfjs-3.11.174/pdf.worker.min.js` | pdfjs-dist@3.11.174 → build/pdf.worker.min.js | 1.1 MB | `feabdf309770ed24bba31a5467836cdc8cf639c705af27d52b585b041bb8527b` |
+|  | new in 3.45.0 — reads the text of a PDF for 📚 Draft from sources (src/source_ai.js). Apache-2.0. Loaded on the first PDF only, not precached; text only (no rendering, `isEvalSupported: false`) | | |
 
 docx and jsPDF are byte-identical to the copies in DACUM Live Pro's own
 `vendor/` folder (same checksums).
