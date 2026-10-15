@@ -66,11 +66,12 @@ jobs:
           # 3.45 for 📚 Draft from sources,
           # 3.46 for drafting several sheets from sources,
           # 3.47 for the programme context, no-source and mixed drafting,
-          # 3.48 for the suggested-content counts and the content tools.
+          # 3.48 for the suggested-content counts and the content tools,
+          # 3.49 for offline excerpts from the book.
           # version.json now reads 3.7.0, and any value left behind here
           # would roll the number backwards to <old>.<run> on the next
           # push — the same failure, one minor later.
-          MAJOR_MINOR: "3.48"
+          MAJOR_MINOR: "3.49"
         run: |
           VERSION="${MAJOR_MINOR}.${GITHUB_RUN_NUMBER}"
           BUILD="$(date -u +%Y-%m-%d)"

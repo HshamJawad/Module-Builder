@@ -498,3 +498,100 @@ test('several sheets with no source: rows start on AI knowledge, no pages to cho
   expect(calls.sheet.every(p => p.includes('NO SOURCE IS GIVEN'))).toBe(true);
   expect(errors).toEqual([]);
 });
+
+/* ── 3.49.0: 📖 excerpts from the book, offline ──────────────── */
+
+const para = (s, n = 18) => Array.from({ length: n }, () => s).join(' ');
+const BOOK = [
+  para('Electrical safety rules protect the worker. Switch off and lock the supply before any work.'),
+  para('A multimeter measures voltage. To measure voltage, set the multimeter to volts and connect the probes in parallel with the load.'),
+  para('Soldering joins wires with melted solder. Heat the joint with the soldering iron, then feed the solder.'),
+].join('\n\n');
+
+async function noNetworkAI(page) {
+  const calls = [];
+  await page.route('**/api/generate-dacum', r => { calls.push(1); return r.fulfill({ status: 500, body: '{}' }); });
+  return calls;
+}
+
+test('📖 excerpts, this sheet: the matching page, as the book wrote it, with its page — nothing sent', async ({ page }) => {
+  const errors = await ready(page);
+  const calls = await noNetworkAI(page);
+  await page.evaluate((t) => mbSrcAddText('Workshop Book', t), BOOK);
+  expect(await page.evaluate(async () => (await mbSources.list())[0].pages.length)).toBe(3);
+  await page.locator('#mb-src-btn').click();
+  const ov = page.locator('#src-overlay');
+  await ov.locator('input[name="src-method"][value="excerpt"]').check();
+  await expect(ov.locator('input[name="src-pick"][value="__ai__"]')).toHaveCount(0);
+  await expect(ov.locator('#src-to')).toHaveValue('3');                 // the whole book
+  await expect(ov.locator('#src-est')).toContainText('Offline');
+  await expect(ov.locator('#src-gen')).toContainText('Extract');
+  await ov.locator('#src-topic').fill('Measuring voltage with a multimeter');
+  await ov.locator('[data-src="gen"]').click();
+  await expect(ov.locator('.src-part').first()).toContainText('connect the probes in parallel');
+  await expect(ov.locator('.src-part-cite').first()).toContainText('(Excerpt — Workshop Book, p. 2)');
+  await ov.locator('[data-src="keep"]').click();
+  const texts = await page.evaluate(() => {
+    const lo = mbState.learningOutcomesData.find(l => l.id === mbState.currentLOId);
+    return lo.infoSheets[mbState.currentInfoSheetIndex].contentSections.map(c => biGet(c.text, 'en'));
+  });
+  expect(texts.join('\n')).toContain('(Excerpt — Workshop Book, p. 2)');
+  expect(texts.join('\n')).not.toContain('Soldering joins');
+  expect(calls).toHaveLength(0);
+  expect(errors).toEqual([]);
+});
+
+test('📖 excerpts fill the headings waiting for text; a heading the book does not cover is named', async ({ page }) => {
+  const errors = await ready(page);
+  await page.evaluate((t) => mbSrcAddText('Workshop Book', t), BOOK);
+  const draft = await page.evaluate(async () => {
+    const rec = (await mbSources.list())[0];
+    const ctx = { lo: '', headings: [
+      { ref: 'H1', text: 'Soldering', written: false },
+      { ref: 'H2', text: 'Electrical safety', written: false },
+      { ref: 'H3', text: 'Quantum chromodynamics', written: false } ] };
+    return mbSrcExcerpts(rec, 1, rec.pages.length, ctx, 'Workshop basics');
+  });
+  expect(draft.sections.map(s => [s.ref, s.pages[0]])).toEqual([['H1', 3], ['H2', 1]]);
+  expect(draft.notCovered).toBe('Quantum chromodynamics');
+  expect(errors).toEqual([]);
+});
+
+test('📖 Arabic: letters normalised and prefixes trimmed, so «الصيانة» finds «وصيانة»', async ({ page }) => {
+  const errors = await ready(page, { lang: 'ar', contentLang: 'ar' });
+  const r = await page.evaluate(() => {
+    const rec = { id: 'ar1', name: 'كتاب', pages: [
+      'السلامة المهنية واجبة في الورشة. ارتد النظارات الواقية دائماً. '.repeat(20),
+      'وصيانة الحاسوب الدورية تطيل عمره. نظّف المراوح وافحص الكابلات بانتظام. '.repeat(20)
+    ] };
+    return mbSrcExcerpts(rec, 1, 2, { headings: [{ ref: 'H1', text: 'الصيانة الدورية للحاسوب', written: false }] }, 'الحاسوب');
+  });
+  expect(r.sections[0].pages).toEqual([2]);
+  expect(errors).toEqual([]);
+});
+
+test('📖 several sheets: pages found on this device, sheets written at once, no request', async ({ page }) => {
+  const errors = await ready(page);
+  const calls = await noNetworkAI(page);
+  await page.evaluate(() => {
+    const lo = mbState.learningOutcomesData[0];
+    lo.infoSheets = ['Soldering wires', 'Measuring voltage with a multimeter'].map((t, i) => ({ sheetNumber: '1-' + (i + 1), title: biNew(t), objective: '', contentSections: [], contentSectionImages: {} }));
+    saveCurrentModuleLOData(); mbState.currentInfoSheetIndex = 0; loadCurrentLOSheets();
+  });
+  await page.evaluate((t) => mbSrcAddText('Workshop Book', t), BOOK);
+  await page.locator('#mb-src-btn').click();
+  const ov = page.locator('#src-overlay');
+  await ov.locator('[data-src="mode-many"]').click();
+  await ov.locator('input[name="src-method"][value="excerpt"]').check();
+  await ov.locator('[data-src="map"]').click();
+  await expect(page.locator('#src-msg')).toContainText('2 of 2');
+  await expect(ov.locator('.src-row').nth(0).locator('[data-rf="from"]')).toHaveValue('3');
+  await expect(ov.locator('.src-row').nth(1).locator('[data-rf="from"]')).toHaveValue('2');
+  await ov.locator('[data-src="gen-many"]').click();
+  await expect(page.locator('#src-msg')).toContainText('Done: 2 sheet(s) written.');
+  const s = await page.evaluate(() => mbState.learningOutcomesData[0].infoSheets.map(x => x.contentSections.map(c => biGet(c.text, 'en')).join(' ')));
+  expect(s[0]).toContain('Soldering joins');
+  expect(s[1]).toContain('connect the probes in parallel');
+  expect(calls).toHaveLength(0);
+  expect(errors).toEqual([]);
+});
