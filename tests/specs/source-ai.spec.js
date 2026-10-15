@@ -13,7 +13,7 @@ async function ready(page, opts = {}) {
     wsWriteSettings(Object.assign(wsReadSettings(), { hideSourceDrafts: false }));
     window.dispatchEvent(new CustomEvent('mb:settingschange'));
   });
-  await page.route('**/up.railway.app/', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{"status":"ok"}' }));
+  await page.route(/up\.railway\.app\/$/, r => r.fulfill({ status: 200, contentType: 'application/json', body: '{"status":"ok"}' }));
   await tab(page, 'info');
   await page.evaluate(() => { _applyLOSwitch(mbState.learningOutcomesData[0].id); loadCurrentLOSheets(); });
   return errors;
@@ -72,8 +72,8 @@ test('➕ Add Content at the top and on a card: the new card is brought into vie
 
 test('the dialog says when the AI service cannot be reached', async ({ page }) => {
   const errors = await ready(page);
-  await page.unroute('**/up.railway.app/');
-  await page.route('**/up.railway.app/', r => r.fulfill({ status: 404, body: 'Application not found' }));
+  await page.unroute(/up\.railway\.app\/$/);
+  await page.route(/up\.railway\.app\/$/, r => r.fulfill({ status: 404, body: 'Application not found' }));
   await page.locator('#mb-src-btn').click();
   await expect(page.locator('#src-svc')).toContainText('cannot be reached');
   expect(errors).toEqual([]);
@@ -395,6 +395,7 @@ test('the prompt carries job, occupation, country, scope, the full module title 
   h.context = 'Iraq';
   h.scopeOfWork = 'Installs and maintains computers in offices.';
   const errors = await openApp(page, { handoff: h, contentLang: 'en' });
+  await page.route(/up\.railway\.app\/$/, r => r.fulfill({ status: 200, body: '{}' }));
   await page.evaluate(() => { wsWriteSettings(Object.assign(wsReadSettings(), { hideSourceDrafts: false })); window.dispatchEvent(new CustomEvent('mb:settingschange')); });
   await tab(page, 'info');
   await page.evaluate(() => { _applyLOSwitch(mbState.learningOutcomesData[0].id); loadCurrentLOSheets(); });
@@ -434,7 +435,7 @@ test('no source on the device: written from AI knowledge, flagged, no page lines
   const ov = page.locator('#src-overlay');
   await expect(ov.locator('input[name="src-pick"][value="__ai__"]')).toBeChecked();   // the only choice
   await expect(ov.locator('#src-mixed')).toHaveCount(0);
-  await expect(ov.locator('.src-warn')).toContainText('No page citations');
+  await expect(ov.locator('#src-body .src-warn')).toContainText('No page citations');
   await ov.locator('#src-topic').fill('Cables');
   await ov.locator('[data-src="gen"]').click();
   await expect(ov.locator('.src-gap').filter({ hasText: 'To check' })).toContainText('cable colours');
