@@ -41,6 +41,18 @@
 // a stop, a busy service or a closed page leaves the rest for the next
 // Generate.
 //
+// CONTEXT, NO SOURCE, MIXED (3.47.0)
+// Every prompt starts with the programme, as DACUM Live Pro's do: the
+// JOB (the focus), the occupation (context), sector, country / context
+// and scope of work (DACUM 3.118 sends them; the country can be typed in
+// the dialog and is kept on the module), the module's full title (its
+// short name only when there is none) and the level. A sheet can be
+// written with no source («🧠 AI knowledge»: flagged in the dialog, no
+// page lines, no reference, doubtful points listed «to check»), or from
+// a source completed from general knowledge (each such section ends with
+// a line saying so). Invented standards, codes and references are
+// forbidden in every mode.
+//
 // Off by default, and nothing here runs until the dialog is opened: the
 // PDF reader (vendor/pdfjs-3.11.174) is loaded on the first PDF.
 // ============================================================
@@ -139,7 +151,16 @@ var _SRC_STRINGS = {
         doneMany: 'Done: {v0} sheet(s) written.',
         failedSome: '{v0} sheet(s) failed — press Generate to try them again.',
         stDone: 'Written', stErr: 'Failed', stRun: 'Writing…', stWait: 'Waiting',
-        outcome: 'LO {v0}'
+        outcome: 'LO {v0}',
+        aiSource: '🧠 Without a source — AI knowledge',
+        aiOpt: '🧠 AI knowledge',
+        aiNote: 'Written from the AI’s general professional knowledge for this job, level and country. No page citations and no reference are added. Check every technical fact, value and safety rule before use.',
+        mixed: 'Complete what the pages do not cover from general knowledge (marked in the sheet)',
+        country: 'Country / context',
+        countryPh: 'e.g. Iraq',
+        toVerify: 'To check',
+        generalTag: 'General knowledge',
+        ctxLine: 'Written for: {v0}'
     },
     fr: {
         btn: 'Rédiger depuis les sources',
@@ -222,7 +243,16 @@ var _SRC_STRINGS = {
         doneMany: 'Terminé : {v0} fiche(s) rédigée(s).',
         failedSome: '{v0} fiche(s) en échec — cliquez sur Générer pour réessayer.',
         stDone: 'Rédigée', stErr: 'Échec', stRun: 'Rédaction…', stWait: 'En attente',
-        outcome: 'RA {v0}'
+        outcome: 'RA {v0}',
+        aiSource: '🧠 Sans source — connaissances de l’IA',
+        aiOpt: '🧠 Connaissances de l’IA',
+        aiNote: 'Rédigé à partir des connaissances professionnelles générales de l’IA pour cet emploi, ce niveau et ce pays. Aucune page ni référence n’est ajoutée. Vérifiez chaque donnée technique, valeur et règle de sécurité avant usage.',
+        mixed: 'Compléter ce que les pages ne couvrent pas par des connaissances générales (signalé dans la fiche)',
+        country: 'Pays / contexte',
+        countryPh: 'ex. Irak',
+        toVerify: 'À vérifier',
+        generalTag: 'Connaissances générales',
+        ctxLine: 'Rédigé pour : {v0}'
     },
     ar: {
         btn: 'صياغة من المصادر',
@@ -305,7 +335,16 @@ var _SRC_STRINGS = {
         doneMany: 'اكتمل: كُتبت {v0} ورقة.',
         failedSome: 'تعذّرت {v0} ورقة — اضغط «توليد» لإعادة المحاولة.',
         stDone: 'كُتبت', stErr: 'تعذّرت', stRun: 'تُكتب…', stWait: 'بالانتظار',
-        outcome: 'المحصلة {v0}'
+        outcome: 'المحصلة {v0}',
+        aiSource: '🧠 بلا مصدر — معرفة الذكاء الاصطناعي',
+        aiOpt: '🧠 معرفة الذكاء الاصطناعي',
+        aiNote: 'يُكتب من المعرفة المهنية العامة للذكاء الاصطناعي بما يناسب هذا العمل والمستوى والدولة. لا تُضاف صفحات ولا مرجع. تحقّق من كل معلومة فنية وقيمة وقاعدة سلامة قبل الاستخدام.',
+        mixed: 'إكمال ما لا تغطيه الصفحات من المعرفة العامة (مع تمييزه في الورقة)',
+        country: 'الدولة / السياق',
+        countryPh: 'مثال: العراق',
+        toVerify: 'يحتاج تحققاً',
+        generalTag: 'معرفة عامة',
+        ctxLine: 'يُكتب لـ: {v0}'
     }
 };
 
@@ -315,6 +354,14 @@ var _SRC_CITE = {
     fr: '(Source : {s}, p. {p})',
     ar: '(المصدر: {s}، ص {p})'
 };
+/* 3.47.0: the line that ends a section NOT drawn from the source, in a
+   sheet completed from general knowledge. */
+var _SRC_GENERAL = {
+    en: '(General knowledge — not from the source; check it)',
+    fr: '(Connaissances générales — hors de la source ; à vérifier)',
+    ar: '(معرفة عامة — ليست من المصدر؛ تحقّق منها)'
+};
+var SRC_AI = '__ai__';            // the «no source» choice
 var _SRC_LANG_NAMES = { en: 'English', ar: 'Arabic', fr: 'French' };
 var _SRC_STYLE = {
     ar: 'Write Modern Standard Arabic in a clear, formal register suited to vocational trainees. Keep technical terms, units, codes and standards in their usual form; Western digits.',
@@ -634,14 +681,58 @@ function mbSrcSheetContext(lo, sh, lang) {
     return ctx;
 }
 
+/* ── The programme around the sheet (3.47.0) ───────────────────
+   As in DACUM Live Pro's prompts: the JOB is the focus, the occupation
+   context only; sector, country and scope of work; the module (its full
+   title, the short name only when there is no title) and its level.
+   Read from what both ways of working fill: the cover table (pre-filled
+   by DACUM, or typed), the module, DACUM's handoff when there was one,
+   and the country typed in this dialog. */
+function _srcCover(key, lang) {
+    var r = (mbState.coverRows || []).find(function (x) { return x.seedKey === key || x.field === key; });
+    return r ? String(_srcTr(r.value, lang) || '').trim() : '';
+}
+function mbSrcProgramContext(lang) {
+    var mod = _srcModule() || {};
+    var dc = mod.dacumContext || {};
+    var title = String(_srcTr(mod.title, lang) || '').trim() || _srcCover('cvUnitTitle', lang) || String(mod.shortName || '').trim();
+    var level = '';
+    if (mod.nqfLevel) level = 'NQF/TVQF level ' + mod.nqfLevel;
+    else if (mod.level) level = 'programme level ' + mod.level;
+    else level = _srcCover('cvLevel', lang);
+    var fw = _srcCover('cvFramework', lang);
+    return {
+        job: _srcCover('cvJob', lang), occupation: _srcCover('cvOccupation', lang), sector: _srcCover('cvSector', lang),
+        country: String(mod.srcCountry != null ? mod.srcCountry : (dc.country || '')).trim(),
+        scope: String(dc.scopeOfWork || '').trim(),
+        module: title, level: level ? level + (fw ? ' (' + fw + ')' : '') : ''
+    };
+}
+function _srcContextLines(c) {
+    if (!c) return '';
+    var same = c.job && c.occupation && c.job.toLowerCase() === c.occupation.toLowerCase();
+    var out = [];
+    out.push('JOB (the focus — write for the holder of this job): ' + (c.job || c.occupation || '(not specified)'));
+    if (c.occupation && !same) out.push('OCCUPATION (context only): ' + c.occupation);
+    if (c.sector) out.push('SECTOR: ' + c.sector);
+    if (c.country) out.push('COUNTRY / CONTEXT: ' + c.country);
+    if (c.scope) out.push('SCOPE OF WORK (boundary): ' + c.scope);
+    if (c.module) out.push('TRAINING MODULE: ' + c.module);
+    if (c.level) out.push('LEVEL OF THE TRAINEES: ' + c.level);
+    return out.join('\n') + '\n';
+}
+
 /* ── The request for one sheet ─────────────────────────────── */
 function mbSrcPrompt(o) {
     var L = _SRC_LANG_NAMES[o.lang] || 'English';
+    var mode = o.mode || 'book';                // 'book' | 'mixed' | 'ai'
     var heads = o.headings || [];
     var toWrite = heads.filter(function (h) { return !h.written; });
     var done = heads.filter(function (h) { return h.written; });
+    var hasSrc = mode !== 'ai';
     return 'You are an instructional designer writing an INFORMATION SHEET for a competency-based TVET training module ' +
         '(technical and vocational education and training). The trainees are vocational learners.\n\n' +
+        _srcContextLines(o.ctx) +
         'TOPIC OF THE SHEET: ' + o.topic + '\n' +
         (o.lo ? 'LEARNING OUTCOME: ' + o.lo + '\n' : '') +
         (o.criteria && o.criteria.length ? 'PERFORMANCE CRITERIA:\n' + o.criteria.map(function (c) { return '- ' + c; }).join('\n') + '\n' : '') +
@@ -649,23 +740,41 @@ function mbSrcPrompt(o) {
             toWrite.map(function (h) { return h.ref + ': ' + h.text; }).join('\n') + '\n' : '') +
         (done.length ? 'SECTIONS ALREADY WRITTEN (do not repeat them):\n' +
             done.map(function (h) { return '- ' + h.text; }).join('\n') + '\n' : '') +
-        '\nSOURCE: ' + o.source + '\n' +
-        'The source pages follow, each starting with a [[Page n]] marker.\n\n' +
-        '<source_pages>\n' + o.pagesText + '\n</source_pages>\n\n' +
+        (hasSrc
+            ? '\nSOURCE: ' + o.source + '\n' +
+              'The source pages follow, each starting with a [[Page n]] marker.\n\n' +
+              '<source_pages>\n' + o.pagesText + '\n</source_pages>\n\n'
+            : '\nNO SOURCE IS GIVEN for this sheet.\n\n') +
         'RULES\n' +
-        '- Use ONLY information found in the source pages. Do not add facts, figures or advice from your own knowledge.\n' +
-        '- If the pages do not cover part of the topic or a heading, do not fill the gap: name it in "notCovered".\n' +
-        '- Explain in your own words, simply and accurately. Do not copy passages; a short definition, a formula, ' +
-        'a value or a safety rule may be kept exact.\n' +
-        '- Keep numbers, units, codes, standards and part names exactly as in the source.\n' +
+        (mode === 'book'
+            ? '- Use ONLY information found in the source pages. Do not add facts, figures or advice from your own knowledge.\n' +
+              '- If the pages do not cover part of the topic or a heading, do not fill the gap: name it in "notCovered".\n'
+            : mode === 'mixed'
+            ? '- Base the sheet on the source pages first. Where the pages do not cover something the topic or a heading needs, ' +
+              'you may complete it from well-established professional knowledge. Such a section gets "origin": "general" and ' +
+              '"pages": []; a section from the pages gets "origin": "source". Never mix both in one section.\n' +
+              '- Name in "notCovered" what the pages do not cover.\n'
+            : '- Write from well-established professional knowledge of this job: only what competent practitioners and ' +
+              'trainers would agree on, as practised in the country given (or in general when none is given). Every section has ' +
+              '"origin": "general" and "pages": [].\n') +
+        (hasSrc ? '- Explain in your own words, simply and accurately. Do not copy passages; a short definition, a formula, ' +
+              'a value or a safety rule may be kept exact.\n' +
+              '- Keep numbers, units, codes, standards and part names exactly as in the source.\n' : '') +
+        '- NEVER invent standard numbers, regulation names, codes, statistics, prices or references. Where a standard or a ' +
+        'local rule matters, write it generically (e.g. "the national wiring regulations").\n' +
+        (mode !== 'book' ? '- A fact, value or rule you are not sure of, or that depends on local regulation, goes in "toVerify" ' +
+              '(short items) instead of being stated as certain.\n' : '') +
+        '- Pitch depth, vocabulary and examples to the level of the trainees; use the conditions, tools, units and practices ' +
+        'usual for the job in the country given.\n' +
         (toWrite.length
             ? '- Write the text of every heading waiting for its text, in the order given, and return it with its "ref" ' +
-              '(e.g. "H2") and its heading (in ' + L + '). A heading the pages say nothing about is left out and named in "notCovered". ' +
-              'Then add new sections ("ref": "") only for what the topic needs that those headings do not cover — at most 3.\n'
+              '(e.g. "H2") and its heading (in ' + L + ').' +
+              (mode === 'book' ? ' A heading the pages say nothing about is left out and named in "notCovered".' : '') +
+              ' Then add new sections ("ref": "") only for what the topic needs that those headings do not cover — at most 3.\n'
             : '- Write 3 to 7 sections that teach the topic in a logical order ("ref": "").\n') +
         '- Each section text is 60 to 250 words, and the whole answer stays under 1,300 words (the reply has a fixed length limit). ' +
         'A list is written as lines beginning with "• "; the steps of a procedure as lines "1. ", "2. ".\n' +
-        '- "pages" lists the page numbers (from the [[Page n]] markers) each section is based on.\n' +
+        (hasSrc ? '- "pages" lists the page numbers (from the [[Page n]] markers) each section is based on.\n' : '') +
         '- "objective": one to three lines completing "After studying this information sheet, you will be able to:", ' +
         'each line starting with an action verb.\n' +
         (o.selfCheck
@@ -674,8 +783,8 @@ function mbSrcPrompt(o) {
             : '- "selfCheck" and "answerKey" are empty strings.\n') +
         '- Write everything in ' + L + '. ' + (_SRC_STYLE[o.lang] || '') + '\n\n' +
         'OUTPUT FORMAT\nReturn ONLY a JSON object, no other text:\n' +
-        '{"objective":"...","sections":[{"ref":"H1","heading":"...","text":"...","pages":[12,13]}],' +
-        '"selfCheck":"...","answerKey":"...","notCovered":"..."}';
+        '{"objective":"...","sections":[{"ref":"H1","heading":"...","text":"...","origin":"' + (hasSrc ? 'source' : 'general') + '","pages":[' + (hasSrc ? '12,13' : '') + ']}],' +
+        '"selfCheck":"...","answerKey":"...","notCovered":"...","toVerify":"..."}';
 }
 
 /* ── The request that matches sheets to pages ───────────────── */
@@ -714,21 +823,28 @@ function _srcJson(data) {
 }
 
 /** Normalised draft: never a crash on a missing field. */
-function mbSrcNormalise(obj, maxPage) {
-    var str = function (v) { return typeof v === 'string' ? v.trim() : ''; };
+function mbSrcNormalise(obj, maxPage, mode) {
+    var str = function (v) { return typeof v === 'string' ? v.trim() : (Array.isArray(v) ? v.filter(function (x) { return typeof x === 'string'; }).join('\n').trim() : ''); };
     if (!obj || !Array.isArray(obj.sections)) throw new Error('badReply');
     return {
+        mode: mode || 'book',
         objective: str(obj.objective),
         sections: (obj.sections || []).map(function (s) {
             var pages = (Array.isArray(s && s.pages) ? s.pages : []).map(function (p) { return parseInt(p, 10); })
                 .filter(function (p) { return isFinite(p) && p >= 1 && (!maxPage || p <= maxPage); });
             pages = pages.filter(function (p, i) { return pages.indexOf(p) === i; }).sort(function (a, b) { return a - b; });
             var ref = str(s && s.ref);
-            return { ref: /^H\d+$/.test(ref) ? ref : '', heading: str(s && s.heading), text: str(s && s.text), pages: pages };
+            /* What a section stands on: always «general» with no source;
+               with one, «general» only when the AI says so — a section
+               with pages is from the source whatever it claims. */
+            var origin = mode === 'ai' ? 'general'
+                : (mode === 'mixed' && str(s && s.origin) === 'general' && !pages.length) ? 'general' : 'source';
+            return { ref: /^H\d+$/.test(ref) ? ref : '', heading: str(s && s.heading), text: str(s && s.text), pages: mode === 'ai' ? [] : pages, origin: origin };
         }).filter(function (s) { return s.text && (s.heading || s.ref); }),
         selfCheck: str(obj.selfCheck),
         answerKey: str(obj.answerKey),
-        notCovered: str(obj.notCovered)
+        notCovered: mode === 'ai' ? '' : str(obj.notCovered),
+        toVerify: mode === 'book' ? '' : str(obj.toVerify)
     };
 }
 
@@ -802,8 +918,12 @@ function _srcWriteSheet(sh, draft, pick, rec, lang) {
     draft.sections.forEach(function (s, i) {
         if (pick.sections && !pick.sections[i]) return;
         var text = s.text;
-        if (pick.cite) {
-            var cite = mbSrcCiteLine(rec.name, s.pages, lang);
+        if (pick.cite && rec) {
+            /* From the source: its pages. Completed from general
+               knowledge in a sheet that has a source: said so, so the two
+               never read alike. A sheet with no source at all carries no
+               line; the dialog warns instead. */
+            var cite = s.origin === 'general' ? (_SRC_GENERAL[lang] || _SRC_GENERAL.en) : mbSrcCiteLine(rec.name, s.pages, lang);
             if (cite) text = text ? text + '\n' + cite : cite;
         }
         var target = s.ref ? byRef[s.ref] : null;
@@ -829,7 +949,7 @@ function _srcWriteSheet(sh, draft, pick, rec, lang) {
         setL(sh, 'selfCheckContent', draft.selfCheck);
         if (draft.answerKey && !_srcStrict(sh.answersKeyContent, lang).trim()) setL(sh, 'answersKeyContent', draft.answerKey);
     }
-    _srcAddReference(rec.ref || rec.name);
+    if (rec) _srcAddReference(rec.ref || rec.name);
     return n;
 }
 
@@ -944,9 +1064,10 @@ function _srcRowSheet(r) {
 }
 function _srcRowRec(r) { return _src.list.find(function (x) { return x.id === r.src; }) || null; }
 function _srcRowReady(r) {
+    if (!r.on || !r.topic.trim()) return false;
+    if (r.src === SRC_AI) return true;
     var rec = _srcRowRec(r);
-    return !!(r.on && rec && r.topic.trim() && r.from >= 1 && r.to >= r.from && r.to <= rec.pages.length &&
-              (r.to - r.from + 1) <= SRC_MAX_PAGES);
+    return !!(rec && r.from >= 1 && r.to >= r.from && r.to <= rec.pages.length && (r.to - r.from + 1) <= SRC_MAX_PAGES);
 }
 
 /* ── The dialog ─────────────────────────────────────────────── */
@@ -1035,16 +1156,19 @@ async function mbSrcOpen() {
     _src = { mode: 'one', list: [], sel: null, from: 1, to: 1, topic: ctx.title || '', selfCheck: true, cite: true,
              draft: null, busy: false, paste: false,
              moduleId: mbState.currentModuleId, scope: (saved && saved.scope) || 'lo', use: (saved && saved.use) || null,
-             rows: [], running: false, stop: false, note: '' };
+             rows: [], running: false, stop: false, note: '', mixed: false,
+             country: mbSrcProgramContext(lang).country };
     try { _src.list = await mbSources.list(); } catch (e) { _src.list = []; }
+    /* No source on this device: «without a source» is the choice. */
     if (_src.list.length) _srcSelect(_src.list[_src.list.length - 1].id, true);
+    else _srcSelect(SRC_AI, true);
     if (!_src.use) _src.use = _src.list.slice(-3).map(function (r) { return r.id; });
     _src.use = _src.use.filter(function (id) { return _src.list.some(function (r) { return r.id === id; }); });
     /* A run left unfinished on this module opens where it stopped. */
     if (saved && saved.rows.some(function (r) { return r.status === 'done'; }) &&
         saved.rows.some(function (r) { return r.on !== false && r.status !== 'done' && r.src; })) {
         _src.mode = 'many';
-        _src.rows = mbSrcBuildRows(_src.scope);
+        _src.rows = _srcDefaultRows(mbSrcBuildRows(_src.scope));
         _src.note = _srcT('resume', { v0: _src.rows.filter(function (r) { return r.on && r.status !== 'done'; }).length });
     }
 
@@ -1090,6 +1214,18 @@ function mbSrcClose() {
 function _srcRec() {
     return _src && _src.list.find(function (r) { return r.id === _src.sel; }) || null;
 }
+function _srcIsAI() { return !!_src && _src.sel === SRC_AI; }
+/** Rows with no source chosen use «AI knowledge» when the device has no source at all. */
+function _srcDefaultRows(rows) {
+    if (!_src.list.length) rows.forEach(function (r) { if (!r.src) r.src = SRC_AI; });
+    return rows;
+}
+/** «Written for: job · level · module · country» under the country field. */
+function _srcCtxSummary() {
+    var c = mbSrcProgramContext(_srcContentLang());
+    var parts = [c.job || c.occupation, c.level, c.module, c.country].filter(Boolean);
+    return parts.length ? _srcT('ctxLine', { v0: parts.join(' · ') }) : '';
+}
 function _srcSelect(id, quiet) {
     _src.sel = id;
     var rec = _srcRec();
@@ -1111,6 +1247,13 @@ function _srcPaintEstimate() {
     var el = document.getElementById('src-est');
     var rec = _srcRec();
     if (!el) return false;
+    if (_srcIsAI()) {
+        var ta = 1600;
+        el.className = 'src-est';
+        el.textContent = _srcT('estimate', { v0: ta.toLocaleString(), v1: SRC_OUT_TOKENS.toLocaleString(), v2: _srcCost(ta, SRC_OUT_EST).toFixed(2) });
+        var g0 = document.getElementById('src-gen'); if (g0) g0.disabled = _src.busy;
+        return true;
+    }
     if (!rec) { el.textContent = ''; return false; }
     var from = _src.from, to = _src.to;
     var ok = from >= 1 && to >= from && to <= rec.pages.length;
@@ -1138,7 +1281,7 @@ function _srcPaintBatchEstimate() {
     var el = document.getElementById('src-total');
     var ready = _src.rows.filter(_srcRowReady);
     var tin = 0;
-    ready.forEach(function (r) { tin += mbSrcTokens(_srcPagesText(_srcRowRec(r), r.from, r.to)) + 1100; });
+    ready.forEach(function (r) { tin += r.src === SRC_AI ? 1600 : mbSrcTokens(_srcPagesText(_srcRowRec(r), r.from, r.to)) + 1400; });
     if (el) {
         el.className = 'src-est' + (ready.length ? '' : ' is-bad');
         el.textContent = ready.length
@@ -1147,7 +1290,7 @@ function _srcPaintBatchEstimate() {
     }
     var me = document.getElementById('src-map-est');
     var recs = _srcUsedRecs();
-    var mapRows = _src.rows.filter(function (r) { return r.on && r.status !== 'done' && r.topic.trim(); });
+    var mapRows = _src.rows.filter(function (r) { return r.on && r.status !== 'done' && r.topic.trim() && r.src !== SRC_AI; });
     if (me) {
         if (recs.length && mapRows.length) {
             var mt = mbSrcTokens(mbSrcMapPrompt(mapRows, recs, _srcContentLang()));
@@ -1183,6 +1326,12 @@ function _srcPaint() {
               '" aria-label="' + _srcEsc(_srcT('del') + ' — ' + r.name) + '">🗑</button>' +
         '</label>';
     }).join('');
+    if (!many) {
+        var aiOn = _srcIsAI();
+        items = '<label class="src-item' + (aiOn ? ' is-on' : '') + '">' +
+            '<input type="radio" name="src-pick" value="' + SRC_AI + '"' + (aiOn ? ' checked' : '') + '>' +
+            '<span class="src-name">' + _srcEsc(_srcT('aiSource')) + '</span></label>' + items;
+    }
     var html =
         '<div class="src-modes" role="tablist">' +
           '<button type="button" class="src-mode' + (many ? '' : ' is-on') + '" role="tab" aria-selected="' + !many + '" data-src="mode-one">' + _srcEsc(_srcT('modeOne')) + '</button>' +
@@ -1206,7 +1355,11 @@ function _srcPaint() {
             '</div>'
           : '');
     html += many ? _srcBatchHtml() : _srcOneHtml(rec);
+    html += '<div class="src-stack"><label for="src-country">' + _srcEsc(_srcT('country')) + '</label>' +
+          '<input type="text" class="src-input" id="src-country" dir="auto" maxlength="120" value="' + _srcEsc(_src.country || '') +
+          '" placeholder="' + _srcEsc(_srcT('countryPh')) + '"><span class="src-est" id="src-ctxline">' + _srcEsc(_srcCtxSummary()) + '</span></div>';
     html += '<h4 class="ws-group"></h4><div class="ws-checks">' +
+          ((many || (!_srcIsAI() && rec)) ? '<label class="ws-check"><input type="checkbox" id="src-mixed"' + (_src.mixed ? ' checked' : '') + '><span>' + _srcEsc(_srcT('mixed')) + '</span></label>' : '') +
           '<label class="ws-check"><input type="checkbox" id="src-self"' + (_src.selfCheck ? ' checked' : '') + '><span>' + _srcEsc(_srcT('optSelf')) + '</span></label>' +
           '<label class="ws-check"><input type="checkbox" id="src-cite"' + (_src.cite ? ' checked' : '') + '><span>' + _srcEsc(_srcT('optCite')) + '</span></label>' +
         '</div>' +
@@ -1221,13 +1374,15 @@ function _srcPaint() {
         '<button type="button" class="ws-btn ws-btn-primary" id="src-gen" data-src="' + (many ? 'gen-many' : 'gen') + '">' +
           _srcEsc(_srcT(many ? 'genMany' : 'generate')) + '</button>';
     if (many) _srcPaintBatchEstimate();
-    else if (rec) _srcPaintEstimate();
+    else if (rec || _srcIsAI()) _srcPaintEstimate();
     else document.getElementById('src-gen').disabled = true;
 }
 
 function _srcOneHtml(rec) {
     var n = rec ? rec.pages.length : 0;
-    return (rec
+    if (_srcIsAI()) rec = null;
+    return (_srcIsAI() ? '<p class="src-warn">⚠️ ' + _srcEsc(_srcT('aiNote')) + '</p><p class="src-est" id="src-est"></p>' : '') +
+        (rec
           ? '<div class="src-stack"><label for="src-ref">' + _srcEsc(_srcT('ref')) + '</label>' +
               '<input type="text" class="src-input" id="src-ref" data-ref="' + _srcEsc(rec.id) + '" dir="auto" maxlength="400" value="' + _srcEsc(rec.ref || '') +
               '" placeholder="' + _srcEsc(_srcT('refPh')) + '"></div>' +
@@ -1258,7 +1413,8 @@ function _srcBatchHtml() {
     }).join('');
     var scanned = recs.filter(_srcLooksScanned).map(function (r) { return r.name; });
     var opts = function (cur) {
-        return '<option value="">' + _srcEsc(_srcT('none2')) + '</option>' + recs.map(function (r) {
+        return '<option value="">' + _srcEsc(_srcT('none2')) + '</option>' +
+            '<option value="' + SRC_AI + '"' + (cur === SRC_AI ? ' selected' : '') + '>' + _srcEsc(_srcT('aiOpt')) + '</option>' + recs.map(function (r) {
             return '<option value="' + _srcEsc(r.id) + '"' + (r.id === cur ? ' selected' : '') + '>' + _srcEsc(r.name) + '</option>';
         }).join('');
     };
@@ -1274,10 +1430,11 @@ function _srcBatchHtml() {
               '<input type="text" class="src-input" data-rf="topic" data-i="' + i + '" dir="auto" maxlength="300" value="' + _srcEsc(r.topic) +
                 '" placeholder="' + _srcEsc(_srcT('noTitle')) + '" aria-label="' + _srcEsc(_srcT('topic')) + '">' +
               '<select class="src-sel" data-rf="src" data-i="' + i + '" aria-label="' + _srcEsc(_srcT('sources')) + '">' + opts(r.src) + '</select>' +
+              (r.src === SRC_AI ? '' :
               '<span class="src-meta">' + _srcEsc(_srcT('pagesShort')) + '</span>' +
               '<input type="number" class="src-num" data-rf="from" data-i="' + i + '" min="1" max="' + n + '" value="' + (r.from || '') + '" aria-label="' + _srcEsc(_srcT('from')) + '">' +
               '<span class="src-meta">–</span>' +
-              '<input type="number" class="src-num" data-rf="to" data-i="' + i + '" min="1" max="' + n + '" value="' + (r.to || '') + '" aria-label="' + _srcEsc(_srcT('to')) + '">' +
+              '<input type="number" class="src-num" data-rf="to" data-i="' + i + '" min="1" max="' + n + '" value="' + (r.to || '') + '" aria-label="' + _srcEsc(_srcT('to')) + '">') +
             '</div>' +
         '</div>';
     }).join('');
@@ -1306,10 +1463,13 @@ function _srcPaintDraft(body, foot) {
     var heads = {};
     (_src.draftCtx ? _src.draftCtx.headings : []).forEach(function (h) { heads[h.ref] = h.text; });
     var html = '<h4 class="ws-group">' + _srcEsc(_srcT('result')) + '</h4>';
+    if (d.mode === 'ai') html += '<div class="src-gap">⚠️ ' + _srcEsc(_srcT('aiNote')) + '</div>';
     if (d.notCovered) html += '<div class="src-gap" dir="auto">⚠️ ' + _srcEsc(_srcT('notCovered')) + ': ' + _srcEsc(d.notCovered) + '</div>';
+    if (d.toVerify) html += '<div class="src-gap" dir="auto">🔎 ' + _srcEsc(_srcT('toVerify')) + ':\n' + _srcEsc(d.toVerify) + '</div>';
     if (d.objective) html += part('objective', '🎯 ' + _srcT('objective'), d.objective);
     d.sections.forEach(function (s, i) {
-        var cite = _src.cite ? mbSrcCiteLine(rec ? rec.name : '', s.pages, lang) : '';
+        var cite = s.origin === 'general' ? (d.mode === 'ai' ? '🧠 ' + _srcT('generalTag') : (_SRC_GENERAL[lang] || _SRC_GENERAL.en))
+            : (_src.cite ? mbSrcCiteLine(rec ? rec.name : '', s.pages, lang) : '');
         html += part('s' + i, s.heading || heads[s.ref] || '—', s.text, cite ? '<div class="src-part-cite" dir="auto">' + _srcEsc(cite) + '</div>' : '');
     });
     if (d.selfCheck) html += part('selfCheck', '✅ ' + _srcT('selfCheck') + ' + ' + _srcT('answers'), d.selfCheck + (d.answerKey ? '\n\n— ' + _srcT('answers') + ' —\n' + d.answerKey : ''));
@@ -1352,7 +1512,16 @@ function _srcOnChange(e) {
     }
     if (t.id === 'src-self') { _src.selfCheck = !!t.checked; return; }
     if (t.id === 'src-cite') { _src.cite = !!t.checked; return; }
-    if (t.id === 'src-scope') { _src.scope = t.value === 'all' ? 'all' : 'lo'; _srcJobSave(); _src.rows = mbSrcBuildRows(_src.scope); _srcPaint(); return; }
+    if (t.id === 'src-scope') { _src.scope = t.value === 'all' ? 'all' : 'lo'; _srcJobSave(); _src.rows = _srcDefaultRows(mbSrcBuildRows(_src.scope)); _srcPaint(); return; }
+    if (t.id === 'src-mixed') { _src.mixed = !!t.checked; return; }
+    if (t.id === 'src-country') {
+        /* Kept on the module, like DACUM's own value it overrides. */
+        _src.country = t.value.trim();
+        var mod = _srcModule();
+        if (mod) { mod.srcCountry = _src.country; if (typeof mbLibrarySave === 'function') { try { mbLibrarySave(); } catch (err) { /* autosave absent */ } } }
+        var cl = document.getElementById('src-ctxline'); if (cl) cl.textContent = _srcCtxSummary();
+        return;
+    }
     var refId = t.getAttribute && t.getAttribute('data-ref');
     if (refId) {
         var rec = _src.list.find(function (x) { return x.id === refId; });
@@ -1365,9 +1534,11 @@ function _srcOnChange(e) {
         if (!r) return;
         if (rf === 'on') { r.on = !!t.checked; if (r.on && r.status === 'done') r.status = 'wait'; }
         else {
+            var wasAI = r.src === SRC_AI;
             r.src = t.value;
             var rr = _srcRowRec(r);
             if (rr && !r.from) { r.from = 1; r.to = Math.min(rr.pages.length, 15); _srcPaint(); }
+            else if (wasAI !== (r.src === SRC_AI)) _srcPaint();
         }
         _srcJobSave();
         _srcPaintBatchEstimate();
@@ -1407,7 +1578,7 @@ async function _srcOnClick(e) {
     if (act === 'mode-one' || act === 'mode-many') {
         if (_src.running) return;
         _src.mode = act === 'mode-many' ? 'many' : 'one';
-        if (_src.mode === 'many') _src.rows = mbSrcBuildRows(_src.scope);
+        if (_src.mode === 'many') _src.rows = _srcDefaultRows(mbSrcBuildRows(_src.scope));
         _srcPaint(); _srcMsg(''); return;
     }
     if (act === 'file') { document.getElementById('src-file').click(); return; }
@@ -1468,7 +1639,9 @@ async function _srcOnClick(e) {
 /* «This sheet» */
 async function _srcGenerate() {
     var rec = _srcRec();
-    if (!rec) { _srcMsg(_srcT('needSource'), 'error'); return; }
+    var ai = _srcIsAI();
+    if (!rec && !ai) { _srcMsg(_srcT('needSource'), 'error'); return; }
+    var mode = ai ? 'ai' : (_src.mixed ? 'mixed' : 'book');
     var topic = (_src.topic || '').trim();
     if (!topic) { _srcMsg(_srcT('needTopic'), 'error'); var tp = document.getElementById('src-topic'); if (tp) tp.focus(); return; }
     if (!_srcPaintEstimate()) return;
@@ -1477,8 +1650,9 @@ async function _srcGenerate() {
     var lo = mbCurrentLOObject();
     var ctx = mbSrcSheetContext(lo, (lo.infoSheets || [])[mbState.currentInfoSheetIndex], lang);
     var prompt = mbSrcPrompt({
-        lang: lang, topic: topic, lo: ctx.lo, criteria: ctx.criteria, headings: ctx.headings,
-        source: rec.ref || rec.name, pagesText: _srcPagesText(rec, _src.from, _src.to), selfCheck: _src.selfCheck
+        lang: lang, topic: topic, lo: ctx.lo, criteria: ctx.criteria, headings: ctx.headings, mode: mode,
+        ctx: mbSrcProgramContext(lang),
+        source: rec ? (rec.ref || rec.name) : '', pagesText: rec ? _srcPagesText(rec, _src.from, _src.to) : '', selfCheck: _src.selfCheck
     });
     _src.busy = true;
     var gen = document.getElementById('src-gen');
@@ -1490,7 +1664,7 @@ async function _srcGenerate() {
     if (foot) foot.insertBefore(cancel, foot.firstChild);
     _srcMsg(_srcT('working'));
     try {
-        var draft = mbSrcNormalise(await _srcCallAI(prompt), rec.pages.length);
+        var draft = mbSrcNormalise(await _srcCallAI(prompt), rec ? rec.pages.length : 0, mode);
         if (!_src) return;
         if (!draft.sections.length && !draft.objective) throw new Error('badReply');
         _src.draft = draft;
@@ -1513,7 +1687,7 @@ async function _srcGenerate() {
 async function _srcMap() {
     var recs = _srcUsedRecs();
     var idx = [];
-    _src.rows.forEach(function (r, i) { if (r.on && r.status !== 'done' && r.topic.trim()) idx.push(i); });
+    _src.rows.forEach(function (r, i) { if (r.on && r.status !== 'done' && r.topic.trim() && r.src !== SRC_AI) idx.push(i); });
     if (!recs.length || !idx.length) return;
     if (typeof navigator !== 'undefined' && navigator.onLine === false) { _srcMsg(_srcT('offline'), 'error'); return; }
     var rows = idx.map(function (i) { return _src.rows[i]; });
@@ -1556,7 +1730,9 @@ async function _srcRunMany() {
         var r = queue[i];
         var found = _srcRowSheet(r);
         var rec = _srcRowRec(r);
-        if (!found || !rec) { r.status = 'err'; failed++; continue; }
+        var rowAI = r.src === SRC_AI;
+        if (!found || (!rec && !rowAI)) { r.status = 'err'; failed++; continue; }
+        var rowMode = rowAI ? 'ai' : (S.mixed ? 'mixed' : 'book');
         r.status = 'run';
         _srcPaint(); prog(i);
         _srcMsg(_srcT('progress', { v0: i + 1, v1: queue.length, v2: r.topic }));
@@ -1564,8 +1740,9 @@ async function _srcRunMany() {
         try {
             var draft = mbSrcNormalise(await _srcCallAI(mbSrcPrompt({
                 lang: lang, topic: r.topic.trim(), lo: ctx.lo, criteria: ctx.criteria, headings: ctx.headings,
-                source: rec.ref || rec.name, pagesText: _srcPagesText(rec, r.from, r.to), selfCheck: S.selfCheck
-            })), rec.pages.length);
+                mode: rowMode, ctx: mbSrcProgramContext(lang),
+                source: rec ? (rec.ref || rec.name) : '', pagesText: rec ? _srcPagesText(rec, r.from, r.to) : '', selfCheck: S.selfCheck
+            })), rec ? rec.pages.length : 0, rowMode);
             found = _srcRowSheet(r) || found;
             _srcWriteSheet(found.sh, draft, { objective: true, selfCheck: S.selfCheck, cite: S.cite, topic: r.topic.trim() }, rec, lang);
             _srcAfterWrite();

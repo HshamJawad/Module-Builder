@@ -193,6 +193,13 @@ function _mbApplyDacumModuleFields(module, dacumModule, exportData) {
        DACUM shows) and the programme's requirements and course
        information. Replaced on every transfer. The module's entry
        skills and resource lists travel inside `curriculum` above. */
+    /* 3.47.0 — DACUM Live Pro 3.118: Chart Info's country / context and
+       scope of work, for the AI drafting of information sheets
+       (source_ai.js). Replaced on every transfer. */
+    const dctx = {};
+    if (String(exportData.context || '').trim()) dctx.country = String(exportData.context).trim();
+    if (String(exportData.scopeOfWork || '').trim()) dctx.scopeOfWork = String(exportData.scopeOfWork).trim();
+    if (Object.keys(dctx).length) module.dacumContext = dctx; else delete module.dacumContext;
     const cat = dacumModule.category;
     if (cat && typeof cat === 'object' && String(cat.id || '').trim()) {
         module.category = { id: String(cat.id), label: String(cat.label || cat.id) };
