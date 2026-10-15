@@ -68,11 +68,12 @@ jobs:
           # 3.47 for the programme context, no-source and mixed drafting,
           # 3.48 for the suggested-content counts and the content tools,
           # 3.49 for offline excerpts from the book,
-          # 3.50 for the assessment result options.
+          # 3.50 for the assessment result options,
+          # 3.51 for the rating scale.
           # version.json now reads 3.7.0, and any value left behind here
           # would roll the number backwards to <old>.<run> on the next
           # push — the same failure, one minor later.
-          MAJOR_MINOR: "3.50"
+          MAJOR_MINOR: "3.51"
         run: |
           VERSION="${MAJOR_MINOR}.${GITHUB_RUN_NUMBER}"
           BUILD="$(date -u +%Y-%m-%d)"

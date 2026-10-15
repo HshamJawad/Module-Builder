@@ -49,7 +49,8 @@ function mbPackageProjectPart(shared) {
             glossary:        shared.glossary || null,     // 3.42.0
             /* 3.50.0: the assessment result options travel here too —
                project-wide settings, with the glossary. */
-            assessmentResults: shared.assessmentResults || null
+            assessmentResults: shared.assessmentResults || null,
+            ratingScale:       shared.ratingScale || null      // 3.51.0
         },
         team: {
             teamMembers:         shared.teamMembers || [],

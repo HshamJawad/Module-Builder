@@ -206,6 +206,16 @@ function _hxQR(qr, L) {
     return '<div class="mx-qr">' + body + '<div>' + txt + '</div></div>';
 }
 
+/** 3.51.0: criteria × levels, a radio per cell, remembered like the checklists. */
+function _hxScaleTable(id, rows, levels) {
+    return '<table class="mx-tbl mx-scale"><thead><tr><th>#</th><th></th>' + levels.map(function (l) { return '<th>' + _hxEsc(l) + '</th>'; }).join('') +
+        '</tr></thead><tbody>' + rows.map(function (c, ci) {
+            return '<tr><td>' + (ci + 1) + '</td><td>' + _hxText(c) + '</td>' + levels.map(function (l, li) {
+                return '<td style="text-align:center"><input type="radio" name="' + id + '-s-' + ci + '" data-check="' + id + '-s-' + ci + '-' + li + '" aria-label="' + _hxEsc(l) + '"></td>';
+            }).join('') + '</tr>';
+        }).join('') + '</tbody></table>';
+}
+
 function _hxSection(id, kicker, title, inner) {
     return '<section class="mx-sec" id="' + _hxEsc(id) + '">' +
            (kicker ? '<div class="mx-kicker">' + _hxEsc(kicker) + '</div>' : '') +
@@ -382,11 +392,17 @@ function mbBuildModuleHtml(model, opts) {
                 h += '<div class="mx-check"><div class="mx-sub">' +
                      _hxEsc(sh.criteria.title || (t('checklist') + ' ' + sh.number)) + '</div>';
                 if (sh.criteria.instruction) h += '<p class="mx-lead">' + _hxText(sh.criteria.instruction) + '</p>';
-                h += '<ol class="mx-checklist">' + sh.criteria.rows.map(function (c, ci) {
-                    var cid = aid + '-c-' + ci;
-                    return '<li><label><input type="checkbox" data-check="' + cid + '"><span>' + _hxText(c) + '</span></label></li>';
-                }).join('') + '</ol>';
-                if (sh.criteria.footer) h += '<p class="mx-lead">' + _hxText(sh.criteria.footer) + '</p>';
+                if (sh.criteria.scale) {
+                    /* 3.51.0: one choice per criterion among the levels. */
+                    h += _hxScaleTable(aid, sh.criteria.rows, sh.criteria.scale);
+                    h += '<p class="mx-lead"><strong>' + _hxText(sh.criteria.pass) + '</strong></p>';
+                } else {
+                    h += '<ol class="mx-checklist">' + sh.criteria.rows.map(function (c, ci) {
+                        var cid = aid + '-c-' + ci;
+                        return '<li><label><input type="checkbox" data-check="' + cid + '"><span>' + _hxText(c) + '</span></label></li>';
+                    }).join('') + '</ol>';
+                    if (sh.criteria.footer) h += '<p class="mx-lead">' + _hxText(sh.criteria.footer) + '</p>';
+                }
                 h += '</div>';
             }
 
@@ -424,6 +440,11 @@ function mbBuildModuleHtml(model, opts) {
                                 '</td><td>' + _hxText(r.date) + '</td></tr>';
                      }).join('') + '</tbody></table>';
             }
+            if (f.scale && f.rows.length) {
+                h += '<div class="mx-sub">' + _hxEsc(_scT('rating', null, L)) + '</div>' +
+                     _hxScaleTable('asm-' + fi, f.rows.map(function (r) { return r.criteria; }).filter(function (c) { return c.trim(); }), f.scale);
+            }
+            if (f.pass) h += '<p class="mx-lead"><strong>' + _hxText(f.pass) + '</strong></p>';
             /* 3.50.0: real checkboxes the trainer can tick in the browser. */
             var _res = (f.results && f.results.length) ? f.results : [t('competent'), t('notYet')];
             h += '<p class="mx-result"><strong>' + t('result') + ':</strong> ' + _res.map(function (x, ri) {
@@ -782,6 +803,7 @@ function _hxJs() {
 '    var id = cb.getAttribute("data-check");',
 '    if (state[id]) cb.checked = true;',
 '    cb.addEventListener("change", function(){',
+'      if (cb.type === "radio") Array.prototype.forEach.call(document.querySelectorAll("input[name=\\""+cb.name+"\\"]"), function(o){ state[o.getAttribute("data-check")] = false; });',
 '      state[id] = cb.checked; save(state);',
 '    });',
 '  });',
