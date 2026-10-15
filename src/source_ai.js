@@ -55,7 +55,16 @@
 // a line saying so). Invented standards, codes and references are
 // forbidden in every mode.
 //
-// Off by default, and nothing here runs until the dialog is opened: the
+// 📖 EXCERPTS, OFFLINE (3.49.0)
+// A second method: no AI, no network, no cost. The book is cut into
+// passages and searched with BM25 (word statistics) for each heading of
+// the sheet, or its topic; the best passages go on the sheet as the book
+// wrote them, each with «(Excerpt — book, p. N)», for the trainer to
+// rewrite. «Suggest pages» works the same way on the device. Words are
+// matched, not meanings: the book and the sheet must share a language.
+// See ROADMAP.md for RAG and the other options left for later.
+//
+// Nothing here runs until the dialog is opened: the
 // PDF reader (vendor/pdfjs-3.11.174) is loaded on the first PDF.
 // ============================================================
 
@@ -129,6 +138,16 @@ var _SRC_STRINGS = {
         copyNote: 'Use sources you may use for training. The draft paraphrases; check quotations and figures against the book.',
         hint: 'Drafting from sources (AI) can be turned on in Settings → Misc.',
         svcDown: 'The AI service cannot be reached right now (it may be stopped or offline). You can add sources and choose pages; generating works once the service is back.',
+        methodTitle: 'How',
+        methodAi: '✨ The AI writes the sheet',
+        methodEx: '📖 Excerpts from the book — offline, free',
+        exNote: 'The tool finds, in the pages you choose, the passages that best match the sheet\u2019s topic and headings, and puts them on the sheet with their page. Nothing is sent and there is no cost. The text is the book\u2019s own: rewrite it in your own words and mind the copyright. Works when the book and the sheet are in the same language.',
+        exEst: 'Offline — nothing is sent, no cost.',
+        exGen: '📖 Extract',
+        exNone: 'No passage of these pages matches the topic. Choose other pages, or check that the book and the sheet are in the same language.',
+        exNeedBook: 'Excerpts need a book or a text source.',
+        exMapDone: 'Pages found on this device for {v0} of {v1} sheets. Check them, then extract.',
+        exTag: 'Excerpt from the book',
         modeOne: '📄 This sheet',
         modeMany: '📚 Several sheets',
         useSources: 'Use these sources',
@@ -223,6 +242,16 @@ var _SRC_STRINGS = {
         copyNote: 'Utilisez des sources autorisées pour la formation. Le brouillon reformule ; vérifiez citations et valeurs dans l’ouvrage.',
         hint: 'La rédaction depuis les sources (IA) s’active dans Paramètres → Divers.',
         svcDown: 'Le service d’IA est injoignable pour le moment (arrêté ou hors ligne). Vous pouvez ajouter des sources et choisir les pages ; la génération fonctionnera quand le service sera rétabli.',
+        methodTitle: 'Méthode',
+        methodAi: '✨ L’IA rédige la fiche',
+        methodEx: '📖 Extraits du livre — hors ligne, gratuit',
+        exNote: 'L’outil trouve, dans les pages choisies, les passages qui correspondent le mieux au sujet et aux titres de la fiche, et les place sur la fiche avec leur page. Rien n’est envoyé, sans coût. Le texte est celui du livre : reformulez-le et respectez le droit d’auteur. Fonctionne quand le livre et la fiche sont dans la même langue.',
+        exEst: 'Hors ligne — rien n’est envoyé, sans coût.',
+        exGen: '📖 Extraire',
+        exNone: 'Aucun passage de ces pages ne correspond au sujet. Choisissez d’autres pages, ou vérifiez que le livre et la fiche sont dans la même langue.',
+        exNeedBook: 'Les extraits ont besoin d’un livre ou d’un texte source.',
+        exMapDone: 'Pages trouvées sur cet appareil pour {v0} fiche(s) sur {v1}. Vérifiez-les, puis extrayez.',
+        exTag: 'Extrait du livre',
         modeOne: '📄 Cette fiche',
         modeMany: '📚 Plusieurs fiches',
         useSources: 'Utiliser ces sources',
@@ -317,6 +346,16 @@ var _SRC_STRINGS = {
         copyNote: 'استخدم مصادر مسموحاً استخدامها في التدريب. المسودة تعيد الصياغة؛ تحقق من الاقتباسات والقيم في الكتاب.',
         hint: 'يمكن تفعيل الصياغة من المصادر (ذكاء اصطناعي) من الإعدادات ← متنوع.',
         svcDown: 'خدمة الذكاء الاصطناعي غير متاحة الآن (قد تكون متوقفة أو لا يوجد اتصال). يمكنك إضافة المصادر واختيار الصفحات، ويعمل التوليد عند عودة الخدمة.',
+        methodTitle: 'الطريقة',
+        methodAi: '✨ يكتب الذكاء الاصطناعي الورقة',
+        methodEx: '📖 مقتطفات من الكتاب — دون إنترنت ومجاناً',
+        exNote: 'تبحث الأداة في الصفحات التي تختارها عن الفقرات الأقرب إلى موضوع الورقة وعناوينها، وتضعها في الورقة مع رقم صفحتها. لا يُرسل شيء ولا كلفة. النص هو نص الكتاب نفسه: أعد صياغته بأسلوبك وراعِ حقوق النشر. تعمل حين يكون الكتاب والورقة بلغة واحدة.',
+        exEst: 'دون إنترنت — لا يُرسل شيء ولا كلفة.',
+        exGen: '📖 استخراج',
+        exNone: 'لا توجد فقرة في هذه الصفحات تطابق الموضوع. اختر صفحات أخرى، أو تأكد أن الكتاب والورقة بلغة واحدة.',
+        exNeedBook: 'المقتطفات تحتاج كتاباً أو نصاً مصدراً.',
+        exMapDone: 'وُجدت الصفحات على هذا الجهاز لـ {v0} من {v1} ورقة. راجعها ثم استخرج.',
+        exTag: 'مقتطف من الكتاب',
         modeOne: '📄 هذه الورقة',
         modeMany: '📚 عدة أوراق',
         useSources: 'المصادر المستخدمة',
@@ -369,7 +408,13 @@ var _SRC_GENERAL = {
     fr: '(Connaissances générales — hors de la source ; à vérifier)',
     ar: '(معرفة عامة — ليست من المصدر؛ تحقّق منها)'
 };
-var SRC_AI = '__ai__';            // the «no source» choice
+var SRC_AI = '__ai__';
+/* 3.49.0: the line that ends an excerpt copied from the book. */
+var _SRC_EXCERPT = {
+    en: '(Excerpt — {s}, p. {p})',
+    fr: '(Extrait — {s}, p. {p})',
+    ar: '(مقتطف — {s}، ص {p})'
+};            // the «no source» choice
 var _SRC_LANG_NAMES = { en: 'English', ar: 'Arabic', fr: 'French' };
 var _SRC_STYLE = {
     ar: 'Write Modern Standard Arabic in a clear, formal register suited to vocational trainees. Keep technical terms, units, codes and standards in their usual form; Western digits.',
@@ -733,6 +778,210 @@ function _srcContextLines(c) {
     return out.join('\n') + '\n';
 }
 
+/* ── 📖 Excerpts from the book, offline (3.49.0) ──────────────
+   No AI and no network: the pages are cut into passages, and a BM25
+   search (word statistics, the way search engines rank text) finds for
+   each heading of the sheet — or for its topic — the passages that match
+   best. They go on the sheet as the book wrote them, with their page;
+   the trainer rewrites them. Arabic letters are normalised (أ إ آ → ا,
+   ة → ه, ى → ي, diacritics and tatweel removed) and common prefixes and
+   endings trimmed, so «الصيانة» finds «وصيانة». The book and the sheet
+   must share a language: words are matched, not meanings. */
+var _SRC_STOP = (function () {
+    var w = ('the a an and or of to in on for with by from as at is are was were be been this that these those it its ' +
+        'into than then so such can may must should will not no also which who what when where how all any each ' +
+        'le la les un une des et ou de du au aux en dans par pour sur avec est sont ce cette ces il elle ils qui que ' +
+        'ne pas plus se sa son ses leur leurs ' +
+        'في من على الى إلى عن مع او أو و ثم هذا هذه ذلك تلك التي الذي الذين هو هي هم كان كانت يكون تكون ما لا ان أن إن قد كل بين عند حتى لم لن اي أي ' +
+        'كما بعد قبل حيث ايضا أيضا غير اذا إذا ف ب ل').split(/\s+/);
+    var set = {};
+    w.forEach(function (x) { set[_srcNorm(x)] = 1; });
+    return set;
+})();
+function _srcNorm(s) {
+    s = String(s || '').toLowerCase()
+        .replace(/[ً-ٰٟـ]/g, '')
+        .replace(/[أإآٱ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/ؤ/g, 'و').replace(/ئ/g, 'ي');
+    try { s = s.normalize('NFD').replace(/[̀-ͯ]/g, ''); } catch (e) { /* old browser */ }
+    return s;
+}
+function _srcStem(t) {
+    if (/[؀-ۿ]/.test(t)) {
+        if (t.length > 5) t = t.replace(/^(وال|بال|كال|فال|لل)/, '');
+        if (t.length > 4) t = t.replace(/^ال/, '');
+        if (t.length > 4) t = t.replace(/^[وفب]/, '');
+        if (t.length > 4) t = t.replace(/(ات|ون|ين|ها|هم|ية|يه)$/, '');
+        return t;
+    }
+    if (t.length > 4 && /ies$/.test(t)) return t.slice(0, -3) + 'y';
+    if (t.length > 3 && /s$/.test(t) && !/ss$/.test(t)) return t.slice(0, -1);
+    return t;
+}
+function mbSrcTokens2(text) {
+    return _srcNorm(text).split(/[^\p{L}\p{N}]+/u).filter(function (t) {
+        return t.length >= 2 && !_SRC_STOP[t];
+    }).map(_srcStem).filter(function (t) { return t.length >= 2; });
+}
+
+/** Passages of a source: { page, text, toks, tf, len }. A page with no
+    blank lines (most PDFs) is cut at sentence ends into pieces of about
+    a short paragraph; a short line ending without a full stop is kept
+    with what follows (a heading with its text). */
+function _srcPassages(rec) {
+    var out = [];
+    rec.pages.forEach(function (p, i) {
+        var txt = String(p || '').trim();
+        if (!txt) return;
+        var blocks = txt.split(/\n\s*\n/);
+        var chunks = [];
+        blocks.forEach(function (b) {
+            var flat = b.replace(/\n(?!\s*(?:[•\-–▪◦]|\d+[.)]))/g, ' ').replace(/[ \t]+/g, ' ').trim();
+            if (flat.length <= 900) { if (flat) chunks.push(flat); return; }
+            var sentences = flat.match(/[^.!?؟。\n]+[.!?؟。]+["»”)]*\s*|[^.!?؟。\n]+$/g) || [flat];
+            var cur = '';
+            sentences.forEach(function (x) {
+                if (cur && (cur.length + x.length) > 650) { chunks.push(cur.trim()); cur = ''; }
+                cur += x;
+            });
+            if (cur.trim()) chunks.push(cur.trim());
+        });
+        /* A tiny piece (a heading) joins the next one. */
+        for (var k = 0; k < chunks.length; k++) {
+            if (chunks[k].length < 120 && k + 1 < chunks.length) { chunks[k + 1] = chunks[k] + '\n' + chunks[k + 1]; continue; }
+            out.push({ page: i + 1, text: chunks[k] });
+        }
+    });
+    out.forEach(function (ps) {
+        ps.toks = mbSrcTokens2(ps.text);
+        ps.len = ps.toks.length || 1;
+        ps.tf = {};
+        ps.toks.forEach(function (t) { ps.tf[t] = (ps.tf[t] || 0) + 1; });
+    });
+    return out;
+}
+
+var _srcIndexCache = {};
+function _srcIndex(rec) {
+    if (_srcIndexCache[rec.id] && _srcIndexCache[rec.id].n === rec.pages.length) return _srcIndexCache[rec.id];
+    var ps = _srcPassages(rec);
+    var df = {}, total = 0;
+    ps.forEach(function (p) { total += p.len; Object.keys(p.tf).forEach(function (t) { df[t] = (df[t] || 0) + 1; }); });
+    var idx = { n: rec.pages.length, ps: ps, df: df, avg: ps.length ? total / ps.length : 1, N: ps.length };
+    _srcIndexCache[rec.id] = idx;
+    return idx;
+}
+
+/** BM25 score of one passage for weighted query terms { term: weight }. */
+function _srcScore(idx, p, q) {
+    var k1 = 1.2, b = 0.75, sc = 0;
+    Object.keys(q).forEach(function (t) {
+        var f = p.tf[t];
+        if (!f) return;
+        var idf = Math.log(1 + (idx.N - idx.df[t] + 0.5) / (idx.df[t] + 0.5));
+        sc += q[t] * idf * (f * (k1 + 1)) / (f + k1 * (1 - b + b * p.len / idx.avg));
+    });
+    return sc;
+}
+function _srcQuery(parts) {
+    var q = {};
+    parts.forEach(function (x) {
+        mbSrcTokens2(x.text).forEach(function (t) { q[t] = Math.max(q[t] || 0, x.w); });
+    });
+    return q;
+}
+function _srcCut(t, max) {
+    t = String(t || '').trim();
+    if (t.length <= max) return t;
+    var cut = t.slice(0, max);
+    var end = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('؟ '), cut.lastIndexOf('! '), cut.lastIndexOf('.\n'));
+    return (end > max * 0.5 ? cut.slice(0, end + 1) : cut) + ' …';
+}
+/** A heading for a passage on a sheet with no headings: its own first
+    line when that reads like one, else the topic and a number. */
+function _srcPassageHead(text, topic, k) {
+    var first = String(text).split('\n')[0].trim();
+    if (first && first.length <= 80 && !/[.:;,،]$/.test(first) && first.split(/\s+/).length <= 10 && first.length < String(text).length) return first;
+    return topic + ' (' + k + ')';
+}
+
+/**
+ * The draft for one sheet, from the book alone: the same shape as the
+ * AI's (mode 'excerpt'), so the dialog and the sheet writer need nothing
+ * else. Headings waiting for text get their best one or two passages;
+ * a sheet with none gets up to five sections for its topic.
+ */
+function mbSrcExcerpts(rec, from, to, ctx, topic) {
+    var idx = _srcIndex(rec);
+    var pool = idx.ps.filter(function (p) { return p.page >= from && p.page <= to; });
+    var used = {};
+    var topicQ = [{ text: topic, w: 0.4 }].concat(ctx && ctx.lo ? [{ text: ctx.lo, w: 0.15 }] : []);
+    var rank = function (q) {
+        return pool.map(function (p, i) { return { p: p, i: i, s: _srcScore(idx, p, q) }; })
+            .filter(function (x) { return x.s > 0 && !used[x.p.page + ':' + x.i]; })
+            .sort(function (a, b) { return b.s - a.s; });
+    };
+    var sections = [], missing = [];
+    var heads = ((ctx && ctx.headings) || []).filter(function (h) { return !h.written; });
+    if (heads.length) {
+        heads.forEach(function (h) {
+            var r = rank(_srcQuery([{ text: h.text, w: 1 }].concat(topicQ)));
+            if (!r.length || r[0].s < 1) { missing.push(h.text); return; }
+            var pick = r.filter(function (x, j) { return j < 2 && x.s >= r[0].s * 0.45; });
+            pick.forEach(function (x) { used[x.p.page + ':' + x.i] = 1; });
+            pick.sort(function (a, b) { return a.p.page - b.p.page || a.i - b.i; });
+            sections.push({
+                ref: h.ref, heading: h.text, origin: 'source',
+                text: _srcCut(pick.map(function (x) { return x.p.text; }).join('\n\n'), 1500),
+                pages: pick.map(function (x) { return x.p.page; }).filter(function (v, k, a) { return a.indexOf(v) === k; })
+            });
+        });
+    } else {
+        var r2 = rank(_srcQuery([{ text: topic, w: 1 }].concat(ctx && ctx.lo ? [{ text: ctx.lo, w: 0.3 }] : [])));
+        var best = r2.length ? r2[0].s : 0;
+        r2.filter(function (x) { return x.s >= best * 0.35; }).slice(0, 5)
+          .sort(function (a, b) { return a.p.page - b.p.page || a.i - b.i; })
+          .forEach(function (x, k) {
+              sections.push({ ref: '', heading: _srcPassageHead(x.p.text, topic, k + 1), origin: 'source',
+                              text: _srcCut(x.p.text, 1500), pages: [x.p.page] });
+          });
+    }
+    return { mode: 'excerpt', objective: '', sections: sections, selfCheck: '', answerKey: '',
+             notCovered: missing.join('; '), toVerify: '' };
+}
+
+/** 🔎 on this device: for each row, the source and the few pages that
+    match its topic and headings best. { rowIndex: { src, from, to } } */
+function mbSrcMapLocal(rows, recs) {
+    var out = {};
+    rows.forEach(function (r, ri) {
+        var q = _srcQuery([{ text: r.topic, w: 1 }].concat((r.heads || []).map(function (h) { return { text: h, w: 0.6 }; })));
+        var bestRec = null, bestScore = 0, bestPages = null;
+        recs.forEach(function (rec) {
+            var idx = _srcIndex(rec);
+            var byPage = {};
+            idx.ps.forEach(function (p) {
+                var sc = _srcScore(idx, p, q);
+                if (sc > 0) (byPage[p.page] = byPage[p.page] || []).push(sc);
+            });
+            var pageScore = {};
+            Object.keys(byPage).forEach(function (pg) {
+                var a = byPage[pg].sort(function (x, y) { return y - x; });
+                pageScore[pg] = a[0] + (a[1] || 0) * 0.5;
+            });
+            var top = 0, topPage = 0;
+            Object.keys(pageScore).forEach(function (pg) { if (pageScore[pg] > top) { top = pageScore[pg]; topPage = +pg; } });
+            if (top > bestScore) { bestScore = top; bestRec = rec; bestPages = { score: pageScore, top: topPage, best: top }; }
+        });
+        if (!bestRec || bestScore < 1) return;
+        var from = bestPages.top, to = bestPages.top;
+        var good = function (pg) { return (bestPages.score[pg] || 0) >= bestPages.best * 0.4; };
+        while ((to - from + 1) < 6 && good(to + 1)) to++;
+        while ((to - from + 1) < 6 && from > 1 && good(from - 1)) from--;
+        out[ri] = { src: bestRec.id, from: from, to: to };
+    });
+    return out;
+}
+
 /* ── The request for one sheet ─────────────────────────────── */
 function mbSrcPrompt(o) {
     var L = _SRC_LANG_NAMES[o.lang] || 'English';
@@ -934,7 +1183,10 @@ function _srcWriteSheet(sh, draft, pick, rec, lang) {
                knowledge in a sheet that has a source: said so, so the two
                never read alike. A sheet with no source at all carries no
                line; the dialog warns instead. */
-            var cite = s.origin === 'general' ? (_SRC_GENERAL[lang] || _SRC_GENERAL.en) : mbSrcCiteLine(rec.name, s.pages, lang);
+            var cite = s.origin === 'general' ? (_SRC_GENERAL[lang] || _SRC_GENERAL.en)
+                : draft.mode === 'excerpt'
+                ? (s.pages && s.pages.length ? (_SRC_EXCERPT[lang] || _SRC_EXCERPT.en).replace('{s}', rec.name).replace('{p}', mbSrcPageList(s.pages, lang)) : '')
+                : mbSrcCiteLine(rec.name, s.pages, lang);
             if (cite) text = text ? text + '\n' + cite : cite;
         }
         var target = s.ref ? byRef[s.ref] : null;
@@ -1076,9 +1328,10 @@ function _srcRowSheet(r) {
 function _srcRowRec(r) { return _src.list.find(function (x) { return x.id === r.src; }) || null; }
 function _srcRowReady(r) {
     if (!r.on || !r.topic.trim()) return false;
-    if (r.src === SRC_AI) return true;
+    var ex = !!(_src && _src.method === 'excerpt');
+    if (r.src === SRC_AI) return !ex;
     var rec = _srcRowRec(r);
-    return !!(rec && r.from >= 1 && r.to >= r.from && r.to <= rec.pages.length && (r.to - r.from + 1) <= SRC_MAX_PAGES);
+    return !!(rec && r.from >= 1 && r.to >= r.from && r.to <= rec.pages.length && (ex || (r.to - r.from + 1) <= SRC_MAX_PAGES));
 }
 
 /* ── The dialog ─────────────────────────────────────────────── */
@@ -1167,7 +1420,7 @@ async function mbSrcOpen() {
     _src = { mode: 'one', list: [], sel: null, from: 1, to: 1, topic: ctx.title || '', selfCheck: true, cite: true,
              draft: null, busy: false, paste: false,
              moduleId: mbState.currentModuleId, scope: (saved && saved.scope) || 'lo', use: (saved && saved.use) || null,
-             rows: [], running: false, stop: false, note: '', mixed: false,
+             rows: [], running: false, stop: false, note: '', mixed: false, method: 'ai',
              country: mbSrcProgramContext(lang).country };
     try { _src.list = await mbSources.list(); } catch (e) { _src.list = []; }
     /* No source on this device: «without a source» is the choice. */
@@ -1288,6 +1541,13 @@ function _srcPaintEstimate() {
     var el = document.getElementById('src-est');
     var rec = _srcRec();
     if (!el) return false;
+    if (_src.method === 'excerpt') {
+        var okx = !!rec && _src.from >= 1 && _src.to >= _src.from && _src.to <= rec.pages.length;
+        el.className = 'src-est' + (okx ? '' : ' is-bad');
+        el.textContent = rec ? _srcT('exEst') : _srcT('exNeedBook');
+        var gx = document.getElementById('src-gen'); if (gx) gx.disabled = !okx || _src.busy;
+        return okx;
+    }
     if (_srcIsAI()) {
         var ta = 1600;
         el.className = 'src-est';
@@ -1321,6 +1581,13 @@ function _srcPaintEstimate() {
 function _srcPaintBatchEstimate() {
     var el = document.getElementById('src-total');
     var ready = _src.rows.filter(_srcRowReady);
+    if (_src.method === 'excerpt') {
+        if (el) { el.className = 'src-est' + (ready.length ? '' : ' is-bad'); el.textContent = ready.length ? _srcT('exEst') : _srcT('needRows'); }
+        var mex = document.getElementById('src-map-est'); if (mex) mex.textContent = _srcT('exEst');
+        var mbx = document.getElementById('src-map'); if (mbx) mbx.disabled = _src.running || !_srcUsedRecs().length;
+        var gx2 = document.getElementById('src-gen'); if (gx2) gx2.disabled = _src.running || !ready.length;
+        return ready.length;
+    }
     var tin = 0;
     ready.forEach(function (r) { tin += r.src === SRC_AI ? 1600 : mbSrcTokens(_srcPagesText(_srcRowRec(r), r.from, r.to)) + 1400; });
     if (el) {
@@ -1367,7 +1634,8 @@ function _srcPaint() {
               '" aria-label="' + _srcEsc(_srcT('del') + ' — ' + r.name) + '">🗑</button>' +
         '</label>';
     }).join('');
-    if (!many) {
+    var ex = _src.method === 'excerpt';
+    if (!many && !ex) {
         var aiOn = _srcIsAI();
         items = '<label class="src-item' + (aiOn ? ' is-on' : '') + '">' +
             '<input type="radio" name="src-pick" value="' + SRC_AI + '"' + (aiOn ? ' checked' : '') + '>' +
@@ -1379,7 +1647,7 @@ function _srcPaint() {
           '<button type="button" class="src-mode' + (many ? ' is-on' : '') + '" role="tab" aria-selected="' + many + '" data-src="mode-many">' + _srcEsc(_srcT('modeMany')) + '</button>' +
         '</div>' +
         '<fieldset class="src-fs" id="src-fs"' + (_src.running ? ' disabled' : '') + '>' +
-        '<p class="ws-note ws-note-sm">ℹ️ ' + _srcEsc(_srcT(many ? 'batchNote' : 'intro')) + '</p>' +
+        ((ex && !many) ? '' : '<p class="ws-note ws-note-sm">ℹ️ ' + _srcEsc(_srcT(many ? 'batchNote' : 'intro')) + '</p>') +
         '<h4 class="ws-group">' + _srcEsc(_srcT(many ? 'useSources' : 'sources')) + '</h4>' +
         (items ? '<div class="src-list" role="' + (many ? 'group' : 'radiogroup') + '">' + items + '</div>' : '<p class="src-est">' + _srcEsc(_srcT('none')) + '</p>') +
         '<div class="src-btns">' +
@@ -1395,16 +1663,25 @@ function _srcPaint() {
               '<button type="button" class="src-btn" data-src="paste-add">' + _srcEsc(_srcT('pasteAdd')) + '</button>' +
             '</div>'
           : '');
+    html += '<h4 class="ws-group">' + _srcEsc(_srcT('methodTitle')) + '</h4>' +
+        '<div class="src-list" role="radiogroup">' +
+          ['ai', 'excerpt'].map(function (m) {
+              var on = (_src.method === m);
+              return '<label class="src-item' + (on ? ' is-on' : '') + '"><input type="radio" name="src-method" value="' + m + '"' + (on ? ' checked' : '') + '>' +
+                  '<span class="src-name">' + _srcEsc(_srcT(m === 'ai' ? 'methodAi' : 'methodEx')) + '</span></label>';
+          }).join('') +
+        '</div>' +
+        (ex ? '<p class="ws-note ws-note-sm">📖 ' + _srcEsc(_srcT('exNote')) + '</p>' : '');
     html += many ? _srcBatchHtml() : _srcOneHtml(rec);
-    html += '<div class="src-stack"><label for="src-country">' + _srcEsc(_srcT('country')) + '</label>' +
+    html += ex ? '' : '<div class="src-stack"><label for="src-country">' + _srcEsc(_srcT('country')) + '</label>' +
           '<input type="text" class="src-input" id="src-country" dir="auto" maxlength="120" value="' + _srcEsc(_src.country || '') +
           '" placeholder="' + _srcEsc(_srcT('countryPh')) + '"><span class="src-est" id="src-ctxline">' + _srcEsc(_srcCtxSummary()) + '</span></div>';
-    html += '<h4 class="ws-group"></h4><div class="ws-checks">' +
+    html += ex ? '' : '<h4 class="ws-group"></h4><div class="ws-checks">' +
           ((many || (!_srcIsAI() && rec)) ? '<label class="ws-check"><input type="checkbox" id="src-mixed"' + (_src.mixed ? ' checked' : '') + '><span>' + _srcEsc(_srcT('mixed')) + '</span></label>' : '') +
           '<label class="ws-check"><input type="checkbox" id="src-self"' + (_src.selfCheck ? ' checked' : '') + '><span>' + _srcEsc(_srcT('optSelf')) + '</span></label>' +
           '<label class="ws-check"><input type="checkbox" id="src-cite"' + (_src.cite ? ' checked' : '') + '><span>' + _srcEsc(_srcT('optCite')) + '</span></label>' +
-        '</div>' +
-        (many ? '<p class="src-est" id="src-total"></p><progress class="src-prog" id="src-prog" max="1" value="0"' + (_src.running ? '' : ' hidden') + '></progress>' : '') +
+        '</div>';
+    html += (many ? '<p class="src-est" id="src-total"></p><progress class="src-prog" id="src-prog" max="1" value="0"' + (_src.running ? '' : ' hidden') + '></progress>' : '') +
         '<p class="src-est">🔒 ' + _srcEsc(_srcT('privacy')) + '</p>' +
         '<p class="src-est">©️ ' + _srcEsc(_srcT('copyNote')) + '</p>' +
         '</fieldset>';
@@ -1413,7 +1690,7 @@ function _srcPaint() {
         '<button type="button" class="ws-btn ws-btn-ghost" data-src="close">' + _srcEsc(_srcT('close')) + '</button>' +
         (many && _src.running ? '<button type="button" class="ws-btn ws-btn-ghost" data-src="stop">' + _srcEsc(_srcT('stop')) + '</button>' : '') +
         '<button type="button" class="ws-btn ws-btn-primary" id="src-gen" data-src="' + (many ? 'gen-many' : 'gen') + '">' +
-          _srcEsc(_srcT(many ? 'genMany' : 'generate')) + '</button>';
+          _srcEsc(_srcT(ex ? 'exGen' : many ? 'genMany' : 'generate')) + '</button>';
     if (many) _srcPaintBatchEstimate();
     else if (rec || _srcIsAI()) _srcPaintEstimate();
     else document.getElementById('src-gen').disabled = true;
@@ -1455,7 +1732,7 @@ function _srcBatchHtml() {
     var scanned = recs.filter(_srcLooksScanned).map(function (r) { return r.name; });
     var opts = function (cur) {
         return '<option value="">' + _srcEsc(_srcT('none2')) + '</option>' +
-            '<option value="' + SRC_AI + '"' + (cur === SRC_AI ? ' selected' : '') + '>' + _srcEsc(_srcT('aiOpt')) + '</option>' + recs.map(function (r) {
+            (_src.method === 'excerpt' ? '' : '<option value="' + SRC_AI + '"' + (cur === SRC_AI ? ' selected' : '') + '>' + _srcEsc(_srcT('aiOpt')) + '</option>') + recs.map(function (r) {
             return '<option value="' + _srcEsc(r.id) + '"' + (r.id === cur ? ' selected' : '') + '>' + _srcEsc(r.name) + '</option>';
         }).join('');
     };
@@ -1505,11 +1782,13 @@ function _srcPaintDraft(body, foot) {
     (_src.draftCtx ? _src.draftCtx.headings : []).forEach(function (h) { heads[h.ref] = h.text; });
     var html = '<h4 class="ws-group">' + _srcEsc(_srcT('result')) + '</h4>';
     if (d.mode === 'ai') html += '<div class="src-gap">⚠️ ' + _srcEsc(_srcT('aiNote')) + '</div>';
+    if (d.mode === 'excerpt') html += '<div class="src-gap">📖 ' + _srcEsc(_srcT('exNote')) + '</div>';
     if (d.notCovered) html += '<div class="src-gap" dir="auto">⚠️ ' + _srcEsc(_srcT('notCovered')) + ': ' + _srcEsc(d.notCovered) + '</div>';
     if (d.toVerify) html += '<div class="src-gap" dir="auto">🔎 ' + _srcEsc(_srcT('toVerify')) + ':\n' + _srcEsc(d.toVerify) + '</div>';
     if (d.objective) html += part('objective', '🎯 ' + _srcT('objective'), d.objective);
     d.sections.forEach(function (s, i) {
-        var cite = s.origin === 'general' ? (d.mode === 'ai' ? '🧠 ' + _srcT('generalTag') : (_SRC_GENERAL[lang] || _SRC_GENERAL.en))
+        var cite = d.mode === 'excerpt' ? (_SRC_EXCERPT[lang] || _SRC_EXCERPT.en).replace('{s}', rec ? rec.name : '').replace('{p}', mbSrcPageList(s.pages, lang))
+            : s.origin === 'general' ? (d.mode === 'ai' ? '🧠 ' + _srcT('generalTag') : (_SRC_GENERAL[lang] || _SRC_GENERAL.en))
             : (_src.cite ? mbSrcCiteLine(rec ? rec.name : '', s.pages, lang) : '');
         html += part('s' + i, s.heading || heads[s.ref] || '—', s.text, cite ? '<div class="src-part-cite" dir="auto">' + _srcEsc(cite) + '</div>' : '');
     });
@@ -1555,6 +1834,19 @@ function _srcOnChange(e) {
     if (t.id === 'src-cite') { _src.cite = !!t.checked; return; }
     if (t.id === 'src-scope') { _src.scope = t.value === 'all' ? 'all' : 'lo'; _srcJobSave(); _src.rows = _srcDefaultRows(mbSrcBuildRows(_src.scope)); _srcPaint(); return; }
     if (t.id === 'src-mixed') { _src.mixed = !!t.checked; return; }
+    if (t.name === 'src-method') {
+        _src.method = t.value === 'excerpt' ? 'excerpt' : 'ai';
+        if (_src.method === 'excerpt') {
+            /* Excerpts need a book: leave «no source», and search the
+               whole book by default (no page limit, nothing is sent). */
+            if (_srcIsAI() && _src.list.length) _src.sel = _src.list[_src.list.length - 1].id;
+            var rx = _srcRec(); if (rx) { _src.from = 1; _src.to = rx.pages.length; }
+        } else {
+            var ra = _srcRec(); if (ra && (_src.to - _src.from + 1) > SRC_MAX_PAGES) _src.to = _src.from + SRC_MAX_PAGES - 1;
+        }
+        _srcPaint(); _srcMsg('');
+        return;
+    }
     if (t.id === 'src-country') {
         /* Kept on the module, like DACUM's own value it overrides. */
         _src.country = t.value.trim();
@@ -1653,8 +1945,8 @@ async function _srcOnClick(e) {
         _srcPaint();
         return;
     }
-    if (act === 'gen') { _srcGenerate(); return; }
-    if (act === 'map') { _srcMap(); return; }
+    if (act === 'gen') { if (_src.method === 'excerpt') _srcExtractOne(); else _srcGenerate(); return; }
+    if (act === 'map') { if (_src.method === 'excerpt') _srcMapLocal(); else _srcMap(); return; }
     if (act === 'gen-many') { _srcRunMany(); return; }
     if (act === 'stop') { _src.stop = true; if (_srcAbort) _srcAbort.abort(); return; }
     if (act === 'back') { _src.draft = null; _srcPaint(); _srcMsg(''); return; }
@@ -1724,6 +2016,39 @@ async function _srcGenerate() {
     }
 }
 
+/* «This sheet», 📖: the draft from the book, on this device. */
+function _srcExtractOne() {
+    var rec = _srcRec();
+    if (!rec) { _srcMsg(_srcT('exNeedBook'), 'error'); return; }
+    var topic = (_src.topic || '').trim();
+    if (!topic) { _srcMsg(_srcT('needTopic'), 'error'); var tp = document.getElementById('src-topic'); if (tp) tp.focus(); return; }
+    if (!_srcPaintEstimate()) return;
+    var lang = _srcContentLang();
+    var lo = mbCurrentLOObject();
+    var ctx = mbSrcSheetContext(lo, (lo.infoSheets || [])[mbState.currentInfoSheetIndex], lang);
+    var draft = mbSrcExcerpts(rec, _src.from, _src.to, ctx, topic);
+    if (!draft.sections.length) { _srcMsg(_srcT('exNone'), 'error'); return; }
+    _src.draft = draft;
+    _src.draftCtx = ctx;
+    _srcPaint();
+    _srcMsg('');
+}
+
+/* «Several sheets», 📖: 🔎 pages found on this device. */
+function _srcMapLocal() {
+    var recs = _srcUsedRecs();
+    var idx = [];
+    _src.rows.forEach(function (r, i) { if (r.on && r.status !== 'done' && r.topic.trim()) idx.push(i); });
+    if (!recs.length || !idx.length) return;
+    var rows = idx.map(function (i) { return _src.rows[i]; });
+    var m = mbSrcMapLocal(rows, recs);
+    var n = 0;
+    Object.keys(m).forEach(function (k) { var r = rows[+k]; r.src = m[k].src; r.from = m[k].from; r.to = m[k].to; n++; });
+    _srcJobSave();
+    _srcPaint();
+    _srcMsg(_srcT('exMapDone', { v0: n, v1: rows.length }), n ? 'ok' : 'error');
+}
+
 /* «Several sheets»: 🔎 the pages of each ticked sheet. */
 async function _srcMap() {
     var recs = _srcUsedRecs();
@@ -1759,7 +2084,7 @@ async function _srcMap() {
 async function _srcRunMany() {
     var queue = _src.rows.filter(_srcRowReady);
     if (!queue.length) { _srcMsg(_srcT('needRows'), 'error'); return; }
-    if (typeof navigator !== 'undefined' && navigator.onLine === false) { _srcMsg(_srcT('offline'), 'error'); return; }
+    if (_src.method !== 'excerpt' && typeof navigator !== 'undefined' && navigator.onLine === false) { _srcMsg(_srcT('offline'), 'error'); return; }
     if (typeof saveCurrentSheetToLO === 'function') saveCurrentSheetToLO();
     var S = _src, lang = _srcContentLang();
     S.running = true; S.stop = false;
@@ -1773,6 +2098,16 @@ async function _srcRunMany() {
         var rec = _srcRowRec(r);
         var rowAI = r.src === SRC_AI;
         if (!found || (!rec && !rowAI)) { r.status = 'err'; failed++; continue; }
+        if (S.method === 'excerpt') {
+            /* 📖 on this device: no request, nothing to wait for. */
+            var exd = mbSrcExcerpts(rec, r.from, r.to, mbSrcSheetContext(found.lo, found.sh, lang), r.topic.trim());
+            if (!exd.sections.length) { r.status = 'err'; failed++; _srcJobSave(); continue; }
+            _srcWriteSheet(found.sh, exd, { cite: true, topic: r.topic.trim() }, rec, lang);
+            _srcAfterWrite();
+            r.status = 'done'; r.on = false; done++;
+            _srcJobSave();
+            continue;
+        }
         var rowMode = rowAI ? 'ai' : (S.mixed ? 'mixed' : 'book');
         r.status = 'run';
         _srcPaint(); prog(i);
