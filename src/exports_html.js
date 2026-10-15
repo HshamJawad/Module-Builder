@@ -413,7 +413,7 @@ function mbBuildModuleHtml(model, opts) {
     });
 
     if (model.assessment.length && inc('assessment')) {
-        var as = model.assessment.map(function (f) {
+        var as = model.assessment.map(function (f, fi) {
             var h = '<div class="mx-block"><div class="mx-sub">' + t('outcome') + ' ' + f.outcomeIndex + ': ' + _hxEsc(f.outcomeTitle) + '</div>';
             if (f.rows.length) {
                 h += '<table class="mx-tbl"><thead><tr><th>' + t('colCriteria') + '</th><th>' + t('colActivities') +
@@ -424,9 +424,13 @@ function mbBuildModuleHtml(model, opts) {
                                 '</td><td>' + _hxText(r.date) + '</td></tr>';
                      }).join('') + '</tbody></table>';
             }
-            h += '<p class="mx-result"><strong>' + t('result') + ':</strong> ' +
-                 (f.competent ? '☑' : '☐') + ' ' + t('competent') + ' &nbsp; ' +
-                 (f.notYetCompetent ? '☑' : '☐') + ' ' + t('notYet') + '</p>';
+            /* 3.50.0: real checkboxes the trainer can tick in the browser. */
+            var _res = (f.results && f.results.length) ? f.results : [t('competent'), t('notYet')];
+            h += '<p class="mx-result"><strong>' + t('result') + ':</strong> ' + _res.map(function (x, ri) {
+                     /* data-check: remembered in this browser, like the checklists. */
+                     return '<label style="display:inline-flex;align-items:center;gap:6px;margin-inline-end:18px;cursor:pointer;">' +
+                            '<input type="checkbox" data-check="asm-' + fi + '-r-' + ri + '" style="width:18px;height:18px;"> ' + _hxEsc(x) + '</label>';
+                 }).join('') + '</p>';
             var sig = [];
             if (f.teacherName) sig.push(t('trainer') + ': ' + _hxEsc(f.teacherName) + (f.teacherDate ? ' — ' + _hxEsc(f.teacherDate) : ''));
             if (f.learnerName) sig.push(t('learner') + ': ' + _hxEsc(f.learnerName) + (f.learnerDate ? ' — ' + _hxEsc(f.learnerDate) : ''));

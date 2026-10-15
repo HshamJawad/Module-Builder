@@ -594,8 +594,9 @@ function _pdfBuild(pdf, model, lang) {
                     [w.CW * 0.28, w.CW * 0.2, w.CW * 0.2, w.CW * 0.19, w.CW * 0.13],
                     { size: S.body });
             }
-            w.text(t('result') + ':  ' + (f.competent ? '[X] ' : '[  ] ') + t('competent') +
-                   '     ' + (f.notYetCompetent ? '[X] ' : '[  ] ') + t('notYet'), { bold: true });
+            /* 3.50.0: the project's options, empty — ticked by the trainer. */
+            var _res = (f.results && f.results.length) ? f.results : [t('competent'), t('notYet')];
+            w.text(t('result') + ':  ' + _res.map(function (x) { return '[  ] ' + x; }).join('     '), { bold: true });
             w.table(null, [
                 [t('trainer'), f.teacherName, t('signature') + ': ______________', f.teacherDate],
                 [t('learner'), f.learnerName, t('signature') + ': ______________', f.learnerDate]

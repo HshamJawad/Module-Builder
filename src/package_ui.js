@@ -375,6 +375,12 @@
             dst.glossary = JSON.parse(JSON.stringify(gl));
             added++;
         }
+        /* 3.50.0: result options, taken only when this project uses the defaults. */
+        var ar = part.references && part.references.assessmentResults;
+        if (ar && typeof mbAsmNormalizeResults === 'function' && mbAsmNormalizeResults(ar) && !mbAsmNormalizeResults(dst.assessmentResults)) {
+            dst.assessmentResults = mbAsmNormalizeResults(ar);
+            added++;
+        }
         var team = (part.team && part.team.teamMembers) || [];
         if (!Array.isArray(dst.teamMembers)) dst.teamMembers = [];
         var names = new Set(dst.teamMembers.map(function (m) { return norm(m && m.name); }));

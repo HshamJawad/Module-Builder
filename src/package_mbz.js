@@ -46,7 +46,10 @@ function mbPackageProjectPart(shared) {
             referencesTitle: shared.referencesTitle || null,
             referencesData:  shared.referencesData || [],
             refIdCounter:    shared.refIdCounter || 1,
-            glossary:        shared.glossary || null      // 3.42.0
+            glossary:        shared.glossary || null,     // 3.42.0
+            /* 3.50.0: the assessment result options travel here too —
+               project-wide settings, with the glossary. */
+            assessmentResults: shared.assessmentResults || null
         },
         team: {
             teamMembers:         shared.teamMembers || [],

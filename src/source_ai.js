@@ -148,6 +148,8 @@ var _SRC_STRINGS = {
         exNeedBook: 'Excerpts need a book or a text source.',
         exMapDone: 'Pages found on this device for {v0} of {v1} sheets. Check them, then extract.',
         exTag: 'Excerpt from the book',
+        clearAsk: 'Also delete the {v0} source(s) (books, texts) kept on this device for «Draft from sources»? They serve every project.',
+        cleared: 'Sources deleted from this device.',
         modeOne: '📄 This sheet',
         modeMany: '📚 Several sheets',
         useSources: 'Use these sources',
@@ -252,6 +254,8 @@ var _SRC_STRINGS = {
         exNeedBook: 'Les extraits ont besoin d’un livre ou d’un texte source.',
         exMapDone: 'Pages trouvées sur cet appareil pour {v0} fiche(s) sur {v1}. Vérifiez-les, puis extrayez.',
         exTag: 'Extrait du livre',
+        clearAsk: 'Supprimer aussi les {v0} source(s) (livres, textes) gardées sur cet appareil pour « Rédiger depuis les sources » ? Elles servent à tous les projets.',
+        cleared: 'Sources supprimées de cet appareil.',
         modeOne: '📄 Cette fiche',
         modeMany: '📚 Plusieurs fiches',
         useSources: 'Utiliser ces sources',
@@ -356,6 +360,8 @@ var _SRC_STRINGS = {
         exNeedBook: 'المقتطفات تحتاج كتاباً أو نصاً مصدراً.',
         exMapDone: 'وُجدت الصفحات على هذا الجهاز لـ {v0} من {v1} ورقة. راجعها ثم استخرج.',
         exTag: 'مقتطف من الكتاب',
+        clearAsk: 'هل تحذف أيضاً المصادر ({v0}) (كتب ونصوص) المحفوظة على هذا الجهاز لـ«صياغة من المصادر»؟ هي مشتركة بين كل المشاريع.',
+        cleared: 'حُذفت المصادر من هذا الجهاز.',
         modeOne: '📄 هذه الورقة',
         modeMany: '📚 عدة أوراق',
         useSources: 'المصادر المستخدمة',
@@ -505,6 +511,20 @@ var mbSources = (function () {
         remove: function (id) { return tx('readwrite', function (s) { s.delete(id); return null; }); }
     };
 })();
+
+/** After Clear All (storage.js): the sources are the device's, not the
+    project's, so they are kept unless the user says otherwise (3.50.0). */
+async function mbSrcOfferClear() {
+    var list = [];
+    try { list = await mbSources.list(); } catch (e) { return; }
+    if (!list.length) return;
+    var ask = _srcT('clearAsk', { v0: list.length });
+    var yes = (typeof mbConfirm === 'function') ? await mbConfirm(ask, { danger: true }) : window.confirm(ask);
+    if (!yes) return;
+    for (var i = 0; i < list.length; i++) { try { await mbSources.remove(list[i].id); } catch (e) { /* ignore */ } }
+    try { Object.keys(localStorage).forEach(function (k) { if (k.indexOf(SRC_JOB_KEY) === 0) localStorage.removeItem(k); }); } catch (e) { /* ignore */ }
+    if (typeof showStatus === 'function') showStatus(_srcT('cleared'), 'success');
+}
 
 function _srcNewId() {
     return 'src_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);

@@ -192,6 +192,7 @@ async function clearAll() {
         const assessContent = document.getElementById('assessment-simple-content');
         if (assessContent) assessContent.value = '';
         mbState.assessmentFormsData = {};
+        mbState.assessmentResults = null;   // 3.50.0 — the default options
         const assessmentList = document.getElementById('assessment-forms-list');
         if (assessmentList) assessmentList.innerHTML = '<p style="color: #6b7280; text-align: center; padding: 20px;" data-i18n="dgNoAssessmentFormsYet">' +
             escapeHtml(window.i18n.t('dgNoAssessmentFormsYet')) + '</p>';
@@ -258,5 +259,8 @@ async function clearAll() {
         window.dispatchEvent(new CustomEvent('mb:projectcleared'));
 
         showStatus(window.i18n.t('dgAllDataCleared'), 'success');
+        /* 3.50.0: the books of «Draft from sources» are kept on the
+           device for every project; ask whether they go too. */
+        if (typeof mbSrcOfferClear === 'function') { try { await mbSrcOfferClear(); } catch (e) { /* ignore */ } }
     }
 }

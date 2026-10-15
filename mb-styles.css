@@ -3707,3 +3707,23 @@ input.mb-seq-auto { background: #f1f5f9 !important; color: #475569; cursor: defa
 /* The global button rule flattens it; the AI tool reads as its own thing. */
 button.mb-src-btn { background: #eef2ff !important; color: #3730a3 !important; border: 1px solid #a5b4fc !important; font-weight: 700 !important; }
 button.mb-src-btn:hover { background: #e0e7ff !important; }
+
+/* 3.50.0 — assessment form: cells that grow with their text; the result
+   options as they print, not clickable (assessment_results.js) */
+textarea.mb-asm-cell {
+    width: 100%; box-sizing: border-box; border: 1px solid #e5e7eb; padding: 6px; border-radius: 4px;
+    font: inherit; font-size: 0.9em; line-height: 1.4; min-height: 34px; resize: vertical;
+    field-sizing: content; max-height: 320px; overflow-y: auto; background: #fff;
+}
+.mb-asm-result { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+.mb-asm-opts { display: flex; flex-wrap: wrap; gap: 8px 22px; color: #374151; font-weight: 600; }
+.mb-asm-box { font-size: 1.15em; color: #6b7280; }
+button.mb-asm-edit { padding: 6px 12px !important; border: 1px solid #cbd5e1 !important; border-radius: 8px !important; background: #f1f5f9 !important; color: #475569 !important; font-weight: 600 !important; font-size: 0.85em !important; cursor: pointer; }
+.mb-asm-note { flex-basis: 100%; margin: 2px 0 0; font-size: 0.82em; color: #64748b; }
+#asm-overlay .asm-presets { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 6px; }
+#asm-overlay button.asm-preset { padding: 6px 10px !important; border: 1px solid #c7d2fe !important; background: #eef2ff !important; color: #3730a3 !important; border-radius: 999px !important; font-size: 0.85em !important; cursor: pointer; }
+#asm-overlay .asm-small { font-size: 0.82em; color: #64748b; margin: 0 0 12px; }
+#asm-overlay .asm-label { display: block; font-weight: 600; color: #374151; margin: 0 0 6px; }
+#asm-overlay .asm-text { width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1.5px solid #c7d2fe; border-radius: 8px; font: inherit; line-height: 1.6; }
+/* the criteria column wide enough to read a criterion */
+#assessment-forms-list tbody td:first-child { min-width: 240px; }

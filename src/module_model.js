@@ -455,6 +455,8 @@ function mbBuildModuleModel(lang, state) {
                 }),
             competent: !!form.competent,
             notYetCompetent: !!form.notYetCompetent,
+            /* 3.50.0: the options the trainer ticks, in this language. */
+            results: (typeof mbAsmResultLabels === 'function') ? mbAsmResultLabels(lang, raw) : [],
             teacherName: _mmStr(form.teacherName),
             teacherDate: _mmStr(form.teacherDate),
             learnerName: _mmStr(form.learnerName),

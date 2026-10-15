@@ -2066,35 +2066,23 @@ async function exportToDocx() {
                         spacing: { after: 200 },
                     }));
                     
-                    // Result checkboxes - always empty for paper printout
-                    const competentSymbol = '☐';
-                    const notCompetentSymbol = '☐';
-                    
-                    formChildren.push(new Paragraph({
-                        children: [
-                            new TextRun({
-                                text: `${competentSymbol} ` + _mbT('expCompetent'),
-                                size: _wsBody(),
-                                rightToLeft: _mbRtl(),
-                            }),
-                        ],
-                        alignment: _mbStart(AlignmentType),
-                        bidirectional: _mbRtl(),
-                        spacing: { after: 150 },
-                    }));
-                    
-                    formChildren.push(new Paragraph({
-                        children: [
-                            new TextRun({
-                                text: `${notCompetentSymbol} ` + _mbT('expNotYetCompetent'),
-                                size: _wsBody(),
-                                rightToLeft: _mbRtl(),
-                            }),
-                        ],
-                        alignment: _mbStart(AlignmentType),
-                        bidirectional: _mbRtl(),
-                        spacing: { after: 400 },
-                    }));
+                    // Result options - always empty boxes for paper printout (3.50.0: the project's options)
+                    const _resLabels = (typeof mbAsmResultLabels === 'function')
+                        ? mbAsmResultLabels(_mbLang()) : [_mbT('expCompetent'), _mbT('expNotYetCompetent')];
+                    _resLabels.forEach((lab, ri) => {
+                        formChildren.push(new Paragraph({
+                            children: [
+                                new TextRun({
+                                    text: '☐ ' + lab,
+                                    size: _wsBody(),
+                                    rightToLeft: _mbRtl(),
+                                }),
+                            ],
+                            alignment: _mbStart(AlignmentType),
+                            bidirectional: _mbRtl(),
+                            spacing: { after: ri === _resLabels.length - 1 ? 400 : 150 },
+                        }));
+                    });
                     
                     // Signature Section with stored data
                     const teacherLine = _mbTf('expSignatureLine', {

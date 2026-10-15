@@ -58,9 +58,9 @@ test('Arabic content, English DACUM texts with an Arabic version: every side in 
   const crit = await page.evaluate(() => mbState.assessmentFormsData[mbState.currentLOId].rows.map(r => r.criteria)
     .find(c => c && c.en === 'Mandatory: Disconnect power'));
   expect(crit.ar).toBe('إلزامي: فصل التيار الكهربائي');
-  await expect(page.locator('#assessment-forms-list input[value="إلزامي: فصل التيار الكهربائي"]')).toHaveCount(1);
+  await expect(page.locator('#assessment-forms-list textarea.mb-asm-cell').filter({ hasText: /^إلزامي: فصل التيار الكهربائي$/ })).toHaveCount(1);   // 3.50.0: cells are text areas
   await page.evaluate(() => switchContentLang('en'));
-  await expect(page.locator('#assessment-forms-list input[value="Mandatory: Disconnect power"]')).toHaveCount(1);
+  await expect(page.locator('#assessment-forms-list textarea.mb-asm-cell').filter({ hasText: /^Mandatory: Disconnect power$/ })).toHaveCount(1);   // 3.50.0: cells are text areas
   expect(errors).toEqual([]);
 });
 
