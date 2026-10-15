@@ -10,9 +10,10 @@ const PAGE_TEXT = (n) => `Page ${n} text. ` + `Voltage is measured in parallel w
 async function ready(page, opts = {}) {
   const errors = await openApp(page, { handoff: fixture('dacum-handoff.json'), contentLang: 'en', ...opts });
   await page.evaluate(() => {
-    wsWriteSettings(Object.assign(wsReadSettings(), { sourceDrafts: true }));
+    wsWriteSettings(Object.assign(wsReadSettings(), { hideSourceDrafts: false }));
     window.dispatchEvent(new CustomEvent('mb:settingschange'));
   });
+  await page.route('**/up.railway.app/', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{"status":"ok"}' }));
   await tab(page, 'info');
   await page.evaluate(() => { _applyLOSwitch(mbState.learningOutcomesData[0].id); loadCurrentLOSheets(); });
   return errors;
@@ -29,19 +30,52 @@ async function mockAI(page, reply) {
   return seen;
 }
 
-test('off by default; Settings → Misc shows the button on information sheets', async ({ page }) => {
+test('shown by default at the top of the content; Settings → Misc hides it and a line says where it went', async ({ page }) => {
   const errors = await openApp(page, { handoff: fixture('dacum-handoff.json'), contentLang: 'en' });
   await tab(page, 'info');
-  await expect(page.locator('#mb-src-btn')).toBeHidden();
+  await expect(page.locator('.mb-content-tools #mb-src-btn')).toBeVisible();
+  await expect(page.locator('#mb-src-btn')).toContainText('Draft from sources');
+  await expect(page.locator('#mb-src-hint')).toBeHidden();
   await page.locator('#mb-settings-nav').click();
   const ov = page.locator('#ws-overlay');
   await ov.locator('.ws-nav-btn[data-ws-pane="misc"]').click();
-  await ov.locator('input[data-ws-misc="sourceDrafts"]').check();
+  await expect(ov.locator('input[data-ws-misc="sourceDrafts"]')).toBeChecked();
+  await ov.locator('input[data-ws-misc="sourceDrafts"]').uncheck();
   await ov.locator('#ws-save').click();
   await ov.locator('#ws-close').click();
+  await expect(page.locator('#mb-src-btn')).toBeHidden();
+  await expect(page.locator('#mb-src-hint')).toContainText('Settings → Misc');
+  expect(await page.evaluate(() => wsReadSettings().hideSourceDrafts)).toBe(true);
+  // a «sourceDrafts: false» saved by 3.45–3.47 does not hide it
+  await page.evaluate(() => { wsWriteSettings(Object.assign(wsReadSettings(), { hideSourceDrafts: false, sourceDrafts: false })); window.dispatchEvent(new CustomEvent('mb:settingschange')); });
   await expect(page.locator('#mb-src-btn')).toBeVisible();
-  await expect(page.locator('#mb-src-btn')).toContainText('Draft from sources');
-  expect(await page.evaluate(() => wsReadSettings().sourceDrafts)).toBe(true);
+  expect(errors).toEqual([]);
+});
+
+test('➕ Add Content at the top and on a card: the new card is brought into view and focused', async ({ page }) => {
+  const errors = await openApp(page, { handoff: fixture('dacum-handoff.json'), contentLang: 'en' });
+  await tab(page, 'info');
+  await page.evaluate(() => { _applyLOSwitch(mbState.learningOutcomesData[0].id); loadCurrentLOSheets(); });
+  const cards = page.locator('#content-sections-container .content-section-item');
+  const n = await cards.count();
+  await page.locator('.mb-content-tools [data-act="mbAddContentSectionTop"]').click();
+  await expect(cards).toHaveCount(n + 1);
+  await expect(cards.last().locator('textarea')).toBeFocused();
+  await expect(cards.last()).toBeInViewport();
+  await page.mouse.wheel(0, -5000);
+  await cards.first().locator('[data-act="addContentSection"]').click();
+  await expect(cards).toHaveCount(n + 2);
+  await expect(cards.last().locator('textarea')).toBeFocused();
+  await expect(cards.last()).toBeInViewport();
+  expect(errors).toEqual([]);
+});
+
+test('the dialog says when the AI service cannot be reached', async ({ page }) => {
+  const errors = await ready(page);
+  await page.unroute('**/up.railway.app/');
+  await page.route('**/up.railway.app/', r => r.fulfill({ status: 404, body: 'Application not found' }));
+  await page.locator('#mb-src-btn').click();
+  await expect(page.locator('#src-svc')).toContainText('cannot be reached');
   expect(errors).toEqual([]);
 });
 
@@ -133,7 +167,7 @@ test('PDF: read page by page in the browser, kept on this device after a reload'
   await expect(ov.locator('.src-item:has(.src-meta)')).toHaveCount(1, { timeout: 15_000 });
   await expect(ov.locator('.src-item:has(.src-meta) .src-name')).toHaveText('Multimeter Handbook');
   await expect(ov.locator('.src-item .src-meta')).toContainText('3 pages');
-  await expect(ov.locator('.src-warn')).toHaveCount(0);       // not scanned
+  await expect(ov.locator('#src-body .src-warn'), await ov.locator('.src-warn').allTextContents().then(t => t.join(' / '))).toHaveCount(0);       // not scanned
   const p2 = await page.evaluate(async () => (await mbSources.list())[0].pages[1]);
   expect(p2).toContain('Chapter 2');
   expect(p2).toContain('page 2');
@@ -361,7 +395,7 @@ test('the prompt carries job, occupation, country, scope, the full module title 
   h.context = 'Iraq';
   h.scopeOfWork = 'Installs and maintains computers in offices.';
   const errors = await openApp(page, { handoff: h, contentLang: 'en' });
-  await page.evaluate(() => { wsWriteSettings(Object.assign(wsReadSettings(), { sourceDrafts: true })); window.dispatchEvent(new CustomEvent('mb:settingschange')); });
+  await page.evaluate(() => { wsWriteSettings(Object.assign(wsReadSettings(), { hideSourceDrafts: false })); window.dispatchEvent(new CustomEvent('mb:settingschange')); });
   await tab(page, 'info');
   await page.evaluate(() => { _applyLOSwitch(mbState.learningOutcomesData[0].id); loadCurrentLOSheets(); });
   const seen = await mockAI(page, draftReply([{ ref: '', heading: 'A', text: 'Text A.', origin: 'general', pages: [] }]));

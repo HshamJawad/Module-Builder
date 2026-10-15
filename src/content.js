@@ -520,6 +520,26 @@ function addContentSection(heading) {
        calls addContentSection(buttonElement, event). Anything looser here
        would name every hand-added card "[object HTMLButtonElement]". */
     if (typeof heading === 'string' && heading.trim()) mbApplyContentHeading(csc, heading);
+    /* 3.48.0: pressed by the user (events.js passes the button), the new
+       card is brought into view and its text box focused — it is added
+       at the END of the sheet, often far below the button, and used to
+       look as if nothing had happened. Loading a sheet passes a string
+       or nothing, and does not scroll. */
+    if (heading && typeof heading === 'object' && heading.nodeType === 1) _mbShowNewContent(sectionDiv);
+}
+
+function _mbShowNewContent(card) {
+    if (!card) return;
+    card.classList.add('mb-just-added');
+    setTimeout(function () { card.classList.remove('mb-just-added'); }, 1700);
+    try { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) { /* old browser */ }
+    var ta = card.querySelector('textarea');
+    if (ta) { try { ta.focus({ preventScroll: true }); } catch (e) { ta.focus(); } }
+}
+
+/** ➕ at the top of the content (3.48.0): same as the card buttons. */
+function mbAddContentSectionTop(btn) {
+    addContentSection(btn && btn.nodeType === 1 ? btn : document.body);
 }
 
 async function removeContentSection(id) {

@@ -206,7 +206,12 @@ function _spRenderKind(kind) {
     var los = _cmLos(module);
     var view = mbSpView[kind];
     var shown = _spShown(rows, kind);
-    var c = _spCounts(rows, kind);
+    /* 3.48.0: the counts in the header are those of what is SHOWN, so
+       they agree with the buttons under them; what waits elsewhere in
+       the module is said on a line of its own, with a way to show it. */
+    var c = _spCounts(shown, kind);
+    var all = _spCounts(rows, kind);
+    var otherNew = all.new - c.new, otherOk = all.ok - c.ok;
     var groups = [], byKey = {};
     shown.forEach(function (r) {
         var gk = !r.lo && r.taskId !== MB_LO_PC ? '!nolo' : _spGroupKey(r);
@@ -233,6 +238,13 @@ function _spRenderKind(kind) {
                 '<span class="mb-sp-count is-built">' + _spEsc(_spT('mbSpCountBuilt', { v0: c.built })) + '</span>' +
             '</summary>' +
             '<p class="mb-sp-intro" dir="auto">' + _spEsc(_spT('mbSpIntro_' + kind)) + '</p>' +
+            ((view.filter !== 'all' && (otherNew > 0 || otherOk > 0))
+                ? '<p class="mb-sp-others" dir="auto">⚠ ' +
+                    (otherNew > 0 ? _spEsc(_spT('mbSpOtherLos', { v0: otherNew })) + ' ' : '') +
+                    (otherOk > 0 ? _spEsc(_spT('mbSpOtherLosOk', { v0: otherOk })) + ' ' : '') +
+                    '<button type="button" class="mb-sp-btn is-quiet" data-act="mbSpViewFilter" data-args="' + _spArgs([kind, 'all']) + '">' +
+                    _spEsc(_spT('mbSpShowModule')) + ' →</button></p>'
+                : '') +
             _spLangBanner(module, mine) +
             '<div class="mb-sp-bar">' + filterHtml +
                 '<button type="button" class="mb-sp-btn" data-act="mbSpApproveMany" data-args="' + _spArgs([kind, nSel ? 'selected' : 'shown']) + '"' + ((nSel || nNew) ? '' : ' disabled') + '>✓ ' +
