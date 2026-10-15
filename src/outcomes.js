@@ -167,6 +167,10 @@ function _applyLOSwitch(selectedLOId) {
        the outcome too. */
     if (typeof renderAssessmentForms === 'function') renderAssessmentForms();
     if (typeof renderSourceBrowser === 'function') renderSourceBrowser();
+    /* 3.48.0: the suggested-content panels list «this learning outcome»
+       by default; without a repaint they kept the previous outcome's
+       items, counts and disabled buttons until something else redrew them. */
+    if (typeof mbSpRefresh === 'function') mbSpRefresh();
 }
 
 function updateLOSummary() {

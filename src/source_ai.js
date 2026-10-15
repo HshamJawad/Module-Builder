@@ -23,8 +23,10 @@
 //                  project — a book serves many modules. Not in the
 //                  project file or the .mbz package. Only the text is
 //                  kept, page by page; the PDF itself is not stored.
-//   The setting    settings.sourceDrafts (Settings → Misc), OFF by
-//                  default: the button does not appear until it is on.
+//   The setting    settings.hideSourceDrafts (Settings → Misc). Since
+//                  3.48.0 the button is SHOWN by default, at the top of
+//                  the sheet's content (nothing is sent before Generate);
+//                  hidden, a line says where to turn it back on.
 //   The AI         the same backend as the rest of Module Builder
 //                  (/api/generate-dacum), so the key stays on the server.
 //
@@ -111,7 +113,7 @@ var _SRC_STRINGS = {
         noText: 'No text could be read from this file.',
         badFile: 'This file type is not supported. Use PDF, TXT, MD or HTML.',
         working: 'Writing the draft… this can take up to a minute.',
-        failed: 'The AI service did not answer. Check the connection and try again.',
+        failed: 'The AI service did not answer — it may be stopped, or the connection is down. Try again later.',
         rate: 'The AI service is busy (rate limit). Wait a minute and try again.',
         badReply: 'The answer could not be read. Try again, or choose fewer pages.',
         result: 'Draft — tick what to keep',
@@ -125,6 +127,8 @@ var _SRC_STRINGS = {
         offline: 'You are offline. The AI needs a connection.',
         privacy: 'Sources stay in this browser. The pages you choose are sent to the AI service when you press Generate.',
         copyNote: 'Use sources you may use for training. The draft paraphrases; check quotations and figures against the book.',
+        hint: 'Drafting from sources (AI) can be turned on in Settings → Misc.',
+        svcDown: 'The AI service cannot be reached right now (it may be stopped or offline). You can add sources and choose pages; generating works once the service is back.',
         modeOne: '📄 This sheet',
         modeMany: '📚 Several sheets',
         useSources: 'Use these sources',
@@ -203,7 +207,7 @@ var _SRC_STRINGS = {
         noText: 'Aucun texte n’a pu être lu dans ce fichier.',
         badFile: 'Type de fichier non pris en charge. Utilisez PDF, TXT, MD ou HTML.',
         working: 'Rédaction du brouillon… cela peut prendre une minute.',
-        failed: 'Le service d’IA n’a pas répondu. Vérifiez la connexion et réessayez.',
+        failed: 'Le service d’IA n’a pas répondu — il est peut-être arrêté, ou la connexion est coupée. Réessayez plus tard.',
         rate: 'Le service d’IA est saturé. Attendez une minute et réessayez.',
         badReply: 'La réponse n’a pas pu être lue. Réessayez ou choisissez moins de pages.',
         result: 'Brouillon — cochez ce que vous gardez',
@@ -217,6 +221,8 @@ var _SRC_STRINGS = {
         offline: 'Vous êtes hors ligne. L’IA a besoin d’une connexion.',
         privacy: 'Les sources restent dans ce navigateur. Les pages choisies sont envoyées au service d’IA quand vous cliquez sur Générer.',
         copyNote: 'Utilisez des sources autorisées pour la formation. Le brouillon reformule ; vérifiez citations et valeurs dans l’ouvrage.',
+        hint: 'La rédaction depuis les sources (IA) s’active dans Paramètres → Divers.',
+        svcDown: 'Le service d’IA est injoignable pour le moment (arrêté ou hors ligne). Vous pouvez ajouter des sources et choisir les pages ; la génération fonctionnera quand le service sera rétabli.',
         modeOne: '📄 Cette fiche',
         modeMany: '📚 Plusieurs fiches',
         useSources: 'Utiliser ces sources',
@@ -295,7 +301,7 @@ var _SRC_STRINGS = {
         noText: 'تعذّر استخراج نص من هذا الملف.',
         badFile: 'نوع الملف غير مدعوم. استخدم PDF أو TXT أو MD أو HTML.',
         working: 'تجري كتابة المسودة… قد يستغرق ذلك دقيقة.',
-        failed: 'لم تستجب خدمة الذكاء الاصطناعي. تحقق من الاتصال وأعد المحاولة.',
+        failed: 'لم تستجب خدمة الذكاء الاصطناعي — قد تكون متوقفة أو الاتصال مقطوع. أعد المحاولة لاحقاً.',
         rate: 'خدمة الذكاء الاصطناعي مشغولة الآن. انتظر دقيقة وأعد المحاولة.',
         badReply: 'تعذّرت قراءة الإجابة. أعد المحاولة أو اختر صفحات أقل.',
         result: 'المسودة — حدّد ما تريد الاحتفاظ به',
@@ -309,6 +315,8 @@ var _SRC_STRINGS = {
         offline: 'أنت غير متصل. يحتاج الذكاء الاصطناعي إلى اتصال.',
         privacy: 'تبقى المصادر في هذا المتصفح، ولا تُرسل إلا الصفحات المختارة عند الضغط على «توليد».',
         copyNote: 'استخدم مصادر مسموحاً استخدامها في التدريب. المسودة تعيد الصياغة؛ تحقق من الاقتباسات والقيم في الكتاب.',
+        hint: 'يمكن تفعيل الصياغة من المصادر (ذكاء اصطناعي) من الإعدادات ← متنوع.',
+        svcDown: 'خدمة الذكاء الاصطناعي غير متاحة الآن (قد تكون متوقفة أو لا يوجد اتصال). يمكنك إضافة المصادر واختيار الصفحات، ويعمل التوليد عند عودة الخدمة.',
         modeOne: '📄 هذه الورقة',
         modeMany: '📚 عدة أوراق',
         useSources: 'المصادر المستخدمة',
@@ -392,8 +400,8 @@ function _srcContentLang() {
 
 /* ── The setting ───────────────────────────────────────────── */
 function mbSrcEnabled() {
-    try { if (typeof _wsGet === 'function') return (_wsGet() || {}).sourceDrafts === true; } catch (e) { /* fall through */ }
-    return false;
+    try { if (typeof _wsGet === 'function') return (_wsGet() || {}).hideSourceDrafts !== true; } catch (e) { /* fall through */ }
+    return true;
 }
 
 /** Show or hide the button on the information sheet, in the UI language. */
@@ -403,6 +411,9 @@ function mbSrcPaintButton() {
     b.hidden = !mbSrcEnabled();
     var l = document.getElementById('mb-src-btn-label');
     if (l) l.textContent = _srcT('btn');
+    /* Hidden in Settings: one quiet line says where to turn it back on. */
+    var h = document.getElementById('mb-src-hint');
+    if (h) { h.hidden = mbSrcEnabled(); h.textContent = _srcT('hint'); }
 }
 if (typeof window !== 'undefined') {
     window.addEventListener('mb:settingschange', mbSrcPaintButton);
@@ -1191,6 +1202,7 @@ async function mbSrcOpen() {
     document.body.appendChild(ov);
     _srcPaint();
     if (_src.note) _srcMsg(_src.note);
+    _srcCheckService();
 
     ov.addEventListener('click', _srcOnClick);
     ov.addEventListener('input', _srcOnInput);
@@ -1200,6 +1212,35 @@ async function mbSrcOpen() {
     document.addEventListener('keydown', _srcKey);
 }
 var _srcKey = null;
+
+/** 3.48.0: is the AI service there? Asked once when the dialog opens,
+    quietly; when it is not, a line says so at the top of the dialog
+    (sources and pages can still be prepared). */
+async function _srcCheckService() {
+    var base = (typeof MB_AI_BACKEND_BASE !== 'undefined') ? MB_AI_BACKEND_BASE : 'https://dacum-ai-backend-production.up.railway.app';
+    var ok = false;
+    if (typeof navigator === 'undefined' || navigator.onLine !== false) {
+        var ctl = new AbortController();
+        var t = setTimeout(function () { ctl.abort(); }, 8000);
+        try {
+            var r = await fetch(base + '/', { method: 'GET', signal: ctl.signal, cache: 'no-store' });
+            ok = r.ok;
+        } catch (e) { ok = false; } finally { clearTimeout(t); }
+    }
+    if (!_src) return;
+    _src.svcDown = !ok;
+    var ov = document.getElementById('src-overlay');
+    var old = document.getElementById('src-svc');
+    if (old) old.remove();
+    if (!ok && ov) {
+        var p = document.createElement('p');
+        p.id = 'src-svc'; p.className = 'src-warn'; p.setAttribute('role', 'alert');
+        p.style.margin = '12px 20px 0';
+        p.textContent = '⚠️ ' + _srcT('svcDown');
+        var body = document.getElementById('src-body');
+        body.parentNode.insertBefore(p, body);
+    }
+}
 
 function mbSrcClose() {
     if (_src) { _src.stop = true; _srcJobSave(); }
