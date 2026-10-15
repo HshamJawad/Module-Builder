@@ -205,7 +205,15 @@ function mbAsmResultEdit() {
     document.addEventListener('keydown', esc);
     document.getElementById('asm-x').addEventListener('click', close);
     document.getElementById('asm-cancel').addEventListener('click', close);
-    ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
+    /* 3.50.1: the backdrop closes the dialog only for a click that
+       STARTED on it, and never over unsaved typing. Selecting text in the
+       box and releasing the mouse outside it fired a «click» on the
+       backdrop, and the dialog vanished with what had been typed. */
+    var downOnBackdrop = false, dirty = false;
+    ov.addEventListener('mousedown', function (e) { downOnBackdrop = (e.target === ov); });
+    ta.addEventListener('input', function () { dirty = true; });
+    ov.querySelectorAll('[data-preset]').forEach(function (b) { b.addEventListener('click', function () { dirty = true; }); });
+    ov.addEventListener('click', function (e) { if (e.target === ov && downOnBackdrop && !dirty) close(); downOnBackdrop = false; });
     document.getElementById('asm-save').addEventListener('click', function () {
         mbState.assessmentResults = mbAsmNormalizeResults(_asmDraft);
         close();

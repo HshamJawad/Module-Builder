@@ -109,3 +109,29 @@ test('Clear All asks whether the sources kept on the device go too', async ({ pa
   await expect.poll(() => page.evaluate(async () => (await mbSources.list()).length)).toBe(0);
   expect(errors).toEqual([]);
 });
+
+test('typing your own options: selecting text and releasing outside the box keeps the dialog; saved options show and export', async ({ page }) => {
+  const errors = await openApp(page, { handoff: fixture('dacum-handoff.json'), contentLang: 'en' });
+  await buildForms(page);
+  await page.locator('[data-act="mbAsmResultEdit"]').first().click();
+  const ov = page.locator('#asm-overlay');
+  const ta = ov.locator('#asm-text');
+  await ta.fill('Ready for work\nNeeds more practice');
+  // drag-select from inside the box to the backdrop, as a user does
+  const b = await ta.boundingBox();
+  await page.mouse.move(b.x + 20, b.y + 12);
+  await page.mouse.down();
+  await page.mouse.move(5, 5, { steps: 5 });
+  await page.mouse.up();
+  await expect(ov).toBeVisible();
+  // a click on the backdrop with unsaved typing does not close it either
+  await page.mouse.click(5, 5);
+  await expect(ov).toBeVisible();
+  await ov.locator('#asm-save').click();
+  await expect(ov).toHaveCount(0);
+  await expect(page.locator('.mb-asm-opts').first()).toHaveText(/☐ Ready for work\s*☐ Needs more practice/);
+  const text = await docxText(page);
+  expect(text).toContain('☐ Ready for work');
+  expect(text).toContain('☐ Needs more practice');
+  expect(errors).toEqual([]);
+});
