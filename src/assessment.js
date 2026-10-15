@@ -228,6 +228,7 @@ function renderAssessmentForms() {
             
             <div style="margin-bottom: 20px;">
                 <h5 style="font-weight: 600; color: #374151; margin-bottom: 10px;"><span data-i18n="expResultPlain">${window.i18n.t('expResultPlain')}</span></h5>
+                ${typeof mbScaleFormHtml === 'function' ? mbScaleFormHtml(lo.id) : ''}
                 ${typeof mbAsmResultHtml === 'function' ? mbAsmResultHtml() : ''}
             </div>
             

@@ -555,10 +555,19 @@ function _pdfBuild(pdf, model, lang) {
                 w.newPage();
                 w.heading(sh.criteria.title || (t('checklist') + ' ' + sh.number), 3);
                 if (sh.criteria.instruction) w.text(sh.criteria.instruction);
-                w.table(['#', t('criteria'), t('yes'), t('no')],
-                    sh.criteria.rows.map(function (c, i) { return [String(i + 1), c, '', '']; }),
-                    [w.CW * 0.08, w.CW * 0.62, w.CW * 0.15, w.CW * 0.15], { size: S.table });
-                if (sh.criteria.footer) w.text(sh.criteria.footer);
+                if (sh.criteria.scale) {
+                    /* 3.51.0: the levels of the scale instead of Yes / No. */
+                    var lv = sh.criteria.scale, lw = Math.max(0.08, 0.42 / lv.length);
+                    w.table(['#', t('criteria')].concat(lv),
+                        sh.criteria.rows.map(function (c, i) { return [String(i + 1), c].concat(lv.map(function () { return ''; })); }),
+                        [w.CW * 0.08, w.CW * (0.92 - lw * lv.length)].concat(lv.map(function () { return w.CW * lw; })), { size: S.table });
+                    w.text(sh.criteria.pass, { bold: true });
+                } else {
+                    w.table(['#', t('criteria'), t('yes'), t('no')],
+                        sh.criteria.rows.map(function (c, i) { return [String(i + 1), c, '', '']; }),
+                        [w.CW * 0.08, w.CW * 0.62, w.CW * 0.15, w.CW * 0.15], { size: S.table });
+                    if (sh.criteria.footer) w.text(sh.criteria.footer);
+                }
             }
         };
 
@@ -595,6 +604,15 @@ function _pdfBuild(pdf, model, lang) {
                     { size: S.body });
             }
             /* 3.50.0: the project's options, empty — ticked by the trainer. */
+            if (f.scale && f.rows.length) {
+                /* 3.51.0: the trainer's rating of each criterion. */
+                var lv2 = f.scale, lw2 = Math.max(0.08, 0.42 / lv2.length);
+                w.label(_scT('rating', null, lang));
+                w.table(['#', t('colCriteria')].concat(lv2),
+                    f.rows.filter(function (r) { return r.criteria.trim(); }).map(function (r, i) { return [String(i + 1), r.criteria].concat(lv2.map(function () { return ''; })); }),
+                    [w.CW * 0.08, w.CW * (0.92 - lw2 * lv2.length)].concat(lv2.map(function () { return w.CW * lw2; })), { size: S.body });
+            }
+            if (f.pass) w.text(f.pass, { bold: true });
             var _res = (f.results && f.results.length) ? f.results : [t('competent'), t('notYet')];
             w.text(t('result') + ':  ' + _res.map(function (x) { return '[  ] ' + x; }).join('     '), { bold: true });
             w.table(null, [

@@ -1698,24 +1698,33 @@ async function exportToDocx() {
                    existing modules. See _mbBoilerplate in docx_bidi.js. */
                 const ctTitle  = _mbBoilerplate(activity.criteriaTitle, 'expCriteriaCheckList', { v0: num });
                 const ctInstr  = _mbBoilerplate(activity.criteriaInstruction, 'expCriteriaInstructionDefault');
-                const ctFooter = _mbBoilerplate(activity.criteriaFooter,      'expCriteriaFooterDefault');
+                /* 3.51.0: with the rating scale, levels instead of Yes / No,
+                   and the passing standard as the footer (the default
+                   footer speaks of «yes»). */
+                const _scLv = (activity.useScale && typeof mbScaleLevels === 'function') ? mbScaleLevels(_mbLang()) : null;
+                const ctFooter = _scLv ? mbScalePass(_mbLang()) : _mbBoilerplate(activity.criteriaFooter, 'expCriteriaFooterDefault');
+                const _ctSpan = _scLv ? 2 + _scLv.length : 4;
                 const ctBdr = { top:{style:BorderStyle.SINGLE,size:1,color:'000000'}, bottom:{style:BorderStyle.SINGLE,size:1,color:'000000'}, left:{style:BorderStyle.SINGLE,size:1,color:'000000'}, right:{style:BorderStyle.SINGLE,size:1,color:'000000'}, insideHorizontal:{style:BorderStyle.SINGLE,size:1,color:'000000'}, insideVertical:{style:BorderStyle.SINGLE,size:1,color:'000000'} };
                 const cellMgn = { top: 120, bottom: 120, left: 150, right: 150 };
                 const ctRows = [];
                 // Title row
-                ctRows.push(new TableRow({ children: [new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: ctTitle, bold: true, size: _wsTable(), color: '1F4788', rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })], columnSpan: 4, margins: cellMgn })] }));
+                ctRows.push(new TableRow({ children: [new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: ctTitle, bold: true, size: _wsTable(), color: '1F4788', rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })], columnSpan: _ctSpan, margins: cellMgn })] }));
                 // Instruction row
-                if (ctInstr.trim()) ctRows.push(new TableRow({ children: [new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: ctInstr, bold: true, size: _wsBody(), rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })], columnSpan: 4, margins: cellMgn })] }));
+                if (ctInstr.trim()) ctRows.push(new TableRow({ children: [new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: ctInstr, bold: true, size: _wsBody(), rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })], columnSpan: _ctSpan, margins: cellMgn })] }));
                 // Header row
                 const mkH = (t, w) => new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: t, bold: true, size: _wsTable(), color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, bidirectional: _mbRtl() })], width: { size: w, type: WidthType.PERCENTAGE }, margins: cellMgn });
-                ctRows.push(new TableRow({ children: [mkH('#',8), mkH(_mbT('expDidYou'),62), mkH(_mbT('expYes'),15), mkH(_mbT('expNo'),15)] }));
+                if (_scLv) {
+                    const lw = Math.max(8, Math.floor(42 / _scLv.length));
+                    ctRows.push(new TableRow({ children: [mkH('#',8), mkH(_mbT('expDidYou'), 92 - lw * _scLv.length)].concat(_scLv.map(l => mkH(l, lw))) }));
+                } else ctRows.push(new TableRow({ children: [mkH('#',8), mkH(_mbT('expDidYou'),62), mkH(_mbT('expYes'),15), mkH(_mbT('expNo'),15)] }));
                 // Criteria rows
                 validCriteria.forEach((c, i) => {
                     const mkD = (t, align) => new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: t, size: _wsChecklist(), rightToLeft: _mbRtl() })], alignment: align, bidirectional: _mbRtl() })], margins: cellMgn });
-                    ctRows.push(new TableRow({ children: [mkD(String(i+1), AlignmentType.CENTER), mkD(c, _mbStart(AlignmentType)), mkD(' ', AlignmentType.CENTER), mkD(' ', AlignmentType.CENTER)] }));
+                    const _blank = (_scLv ? _scLv : [0, 0]).map(() => mkD(' ', AlignmentType.CENTER));
+                    ctRows.push(new TableRow({ children: [mkD(String(i+1), AlignmentType.CENTER), mkD(c, _mbStart(AlignmentType))].concat(_blank) }));
                 });
                 // Footer row
-                if (ctFooter.trim()) ctRows.push(new TableRow({ children: [new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: ctFooter, size: _wsBody(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl() })], columnSpan: 4, margins: cellMgn })] }));
+                if (ctFooter.trim()) ctRows.push(new TableRow({ children: [new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: ctFooter, size: _wsBody(), bold: !!_scLv, rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl() })], columnSpan: _ctSpan, margins: cellMgn })] }));
                 const ctTable = new Table({ rows: ctRows, width: { size: 9072, type: WidthType.DXA }, borders: ctBdr });
                 // Store as separate section (new page — same as self-check)
                 ch.__criteriaSection = [ctTable];
@@ -2045,6 +2054,23 @@ async function exportToDocx() {
                     });
                     
                     formChildren.push(portfolioTable);
+
+                    /* 3.51.0: the trainer's rating of each criterion, and the
+                       passing standard, when the form uses the scale. */
+                    if (formData.useScale && typeof mbScaleLevels === 'function') {
+                        const lv = mbScaleLevels(_mbLang());
+                        const crit = (formData.rows || []).map(r => String(r.criteria || '').trim()).filter(Boolean);
+                        if (crit.length) {
+                            const bd = { style: BorderStyle.SINGLE, size: 1, color: '000000' };
+                            const lw = Math.max(8, Math.floor(42 / lv.length));
+                            const cell = (t, w, bold, center) => new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: t, bold: !!bold, size: _wsTable(), rightToLeft: _mbRtl() })], alignment: center ? AlignmentType.CENTER : _mbStart(AlignmentType), bidirectional: _mbRtl() })], width: w ? { size: w, type: WidthType.PERCENTAGE } : undefined, margins: { top: 100, bottom: 100, left: 100, right: 100 } });
+                            const rr = [new TableRow({ tableHeader: true, children: [cell('#', 8, true, true), cell(_mbT('expAssessmentCriteria'), 92 - lw * lv.length, true, false)].concat(lv.map(l => cell(l, lw, true, true))) })];
+                            crit.forEach((c, i) => rr.push(new TableRow({ children: [cell(String(i + 1), 0, false, true), cell(c, 0, false, false)].concat(lv.map(() => cell(' ', 0, false, true))) })));
+                            formChildren.push(new Paragraph({ children: [new TextRun({ text: _scT('rating', null, _mbLang()), bold: true, size: _wsBody(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { before: 300, after: 150 } }));
+                            formChildren.push(new Table({ rows: rr, width: { size: 9072, type: WidthType.DXA }, borders: { top: bd, bottom: bd, left: bd, right: bd, insideHorizontal: bd, insideVertical: bd } }));
+                        }
+                        formChildren.push(new Paragraph({ children: [new TextRun({ text: mbScalePass(_mbLang()), bold: true, size: _wsBody(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { before: 200 } }));
+                    }
                     
                     // Result Section
                     formChildren.push(new Paragraph({

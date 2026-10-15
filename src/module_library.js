@@ -94,6 +94,7 @@ function mbCollectShared() {
         refIdCounter:           mbState.refIdCounter     || 1,
         glossary:               mbState.glossary         || null,
         assessmentResults:      mbState.assessmentResults || null,   // 3.50.0
+        ratingScale:            mbState.ratingScale       || null,   // 3.51.0
         tvqfBasic:              mbState.tvqfBasic        || {},
         tvqfExtended:           mbState.tvqfExtended     || {},
         cmDefaults:             mbState.cmDefaults       || {}
@@ -116,6 +117,7 @@ function _mbDefaultShared() {
         referencesTitle: null, referencesData: [{ id: 1, value: '' }], refIdCounter: 1,
         glossary: { title: null, tables: [] },
         assessmentResults: null,
+        ratingScale: null,
         tvqfBasic: {}, tvqfExtended: {}, cmDefaults: {}
     };
 }
@@ -169,6 +171,8 @@ function mbApplyProjectShared(data) {
         /* 3.50.0: the assessment result options — null = the defaults. */
         mbState.assessmentResults = (typeof mbAsmNormalizeResults === 'function')
             ? mbAsmNormalizeResults(data.assessmentResults) : null;
+        /* 3.51.0: the rating scale — null = the defaults. */
+        mbState.ratingScale = (typeof mbScaleNormalize === 'function') ? mbScaleNormalize(data.ratingScale) : null;
 
         /* Read before the cover table is drawn: renderCoverTable() is
            what migrates a retired framework card onto the rows. */

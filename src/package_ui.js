@@ -381,6 +381,12 @@
             dst.assessmentResults = mbAsmNormalizeResults(ar);
             added++;
         }
+        /* 3.51.0: the rating scale, likewise. */
+        var rs = part.references && part.references.ratingScale;
+        if (rs && typeof mbScaleNormalize === 'function' && mbScaleNormalize(rs) && !mbScaleNormalize(dst.ratingScale)) {
+            dst.ratingScale = mbScaleNormalize(rs);
+            added++;
+        }
         var team = (part.team && part.team.teamMembers) || [];
         if (!Array.isArray(dst.teamMembers)) dst.teamMembers = [];
         var names = new Set(dst.teamMembers.map(function (m) { return norm(m && m.name); }));

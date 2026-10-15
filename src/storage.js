@@ -193,6 +193,7 @@ async function clearAll() {
         if (assessContent) assessContent.value = '';
         mbState.assessmentFormsData = {};
         mbState.assessmentResults = null;   // 3.50.0 — the default options
+        mbState.ratingScale = null;         // 3.51.0 — the default scale
         const assessmentList = document.getElementById('assessment-forms-list');
         if (assessmentList) assessmentList.innerHTML = '<p style="color: #6b7280; text-align: center; padding: 20px;" data-i18n="dgNoAssessmentFormsYet">' +
             escapeHtml(window.i18n.t('dgNoAssessmentFormsYet')) + '</p>';

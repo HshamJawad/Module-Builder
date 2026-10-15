@@ -384,6 +384,9 @@ function mbBuildModuleModel(lang, state) {
                     };
                 }).filter(function (s) { return s.text.trim() || s.images.length || s.marks.length || s.tables.length; }),
                 criteria: {
+                    /* 3.51.0: levels instead of Yes / No when the sheet uses the scale. */
+                    scale: (sh.useScale && typeof mbScaleLevels === 'function') ? mbScaleLevels(lang, raw) : null,
+                    pass: (sh.useScale && typeof mbScalePass === 'function') ? mbScalePass(lang, raw) : '',
                     title: _mmStr(sh.criteriaTitle),
                     instruction: _mmStr(sh.criteriaInstruction),
                     footer: _mmStr(sh.criteriaFooter),
@@ -457,6 +460,9 @@ function mbBuildModuleModel(lang, state) {
             notYetCompetent: !!form.notYetCompetent,
             /* 3.50.0: the options the trainer ticks, in this language. */
             results: (typeof mbAsmResultLabels === 'function') ? mbAsmResultLabels(lang, raw) : [],
+            /* 3.51.0: the trainer's rating of each criterion, when on. */
+            scale: (form.useScale && typeof mbScaleLevels === 'function') ? mbScaleLevels(lang, raw) : null,
+            pass: (form.useScale && typeof mbScalePass === 'function') ? mbScalePass(lang, raw) : '',
             teacherName: _mmStr(form.teacherName),
             teacherDate: _mmStr(form.teacherDate),
             learnerName: _mmStr(form.learnerName),
