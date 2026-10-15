@@ -75,3 +75,40 @@ test('assessment form: the trainer rates each criterion; scale changed to 0–3 
   expect(await page.evaluate(() => mbScaleLevels('en'))).toEqual(['0', '1', '2', '3']);
   expect(errors).toEqual([]);
 });
+
+// 3.51.1: the scale shows on screen too, not only in the exports.
+test('on screen: the checklist columns follow the scale; the form shows its rating table', async ({ page }) => {
+  const errors = await openApp(page, { handoff: fixture('dacum-handoff.json'), contentLang: 'en' });
+  await buildAll(page);
+  await tab(page, 'activity');
+  await page.evaluate(() => { mbState.currentActivitySheetIndex = 0; loadActivitySheetAtIndex(mbState.learningOutcomesData[0], 0); });
+  const head = page.locator('.criteria-table thead th:visible');
+  await expect(head).toHaveCount(4);
+  await page.locator('#act-scale-host input[type="checkbox"]').check();
+  await expect(head).toHaveCount(5);
+  await expect(head.nth(2)).toHaveText('Not yet');
+  await expect(head.nth(4)).toHaveText('Proficient');
+  const cells = () => page.evaluate(() => Array.from(document.querySelectorAll('#criteria-tbody tr')).map(r => r.cells.length));
+  expect((await cells()).every(n => n === 5)).toBe(true);
+  await page.evaluate(() => addCriteria());
+  await page.waitForTimeout(50);
+  expect((await cells()).every(n => n === 5)).toBe(true);
+  // another sheet without the scale: Yes / No again
+  await page.evaluate(() => { saveCurrentSheetToLO(); mbState.currentActivitySheetIndex = 1; loadActivitySheetAtIndex(mbState.learningOutcomesData[0], 1); });
+  await expect(head).toHaveCount(4);
+  await expect(head.nth(2)).toHaveText('Yes');
+  expect((await cells()).every(n => n === 4)).toBe(true);
+
+  await tab(page, 'assessment');
+  const sf = page.locator('#assessment-forms-list .mb-scale-form').first();
+  await expect(sf.locator('table')).toHaveCount(0);
+  await sf.locator('input[type="checkbox"]').check();
+  const tbl = page.locator('#assessment-forms-list .mb-scale-form').first().locator('table');
+  await expect(tbl.locator('th')).toHaveCount(5);
+  await expect(tbl.locator('th').nth(3)).toHaveText('Acceptable');
+  const crit = page.locator('#assessment-forms-list textarea[data-args*="\\"criteria\\""]').first();
+  await crit.fill('Wears gloves');
+  await crit.dispatchEvent('change');
+  await expect(page.locator('#assessment-forms-list .mb-scale-form').first().locator('table')).toContainText('Wears gloves');
+  expect(errors).toEqual([]);
+});

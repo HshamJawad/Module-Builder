@@ -347,6 +347,7 @@ function updateAssessmentCell(loId, rowIndex, field, value) {
            side per language; typing changes the content language's side. */
         if (field === 'criteria' && typeof biIs === 'function' && biIs(row.criteria)) row.criteria[contentLang()] = value;
         else row[field] = value;
+        if (field === 'criteria' && typeof mbScaleRefreshForm === 'function') mbScaleRefreshForm(loId);
     }
 }
 

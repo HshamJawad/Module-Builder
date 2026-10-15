@@ -1,6 +1,6 @@
 // ============================================================
 // /src/rating_scale.js
-// Rating scale and passing standard (3.51.0)
+// Rating scale and passing standard (3.51.0; on screen too: 3.51.1)
 //
 // WHY
 // A checklist answered «Yes / No» says whether each criterion was met.
@@ -41,6 +41,7 @@ var _SC_STRINGS = {
         levelsIn: 'Levels in {v0}', passIn: 'Passing standard in {v0}',
         passAuto: 'Passing standard: «{v0}» or higher on every criterion.',
         rating: 'Rating of the criteria',
+        critCol: 'Assessment criteria', noCrit: 'The criteria of the table above appear here.',
         defaults: '↺ Defaults', cancel: 'Cancel', save: 'Save', saved: 'Rating scale saved.'
     },
     fr: {
@@ -55,6 +56,7 @@ var _SC_STRINGS = {
         levelsIn: 'Niveaux en {v0}', passIn: 'Critère de réussite en {v0}',
         passAuto: 'Critère de réussite : « {v0} » ou plus pour chaque critère.',
         rating: 'Appréciation des critères',
+        critCol: 'Critères d’évaluation', noCrit: 'Les critères du tableau ci-dessus apparaissent ici.',
         defaults: '↺ Par défaut', cancel: 'Annuler', save: 'Enregistrer', saved: 'Échelle enregistrée.'
     },
     ar: {
@@ -69,6 +71,7 @@ var _SC_STRINGS = {
         levelsIn: 'المستويات بـ{v0}', passIn: 'معيار النجاح بـ{v0}',
         passAuto: 'معيار النجاح: «{v0}» أو أعلى في كل معيار.',
         rating: 'تقدير المعايير',
+        critCol: 'معايير التقييم', noCrit: 'تظهر هنا معايير الجدول أعلاه.',
         defaults: '↺ الافتراضي', cancel: 'إلغاء', save: 'حفظ', saved: 'حُفظ مقياس التقدير.'
     }
 };
@@ -143,6 +146,48 @@ function mbScalePaintActivity() {
             _scEsc(_scT('actToggle')) + '</label>' +
         '<button type="button" class="mb-asm-edit" data-act="mbScaleEdit">' + _scEsc(_scT('edit')) + '</button>' +
         (on ? '<p class="mb-asm-note" dir="auto">' + _scEsc(_scT('cols', { v0: mbScaleLevels(lang).join(' · ') })) + '<br>' + _scEsc(mbScalePass(lang)) + '</p>' : '');
+    mbScaleSyncActivityTable();
+}
+
+/* 3.51.1: the checklist on screen shows the scale's columns, as printed.
+   The Yes / No headers stay in the page (hidden) so their i18n keeps
+   working; the extra cells are empty, like Yes / No, and nothing reads them. */
+function mbScaleSyncActivityTable() {
+    var tbody = document.getElementById('criteria-tbody');
+    var table = tbody && tbody.closest('table');
+    var hr = table && table.querySelector('thead tr');
+    if (!hr) return;
+    var sh = _scCurrentActivity();
+    var lv = (sh && sh.useScale) ? mbScaleLevels(_scLang()) : null;
+    var ths = Array.prototype.slice.call(hr.children);
+    ths.forEach(function (th, i) {
+        if (th.classList.contains('mb-sc-th')) th.remove();
+        else if (i >= 2) th.style.display = lv ? 'none' : '';
+    });
+    if (lv) {
+        var w = Math.max(8, Math.floor(30 / lv.length));
+        lv.forEach(function (l) {
+            var th = document.createElement('th');
+            th.className = 'mb-sc-th';
+            th.setAttribute('dir', 'auto');
+            th.style.cssText = 'border:1px solid #d1d5db;padding:8px;width:' + w + '%;text-align:center;color:#374151;font-weight:700;';
+            th.textContent = l;
+            hr.appendChild(th);
+        });
+    }
+    tbody.__scCols = lv ? lv.length : 2;
+    _scFitRows(tbody);
+    if (!tbody.__scObs && typeof MutationObserver === 'function') {
+        tbody.__scObs = new MutationObserver(function () { _scFitRows(tbody); });
+        tbody.__scObs.observe(tbody, { childList: true });
+    }
+}
+function _scFitRows(tbody) {
+    var n = tbody.__scCols || 2;
+    Array.prototype.forEach.call(tbody.rows, function (tr) {
+        while (tr.cells.length > 2 + n) tr.deleteCell(-1);
+        while (tr.cells.length < 2 + n) { var td = tr.insertCell(-1); td.style.textAlign = 'center'; }
+    });
 }
 function mbScaleToggleActivity(checked) {
     if (typeof saveCurrentSheetToLO === 'function') saveCurrentSheetToLO();
@@ -174,12 +219,36 @@ function mbScaleFormHtml(loId) {
     var f = (mbState.assessmentFormsData || {})[loId] || {};
     var on = !!f.useScale;
     var lang = _scLang();
-    return '<div class="mb-scale-form">' +
+    return '<div class="mb-scale-form" data-sc-lo="' + _scEsc(loId) + '">' +
         '<label class="mb-scale-toggle"><input type="checkbox" data-act="mbScaleToggleForm" data-on="change" data-args=\'["' + _scEsc(loId) + '","$checked"]\'' + (on ? ' checked' : '') + '> ' +
             _scEsc(_scT('asmToggle')) + '</label>' +
         '<button type="button" class="mb-asm-edit" data-act="mbScaleEdit">' + _scEsc(_scT('edit')) + '</button>' +
-        (on ? '<p class="mb-asm-note" dir="auto">' + _scEsc(_scT('cols', { v0: mbScaleLevels(lang).join(' · ') })) + '<br><strong>' + _scEsc(mbScalePass(lang)) + '</strong></p>' : '') +
+        (on ? _scFormTable(f, lang) + '<p class="mb-asm-note" dir="auto">' + _scEsc(_scT('cols', { v0: mbScaleLevels(lang).join(' · ') })) + '<br><strong>' + _scEsc(mbScalePass(lang)) + '</strong></p>' : '') +
     '</div>';
+}
+/** Redraws one form's scale block after its criteria change. */
+function mbScaleRefreshForm(loId) {
+    var f = (mbState.assessmentFormsData || {})[loId];
+    if (!f || !f.useScale) return;
+    document.querySelectorAll('.mb-scale-form').forEach(function (el) {
+        if (el.getAttribute('data-sc-lo') === String(loId)) el.outerHTML = mbScaleFormHtml(loId);
+    });
+}
+/* 3.51.1: the rating table of the form's criteria, as printed. */
+function _scFormTable(f, lang) {
+    var lv = mbScaleLevels(lang);
+    var crit = (f.rows || []).map(function (r) {
+        return String((typeof _mbAsmCriteria === 'function') ? _mbAsmCriteria(r.criteria) : (r.criteria || '')).trim();
+    }).filter(Boolean);
+    var td = 'border:1px solid #d1d5db;padding:6px 8px;';
+    var head = '<tr style="background:#e0e7ff"><th style="' + td + 'width:6%">#</th><th style="' + td + 'text-align:start">' + _scEsc(_scT('critCol')) + '</th>' +
+        lv.map(function (l) { return '<th style="' + td + 'text-align:center" dir="auto">' + _scEsc(l) + '</th>'; }).join('') + '</tr>';
+    var body = (crit.length ? crit : ['']).map(function (c, i) {
+        return '<tr><td style="' + td + 'text-align:center">' + (c ? i + 1 : '') + '</td><td style="' + td + '" dir="auto">' + (c ? _scEsc(c) : '<em style="color:#9ca3af">' + _scEsc(_scT('noCrit')) + '</em>') + '</td>' +
+            lv.map(function () { return '<td style="' + td + '"></td>'; }).join('') + '</tr>';
+    }).join('');
+    return '<div class="mb-scale-table"><h6 style="margin:10px 0 6px;font-weight:700;color:#374151">' + _scEsc(_scT('rating')) + '</h6>' +
+        '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:0.9em;background:#fff">' + head + body + '</table></div></div>';
 }
 function mbScaleToggleForm(loId, checked) {
     var f = (mbState.assessmentFormsData || {})[loId];
