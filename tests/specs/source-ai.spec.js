@@ -65,7 +65,7 @@ test('pasted text: only the chosen pages are sent; the kept draft lands on the s
   await ov.locator('#src-paste-name').fill('Electrical Basics');
   await ov.locator('#src-paste-text').fill([1, 2, 3, 4].map(PAGE_TEXT).join('\n\n'));
   await ov.locator('[data-src="paste-add"]').click();
-  await expect(ov.locator('.src-item')).toHaveCount(1);
+  await expect(ov.locator('.src-item:has(.src-meta)')).toHaveCount(1);
   const pages = await page.evaluate(async () => (await mbSources.list())[0].pages.length);
   expect(pages).toBeGreaterThanOrEqual(4);
 
@@ -130,8 +130,8 @@ test('PDF: read page by page in the browser, kept on this device after a reload'
   await page.locator('#mb-src-btn').click();
   const ov = page.locator('#src-overlay');
   await ov.locator('#src-file').setInputFiles({ name: 'Multimeter Handbook.pdf', mimeType: 'application/pdf', buffer: Buffer.from(bytes) });
-  await expect(ov.locator('.src-item')).toHaveCount(1, { timeout: 15_000 });
-  await expect(ov.locator('.src-item .src-name')).toHaveText('Multimeter Handbook');
+  await expect(ov.locator('.src-item:has(.src-meta)')).toHaveCount(1, { timeout: 15_000 });
+  await expect(ov.locator('.src-item:has(.src-meta) .src-name')).toHaveText('Multimeter Handbook');
   await expect(ov.locator('.src-item .src-meta')).toContainText('3 pages');
   await expect(ov.locator('.src-warn')).toHaveCount(0);       // not scanned
   const p2 = await page.evaluate(async () => (await mbSources.list())[0].pages[1]);
@@ -290,7 +290,7 @@ test('several sheets, made by hand: a sheet without a title asks for its topic; 
   const row = (i) => ov.locator('.src-row').nth(i);
   await expect(row(1).locator('[data-rf="topic"]')).toHaveValue('');
   for (const i of [0, 1]) {
-    await row(i).locator('[data-rf="src"]').selectOption({ index: 1 });
+    await row(i).locator('[data-rf="src"]').selectOption({ label: 'Handbook' });
   }
   await expect(row(0).locator('[data-rf="from"]')).toHaveValue('1');
   await expect(ov.locator('#src-total')).toContainText('1 sheets');   // the untitled one waits for a topic
@@ -320,7 +320,7 @@ test('several sheets: a busy service stops the run; reopening goes on from the s
   await page.locator('#mb-src-btn').click();
   const ov = page.locator('#src-overlay');
   await ov.locator('[data-src="mode-many"]').click();
-  for (let i = 0; i < 3; i++) await ov.locator('.src-row').nth(i).locator('[data-rf="src"]').selectOption({ index: 1 });
+  for (let i = 0; i < 3; i++) await ov.locator('.src-row').nth(i).locator('[data-rf="src"]').selectOption({ label: 'Handbook' });
   await ov.locator('[data-src="gen-many"]').click();
   await expect(page.locator('#src-msg')).toContainText('busy', { timeout: 20_000 });
   await expect(ov.locator('.src-row.is-done')).toHaveCount(1);
@@ -349,5 +349,117 @@ test('PDF bookmarks are kept as the contents used for matching', async ({ page }
   expect(digest).toBe('p.1 Safety\np.2 Meters\n  p.3 Voltage');
   const noToc = await page.evaluate(() => mbSrcDigest({ pages: ['Chapter 1\nSafety first\nAlways switch off the supply.', ''] }));
   expect(noToc).toBe('p.1: Chapter 1 | Safety first');
+  expect(errors).toEqual([]);
+});
+
+/* ── 3.47.0: the programme around the sheet; no source; mixed ── */
+
+const draftReply = (sections, extra = {}) => ({ objective: 'Do the work.', sections, selfCheck: '', answerKey: '', notCovered: '', toVerify: '', ...extra });
+
+test('the prompt carries job, occupation, country, scope, the full module title and level (DACUM handoff), and a typed country wins', async ({ page }) => {
+  const h = fixture('dacum-handoff.json');
+  h.context = 'Iraq';
+  h.scopeOfWork = 'Installs and maintains computers in offices.';
+  const errors = await openApp(page, { handoff: h, contentLang: 'en' });
+  await page.evaluate(() => { wsWriteSettings(Object.assign(wsReadSettings(), { sourceDrafts: true })); window.dispatchEvent(new CustomEvent('mb:settingschange')); });
+  await tab(page, 'info');
+  await page.evaluate(() => { _applyLOSwitch(mbState.learningOutcomesData[0].id); loadCurrentLOSheets(); });
+  const seen = await mockAI(page, draftReply([{ ref: '', heading: 'A', text: 'Text A.', origin: 'general', pages: [] }]));
+  await page.locator('#mb-src-btn').click();
+  const ov = page.locator('#src-overlay');
+  await expect(ov.locator('#src-country')).toHaveValue('Iraq');
+  await expect(ov.locator('#src-ctxline')).toContainText('Computer Maintenance Technician');
+  await ov.locator('#src-topic').fill('Replacing a power supply');
+  await ov.locator('[data-src="gen"]').click();
+  await expect(ov.locator('.src-part')).toHaveCount(2);
+  const p = seen[0];
+  expect(p).toContain('JOB (the focus — write for the holder of this job): Computer Maintenance Technician');
+  expect(p).toContain('OCCUPATION (context only): Maintenance Technician');
+  expect(p).toContain('COUNTRY / CONTEXT: Iraq');
+  expect(p).toContain('SCOPE OF WORK (boundary): Installs and maintains computers in offices.');
+  expect(p).toContain('TRAINING MODULE: Implementing Core Work');        // the title, not the short name «Core»
+  expect(p).toContain('NEVER invent standard numbers');
+  // a country typed here is kept on the module and wins over DACUM's
+  await ov.locator('[data-src="back"]').click();
+  await ov.locator('#src-country').fill('Jordan');
+  await ov.locator('#src-country').dispatchEvent('change');
+  await ov.locator('[data-src="gen"]').click();
+  await expect(ov.locator('.src-part')).toHaveCount(2);
+  expect(seen[1]).toContain('COUNTRY / CONTEXT: Jordan');
+  expect(await page.evaluate(() => mbState.modulesData.find(m => m.id === mbState.currentModuleId).srcCountry)).toBe('Jordan');
+  expect(errors).toEqual([]);
+});
+
+test('no source on the device: written from AI knowledge, flagged, no page lines and no reference', async ({ page }) => {
+  const errors = await ready(page);
+  const refsBefore = await page.evaluate(() => mbState.referencesData.map(r => r.value));
+  const seen = await mockAI(page, draftReply([
+    { ref: '', heading: 'Choosing the cable', text: 'Use a cable rated for the load.', origin: 'source', pages: [3] }
+  ], { toVerify: 'The cable colours used in your country.' }));
+  await page.locator('#mb-src-btn').click();
+  const ov = page.locator('#src-overlay');
+  await expect(ov.locator('input[name="src-pick"][value="__ai__"]')).toBeChecked();   // the only choice
+  await expect(ov.locator('#src-mixed')).toHaveCount(0);
+  await expect(ov.locator('.src-warn')).toContainText('No page citations');
+  await ov.locator('#src-topic').fill('Cables');
+  await ov.locator('[data-src="gen"]').click();
+  await expect(ov.locator('.src-gap').filter({ hasText: 'To check' })).toContainText('cable colours');
+  expect(seen[0]).toContain('NO SOURCE IS GIVEN');
+  expect(seen[0]).not.toContain('<source_pages>');
+  expect(seen[0]).toContain('"toVerify"');
+  await ov.locator('[data-src="keep"]').click();
+  const sh = await page.evaluate(() => {
+    const lo = mbState.learningOutcomesData.find(l => l.id === mbState.currentLOId);
+    return lo.infoSheets[mbState.currentInfoSheetIndex].contentSections.map(c => biGet(c.text, 'en'));
+  });
+  expect(sh).toEqual(['Use a cable rated for the load.']);      // no "(Source: …)", even though the AI gave a page
+  expect(await page.evaluate(() => mbState.referencesData.map(r => r.value))).toEqual(refsBefore);
+  expect(errors).toEqual([]);
+});
+
+test('mixed: pages first, the rest from general knowledge, each section marked for what it stands on', async ({ page }) => {
+  const errors = await ready(page);
+  await page.evaluate(() => mbSrcAddText('Handbook', 'Ohm text. '.repeat(1200)));
+  const seen = await mockAI(page, draftReply([
+    { ref: '', heading: 'From the book', text: 'Book text.', origin: 'source', pages: [1] },
+    { ref: '', heading: 'Filled in', text: 'General text.', origin: 'general', pages: [] }
+  ], { notCovered: 'Testing procedure.' }));
+  await page.locator('#mb-src-btn').click();
+  const ov = page.locator('#src-overlay');
+  await ov.locator('#src-mixed').check();
+  await ov.locator('#src-topic').fill('Ohm');
+  await ov.locator('[data-src="gen"]').click();
+  await expect(ov.locator('.src-part-cite').nth(1)).toContainText('General knowledge');
+  expect(seen[0]).toContain('"origin": "general"');
+  expect(seen[0]).toContain('<source_pages>');
+  await ov.locator('[data-src="keep"]').click();
+  const texts = await page.evaluate(() => {
+    const lo = mbState.learningOutcomesData.find(l => l.id === mbState.currentLOId);
+    return lo.infoSheets[mbState.currentInfoSheetIndex].contentSections.map(c => biGet(c.text, 'en'));
+  });
+  expect(texts[0]).toContain('(Source: Handbook, p. 1)');
+  expect(texts[1]).toContain('(General knowledge — not from the source; check it)');
+  expect(await page.evaluate(() => mbState.referencesData.map(r => r.value))).toContain('Handbook');
+  expect(errors).toEqual([]);
+});
+
+test('several sheets with no source: rows start on AI knowledge, no pages to choose, no matching request', async ({ page }) => {
+  const errors = await ready(page);
+  await page.evaluate(() => {
+    const lo = mbState.learningOutcomesData[0];
+    lo.infoSheets = ['A', 'B'].map((t, i) => ({ sheetNumber: '1-' + (i + 1), title: biNew('Topic ' + t), objective: '', contentSections: [], contentSectionImages: {} }));
+    saveCurrentModuleLOData(); mbState.currentInfoSheetIndex = 0; loadCurrentLOSheets();
+  });
+  const calls = await mockMany(page);
+  await page.locator('#mb-src-btn').click();
+  const ov = page.locator('#src-overlay');
+  await ov.locator('[data-src="mode-many"]').click();
+  await expect(ov.locator('.src-row [data-rf="src"]').first()).toHaveValue('__ai__');
+  await expect(ov.locator('.src-row [data-rf="from"]')).toHaveCount(0);
+  await expect(ov.locator('#src-map')).toBeDisabled();
+  await ov.locator('[data-src="gen-many"]').click();
+  await expect(page.locator('#src-msg')).toContainText('Done: 2 sheet(s) written.', { timeout: 20_000 });
+  expect(calls.map).toHaveLength(0);
+  expect(calls.sheet.every(p => p.includes('NO SOURCE IS GIVEN'))).toBe(true);
   expect(errors).toEqual([]);
 });
