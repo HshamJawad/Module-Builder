@@ -181,29 +181,24 @@ function renderAssessmentForms() {
             formHTML += `
                 <tr>
                     <td style="border: 1px solid #d1d5db; padding: 8px;">
-                        <input type="text" value="${escapeHtml(_mbAsmCriteria(row.criteria))}" placeholder="${escapeHtml(_mbAsmCriteriaHint(row.criteria))}" dir="auto" 
-                            data-act="updateAssessmentCell" data-on="change" data-args='["${lo.id}",${rowIndex},"criteria","$value"]'
-                            style="width: 100%; border: 1px solid #e5e7eb; padding: 6px; border-radius: 4px; font-size: 0.9em;">
+                        <textarea class="mb-asm-cell" rows="1" placeholder="${escapeHtml(_mbAsmCriteriaHint(row.criteria))}" dir="auto"
+                            data-act="updateAssessmentCell" data-on="change" data-args='["${lo.id}",${rowIndex},"criteria","$value"]'>${escapeHtml(_mbAsmCriteria(row.criteria))}</textarea>
                     </td>
                     <td style="border: 1px solid #d1d5db; padding: 8px;">
-                        <input type="text" value="${escapeHtml(row.activities || '')}"
-                            data-act="updateAssessmentCell" data-on="change" data-args='["${lo.id}",${rowIndex},"activities","$value"]'
-                            style="width: 100%; border: 1px solid #e5e7eb; padding: 6px; border-radius: 4px; font-size: 0.9em;">
+                        <textarea class="mb-asm-cell" rows="1" dir="auto"
+                            data-act="updateAssessmentCell" data-on="change" data-args='["${lo.id}",${rowIndex},"activities","$value"]'>${escapeHtml(row.activities || '')}</textarea>
                     </td>
                     <td style="border: 1px solid #d1d5db; padding: 8px;">
-                        <input type="text" value="${escapeHtml(row.outcomes || '')}"
-                            data-act="updateAssessmentCell" data-on="change" data-args='["${lo.id}",${rowIndex},"outcomes","$value"]'
-                            style="width: 100%; border: 1px solid #e5e7eb; padding: 6px; border-radius: 4px; font-size: 0.9em;">
+                        <textarea class="mb-asm-cell" rows="1" dir="auto"
+                            data-act="updateAssessmentCell" data-on="change" data-args='["${lo.id}",${rowIndex},"outcomes","$value"]'>${escapeHtml(row.outcomes || '')}</textarea>
                     </td>
                     <td style="border: 1px solid #d1d5db; padding: 8px;">
-                        <input type="text" value="${escapeHtml(row.verification || '')}"
-                            data-act="updateAssessmentCell" data-on="change" data-args='["${lo.id}",${rowIndex},"verification","$value"]'
-                            style="width: 100%; border: 1px solid #e5e7eb; padding: 6px; border-radius: 4px; font-size: 0.9em;">
+                        <textarea class="mb-asm-cell" rows="1" dir="auto"
+                            data-act="updateAssessmentCell" data-on="change" data-args='["${lo.id}",${rowIndex},"verification","$value"]'>${escapeHtml(row.verification || '')}</textarea>
                     </td>
                     <td style="border: 1px solid #d1d5db; padding: 8px;">
-                        <input type="text" value="${escapeHtml(row.date || '')}"
-                            data-act="updateAssessmentCell" data-on="change" data-args='["${lo.id}",${rowIndex},"date","$value"]'
-                            style="width: 100%; border: 1px solid #e5e7eb; padding: 6px; border-radius: 4px; font-size: 0.9em;">
+                        <textarea class="mb-asm-cell" rows="1" dir="auto"
+                            data-act="updateAssessmentCell" data-on="change" data-args='["${lo.id}",${rowIndex},"date","$value"]'>${escapeHtml(row.date || '')}</textarea>
                     </td>
                     <td style="border: 1px solid #d1d5db; padding: 8px; text-align: center;">
                         <button class="mb-icon-btn danger" data-act="deleteAssessmentRow" data-args='["${lo.id}",${rowIndex}]'
@@ -233,20 +228,7 @@ function renderAssessmentForms() {
             
             <div style="margin-bottom: 20px;">
                 <h5 style="font-weight: 600; color: #374151; margin-bottom: 10px;"><span data-i18n="expResultPlain">${window.i18n.t('expResultPlain')}</span></h5>
-                <div style="display: flex; gap: 20px;">
-                    <label style="display: flex; align-items: center; gap: 8px;">
-                        <input type="checkbox" ${formData.competent ? 'checked' : ''} 
-                            data-act="updateAssessmentResult" data-on="change" data-args='["${lo.id}","competent","$checked"]'
-                            style="width: 18px; height: 18px;">
-                        <span><span data-i18n="expCompetent">${window.i18n.t('expCompetent')}</span></span>
-                    </label>
-                    <label style="display: flex; align-items: center; gap: 8px;">
-                        <input type="checkbox" ${formData.notYetCompetent ? 'checked' : ''} 
-                            data-act="updateAssessmentResult" data-on="change" data-args='["${lo.id}","notYetCompetent","$checked"]'
-                            style="width: 18px; height: 18px;">
-                        <span><span data-i18n="expNotYetCompetent">${window.i18n.t('expNotYetCompetent')}</span></span>
-                    </label>
-                </div>
+                ${typeof mbAsmResultHtml === 'function' ? mbAsmResultHtml() : ''}
             </div>
             
             <div style="margin-bottom: 15px;">
