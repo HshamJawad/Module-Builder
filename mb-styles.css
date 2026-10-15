@@ -3675,3 +3675,12 @@ html[dir="rtl"] .mb-sp[open] > summary::before { transform: rotate(-90deg); }
 input.mb-seq-auto { background: #f1f5f9 !important; color: #475569; cursor: default; }
 .mb-block-place { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 6px 0 8px; font-size: .88em; color: #475569; }
 .mb-block-place select { padding: 5px 8px; border: 1.5px solid #d1d5db; border-radius: 6px; background: #fff; font: inherit; }
+
+/* 3.45.0 — 📚 Draft from sources (src/source_ai.js) */
+.mb-src-btn {
+    padding: 6px 14px; font-size: 0.85em; font-weight: 600;
+    background: #eef2ff; color: #3730a3; border: 1px solid #c7d2fe;
+    border-radius: 6px; cursor: pointer;
+}
+.mb-src-btn:hover { background: #e0e7ff; }
+.mb-src-btn[hidden] { display: none; }

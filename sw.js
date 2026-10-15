@@ -25,7 +25,7 @@
 // Playwright suite checks that every tag is listed here).
 // ============================================================
 
-const CACHE_VERSION = 'mb-3.44.0';
+const CACHE_VERSION = 'mb-3.45.0';
 const CACHE_NAME    = 'module-builder-' + CACHE_VERSION;
 const BASE          = self.registration ? self.registration.scope : '/';
 const OFFLINE_URL   = BASE + 'index.html';
@@ -107,6 +107,7 @@ const PRECACHE_URLS = [
   BASE + 'src/pdf_arabic.js',
   BASE + 'src/exports_pdf.js',
   BASE + 'src/link_modal.js',
+  BASE + 'src/source_ai.js',
   BASE + 'src/export_menu.js',
   BASE + 'src/shortcuts.js',
   BASE + 'src/exports_pptx.js',
