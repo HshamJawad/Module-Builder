@@ -63,11 +63,12 @@ jobs:
           # 3.42 for the glossary, sheet types and the checklist time row,
           # 3.43 for the order and numbering inside a learning outcome,
           # 3.44 for the sheet names in the interface,
-          # 3.45 for 📚 Draft from sources.
+          # 3.45 for 📚 Draft from sources,
+          # 3.46 for drafting several sheets from sources.
           # version.json now reads 3.7.0, and any value left behind here
           # would roll the number backwards to <old>.<run> on the next
           # push — the same failure, one minor later.
-          MAJOR_MINOR: "3.45"
+          MAJOR_MINOR: "3.46"
         run: |
           VERSION="${MAJOR_MINOR}.${GITHUB_RUN_NUMBER}"
           BUILD="$(date -u +%Y-%m-%d)"

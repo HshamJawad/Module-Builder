@@ -180,3 +180,174 @@ test('Arabic, 360 px: the dialog fits, Arabic labels, citation in Arabic', async
   expect(await page.evaluate(() => mbSrcTokens('الجهد'))).toBe(3);
   expect(errors).toEqual([]);
 });
+
+/* ── 3.46.0: several sheets ─────────────────────────────────── */
+
+/** A mocked AI for several sheets: the matching request gets `map`;
+    each sheet request gets a draft that writes H1 and adds one section,
+    or the status in `fail` (by call number, 1-based among sheet calls). */
+async function mockMany(page, { map = null, fail = {} } = {}) {
+  const calls = { map: [], sheet: [] };
+  await page.route('**/api/generate-dacum', async (route) => {
+    const prompt = JSON.parse(route.request().postData()).prompt;
+    if (prompt.includes('You match the INFORMATION SHEETS')) {
+      calls.map.push(prompt);
+      return route.fulfill({ status: 200, contentType: 'application/json',
+        body: JSON.stringify({ content: [{ type: 'text', text: JSON.stringify(map) }] }) });
+    }
+    calls.sheet.push(prompt);
+    const n = calls.sheet.length;
+    if (fail[n]) return route.fulfill({ status: fail[n], body: '{}' });
+    const topic = (prompt.match(/TOPIC OF THE SHEET: (.*)/) || [])[1];
+    const hasH1 = /\nH1: /.test(prompt);
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ content: [{ type: 'text', text: JSON.stringify({
+      objective: 'Objective for ' + topic,
+      sections: [
+        ...(hasH1 ? [{ ref: 'H1', heading: 'ignored', text: 'Body written for H1 of ' + topic, pages: [1] }] : []),
+        { ref: '', heading: 'Extra ' + n, text: 'A new section from the pages.', pages: [2] }
+      ], selfCheck: '', answerKey: '', notCovered: '' }) }] }) });
+  });
+  return calls;
+}
+
+const sheetsOf = (page, loIdx = 0) => page.evaluate((i) => mbState.learningOutcomesData[i].infoSheets.map(s => ({
+  title: biGet(s.title, 'en'), objective: biGet(s.objective, 'en'),
+  sections: s.contentSections.map(c => [biGetStrict(c.heading, 'en'), biGetStrict(c.text, 'en')])
+})), loIdx);
+
+test('several sheets, built from DACUM: pages suggested, empty headings written, nothing replaced', async ({ page }) => {
+  const errors = await ready(page);
+  await page.evaluate(() => { mbSpViewFilter('info', 'all'); mbSpApproveMany('info', 'shown'); mbSpBuild('info', 'all'); });
+  await page.evaluate(() => { _applyLOSwitch(mbState.learningOutcomesData[0].id); loadCurrentLOSheets(); });
+  const before = await sheetsOf(page);
+  expect(before.length).toBeGreaterThan(0);
+  expect(before[0].title).not.toBe('');
+  // a DACUM-built sheet: headings waiting for their text
+  expect(before[0].sections.length).toBeGreaterThan(0);
+  const firstHead = before[0].sections[0][0];
+  const n = before.length;
+  // one heading that already has text must stay as it is
+  await page.evaluate(() => {
+    const s = mbState.learningOutcomesData[0].infoSheets[0];
+    s.contentSections.push({ contentId: '', marks: [], tables: [], uid: mbUid(), heading: biNew('Kept'), text: biNew('Written by the trainer.') });
+    saveCurrentModuleLOData(); loadCurrentLOSheets();
+  });
+  await page.evaluate(() => mbSrcAddText('Electrical Basics', Array.from({ length: 5 }, (_, i) => 'Chapter ' + (i + 1) + '\n\n' + 'Text about voltage. '.repeat(160)).join('\n\n')));
+  const calls = await mockMany(page, { map: { map: Array.from({ length: n }, (_, i) => ({ sheet: 'S' + (i + 1), source: 'B1', from: 2, to: 3 })) } });
+
+  await page.locator('#mb-src-btn').click();
+  const ov = page.locator('#src-overlay');
+  await ov.locator('[data-src="mode-many"]').click();
+  await expect(ov.locator('.src-row')).toHaveCount(n);
+  await expect(ov.locator('.src-row [data-rf="topic"]').first()).toHaveValue(before[0].title);
+  await expect(ov.locator('#src-gen')).toBeDisabled();            // no pages yet
+  await ov.locator('[data-src="map"]').click();
+  await expect(page.locator('#src-msg')).toContainText(`${n} of ${n}`);
+  expect(calls.map[0]).toMatch(/S1 \[LO ?\d/);
+  expect(calls.map[0]).toContain(before[0].title);
+  expect(calls.map[0]).toContain('p.1:');                        // the page digest, not the pages
+  expect(calls.map[0].length).toBeLessThan(4000);                // a line per page, never the pages themselves
+  await expect(ov.locator('.src-row [data-rf="from"]').first()).toHaveValue('2');
+  await expect(ov.locator('#src-total')).toContainText(`${n} sheets`);
+
+  await ov.locator('[data-src="gen-many"]').click();
+  await expect(page.locator('#src-msg')).toContainText(`Done: ${n} sheet(s) written.`, { timeout: 20_000 });
+  await expect(ov.locator('.src-row.is-done')).toHaveCount(n);
+  expect(calls.sheet).toHaveLength(n);
+  expect(calls.sheet[0]).toContain('HEADINGS ALREADY ON THE SHEET, WAITING FOR THEIR TEXT');
+  expect(calls.sheet[0]).toContain('H1: ' + firstHead);
+  expect(calls.sheet[0]).toContain('SECTIONS ALREADY WRITTEN (do not repeat them):');
+  expect(calls.sheet[0]).toMatch(/\n- Kept\n/);
+  expect(calls.sheet[0]).toContain('[[Page 2]]');
+  expect(calls.sheet[0]).not.toContain('[[Page 4]]');
+
+  const after = await sheetsOf(page);
+  expect(after[0].sections[0][0]).toBe(firstHead);                 // the DACUM heading kept
+  expect(after[0].sections[0][1]).toContain('Body written for H1 of ' + before[0].title);
+  expect(after[0].sections[0][1]).toContain('(Source: Electrical Basics, p. 1)');
+  expect(after[0].sections.find(s => s[0] === 'Kept')[1]).toBe('Written by the trainer.');
+  expect(after[0].sections[after[0].sections.length - 1][0]).toBe('Extra 1');
+  expect(after[0].objective).toBe('Objective for ' + before[0].title);
+  expect(errors).toEqual([]);
+});
+
+test('several sheets, made by hand: a sheet without a title asks for its topic; pages chosen by hand', async ({ page }) => {
+  const errors = await ready(page);
+  await page.evaluate(() => {
+    const lo = mbState.learningOutcomesData[0];
+    lo.infoSheets = [
+      { sheetNumber: '1-1', title: biNew('Ohm’s law'), objective: '', contentSections: [], contentSectionImages: {} },
+      { sheetNumber: '1-2', title: biNew(''), objective: '', contentSections: [], contentSectionImages: {} }
+    ];
+    saveCurrentModuleLOData(); mbState.currentInfoSheetIndex = 0; loadCurrentLOSheets();
+  });
+  await page.evaluate(() => mbSrcAddText('Handbook', 'Ohm text. '.repeat(1200)));
+  const calls = await mockMany(page);
+  await page.locator('#mb-src-btn').click();
+  const ov = page.locator('#src-overlay');
+  await ov.locator('[data-src="mode-many"]').click();
+  await expect(ov.locator('.src-row')).toHaveCount(2);
+  const row = (i) => ov.locator('.src-row').nth(i);
+  await expect(row(1).locator('[data-rf="topic"]')).toHaveValue('');
+  for (const i of [0, 1]) {
+    await row(i).locator('[data-rf="src"]').selectOption({ index: 1 });
+  }
+  await expect(row(0).locator('[data-rf="from"]')).toHaveValue('1');
+  await expect(ov.locator('#src-total')).toContainText('1 sheets');   // the untitled one waits for a topic
+  await row(1).locator('[data-rf="topic"]').fill('Series circuits');
+  await row(1).locator('[data-rf="from"]').fill('2');
+  await row(1).locator('[data-rf="to"]').fill('2');
+  await expect(ov.locator('#src-total')).toContainText('2 sheets');
+  await ov.locator('[data-src="gen-many"]').click();
+  await expect(page.locator('#src-msg')).toContainText('Done: 2 sheet(s) written.', { timeout: 20_000 });
+  expect(calls.map).toHaveLength(0);
+  expect(calls.sheet[0]).toContain('Write 3 to 7 sections');           // no headings on a hand-made sheet
+  const after = await sheetsOf(page);
+  expect(after[1].title).toBe('Series circuits');                       // the topic became its title
+  expect(after[0].sections.map(s => s[0])).toEqual(['Extra 1']);         // no H1 there: only the new section
+  expect(errors).toEqual([]);
+});
+
+test('several sheets: a busy service stops the run; reopening goes on from the sheet left', async ({ page }) => {
+  const errors = await ready(page);
+  await page.evaluate(() => {
+    const lo = mbState.learningOutcomesData[0];
+    lo.infoSheets = ['A', 'B', 'C'].map((t, i) => ({ sheetNumber: '1-' + (i + 1), title: biNew('Topic ' + t), objective: '', contentSections: [], contentSectionImages: {} }));
+    saveCurrentModuleLOData(); mbState.currentInfoSheetIndex = 0; loadCurrentLOSheets();
+  });
+  await page.evaluate(() => mbSrcAddText('Handbook', 'Text. '.repeat(1500)));
+  let calls = await mockMany(page, { fail: { 2: 429 } });
+  await page.locator('#mb-src-btn').click();
+  const ov = page.locator('#src-overlay');
+  await ov.locator('[data-src="mode-many"]').click();
+  for (let i = 0; i < 3; i++) await ov.locator('.src-row').nth(i).locator('[data-rf="src"]').selectOption({ index: 1 });
+  await ov.locator('[data-src="gen-many"]').click();
+  await expect(page.locator('#src-msg')).toContainText('busy', { timeout: 20_000 });
+  await expect(ov.locator('.src-row.is-done')).toHaveCount(1);
+  await expect(ov.locator('.src-row.is-err')).toHaveCount(1);
+  expect(calls.sheet).toHaveLength(2);                                  // C was not tried
+  await ov.locator('#src-x').click();
+
+  await page.unroute('**/api/generate-dacum');
+  calls = await mockMany(page);
+  await page.locator('#mb-src-btn').click();
+  await expect(ov.locator('.src-mode.is-on')).toContainText('Several sheets');
+  await expect(page.locator('#src-msg')).toContainText('2 sheet(s) left');
+  await expect(ov.locator('.src-row').nth(0).locator('[data-rf="on"]')).not.toBeChecked();
+  await ov.locator('[data-src="gen-many"]').click();
+  await expect(page.locator('#src-msg')).toContainText('Done: 2 sheet(s) written.', { timeout: 20_000 });
+  expect(calls.sheet.map(p => (p.match(/TOPIC OF THE SHEET: (.*)/) || [])[1])).toEqual(['Topic B', 'Topic C']);
+  const after = await sheetsOf(page);
+  expect(after.map(s => s.sections.length)).toEqual([1, 1, 1]);          // A written once, not again
+  expect(errors).toEqual([]);
+});
+
+test('PDF bookmarks are kept as the contents used for matching', async ({ page }) => {
+  const errors = await ready(page);
+  const digest = await page.evaluate(() => mbSrcDigest({ pages: ['a', 'b', 'c', 'd'], toc: [
+    { title: 'Safety', page: 1, level: 1 }, { title: 'Meters', page: 2, level: 1 }, { title: 'Voltage', page: 3, level: 2 }] }));
+  expect(digest).toBe('p.1 Safety\np.2 Meters\n  p.3 Voltage');
+  const noToc = await page.evaluate(() => mbSrcDigest({ pages: ['Chapter 1\nSafety first\nAlways switch off the supply.', ''] }));
+  expect(noToc).toBe('p.1: Chapter 1 | Safety first');
+  expect(errors).toEqual([]);
+});
