@@ -4,6 +4,67 @@
 // Extracted verbatim from Module_Builder.html lines 5435-7018 (v2.0-legacy).
 // ============================================================
 
+/* ── Sheet pictures, ready for Word (3.54.3) ─────────────────
+   Walks the learning outcomes for every picture on an information or
+   activity sheet and resolves, per data URL, { data, w, h }: the bytes
+   Word will embed and the picture's real size in pixels. A picture the
+   browser cannot decode maps to nothing, so the caller can say so. */
+const MB_DOCX_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/bmp'];
+
+function _mbDocxCollectImages(los) {
+    const out = new Set();
+    const add = (v) => [].concat(v || []).forEach(src => {
+        if (typeof src === 'string' && src.indexOf('data:image/') === 0) out.add(src);
+    });
+    (los || []).forEach(lo => {
+        (lo.infoSheets || []).forEach(sh => Object.values((sh && sh.contentSectionImages) || {}).forEach(add));
+        (lo.activitySheets || []).forEach(sh => Object.values((sh && sh.images) || {}).forEach(add));
+    });
+    return [...out];
+}
+
+function _mbDocxB64Bytes(dataUrl) {
+    const b64 = dataUrl.slice(dataUrl.indexOf(',') + 1);
+    return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+}
+
+function _mbDocxPrepareOne(src) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            try {
+                let w = img.naturalWidth, h = img.naturalHeight;
+                const mime = src.slice(5, src.search(/[;,]/)).toLowerCase();
+                if (MB_DOCX_IMAGE_TYPES.indexOf(mime) !== -1 && /;base64,/.test(src.slice(0, 64))) {
+                    resolve({ data: _mbDocxB64Bytes(src), w, h });
+                    return;
+                }
+                /* WebP, SVG, AVIF …: drawn once and kept as PNG. An SVG
+                   with no size of its own gets a sensible one. */
+                if (!w || !h) { w = 600; h = 400; }
+                const canvas = document.createElement('canvas');
+                canvas.width = w; canvas.height = h;
+                canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                resolve({ data: _mbDocxB64Bytes(canvas.toDataURL('image/png')), w, h });
+            } catch (e) {
+                console.warn('[DOCX] picture could not be prepared:', e);
+                resolve(null);
+            }
+        };
+        img.onerror = () => resolve(null);
+        img.src = src;
+    });
+}
+
+async function _mbDocxPrepareImages(los) {
+    const map = new Map();
+    for (const src of _mbDocxCollectImages(los)) {
+        const prep = await _mbDocxPrepareOne(src);
+        if (prep) map.set(src, prep);
+    }
+    return map;
+}
+
 async function exportToDocx() {
     /* 3.14.0 — a programme compile (package_ui.js) sets mbExportSink to
        receive each module's document instead of a download, and to be
@@ -1245,15 +1306,29 @@ async function exportToDocx() {
         if (mbState.currentLOId) saveCurrentSheetToLO();
         if (mbState.currentModuleId) saveCurrentModuleLOData();
 
+        /* 3.54.3: every sheet picture is decoded once, up front, so its
+           real size is known (an Image read synchronously often still
+           says 0 × 0, and the picture came out a stretched square) and a
+           format Word cannot show — WebP, SVG, AVIF — is turned into PNG
+           instead of becoming an empty frame. */
+        const _imgPrep = await _mbDocxPrepareImages(mbState.learningOutcomesData);
+        let _imgFailed = 0;
+
         // Helper: build ImageRun
         const _mkImgRun = (src) => {
             const { ImageRun } = mbDocxLib();
-            const b64 = src.split(',')[1];
-            const el = new Image(); el.src = src;
-            const ar = el.height / el.width || 1;
-            let w = Math.min(280, el.width || 280), h = Math.round(w * ar);
+            const prep = _imgPrep.get(src);
+            if (!prep) {
+                /* Not a picture this export could read. Counted, and the
+                   author told once the file is made, rather than left to
+                   find an empty cell in Word. */
+                _imgFailed++;
+                throw new Error('image could not be exported');
+            }
+            const ar = prep.h / prep.w || 1;
+            let w = Math.min(280, prep.w || 280), h = Math.round(w * ar);
             if (h > 400) { h = 400; w = Math.round(h / ar); }
-            return new ImageRun({ data: Uint8Array.from(atob(b64), c => c.charCodeAt(0)), transformation: { width: w, height: h } });
+            return new ImageRun({ data: prep.data, transformation: { width: w, height: h } });
         };
 
         // Helper: build a user-created table from saved data
@@ -1557,7 +1632,10 @@ async function exportToDocx() {
                     }));
                 };
                 info.contentSections.forEach((cs) => {
-                    if (!cs.text || !cs.text.trim()) {
+                    let imgs = (info.contentSectionImages && info.contentSectionImages[cs.contentId]) || [];
+                    if (!Array.isArray(imgs)) imgs = [imgs];
+                    /* 3.54.3: pictures with no text yet are printed too. */
+                    if ((!cs.text || !cs.text.trim()) && !imgs.length) {
                         /* 3.35.0: a section with a heading and no text yet
                            is a topic of the sheet (a knowledge item sent by
                            DACUM): its heading is printed. Only a section with
@@ -1567,10 +1645,7 @@ async function exportToDocx() {
                         return;
                     }
                     _pushCsHeading(cs);
-                    const pt = processTextForWordExport(cs.text);
-                    const csid = cs.contentId;
-                    let imgs = (info.contentSectionImages && info.contentSectionImages[csid]) || [];
-                    if (!Array.isArray(imgs)) imgs = [imgs];
+                    const pt = processTextForWordExport(cs.text || '');
                     const row1 = [new TableCell({ children: String(pt).split('\n').filter((l, i, a) => l.trim() || a.length === 1).map(l => new Paragraph({ children: [new TextRun({ text: l, size: _wsBody(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 80 } })), width: { size: 4536, type: WidthType.DXA }, margins: { top: 150, bottom: 150, left: 150, right: 150 }, verticalAlign: 'center' })];
                     if (imgs.length > 0) { try { row1.push(new TableCell({ children: [new Paragraph({ children: [_mkImgRun(imgs[0])], alignment: AlignmentType.CENTER })], width: { size: 4536, type: WidthType.DXA }, margins: { top: 150, bottom: 150, left: 150, right: 150 }, verticalAlign: 'center' })); } catch(e) { row1.push(new TableCell({ children: [new Paragraph({ text: '' })], width: { size: 4536, type: WidthType.DXA } })); } }
                     else { row1.push(new TableCell({ children: [new Paragraph({ text: '' })], width: { size: 4536, type: WidthType.DXA } })); }
@@ -1655,12 +1730,14 @@ async function exportToDocx() {
                 ch.push(new Table({ rows: resRows, width: { size: 9072, type: WidthType.DXA }, layout: 'fixed', borders: bdr, columnWidths: [3356,1178,3356,1178] }));
                 ch.push(new Paragraph({ children: [new TextRun({ text: '' })], spacing: { after: 200 } }));
             }
-            const validSteps = (activity.steps || []).filter(s => s.text && s.text.trim());
+            /* 3.54.3: a step holding only pictures is printed too. */
+            const validSteps = (activity.steps || []).filter(s => (s.text && s.text.trim()) ||
+                [].concat((activity.images && activity.images[s.stepId]) || []).length);
             if (validSteps.length > 0) {
                 ch.push(new Paragraph({ children: [new TextRun({ text: _mbT('expActivitySteps'), bold: true, size: _wsBody(), color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 200 } }));
                 validSteps.forEach((step, si) => {
                     ch.push(new Paragraph({ children: [new TextRun({ text: _mbTf('expStepN', { v0: si + 1 }), bold: true, size: _wsBody(), color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 100 } }));
-                    const pt = processTextForWordExport(step.text);
+                    const pt = processTextForWordExport(step.text || '');
                     let sImgs = (activity.images && activity.images[step.stepId]) || [];
                     if (!Array.isArray(sImgs)) sImgs = [sImgs];
                     const sr1 = [new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: pt, size: _wsBody(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl() })], width: { size: 4536, type: WidthType.DXA }, margins: { top: 150, bottom: 150, left: 150, right: 150 }, verticalAlign: 'center' })];
@@ -2252,6 +2329,7 @@ async function exportToDocx() {
             await _sink.take(blob, getExportFilename('docx'));
             setExportButtonState(false);
             hideExportInfo();
+            if (_imgFailed) showStatus(window.i18n.tf('dgImagesNotExported', { v0: _imgFailed }), 'error');
             return;
         }
         const url = URL.createObjectURL(blob);
@@ -2285,6 +2363,9 @@ async function exportToDocx() {
             ? biLangLabel(_mbLang()) : '';
         showStatus(window.i18n.tf('dgDocumentExportedSuccessfullyFileMb', { v0: filename, v1: fileSizeMB }) +
                    (docLangLabel ? '  ·  ' + docLangLabel : ''), 'success');
+        /* After the success line, not instead of it: the file is made
+           and usable, but the author has to know a picture is missing. */
+        if (_imgFailed) showStatus(window.i18n.tf('dgImagesNotExported', { v0: _imgFailed }), 'error');
 
     } catch (error) {
         console.error('Error:', error);

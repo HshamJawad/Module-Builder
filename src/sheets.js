@@ -154,7 +154,10 @@ function saveCurrentSheetToLO() {
         /* A renamed but still-empty card is kept. Dropping it would throw
            away the name the moment the author typed it and moved on to
            fill the box in later. */
-        if (content.value.trim() || tables.length || marks.length || heading.trim() ||
+        /* 3.54.3: a section holding only pictures is kept too — it was
+           dropped here, and its pictures with it. */
+        const hasImages = (mbState.contentSectionImages[cid] || []).length > 0;
+        if (content.value.trim() || tables.length || marks.length || heading.trim() || hasImages ||
             mbRowHasOtherSide(storedInfo.contentSections, mbRowUid(content), 'text') ||
             mbRowHasOtherSide(storedInfo.contentSections, mbRowUid(content), 'heading')) {
             incomingSections.push({ text: content.value, heading, contentId: cid, marks, tables,
@@ -240,8 +243,10 @@ function saveCurrentSheetToLO() {
     // Collect steps
     const incomingSteps = [];
     document.querySelectorAll('[data-step-id]').forEach((step) => {
-        if (step.value.trim() || mbRowHasOtherSide(storedAct.steps, mbRowUid(step), 'text')) {
-            const sid = step.dataset.stepId;
+        const sid = step.dataset.stepId;
+        /* 3.54.3: a step holding only pictures is kept too. */
+        const hasImages = (mbState.stepImages[sid] || []).length > 0;
+        if (step.value.trim() || hasImages || mbRowHasOtherSide(storedAct.steps, mbRowUid(step), 'text')) {
             incomingSteps.push({ text: step.value, stepId: sid, marks: collectMarks(`step-marks-${sid}`),
                 tables: collectContentTables(`step-${sid}`),
                                  uid: mbRowUid(step) });
@@ -362,12 +367,28 @@ function loadInfoSheetAtIndex(lo, index) {
             delete mbState.contentSectionImages[key];
         }
         
+        /* 3.54.3: the same re-keying the steps got in 3.52.0. Section
+           images are keyed by the card's DOM id (`contentId`), and the
+           cards are renumbered 1…N on every load. Restoring the stored
+           map as-is gave each section's pictures to whichever card got
+           the old number — so after an empty section above it was
+           dropped, or one was deleted, a pasted picture vanished from
+           the sheet and left an empty cell in the Word file. A sheet
+           whose sections carry no contentId keeps the old behaviour. */
+        const savedCsImages = info.contentSectionImages || {};
+        const _csKeyed = (cs) => cs && cs.contentId !== undefined && cs.contentId !== null && cs.contentId !== '';
+        const keyedSections = (info.contentSections || []).some(_csKeyed);
+        const restoredCsImages = keyedSections ? {} : Object.assign({}, savedCsImages);
+
         if (info.contentSections && info.contentSections.length > 0) {
             info.contentSections.forEach((contentData) => {
                 /* biGetStrict, not biGet: a name written only in English
                    must not fall back into the Arabic editing side, where
                    the author would see it as already translated. */
                 addContentSection(biGetStrict(contentData.heading, contentLang()));
+                if (keyedSections && _csKeyed(contentData) && savedCsImages[contentData.contentId]) {
+                    restoredCsImages[mbState.contentSectionCount] = savedCsImages[contentData.contentId];
+                }
                 const lastContent = document.querySelector(`[data-content-id="${mbState.contentSectionCount}"]`);
                 if (lastContent) {
                     lastContent.value = biGetStrict(contentData.text, contentLang());
@@ -391,9 +412,19 @@ function loadInfoSheetAtIndex(lo, index) {
             addContentSection();
         }
         
-        if (info.contentSectionImages) {
-            Object.assign(mbState.contentSectionImages, info.contentSectionImages);
-            for (let contentId in info.contentSectionImages) {
+        /* Pictures stored under a number no section carries (a sheet
+           saved while the bug above was live) are kept on that number,
+           exactly as before, so nothing already saved is thrown away. */
+        if (keyedSections) {
+            const ownIds = new Set((info.contentSections || []).filter(_csKeyed).map(cs => String(cs.contentId)));
+            Object.keys(savedCsImages).forEach(key => {
+                if (!ownIds.has(key) && !(key in restoredCsImages)) restoredCsImages[key] = savedCsImages[key];
+            });
+        }
+
+        if (Object.keys(restoredCsImages).length) {
+            Object.assign(mbState.contentSectionImages, restoredCsImages);
+            for (let contentId in restoredCsImages) {
                 renderContentImageGallery(contentId);
             }
         }
