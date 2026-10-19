@@ -30,3 +30,24 @@ test('Help: the tool name and its description are at the top of the tab', async 
   await expect(head.locator('p')).toContainText('competency-based training module');
   expect(errors).toEqual([]);
 });
+
+// 3.53.1: opening a tab from far down the page leaves its title in view,
+// just below the fixed toolbar — it used to scroll away under it.
+for (const width of [1280, 360]) {
+  test(`switching tab keeps the title visible below the toolbar (${width}px)`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 800 });
+    const errors = await openApp(page, { lang: 'ar' });
+    for (const name of ['references', 'basic-info']) {
+      await page.evaluate(() => window.scrollTo(0, 1500));
+      await tab(page, name);
+      await page.waitForTimeout(900);
+      const r = await page.evaluate(() => ({
+        title: document.getElementById('mb-tab-title').getBoundingClientRect().top,
+        toolbar: document.querySelector('.figma-toolbar').getBoundingClientRect().bottom,
+      }));
+      expect(r.title).toBeGreaterThanOrEqual(r.toolbar);
+      expect(r.title).toBeLessThan(r.toolbar + 80);
+    }
+    expect(errors).toEqual([]);
+  });
+}

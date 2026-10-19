@@ -19,10 +19,7 @@ async function switchTab(tabName) {
     const selectedTabContent = document.getElementById(tabName + '-tab');
     if (selectedTabContent) {
         selectedTabContent.classList.add('active');
-        selectedTabContent.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start'
-        });
+        mbScrollToTabTop(selectedTabContent);
     }
     
     /* Activate the corresponding tab button.
@@ -155,3 +152,32 @@ function mbSyncTabTitle() {
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
     else start();
 })();
+
+
+/* 3.53.1: a tab opens at its TITLE, not at its first field.
+   This used to be selectedTabContent.scrollIntoView({ block: 'start' }),
+   which put the panel's first line at the very top of the window — under
+   the fixed toolbar, and with the tab's title (mbSyncTabTitle, above
+   the panel) scrolled out of sight a moment after it appeared. The page
+   now scrolls so the title sits just below the toolbar. When the title
+   bar is not above the panel (a narrow layout that stacks the side
+   navigation in between), the panel itself is the target, with the
+   same toolbar offset. */
+function mbScrollToTabTop(panel) {
+    var bar = document.querySelector('.mb-tab-title-bar');
+    var target = panel;
+    if (bar && bar.offsetParent !== null && panel &&
+        bar.getBoundingClientRect().bottom <= panel.getBoundingClientRect().top + 1) {
+        var between = panel.getBoundingClientRect().top - bar.getBoundingClientRect().bottom;
+        if (between < 200) target = bar;
+    }
+    if (!target) return;
+    var tb = document.querySelector('.figma-toolbar');
+    var offset = 0;
+    if (tb) {
+        var pos = getComputedStyle(tb).position;
+        if (pos === 'fixed' || pos === 'sticky') offset = Math.max(0, tb.getBoundingClientRect().bottom);
+    }
+    var y = target.getBoundingClientRect().top + window.pageYOffset - offset - 12;
+    window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+}
