@@ -40,7 +40,7 @@ var _LM_STRINGS = {
         pasteTip: 'Paste a QR code image copied from another program or a web page',
         noQr: 'No QR code yet',
         pasted: 'QR code pasted',
-        clipEmpty: 'No image on the clipboard. Copy the QR code image first, then press Paste.',
+        clipEmpty: 'The button cannot read a file copied from a folder — the browser only hands it over on Ctrl+V. Press Ctrl+V now, or drag the image onto the box.',
         clipDenied: 'The browser did not allow reading the clipboard. Allow clipboard access for this site, or use Upload.',
         clipUrl: 'The clipboard holds an image link, not an image. Use “Copy image” on the QR code instead.',
         edit: 'Edit',
@@ -69,7 +69,7 @@ var _LM_STRINGS = {
         pasteTip: 'Coller une image de code QR copiée depuis un autre programme ou une page web',
         noQr: 'Aucun code QR pour l’instant',
         pasted: 'Code QR collé',
-        clipEmpty: 'Aucune image dans le presse-papiers. Copiez d’abord l’image du code QR, puis appuyez sur Coller.',
+        clipEmpty: 'Le bouton ne peut pas lire un fichier copié depuis un dossier — le navigateur ne le donne qu’avec Ctrl+V. Appuyez sur Ctrl+V maintenant, ou glissez l’image sur le cadre.',
         clipDenied: 'Le navigateur n’a pas autorisé la lecture du presse-papiers. Autorisez-la pour ce site, ou utilisez Téléverser.',
         clipUrl: 'Le presse-papiers contient un lien d’image, pas une image. Utilisez « Copier l’image » sur le code QR.',
         edit: 'Modifier',
@@ -98,7 +98,7 @@ var _LM_STRINGS = {
         pasteTip: 'لصق صورة رمز استجابة منسوخة من برنامج آخر أو صفحة ويب',
         noQr: 'لا يوجد رمز استجابة بعد',
         pasted: 'تم لصق رمز الاستجابة',
-        clipEmpty: 'لا توجد صورة في الحافظة. انسخ صورة رمز الاستجابة أولاً ثم اضغط «لصق».',
+        clipEmpty: 'لا يستطيع الزر قراءة ملف منسوخ من مجلد، فالمتصفح لا يسلّمه إلا عند الضغط على Ctrl+V. اضغط Ctrl+V الآن، أو اسحب الصورة إلى المربع.',
         clipDenied: 'لم يسمح المتصفح بقراءة الحافظة. اسمح بالوصول إلى الحافظة لهذا الموقع، أو استخدم «رفع».',
         clipUrl: 'الحافظة تحتوي رابط صورة وليس صورة. استخدم «نسخ الصورة» على رمز الاستجابة.',
         edit: 'تعديل',
@@ -202,7 +202,10 @@ function _lmEnsureStyle() {
         'background:#fff;border:1px solid #e2e8f0;border-radius:10px;',
         'padding:8px;box-sizing:border-box;}',
         '#lm-overlay .lm-qr-box.is-empty{border:2px dashed #cbd5e1;}',
-        '#lm-overlay .lm-qr-box.is-over{border-color:#6366f1;background:#eef2ff;}',
+        '#lm-overlay .lm-qr-box.is-over,#lm-overlay .lm-qr-box.is-waiting{',
+        'border-color:#6366f1;background:#eef2ff;}',
+        '#lm-overlay .lm-qr-box:focus{outline:none;}',
+        '#lm-overlay .lm-qr-box:focus-visible{box-shadow:0 0 0 3px rgba(99,102,241,.35);}',
         '#lm-overlay .lm-qr-box img{width:100%;height:100%;object-fit:contain;',
         'image-rendering:pixelated;}',
         '#lm-overlay .lm-qr-empty{display:flex;flex-direction:column;',
@@ -275,6 +278,7 @@ var _lmScope = 'info';
 var _lmDraft = null;
 var _lmSaved = null;
 var _lmArmed = false;
+var _lmPaste = null;
 var _lmEsc = null;
 
 function _lmEl(id) { return document.getElementById(_lmScope + '-' + id); }
@@ -338,6 +342,7 @@ function _lmPaintQr() {
     var box = document.getElementById('lm-qr-preview');
     if (!box) return;
     box.classList.toggle('is-empty', !_lmDraft.qr);
+    if (_lmDraft.qr) box.classList.remove('is-waiting');
     box.innerHTML = _lmDraft.qr
         ? '<img src="' + _lmDraft.qr + '" alt="QR">'
         : '<span class="lm-qr-empty"><span class="lm-qr-icon" aria-hidden="true">▦</span>' + _lmT('noQr') + '</span>';
@@ -360,6 +365,16 @@ function mbLinkModalSetQr(dataUrl) {
 function mbLinkModalPasteFailed(reason) {
     if (!document.getElementById('lm-overlay')) return;
     _lmMsg(_lmT(reason === 'denied' ? 'clipDenied' : reason === 'url' ? 'clipUrl' : 'clipEmpty'), 'warn');
+    /* 3.54.2: a file copied in Explorer / Finder is invisible to
+       navigator.clipboard.read() — it carries a file reference, not
+       pixels — and a browser hands it to a page only in a real paste
+       event. So the box is made ready for that paste: focused, and
+       highlighted until it arrives. */
+    var box = document.getElementById('lm-qr-preview');
+    if (box && reason !== 'url') {
+        box.classList.add('is-waiting');
+        try { box.focus({ preventScroll: false }); } catch (e) { box.focus(); }
+    }
 }
 
 function mbOpenLinkModal(scope) {
@@ -397,7 +412,7 @@ function mbOpenLinkModal(scope) {
              notes come after it. */
           '<h4 class="ws-group">' + _lmT('qr') + '</h4>' +
           '<div class="lm-qr-card">' +
-            '<div id="lm-qr-preview" class="lm-qr-box"></div>' +
+            '<div id="lm-qr-preview" class="lm-qr-box" tabindex="0"></div>' +
             '<div class="lm-qr-side">' +
               '<button type="button" class="ws-btn ws-btn-ghost" id="lm-qr-btn">' + _lmT('upload') + '</button>' +
               /* 3.54.0: paste, beside upload — a QR code is usually made
@@ -469,13 +484,19 @@ function mbOpenLinkModal(scope) {
     /* Ctrl+V anywhere in the dialog with an IMAGE on the clipboard sets
        the QR code. Text pastes (a URL into the link field) are left
        alone: no image, no preventDefault. */
-    ov.addEventListener('paste', function (e) {
+    /* On the document, not the overlay: a click on a button does not
+       focus it in every browser (Safari, Firefox on Mac), and a paste
+       then fires on <body>, outside the dialog. Removed on close. */
+    _lmPaste = function (e) {
+        if (!document.getElementById('lm-overlay')) return;
         if (typeof _mbPasteZoneOpen !== 'undefined' && _mbPasteZoneOpen) return;
         var blob = (typeof _mbBlobFromDataTransfer === 'function') ? _mbBlobFromDataTransfer(e.clipboardData) : null;
         if (!blob) return;
         e.preventDefault();
+        e.stopPropagation();
         _mbStorePastedBlob('qr', _lmScope, blob);
-    });
+    };
+    document.addEventListener('paste', _lmPaste, true);
 
     document.getElementById('lm-save').addEventListener('click', _lmSave);
     document.getElementById('lm-close').addEventListener('click', mbCloseLinkModal);
@@ -525,6 +546,7 @@ function mbCloseLinkModal() {
     var ov = document.getElementById('lm-overlay');
     if (ov && ov.parentNode) ov.parentNode.removeChild(ov);
     if (_lmEsc) { document.removeEventListener('keydown', _lmEsc); _lmEsc = null; }
+    if (_lmPaste) { document.removeEventListener('paste', _lmPaste, true); _lmPaste = null; }
     _lmArmed = false;
 }
 

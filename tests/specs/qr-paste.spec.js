@@ -14,6 +14,8 @@ async function mockClipboard(page, mode) {
     const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
     const read = mode === 'image'
       ? () => Promise.resolve([{ types: ['image/png'], getType: () => Promise.resolve(new Blob([bytes], { type: 'image/png' })) }])
+      : mode === 'html'
+        ? () => Promise.resolve([{ types: ['text/html'], getType: () => Promise.resolve(new Blob(['<p>x</p><img src="data:image/png;base64,' + b64 + '">'], { type: 'text/html' })) }])
       : mode === 'empty'
         ? () => Promise.resolve([{ types: ['text/plain'], getType: () => Promise.resolve(new Blob(['hello'], { type: 'text/plain' })) }])
         : () => Promise.reject(new DOMException('denied', 'NotAllowedError'));
@@ -74,8 +76,11 @@ test('nothing to paste or no permission: a message in the dialog, no extra windo
 
   await mockClipboard(page, 'empty');
   await ov.locator('#lm-qr-paste').click();
-  await expect(ov.locator('#lm-msg')).toContainText('No image on the clipboard');
+  await expect(ov.locator('#lm-msg')).toContainText('file copied from a folder');
   await expect(page.locator('.mb-paste-zone')).toHaveCount(0);
+  // the box is ready for the Ctrl+V that delivers a copied file
+  await expect(ov.locator('#lm-qr-preview')).toBeFocused();
+  await expect(ov.locator('#lm-qr-preview')).toHaveClass(/is-waiting/);
 
   await mockClipboard(page, 'denied');
   await ov.locator('#lm-qr-paste').click();
@@ -109,5 +114,39 @@ test('Arabic: the paste button and the empty preview read in Arabic', async ({ p
   await page.evaluate(() => mbOpenLinkModal('activity'));
   await expect(page.locator('#lm-qr-paste')).toHaveText('📋 لصق رمز الاستجابة');
   await expect(page.locator('#lm-qr-preview')).toContainText('لا يوجد رمز استجابة بعد');
+  expect(errors).toEqual([]);
+});
+
+test('a copied file arrives by Ctrl+V even when focus is outside the dialog; an <img> in HTML is read by the button', async ({ page }) => {
+  const errors = await openApp(page, { handoff: fixture('dacum-handoff.json'), contentLang: 'en' });
+  await tab(page, 'info');
+  await page.evaluate(() => mbOpenLinkModal('info'));
+  const ov = page.locator('#lm-overlay');
+  await page.evaluate(() => document.activeElement && document.activeElement.blur());
+  await pasteImage(page, 'body');                                      // Explorer → Ctrl+V lands on <body>
+  await expect(ov.locator('#lm-qr-preview img')).toHaveCount(1);
+  await ov.locator('#lm-qr-remove').click();
+  await mockClipboard(page, 'html');
+  await ov.locator('#lm-qr-paste').click();
+  await expect(ov.locator('#lm-qr-preview img')).toHaveCount(1);
+  // after closing, Ctrl+V on the page no longer goes to the dialog
+  await ov.locator('#lm-save').click();
+  await ov.locator('#lm-close').click();
+  await pasteImage(page, 'body');
+  expect(errors).toEqual([]);
+});
+
+test('the real clipboard: an image copied by the browser is pasted by the button', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  const errors = await openApp(page, { handoff: fixture('dacum-handoff.json'), contentLang: 'en' });
+  await tab(page, 'activity');
+  await page.evaluate(() => mbOpenLinkModal('activity'));
+  await page.evaluate(async () => {
+    const c = document.createElement('canvas'); c.width = c.height = 40; c.getContext('2d').fillRect(5, 5, 20, 20);
+    const blob = await new Promise(r => c.toBlob(r, 'image/png'));
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+  });
+  await page.locator('#lm-qr-paste').click();
+  await expect(page.locator('#lm-qr-preview img')).toHaveCount(1);
   expect(errors).toEqual([]);
 });
