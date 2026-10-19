@@ -682,6 +682,49 @@
             font-size: 1em;
         }
 
+        /* 3.52.0: insert below / reorder steps (src/steps.js). */
+        .mb-step-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+        }
+        .mb-step-handle {
+            cursor: grab;
+            color: #9ca3af;
+            font-size: 1.15em;
+            line-height: 1;
+            padding: 2px 4px;
+            border-radius: 4px;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+        .mb-step-handle:hover { color: #667eea; background: #eef0fd; }
+        .mb-step-handle:active { cursor: grabbing; }
+        .mb-step-move {
+            background: #fff;
+            color: #4b5563;
+            border: 1px solid #d1d5db;
+            border-radius: 5px;
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            font-size: 0.7em;
+            line-height: 1;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .mb-step-move:hover:not(:disabled) { background: #eef0fd; border-color: #667eea; color: #667eea; }
+        .mb-step-move:focus-visible { outline: 2px solid #667eea; outline-offset: 1px; }
+        .mb-step-move:disabled { opacity: 0.35; cursor: default; }
+        .step-item.is-dragging {
+            opacity: 0.55;
+            border: 1px dashed #667eea;
+        }
+
         .btn-add-image {
             background: #10b981;
             color: white;

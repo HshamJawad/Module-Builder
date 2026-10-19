@@ -125,11 +125,20 @@ function biMergeArrayById(stored, incoming, fields) {
     });
 
     return incoming.map(function (item, i) {
+        var atI = (stored[i] && typeof stored[i] === 'object') ? stored[i] : null;
         var prev = (item.uid && byId[item.uid]) ||
-                   /* No uid: fall back to position, which is exactly the
-                      old behaviour and correct for a project that has not
-                      been reordered. */
-                   (stored[i] && typeof stored[i] === 'object' ? stored[i] : {});
+                   /* No uid on either side: fall back to position, which
+                      is exactly the old behaviour and correct for a
+                      project that has not been reordered.
+
+                      3.52.0: NOT when the stored item at this position
+                      has a uid of its own. That item is a different row
+                      — the new row was inserted ABOVE it — and borrowing
+                      it handed the new row that row's text pair BY
+                      REFERENCE, so typing in the new step overwrote the
+                      step below it. Unknown uids are new rows, as the
+                      comment above says. */
+                   ((atI && (!item.uid || !atI.uid)) ? atI : {});
 
         var out = {};
         Object.keys(prev).forEach(function (k) { out[k] = prev[k]; });
@@ -137,6 +146,10 @@ function biMergeArrayById(stored, incoming, fields) {
             if (fields.indexOf(k) === -1) out[k] = item[k];
         });
         fields.forEach(function (k) {
+            /* A copy of the pair: biPut writes into it in place, and the
+               stored pair may still be read by another row of this same
+               merge. */
+            if (out[k] && typeof out[k] === 'object') out[k] = Object.assign({}, out[k]);
             if (k in item) biPut(out, k, item[k]);
         });
         if (!out.uid) out.uid = item.uid || mbUid();
