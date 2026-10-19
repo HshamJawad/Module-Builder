@@ -331,13 +331,29 @@ function mbPasteImageInto(targetName, id) {
     if (!canRead) { fallback('denied'); return; }
 
     navigator.clipboard.read().then(function (items) {
-        var imageType = null, imageItem = null, textItem = null;
+        var imageType = null, imageItem = null, textItem = null, htmlItem = null;
         for (var i = 0; i < items.length && !imageType; i++) {
             var types = items[i].types || [];
             for (var j = 0; j < types.length; j++) {
                 if (types[j].indexOf('image/') === 0) { imageType = types[j]; imageItem = items[i]; break; }
                 if (types[j] === 'text/plain' && !textItem) textItem = items[i];
+                if (types[j] === 'text/html' && !htmlItem) htmlItem = items[i];
             }
+        }
+
+        /* 3.54.2: a picture copied out of Word, an e-mail or a selection
+           on a web page often arrives as HTML around an <img>, with no
+           bitmap of its own. Its src — a data: URI or a web address —
+           is the image. */
+        if (!imageItem && htmlItem) {
+            return htmlItem.getType('text/html').then(function (b) { return b.text(); })
+                .then(function (html) {
+                    var m = html.match(/<img[^>]+src\s*=\s*["']([^"']+)["']/i);
+                    if (!m) { fallback('empty'); return false; }
+                    return _mbFetchImageUrl(m[1])
+                        .then(function (blob) { return _mbStorePastedBlob(targetName, id, blob); })
+                        .catch(urlFailed);
+                });
         }
 
         if (imageItem) {
@@ -356,10 +372,12 @@ function mbPasteImageInto(targetName, id) {
         }
         fallback('empty');
         return false;
-    }).catch(function () {
+    }).catch(function (err) {
         /* Permission refused, or a browser that has read() but not the
-           permission model. The modal needs neither. */
-        fallback('denied');
+           permission model. The modal needs neither. Any other error
+           (Chrome's "no valid data on the clipboard", for one) means
+           there was nothing it could read — not a refusal. */
+        fallback(err && err.name === 'NotAllowedError' ? 'denied' : 'empty');
     });
 }
 
