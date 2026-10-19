@@ -35,7 +35,7 @@ function _mbHistLabels() {
     var lang = (window.i18n && window.i18n.getLang) ? window.i18n.getLang() : 'en';
     var L = {
         en: { typing: 'typing', removeContentSection: 'delete a content section', addContentSection: 'add a content section',
-              removeStep: 'delete a step', addStep: 'add a step', addResource: 'add a resource', removeResource: 'delete a resource',
+              removeStep: 'delete a step', addStep: 'add a step', insertStepAfter: 'add a step', moveStepUp: 'move a step', moveStepDown: 'move a step', moveStep: 'move a step', addResource: 'add a resource', removeResource: 'delete a resource',
               addCriteria: 'add a criterion', removeCurrentInfoSheet: 'delete an information sheet', removeCurrentActivitySheet: 'delete an activity sheet',
               addNewInfoSheet: 'add an information sheet', addNewActivitySheet: 'add an activity sheet',
               deleteAssessmentRow: 'delete an assessment row', addAssessmentRow: 'add an assessment row', clearAssessmentRows: 'clear the assessment rows',
@@ -44,7 +44,7 @@ function _mbHistLabels() {
               undone: 'Undone: {v0}', redone: 'Redone: {v0}', nothingUndo: 'Nothing to undo', nothingRedo: 'Nothing to redo',
               undoTip: 'Undo (Ctrl+Z)', redoTip: 'Redo (Ctrl+Y)', undo: 'Undo', redo: 'Redo' },
         fr: { typing: 'saisie', removeContentSection: 'supprimer une section', addContentSection: 'ajouter une section',
-              removeStep: 'supprimer une étape', addStep: 'ajouter une étape', addResource: 'ajouter une ressource', removeResource: 'supprimer une ressource',
+              removeStep: 'supprimer une étape', addStep: 'ajouter une étape', insertStepAfter: 'ajouter une étape', moveStepUp: 'déplacer une étape', moveStepDown: 'déplacer une étape', moveStep: 'déplacer une étape', addResource: 'ajouter une ressource', removeResource: 'supprimer une ressource',
               addCriteria: 'ajouter un critère', removeCurrentInfoSheet: 'supprimer une fiche d’information', removeCurrentActivitySheet: 'supprimer une fiche d’activité',
               addNewInfoSheet: 'ajouter une fiche d’information', addNewActivitySheet: 'ajouter une fiche d’activité',
               deleteAssessmentRow: 'supprimer une ligne d’évaluation', addAssessmentRow: 'ajouter une ligne d’évaluation', clearAssessmentRows: 'vider les lignes d’évaluation',
@@ -53,7 +53,7 @@ function _mbHistLabels() {
               undone: 'Annulé : {v0}', redone: 'Rétabli : {v0}', nothingUndo: 'Rien à annuler', nothingRedo: 'Rien à rétablir',
               undoTip: 'Annuler (Ctrl+Z)', redoTip: 'Rétablir (Ctrl+Y)', undo: 'Annuler', redo: 'Rétablir' },
         ar: { typing: 'الكتابة', removeContentSection: 'حذف قسم محتوى', addContentSection: 'إضافة قسم محتوى',
-              removeStep: 'حذف خطوة', addStep: 'إضافة خطوة', addResource: 'إضافة مورد', removeResource: 'حذف مورد',
+              removeStep: 'حذف خطوة', addStep: 'إضافة خطوة', insertStepAfter: 'إضافة خطوة', moveStepUp: 'نقل خطوة', moveStepDown: 'نقل خطوة', moveStep: 'نقل خطوة', addResource: 'إضافة مورد', removeResource: 'حذف مورد',
               addCriteria: 'إضافة معيار', removeCurrentInfoSheet: 'حذف ورقة معلومات', removeCurrentActivitySheet: 'حذف ورقة نشاط',
               addNewInfoSheet: 'إضافة ورقة معلومات', addNewActivitySheet: 'إضافة ورقة نشاط',
               deleteAssessmentRow: 'حذف صف تقييم', addAssessmentRow: 'إضافة صف تقييم', clearAssessmentRows: 'مسح صفوف التقييم',

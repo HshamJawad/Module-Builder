@@ -480,9 +480,24 @@ function loadActivitySheetAtIndex(lo, index) {
             delete mbState.stepImages[key];
         }
         
+        /* Step images are keyed by the card's DOM id (`stepId`), and the
+           cards are renumbered 1…N on every load. Restoring the stored
+           map as-is attached each step's pictures to whichever card
+           happened to get the old number — after a step was deleted or
+           (3.52.0) moved, the wrong step. Each step's images are
+           re-keyed here to the id its card gets now. A project saved
+           before steps carried a stepId keeps the old behaviour. */
+        const savedImages = activity.images || {};
+        const keyedSteps = (activity.steps || []).some(s => s && s.stepId !== undefined && s.stepId !== null && s.stepId !== '');
+        const restoredImages = keyedSteps ? {} : Object.assign({}, savedImages);
+
         if (activity.steps && activity.steps.length > 0) {
             activity.steps.forEach((stepData) => {
                 addStep();
+                if (keyedSteps && stepData && stepData.stepId !== undefined && stepData.stepId !== null && stepData.stepId !== ''
+                    && savedImages[stepData.stepId]) {
+                    restoredImages[mbState.stepCount] = savedImages[stepData.stepId];
+                }
                 const lastStep = document.querySelector(`[data-step-id="${mbState.stepCount}"]`);
                 if (lastStep) {
                     lastStep.value = biGetStrict(stepData.text, contentLang());
@@ -500,9 +515,9 @@ function loadActivitySheetAtIndex(lo, index) {
             addStep();
         }
         
-        if (activity.images) {
-            Object.assign(mbState.stepImages, activity.images);
-            for (let stepId in activity.images) {
+        if (Object.keys(restoredImages).length) {
+            Object.assign(mbState.stepImages, restoredImages);
+            for (let stepId in restoredImages) {
                 renderStepImageGallery(stepId);
             }
         }
