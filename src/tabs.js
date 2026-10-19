@@ -121,3 +121,37 @@ async function proceedToTab(tabName) {
     // All prerequisites met - proceed to the tab
     await switchTab(tabName);
 }
+
+
+/* 3.53.0: the heading above the tabs names the OPEN TAB, word for word
+   as the side navigation does (as in DACUM Live Pro), instead of
+   repeating the tool's name, which already heads the side navigation.
+
+   Read from the active button rather than from a table of keys: the
+   button is already translated, and renamed by Settings → Misc (sheet
+   names), so the heading follows both without knowing about either.
+   An observer on the navigation repaints it whenever the active button
+   or its text changes — a tab switch, a language switch, a rename. A
+   button that opens a dialog (Coverage, Settings) never becomes active,
+   so the heading keeps naming the tab underneath. */
+function mbSyncTabTitle() {
+    var h = document.getElementById('mb-tab-title');
+    var btn = document.querySelector('#mb-sidenav .tabs .tab.active');
+    if (!h || !btn) return;
+    var text = (btn.textContent || '').replace(/\s+/g, ' ').trim();
+    if (text && h.textContent !== text) h.textContent = text;
+}
+
+(function watchTabTitle() {
+    function start() {
+        mbSyncTabTitle();
+        var nav = document.querySelector('#mb-sidenav .tabs');
+        if (!nav || !window.MutationObserver) return;
+        new MutationObserver(mbSyncTabTitle).observe(nav, {
+            subtree: true, childList: true, characterData: true,
+            attributes: true, attributeFilter: ['class']
+        });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+    else start();
+})();

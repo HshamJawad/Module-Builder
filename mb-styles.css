@@ -195,6 +195,23 @@
             font-weight: 400;
         }
 
+        /* 3.53.0: the open tab's title — one line, aligned with the
+           content under it, and less room above the tabs. */
+        .app-title-bar.mb-tab-title-bar {
+            text-align: start;
+            margin-bottom: 18px;
+            padding-bottom: 12px;
+        }
+        .mb-tab-title-bar h1 {
+            margin: 0;
+            font-size: 1.55em;
+            line-height: 1.3;
+        }
+        /* The tool's name and description, at the top of the Help tab. */
+        .app-title-bar.mb-help-app-title {
+            margin-bottom: 22px;
+        }
+
         .container {
             background: white;
             border-radius: 20px;
