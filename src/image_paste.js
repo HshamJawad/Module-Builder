@@ -56,6 +56,17 @@ var MB_PASTE_TARGETS = {
         galleryId: function (id) { return 'step-image-gallery-' + id; },
         cardSelector: '.step-item',
         idAttr: 'data-step-id'
+    },
+    /* 3.54.0: the QR code of the Video, Link & QR dialog (link_modal.js).
+       One image, not a list, so it brings its own `put` instead of a
+       bucket; the 'qr' profile keeps it PNG, since JPEG blurs the
+       modules of a QR code. No cardSelector: it is reached from the
+       dialog's own button and paste listener, never from a card. */
+    qr: {
+        profile: 'qr',
+        put: function (id, dataUrl) {
+            if (typeof mbLinkModalSetQr === 'function') mbLinkModalSetQr(dataUrl);
+        }
     }
 };
 
@@ -103,10 +114,15 @@ function _mbStorePastedBlob(targetName, id, blob) {
         file = blob; // Safari < 14 has no File constructor
     }
 
-    var bucket = target.bucket();
-    if (!bucket[id]) bucket[id] = [];
+    var bucket = target.put ? null : target.bucket();
+    if (bucket && !bucket[id]) bucket[id] = [];
 
     var store = function (dataUrl) {
+        if (target.put) {
+            target.put(id, dataUrl);
+            _mbPasteStatus(_mbPasteT('dgImagePasted', 'Image pasted'), 'success');
+            return true;
+        }
         bucket[id].push(dataUrl);
         target.render(id);
         _mbPasteNotifyChanged(document.getElementById(target.galleryId(id)));
@@ -115,7 +131,7 @@ function _mbStorePastedBlob(targetName, id, blob) {
     };
 
     if (typeof mbPrepareImage === 'function') {
-        return mbPrepareImage(file, 'content').then(function (out) { return store(out.dataUrl); });
+        return mbPrepareImage(file, target.profile || 'content').then(function (out) { return store(out.dataUrl); });
     }
     return new Promise(function (resolve) {
         var reader = new FileReader();
@@ -360,6 +376,7 @@ document.addEventListener('paste', function (e) {
     var names = Object.keys(MB_PASTE_TARGETS);
     for (var i = 0; i < names.length; i++) {
         var t = MB_PASTE_TARGETS[names[i]];
+        if (!t.cardSelector) continue;
         var card = el.closest(t.cardSelector);
         if (!card) continue;
         var field = card.querySelector('[' + t.idAttr + ']');

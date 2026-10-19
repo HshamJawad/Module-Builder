@@ -36,6 +36,8 @@ var _LM_STRINGS = {
         exportNote: 'Word and PDF are unaffected: they print the QR code and the address exactly as before.',
         qr: 'QR code image',
         upload: '🖼️ Upload QR code (2.5 × 2.5 cm)',
+        paste: '📋 Paste QR code',
+        pasteTip: 'Paste a QR code image copied from another program or a web page (or press Ctrl+V in this dialog)',
         remove: 'Remove',
         close: 'Close', save: 'Save', saved: 'Saved',
         unsaved: 'You have unsaved changes. Press Close again to discard them.'
@@ -57,6 +59,8 @@ var _LM_STRINGS = {
         exportNote: 'Word et PDF ne changent pas : ils impriment le code QR et l\u2019adresse comme avant.',
         qr: 'Image du code QR',
         upload: '🖼️ Téléverser le code QR (2,5 × 2,5 cm)',
+        paste: '📋 Coller le code QR',
+        pasteTip: 'Coller une image de code QR copiée depuis un autre programme ou une page web (ou Ctrl+V dans cette fenêtre)',
         remove: 'Supprimer',
         close: 'Fermer', save: 'Enregistrer', saved: 'Enregistré',
         unsaved: 'Modifications non enregistrées. Appuyez de nouveau sur Fermer pour les abandonner.'
@@ -78,6 +82,8 @@ var _LM_STRINGS = {
         exportNote: 'Word وPDF لا يتأثّران: يطبعان رمز الاستجابة والعنوان كما كانا تماماً.',
         qr: 'صورة رمز الاستجابة',
         upload: '🖼️ رفع رمز الاستجابة (٢٫٥ × ٢٫٥ سم)',
+        paste: '📋 لصق رمز الاستجابة',
+        pasteTip: 'لصق صورة رمز استجابة منسوخة من برنامج آخر أو صفحة ويب (أو اضغط Ctrl+V داخل هذه النافذة)',
         remove: 'حذف',
         close: 'إغلاق', save: 'حفظ', saved: 'تم الحفظ',
         unsaved: 'لديك تغييرات غير محفوظة. اضغط «إغلاق» مرة أخرى لتجاهلها.'
@@ -167,6 +173,9 @@ function _lmEnsureStyle() {
            center` is what puts the dot, the word and the field label on
            the same optical line; the old rule inherited `baseline`,
            which aligns text to text and leaves a form control hanging. */
+        /* 3.54.0: Upload and Paste side by side, wrapping on a phone. */
+        '#lm-overlay .lm-qr-btns{display:flex;flex-wrap:wrap;gap:8px;}',
+
         '#lm-overlay .ws-row.lm-row-type{display:flex;align-items:center;',
         'flex-wrap:wrap;gap:10px 16px;}',
         '#lm-overlay .ws-row.lm-row-type > label:first-child{margin:0;',
@@ -297,6 +306,15 @@ function _lmPaintQr() {
     if (rm) rm.addEventListener('click', function () { _lmDraft.qr = null; _lmPaintQr(); _lmTouch(); });
 }
 
+/* 3.54.0: a pasted QR code lands in the dialog's draft, exactly like an
+   uploaded one — shown at once, stored on Save (image_paste.js, 'qr'). */
+function mbLinkModalSetQr(dataUrl) {
+    if (!_lmDraft || !document.getElementById('lm-overlay')) return;
+    _lmDraft.qr = dataUrl;
+    _lmPaintQr();
+    _lmTouch();
+}
+
 function mbOpenLinkModal(scope) {
     if (document.getElementById('lm-overlay')) return;
     _lmScope = (scope === 'activity') ? 'activity' : 'info';
@@ -329,7 +347,12 @@ function mbOpenLinkModal(scope) {
             '</div></div>' +
           '<div id="lm-note"></div>' +
           '<h4 class="ws-group">' + _lmT('qr') + '</h4>' +
-          '<button type="button" class="ws-btn ws-btn-ghost" id="lm-qr-btn">' + _lmT('upload') + '</button>' +
+          '<div class="lm-qr-btns">' +
+            '<button type="button" class="ws-btn ws-btn-ghost" id="lm-qr-btn">' + _lmT('upload') + '</button>' +
+            /* 3.54.0: paste, beside upload — a QR code is usually made by
+               a generator site or app and copied from there. */
+            '<button type="button" class="ws-btn ws-btn-ghost" id="lm-qr-paste" title="' + _lmT('pasteTip') + '">' + _lmT('paste') + '</button>' +
+          '</div>' +
           '<div id="lm-qr-preview" class="lm-qr"></div>' +
           '<input type="file" accept="image/*" id="lm-qr-file" style="display:none">' +
         '</div>' +
@@ -374,11 +397,30 @@ function mbOpenLinkModal(scope) {
         r.readAsDataURL(f);
     });
 
+    document.getElementById('lm-qr-paste').addEventListener('click', function () {
+        if (typeof mbPasteImageInto === 'function') mbPasteImageInto('qr', _lmScope);
+    });
+    /* Ctrl+V anywhere in the dialog with an IMAGE on the clipboard sets
+       the QR code. Text pastes (a URL into the link field) are left
+       alone: no image, no preventDefault. */
+    ov.addEventListener('paste', function (e) {
+        if (typeof _mbPasteZoneOpen !== 'undefined' && _mbPasteZoneOpen) return;
+        var blob = (typeof _mbBlobFromDataTransfer === 'function') ? _mbBlobFromDataTransfer(e.clipboardData) : null;
+        if (!blob) return;
+        e.preventDefault();
+        _mbStorePastedBlob('qr', _lmScope, blob);
+    });
+
     document.getElementById('lm-save').addEventListener('click', _lmSave);
     document.getElementById('lm-close').addEventListener('click', mbCloseLinkModal);
     document.getElementById('lm-x').addEventListener('click', mbCloseLinkModal);
     ov.addEventListener('click', function (e) { if (e.target === ov) mbCloseLinkModal(); });
-    _lmEsc = function (e) { if (e.key === 'Escape') mbCloseLinkModal(); };
+    _lmEsc = function (e) {
+        /* The paste prompt (image_paste.js) closes on Escape first; that
+           Escape must not also close this dialog under it. */
+        if (e.key !== 'Escape' || e.defaultPrevented) return;
+        mbCloseLinkModal();
+    };
     document.addEventListener('keydown', _lmEsc);
 }
 
