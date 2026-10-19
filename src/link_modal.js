@@ -37,7 +37,13 @@ var _LM_STRINGS = {
         qr: 'QR code image',
         upload: '🖼️ Upload QR code (2.5 × 2.5 cm)',
         paste: '📋 Paste QR code',
-        pasteTip: 'Paste a QR code image copied from another program or a web page (or press Ctrl+V in this dialog)',
+        pasteTip: 'Paste a QR code image copied from another program or a web page',
+        noQr: 'No QR code yet',
+        pasted: 'QR code pasted',
+        clipEmpty: 'No image on the clipboard. Copy the QR code image first, then press Paste.',
+        clipDenied: 'The browser did not allow reading the clipboard. Allow clipboard access for this site, or use Upload.',
+        clipUrl: 'The clipboard holds an image link, not an image. Use “Copy image” on the QR code instead.',
+        edit: 'Edit',
         remove: 'Remove',
         close: 'Close', save: 'Save', saved: 'Saved',
         unsaved: 'You have unsaved changes. Press Close again to discard them.'
@@ -60,7 +66,13 @@ var _LM_STRINGS = {
         qr: 'Image du code QR',
         upload: '🖼️ Téléverser le code QR (2,5 × 2,5 cm)',
         paste: '📋 Coller le code QR',
-        pasteTip: 'Coller une image de code QR copiée depuis un autre programme ou une page web (ou Ctrl+V dans cette fenêtre)',
+        pasteTip: 'Coller une image de code QR copiée depuis un autre programme ou une page web',
+        noQr: 'Aucun code QR pour l’instant',
+        pasted: 'Code QR collé',
+        clipEmpty: 'Aucune image dans le presse-papiers. Copiez d’abord l’image du code QR, puis appuyez sur Coller.',
+        clipDenied: 'Le navigateur n’a pas autorisé la lecture du presse-papiers. Autorisez-la pour ce site, ou utilisez Téléverser.',
+        clipUrl: 'Le presse-papiers contient un lien d’image, pas une image. Utilisez « Copier l’image » sur le code QR.',
+        edit: 'Modifier',
         remove: 'Supprimer',
         close: 'Fermer', save: 'Enregistrer', saved: 'Enregistré',
         unsaved: 'Modifications non enregistrées. Appuyez de nouveau sur Fermer pour les abandonner.'
@@ -83,7 +95,13 @@ var _LM_STRINGS = {
         qr: 'صورة رمز الاستجابة',
         upload: '🖼️ رفع رمز الاستجابة (٢٫٥ × ٢٫٥ سم)',
         paste: '📋 لصق رمز الاستجابة',
-        pasteTip: 'لصق صورة رمز استجابة منسوخة من برنامج آخر أو صفحة ويب (أو اضغط Ctrl+V داخل هذه النافذة)',
+        pasteTip: 'لصق صورة رمز استجابة منسوخة من برنامج آخر أو صفحة ويب',
+        noQr: 'لا يوجد رمز استجابة بعد',
+        pasted: 'تم لصق رمز الاستجابة',
+        clipEmpty: 'لا توجد صورة في الحافظة. انسخ صورة رمز الاستجابة أولاً ثم اضغط «لصق».',
+        clipDenied: 'لم يسمح المتصفح بقراءة الحافظة. اسمح بالوصول إلى الحافظة لهذا الموقع، أو استخدم «رفع».',
+        clipUrl: 'الحافظة تحتوي رابط صورة وليس صورة. استخدم «نسخ الصورة» على رمز الاستجابة.',
+        edit: 'تعديل',
         remove: 'حذف',
         close: 'إغلاق', save: 'حفظ', saved: 'تم الحفظ',
         unsaved: 'لديك تغييرات غير محفوظة. اضغط «إغلاق» مرة أخرى لتجاهلها.'
@@ -173,8 +191,28 @@ function _lmEnsureStyle() {
            center` is what puts the dot, the word and the field label on
            the same optical line; the old rule inherited `baseline`,
            which aligns text to text and leaves a form control hanging. */
-        /* 3.54.0: Upload and Paste side by side, wrapping on a phone. */
-        '#lm-overlay .lm-qr-btns{display:flex;flex-wrap:wrap;gap:8px;}',
+        /* 3.54.1: the QR card — a large preview beside its buttons,
+           stacked on a phone; the dialog a little taller. */
+        '#lm-overlay .ws-modal{max-height:94vh;}',
+        '#lm-overlay .lm-qr-card{display:flex;align-items:center;gap:16px;',
+        'flex-wrap:wrap;padding:12px;margin:0 0 14px;border:1px solid #e2e8f0;',
+        'border-radius:12px;background:#f8fafc;}',
+        '#lm-overlay .lm-qr-box{width:168px;height:168px;flex:0 0 auto;',
+        'display:flex;align-items:center;justify-content:center;',
+        'background:#fff;border:1px solid #e2e8f0;border-radius:10px;',
+        'padding:8px;box-sizing:border-box;}',
+        '#lm-overlay .lm-qr-box.is-empty{border:2px dashed #cbd5e1;}',
+        '#lm-overlay .lm-qr-box.is-over{border-color:#6366f1;background:#eef2ff;}',
+        '#lm-overlay .lm-qr-box img{width:100%;height:100%;object-fit:contain;',
+        'image-rendering:pixelated;}',
+        '#lm-overlay .lm-qr-empty{display:flex;flex-direction:column;',
+        'align-items:center;gap:6px;color:#94a3b8;font-size:.85em;text-align:center;}',
+        '#lm-overlay .lm-qr-icon{font-size:2.4em;line-height:1;}',
+        '#lm-overlay .lm-qr-side{display:flex;flex-direction:column;gap:8px;',
+        'flex:1 1 180px;min-width:0;}',
+        '#lm-overlay .lm-qr-side .ws-btn{width:100%;min-height:38px;',
+        'padding:8px 12px;border-radius:8px;}',
+        '#lm-overlay .lm-qr-remove{color:#b91c1c;}',
 
         '#lm-overlay .ws-row.lm-row-type{display:flex;align-items:center;',
         'flex-wrap:wrap;gap:10px 16px;}',
@@ -299,11 +337,12 @@ function _lmPaintNotes() {
 function _lmPaintQr() {
     var box = document.getElementById('lm-qr-preview');
     if (!box) return;
+    box.classList.toggle('is-empty', !_lmDraft.qr);
     box.innerHTML = _lmDraft.qr
-        ? '<img src="' + _lmDraft.qr + '" alt="QR"><button type="button" class="ws-btn ws-btn-ghost" id="lm-qr-remove">' + _lmT('remove') + '</button>'
-        : '';
+        ? '<img src="' + _lmDraft.qr + '" alt="QR">'
+        : '<span class="lm-qr-empty"><span class="lm-qr-icon" aria-hidden="true">▦</span>' + _lmT('noQr') + '</span>';
     var rm = document.getElementById('lm-qr-remove');
-    if (rm) rm.addEventListener('click', function () { _lmDraft.qr = null; _lmPaintQr(); _lmTouch(); });
+    if (rm) rm.style.display = _lmDraft.qr ? '' : 'none';
 }
 
 /* 3.54.0: a pasted QR code lands in the dialog's draft, exactly like an
@@ -313,6 +352,14 @@ function mbLinkModalSetQr(dataUrl) {
     _lmDraft.qr = dataUrl;
     _lmPaintQr();
     _lmTouch();
+    _lmMsg('\u2713 ' + _lmT('pasted'), 'ok');
+}
+
+/* 3.54.1: why a paste found nothing — said inside the dialog, where the
+   user is looking, instead of opening a second "press Ctrl+V" window. */
+function mbLinkModalPasteFailed(reason) {
+    if (!document.getElementById('lm-overlay')) return;
+    _lmMsg(_lmT(reason === 'denied' ? 'clipDenied' : reason === 'url' ? 'clipUrl' : 'clipEmpty'), 'warn');
 }
 
 function mbOpenLinkModal(scope) {
@@ -345,16 +392,22 @@ function mbOpenLinkModal(scope) {
               '<label class="ws-check"><input type="radio" name="lm-type" value="video"><span>' + _lmT('typeVideo') + '</span></label>' +
               '<label class="ws-check"><input type="radio" name="lm-type" value="page"><span>' + _lmT('typePage') + '</span></label>' +
             '</div></div>' +
-          '<div id="lm-note"></div>' +
+          /* 3.54.1: the QR code sits right under the link, in a card
+             with a preview large enough to check at a glance; the long
+             notes come after it. */
           '<h4 class="ws-group">' + _lmT('qr') + '</h4>' +
-          '<div class="lm-qr-btns">' +
-            '<button type="button" class="ws-btn ws-btn-ghost" id="lm-qr-btn">' + _lmT('upload') + '</button>' +
-            /* 3.54.0: paste, beside upload — a QR code is usually made by
-               a generator site or app and copied from there. */
-            '<button type="button" class="ws-btn ws-btn-ghost" id="lm-qr-paste" title="' + _lmT('pasteTip') + '">' + _lmT('paste') + '</button>' +
+          '<div class="lm-qr-card">' +
+            '<div id="lm-qr-preview" class="lm-qr-box"></div>' +
+            '<div class="lm-qr-side">' +
+              '<button type="button" class="ws-btn ws-btn-ghost" id="lm-qr-btn">' + _lmT('upload') + '</button>' +
+              /* 3.54.0: paste, beside upload — a QR code is usually made
+                 by a generator site or app and copied from there. */
+              '<button type="button" class="ws-btn ws-btn-ghost" id="lm-qr-paste" title="' + _lmT('pasteTip') + '">' + _lmT('paste') + '</button>' +
+              '<button type="button" class="ws-btn ws-btn-ghost lm-qr-remove" id="lm-qr-remove">' + _lmT('remove') + '</button>' +
+            '</div>' +
           '</div>' +
-          '<div id="lm-qr-preview" class="lm-qr"></div>' +
           '<input type="file" accept="image/*" id="lm-qr-file" style="display:none">' +
+          '<div id="lm-note"></div>' +
         '</div>' +
         '<div class="ws-foot">' +
           '<span class="ws-msg" id="lm-msg"></span>' +
@@ -397,6 +450,19 @@ function mbOpenLinkModal(scope) {
         r.readAsDataURL(f);
     });
 
+    document.getElementById('lm-qr-remove').addEventListener('click', function () {
+        _lmDraft.qr = null; _lmPaintQr(); _lmTouch();
+    });
+    /* An image file dropped on the preview is taken like an upload. */
+    var qrBox = document.getElementById('lm-qr-preview');
+    qrBox.addEventListener('dragover', function (e) { e.preventDefault(); qrBox.classList.add('is-over'); });
+    qrBox.addEventListener('dragleave', function () { qrBox.classList.remove('is-over'); });
+    qrBox.addEventListener('drop', function (e) {
+        e.preventDefault();
+        qrBox.classList.remove('is-over');
+        var blob = (typeof _mbBlobFromDataTransfer === 'function') ? _mbBlobFromDataTransfer(e.dataTransfer) : null;
+        if (blob) _mbStorePastedBlob('qr', _lmScope, blob);
+    });
     document.getElementById('lm-qr-paste').addEventListener('click', function () {
         if (typeof mbPasteImageInto === 'function') mbPasteImageInto('qr', _lmScope);
     });
@@ -447,6 +513,7 @@ function _lmSave() {
     if (save) save.disabled = true;
     _lmMsg('\u2713 ' + _lmT('saved'), 'ok');
     _lmPaintButtons();
+    mbPaintLinkSummary();
 }
 
 function mbCloseLinkModal() {
@@ -477,7 +544,67 @@ function _lmPaintButtons() {
     });
 }
 
+/* 3.54.1: the sheet's link and QR code, shown ON the sheet — under the
+   last step (or content section), which is where Word, PDF and HTML
+   print them — so what is stored behind the 🔗 buttons is visible at a
+   glance, the way a step shows its images. Click ✏️ to edit. */
+function mbPaintLinkSummary() {
+    ['info', 'activity'].forEach(function (scope) {
+        var host = document.getElementById(scope + '-link-summary');
+        if (!host) return;
+        var subjEl = document.getElementById(scope + '-link-subject');
+        var urlEl = document.getElementById(scope + '-link-url');
+        var subj = subjEl ? subjEl.value.trim() : '';
+        var url = urlEl ? urlEl.value.trim() : '';
+        var qr = scope === 'info' ? mbState.infoQRImage : mbState.activityQRImage;
+        if (!qr && !subj && !url) { host.innerHTML = ''; return; }
+        var esc = (typeof escapeHtml === 'function') ? escapeHtml : function (t) {
+            return String(t).replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; });
+        };
+        var safeUrl = /^https?:\/\//i.test(url) ? url : '';
+        host.innerHTML =
+            '<div class="mb-link-summary-card">' +
+              (qr ? '<img class="mb-ls-qr" src="' + esc(qr) + '" alt="QR">' : '') +
+              '<div class="mb-ls-text">' +
+                '<div class="mb-ls-title">🔗 ' + esc(subj || _lmT('title').replace('&amp;', '&')) + '</div>' +
+                (url ? (safeUrl
+                    ? '<a class="mb-ls-url" dir="ltr" href="' + esc(safeUrl) + '" target="_blank" rel="noopener">' + esc(url) + '</a>'
+                    : '<div class="mb-ls-url" dir="ltr">' + esc(url) + '</div>') : '') +
+              '</div>' +
+              '<button type="button" class="mb-ls-edit" data-act="mbOpenLinkModal" data-args=\'["' + scope + '"]\'>✏️ ' + _lmT('edit') + '</button>' +
+            '</div>';
+    });
+}
+
+var _lmSummaryTimer = null;
+function _lmScheduleSummary() {
+    clearTimeout(_lmSummaryTimer);
+    /* After the current task: a loader sets the QR image and the link
+       fields one after the other, and the card should show all of them. */
+    _lmSummaryTimer = setTimeout(mbPaintLinkSummary, 0);
+}
+
+/* Every path that changes a sheet's QR code — a sheet loaded, cleared,
+   undone, uploaded through the old card — writes mbState.infoQRImage or
+   activityQRImage. Watching those two keys repaints the card from all of
+   them without each having to know it exists. */
+(function watchQrState() {
+    if (typeof mbState !== 'object' || !mbState) return;
+    ['infoQRImage', 'activityQRImage'].forEach(function (key) {
+        var d = Object.getOwnPropertyDescriptor(mbState, key);
+        if (d && (d.get || d.set || d.configurable === false)) return;
+        var value = mbState[key];
+        Object.defineProperty(mbState, key, {
+            enumerable: true, configurable: true,
+            get: function () { return value; },
+            set: function (v) { value = v; _lmScheduleSummary(); }
+        });
+    });
+})();
+
 if (typeof window !== 'undefined') {
     window.addEventListener('mb:langchange', _lmPaintButtons);
+    window.addEventListener('mb:langchange', mbPaintLinkSummary);
     document.addEventListener('DOMContentLoaded', _lmPaintButtons);
+    document.addEventListener('DOMContentLoaded', _lmScheduleSummary);
 }

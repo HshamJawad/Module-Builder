@@ -3792,3 +3792,25 @@ button.mb-asm-edit { padding: 6px 12px !important; border: 1px solid #cbd5e1 !im
 .mb-scale-host, .mb-scale-form { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 12px 0 6px; }
 .mb-scale-toggle { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: #374151; cursor: pointer; }
 .mb-scale-toggle input { width: 17px; height: 17px; accent-color: #6366f1; }
+
+/* 3.54.1: the sheet's link and QR code, shown under its steps / content
+   sections (src/link_modal.js, mbPaintLinkSummary). */
+.mb-link-summary:empty { display: none; }
+.mb-link-summary-card {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    margin-top: 14px; padding: 12px 14px;
+    background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px;
+}
+.mb-link-summary-card .mb-ls-qr {
+    width: 96px; height: 96px; object-fit: contain; flex: 0 0 auto;
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 4px;
+    image-rendering: pixelated;
+}
+.mb-link-summary-card .mb-ls-text { flex: 1 1 200px; min-width: 0; }
+.mb-link-summary-card .mb-ls-title { font-weight: 600; color: #374151; margin-bottom: 4px; overflow-wrap: anywhere; }
+.mb-link-summary-card .mb-ls-url { font-size: .85em; color: #4f46e5; overflow-wrap: anywhere; text-align: start; }
+.mb-link-summary-card .mb-ls-edit {
+    background: #fff; color: #374151; border: 1px solid #d1d5db; border-radius: 6px;
+    padding: 6px 12px; font-size: .85em; font-weight: 600; cursor: pointer;
+}
+.mb-link-summary-card .mb-ls-edit:hover { border-color: #7c3aed; color: #7c3aed; }

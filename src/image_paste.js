@@ -66,6 +66,11 @@ var MB_PASTE_TARGETS = {
         profile: 'qr',
         put: function (id, dataUrl) {
             if (typeof mbLinkModalSetQr === 'function') mbLinkModalSetQr(dataUrl);
+        },
+        /* 3.54.1: no "press Ctrl+V" window for the QR code — the dialog
+           says what went wrong in its own message line instead. */
+        fail: function (id, reason) {
+            if (typeof mbLinkModalPasteFailed === 'function') mbLinkModalPasteFailed(reason);
         }
     }
 };
@@ -119,8 +124,7 @@ function _mbStorePastedBlob(targetName, id, blob) {
 
     var store = function (dataUrl) {
         if (target.put) {
-            target.put(id, dataUrl);
-            _mbPasteStatus(_mbPasteT('dgImagePasted', 'Image pasted'), 'success');
+            target.put(id, dataUrl);   // the target reports success itself
             return true;
         }
         bucket[id].push(dataUrl);
@@ -308,10 +312,23 @@ function mbOpenPasteZone(targetName, id) {
    modal would fail in exactly the same way and the user needs the real
    explanation instead. */
 function mbPasteImageInto(targetName, id) {
-    if (!MB_PASTE_TARGETS[targetName]) return;
+    var target = MB_PASTE_TARGETS[targetName];
+    if (!target) return;
+    /* A target with its own `fail` (the QR code) is told why nothing was
+       pasted; the others fall back to the paste prompt as before. */
+    var fallback = function (reason) {
+        if (target.fail) target.fail(id, reason);
+        else mbOpenPasteZone(targetName, id);
+    };
+    var urlFailed = function () {
+        if (target.fail) { target.fail(id, 'url'); return false; }
+        _mbPasteStatus(_mbPasteT('dgPasteUrlFailed',
+            'That looks like an image link, not an image. Use right-click → Copy image.'), 'error');
+        return false;
+    };
 
     var canRead = !!(navigator.clipboard && navigator.clipboard.read && window.isSecureContext);
-    if (!canRead) { mbOpenPasteZone(targetName, id); return; }
+    if (!canRead) { fallback('denied'); return; }
 
     navigator.clipboard.read().then(function (items) {
         var imageType = null, imageItem = null, textItem = null;
@@ -331,22 +348,18 @@ function mbPasteImageInto(targetName, id) {
         if (textItem) {
             return textItem.getType('text/plain').then(function (b) { return b.text(); })
                 .then(function (text) {
-                    if (!_mbLooksLikeImageUrl(text)) { mbOpenPasteZone(targetName, id); return false; }
+                    if (!_mbLooksLikeImageUrl(text)) { fallback('empty'); return false; }
                     return _mbFetchImageUrl(text.trim())
                         .then(function (blob) { return _mbStorePastedBlob(targetName, id, blob); })
-                        .catch(function () {
-                            _mbPasteStatus(_mbPasteT('dgPasteUrlFailed',
-                                'That looks like an image link, not an image. Use right-click → Copy image.'), 'error');
-                            return false;
-                        });
+                        .catch(urlFailed);
                 });
         }
-        mbOpenPasteZone(targetName, id);
+        fallback('empty');
         return false;
     }).catch(function () {
         /* Permission refused, or a browser that has read() but not the
            permission model. The modal needs neither. */
-        mbOpenPasteZone(targetName, id);
+        fallback('denied');
     });
 }
 
