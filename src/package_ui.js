@@ -397,6 +397,8 @@
                 if (m && m.key && !keys.has(m.key)) { dst.customMarks.push(JSON.parse(JSON.stringify(m))); keys.add(m.key); added++; }
             });
         }
+        /* 3.64.0: the distribution method, only onto a project still on the default. */
+        if (part.cmMode && part.cmMode !== 'default' && (!dst.cmMode || dst.cmMode === 'default')) { dst.cmMode = part.cmMode; added++; }
         if (pm.cmMarks && Object.keys(pm.cmMarks).length && !(dst.cmMarks && Object.keys(dst.cmMarks).length)) {
             dst.cmMarks = JSON.parse(JSON.stringify(pm.cmMarks));
             added++;

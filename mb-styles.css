@@ -3757,6 +3757,20 @@ html[dir="rtl"] .mb-sp[open] > summary::before { transform: rotate(-90deg); }
 .mb-cov-overlay .mb-cov-box button.mb-cov-cell.is-ok { background: #dbeafe !important; color: #1e40af !important; border-color: #93c5fd !important; }
 .mb-cov-overlay .mb-cov-box button.mb-cov-cell.is-new { background: #fffbeb !important; color: #92400e !important; border-color: #fcd34d !important; }
 .mb-cov-cell.is-off { color: #cbd5e1; }
+/* 3.64.0: distribution method (default / manual / AI) and pickable cells */
+.mb-cov-modes { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 0 0 8px; }
+.mb-cov-modes-h { font-size: 0.85em; color: #0f172a; }
+.mb-cov-overlay .mb-cov-box button.mb-cov-mode { min-height: 30px !important; padding: 4px 12px !important; border-radius: 999px !important; border: 1px solid #cbd5e1 !important; background: #fff !important; color: #334155 !important; font-size: 0.85em; font-weight: 700; cursor: pointer; }
+.mb-cov-overlay .mb-cov-box button.mb-cov-mode.is-on { background: #0c4a6e !important; color: #fff !important; border-color: #0c4a6e !important; }
+.mb-cov-mode-tip { flex: 1 1 100%; font-size: 0.8em; color: #475569; margin: 0; }
+.mb-cov-ai-msg { font-size: 0.82em; color: #0f766e; font-weight: 600; }
+.mb-cov-overlay .mb-cov-box button.mb-cov-cell.is-pick { background: #fff !important; color: #94a3b8 !important; border: 1px dashed #cbd5e1 !important; }
+.mb-cov-overlay .mb-cov-box button.mb-cov-cell.is-pick.is-on { background: #fffbeb !important; color: #92400e !important; border: 1px solid #fcd34d !important; }
+.mb-tab-tools { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; }
+button#mb-tab-cov.mb-tab-cov-btn { display: inline-flex; align-items: center; gap: 6px; box-sizing: border-box; height: 34px; min-height: 0 !important; padding: 0 14px !important; border-radius: 999px !important; border: 2px solid #0284c7 !important; background: #f0f9ff !important; color: #075985 !important; font: inherit; font-weight: 700; font-size: 0.9em; line-height: 1; white-space: nowrap; cursor: pointer; box-shadow: none !important; transition: background .15s, color .15s; }
+button#mb-tab-cov.mb-tab-cov-btn:hover { background: #0284c7 !important; color: #fff !important; }
+button#mb-tab-cov.mb-tab-cov-btn:focus-visible { outline: 2px solid #0284c7; outline-offset: 2px; }
+button#mb-tab-cov.mb-tab-cov-btn[hidden] { display: none !important; }
 .mb-cov-def { grid-template-columns: minmax(0, 1fr) 170px repeat(3, 84px); }   /* 3.62.0: + the mark */
 .mb-cov-def > span { text-align: center; }
 .mb-cov-def > span:first-child { text-align: start; font-size: 0.88em; overflow-wrap: anywhere; }

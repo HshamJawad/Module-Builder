@@ -121,11 +121,30 @@ function _cmFieldGroup(field, taskId) {
 function _cmCleanKinds(v) {
     return Array.isArray(v) ? MB_CM_KINDS.filter(function (k) { return v.indexOf(k) !== -1; }) : null;
 }
-/** The project's default kinds for a field group (Distribution settings). */
-function mbCmDefaultKinds(group) {
+/** The project's default kinds for a field group (Distribution settings),
+ *  whatever the distribution method. */
+function mbCmFieldKinds(group) {
     var own = mbState.cmDefaults && _cmCleanKinds(mbState.cmDefaults[group]);
     if (own) return own;
     return (MB_CM_DEFAULTS[group] || ['info']).slice();
+}
+
+/* 3.64.0 — the distribution method of the project (🗺️ Coverage):
+     'default'  each field goes where Distribution settings sends it
+     'manual'   nothing is sent anywhere until the author ticks it in
+                Coverage (the outcome criteria still go to the form)
+     'ai'       as the default until «🤖 Suggest the distribution» writes
+                the AI's choice on each item (still to be approved)
+   Stored in the shared project data (mbState.cmMode). */
+var MB_CM_MODES = ['default', 'manual', 'ai'];
+function mbCmMode() {
+    return MB_CM_MODES.indexOf(mbState.cmMode) !== -1 ? mbState.cmMode : 'default';
+}
+
+/** The kinds an item of this group goes to unless chosen for it. */
+function mbCmDefaultKinds(group) {
+    if (mbCmMode() === 'manual' && group !== 'lopc') return [];
+    return mbCmFieldKinds(group);
 }
 function _cmSameKinds(a, b) {
     return a.length === b.length && a.every(function (k) { return b.indexOf(k) !== -1; });

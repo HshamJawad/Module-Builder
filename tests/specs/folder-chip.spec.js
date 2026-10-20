@@ -21,6 +21,10 @@ test('a folder waiting for permission shows «📁 Allow» in the toolbar; press
   await expect(chip).toContainText('السماح');
   await expect(chip).toHaveAttribute('title', /New folder/);
   await expect(page.locator('.mb-fld-bar')).toHaveCount(0);          // the old bar is gone
+  // 3.64.0: the toolbar settles — it used to twitch with the chip shown
+  const boxes = [];
+  for (let i = 0; i < 6; i++) { boxes.push(JSON.stringify(await chip.boundingBox())); await page.waitForTimeout(120); }
+  expect(new Set(boxes.slice(1)).size).toBe(1);
   await chip.click();
   await page.waitForFunction(() => window.__asks === 2);
   await expect(chip).toBeHidden();

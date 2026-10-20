@@ -94,13 +94,12 @@ function _mbModuleChip(m, current) {
                 title="${title}"${isCur ? ' aria-current="true"' : ''}><bdi>${_mbEsc(_mbModuleRef(m))}</bdi></button>`;
 }
 
-/** Switches every module selector to this module (same path as choosing
- *  it in the Training Structure Mapping bar). */
+/** Switches every module selector to this module. 3.64.0: through the
+ *  library itself — the Training Structure Mapping bar it used is gone. */
 function mbJumpToModule(moduleId) {
-    const sel = document.getElementById('mapping-module-selector');
-    if (!sel || !mbState.modulesData.some(m => m.id === moduleId)) return;
-    sel.value = moduleId;
-    if (typeof switchModuleFromTab === 'function') switchModuleFromTab('mapping');
+    const m = mbState.modulesData.find(x => x.id === moduleId);
+    if (!m || typeof mbSelectModule !== 'function') return;
+    return mbSelectModule(moduleId, m.title);
 }
 
 let _mbTaIndexOpen = null;   // remembered for this page load

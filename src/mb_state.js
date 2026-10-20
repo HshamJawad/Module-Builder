@@ -190,7 +190,11 @@ var mbState = {
     /* 3.62.0 — custom_marks.js: which mark each Task Analysis field is
        written as ({ safetyOSH: 'warning', … }), and the project's own marks. */
     cmMarks: {},
-    customMarks: []
+    customMarks: [],
+
+    /* 3.64.0 — content_map.js: the distribution method, 'default' |
+       'manual' | 'ai' (🗺️ Coverage). */
+    cmMode: 'default'
 };
 
 /* Map of textarea id → mbState key, for the four fields above. */
