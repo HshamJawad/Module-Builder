@@ -487,6 +487,21 @@
         showBanner();
     }
 
+    /* 3.55.0 — the service worker installed a new build (sw_register.js).
+       This is what makes the bar show on every open after a release: the
+       version.json check alone cannot, because a page opened after the
+       merge already reads the new number as its own. The number is read
+       once more only for the badge's title. */
+    function onWorkerUpdate() {
+        if (updateReady) { showBanner(); return; }
+        fetch(SRC + '?t=' + Date.now(), { cache: 'no-store' })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (d) { if (d && d.version) latest = String(d.version); })
+            .catch(function () {})
+            .then(function () { onUpdateAvailable(latest || loaded || ''); });
+    }
+    window.addEventListener('mb:sw-updated', onWorkerUpdate);
+
     /* ── Polling ─────────────────────────────────────────────── */
     var warned = false;
 
@@ -552,6 +567,7 @@
         paint();
         check();                /* first read establishes `loaded` */
         startPolling();
+        if (window.__mbSwUpdated) onWorkerUpdate();   /* announced before this file ran */
 
         /* Follow the interface language wherever the i18n engine takes it. */
         new MutationObserver(paint).observe(document.documentElement, {
