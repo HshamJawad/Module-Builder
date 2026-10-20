@@ -88,3 +88,29 @@ for (const [lang, text] of Object.entries(WANT)) {
     expect(errors).toEqual([]);
   });
 }
+
+// 3.62.1: «Update now» reloads once, and the reloaded page offers nothing
+// more — the new worker taking over after the reload is the update just
+// applied, not another one.
+test('after «Update now» the reloaded page shows no second bar', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', e => errors.push(String(e && e.message || e)));
+  await page.addInitScript(() => {
+    localStorage.setItem('mb_author_asked', '1');
+    localStorage.setItem('mb_author_name', 'Test author');
+    localStorage.setItem('mb_word_export_settings', JSON.stringify({ templateChooser: false }));
+  });
+  publish('3.91.0');
+  await page.goto('/index.html');
+  await page.waitForFunction(() => navigator.serviceWorker.controller !== null, null, { timeout: 20_000 });
+  await page.waitForTimeout(800);
+  publish('3.91.1');
+  await page.goto('/index.html');
+  const bar = page.locator('.mb-update-bar.is-open');
+  await expect(bar).toBeVisible({ timeout: 20_000 });
+  await Promise.all([page.waitForEvent('load'), bar.locator('.mb-update-go').click()]);
+  await page.waitForFunction(() => window.mbLib && mbLib.booted === true, null, { timeout: 30_000 });
+  await page.waitForTimeout(6000);
+  await expect(page.locator('.mb-update-bar.is-open')).toHaveCount(0);
+  expect(errors).toEqual([]);
+});

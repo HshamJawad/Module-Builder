@@ -282,6 +282,12 @@ var _tplChooserOpen = false;
 function mbTemplateStartup() {
     if (!mbTemplateChooserOn() || _tplChooserOpen) return Promise.resolve();
     if (window.mbLib && mbLib.bootedFromDacum) return Promise.resolve();
+    /* 3.62.1: once per tab. A reload — «Update now» above all — is not a
+       new start, and asking again after it read as a fault. */
+    try {
+        if (sessionStorage.getItem('mb_tpl_asked')) return Promise.resolve();
+        sessionStorage.setItem('mb_tpl_asked', '1');
+    } catch (e) { /* sessionStorage unavailable: ask, as before */ }
     return mbOpenTemplateChooser();
 }
 
