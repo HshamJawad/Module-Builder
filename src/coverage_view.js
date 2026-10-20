@@ -18,6 +18,60 @@
 //   already approved keep their sheets; the others follow at once.
 // ============================================================
 
+if (window.i18n && window.i18n.extend) window.i18n.extend({
+    en: {
+        mbCovNavShort: 'Coverage',
+        cvmHead: 'Distribution method',
+        cvmDefault: 'Default',
+        cvmManual: 'Manual',
+        cvmAi: '🤖 AI',
+        cvmDefaultTip: 'Each Task Analysis field goes to the sheets set in ⚙️ Distribution settings.',
+        cvmManualTip: 'Nothing is sent anywhere by itself: click the cells of an item (📄 🛠️ ✅) to choose where it goes. The outcome criteria still go to the assessment form.',
+        cvmAiTip: 'The AI suggests where each item goes; the suggestions appear in the cells and in Suggested content, to review and approve. Items already approved or built are not changed. Click a cell to change it.',
+        cvmAiRun: '🤖 Suggest the distribution',
+        cvmAiBusy: 'The AI is working…',
+        cvmAiDone: 'AI suggestion: {v0} items distributed — review them, then approve in Suggested content.',
+        cvmAiNone: 'Nothing to distribute: every item is approved or built.',
+        cvmAiFail: 'The AI suggestion failed ({v0}). Nothing was changed.',
+        cvmCellAdd: 'Send to {v0}',
+        cvmCellRemove: 'Remove from {v0}'
+    },
+    fr: {
+        mbCovNavShort: 'Couverture',
+        cvmHead: 'Méthode de répartition',
+        cvmDefault: 'Par défaut',
+        cvmManual: 'Manuelle',
+        cvmAi: '🤖 IA',
+        cvmDefaultTip: 'Chaque champ de l’analyse des tâches va aux fiches fixées dans ⚙️ Paramètres de répartition.',
+        cvmManualTip: 'Rien n’est envoyé de soi-même : cliquez les cases d’un élément (📄 🛠️ ✅) pour choisir où il va. Les critères du résultat vont toujours au formulaire d’évaluation.',
+        cvmAiTip: 'L’IA propose où va chaque élément ; les propositions apparaissent dans les cases et dans le Contenu suggéré, à revoir et à valider. Les éléments déjà validés ou construits ne changent pas. Cliquez une case pour la changer.',
+        cvmAiRun: '🤖 Proposer la répartition',
+        cvmAiBusy: 'L’IA travaille…',
+        cvmAiDone: 'Proposition de l’IA : {v0} éléments répartis — revoyez-les, puis validez dans le Contenu suggéré.',
+        cvmAiNone: 'Rien à répartir : chaque élément est validé ou construit.',
+        cvmAiFail: 'La proposition de l’IA a échoué ({v0}). Rien n’a changé.',
+        cvmCellAdd: 'Envoyer vers {v0}',
+        cvmCellRemove: 'Retirer de {v0}'
+    },
+    ar: {
+        mbCovNavShort: 'التغطية',
+        cvmHead: 'طريقة التوزيع',
+        cvmDefault: 'افتراضي',
+        cvmManual: 'يدوي',
+        cvmAi: '🤖 الذكاء الاصطناعي',
+        cvmDefaultTip: 'كل فقرة من تحليل المهام تذهب إلى الأوراق المحددة في ⚙️ إعداد التوزيع.',
+        cvmManualTip: 'لا يُوزَّع شيء تلقائياً: انقر خانات البند (📄 🛠️ ✅) لتختار أين يذهب. معايير المحصلة تذهب دائماً إلى استمارة التقييم.',
+        cvmAiTip: 'يقترح الذكاء الاصطناعي أين يذهب كل بند؛ تظهر الاقتراحات في الخانات وفي «المحتوى المقترح» لتراجعها وتصادق عليها. البنود المصادق عليها أو المبنية لا تتغير. انقر خانة لتغييرها.',
+        cvmAiRun: '🤖 اقترح التوزيع',
+        cvmAiBusy: 'الذكاء الاصطناعي يعمل…',
+        cvmAiDone: 'اقتراح الذكاء الاصطناعي: وُزِّع {v0} بنداً — راجعها ثم صادق عليها في «المحتوى المقترح».',
+        cvmAiNone: 'لا يوجد ما يُوزَّع: كل البنود مصادق عليها أو مبنية.',
+        cvmAiFail: 'تعذّر اقتراح الذكاء الاصطناعي ({v0}). لم يتغير شيء.',
+        cvmCellAdd: 'إرسال إلى {v0}',
+        cvmCellRemove: 'إزالة من {v0}'
+    }
+});
+
 var MB_COV_ID = 'mb-cov-overlay';
 var mbCovState = { lo: '', pendingOnly: false };
 
@@ -54,6 +108,18 @@ function mbCovClose(id) {
 }
 
 function _covCell(r, kind) {
+    /* 3.64.0: manual and AI distribution — the cells are the choice. A
+       built cell still opens its item; the outcome criteria (lopc) go to
+       the form only. */
+    var pick = mbCmMode() !== 'default' && r.taskId !== MB_LO_PC && r.built.indexOf(kind) === -1;
+    if (pick) {
+        var on = r.dests.indexOf(kind) !== -1;
+        var name = _covT('mbSpKind_' + kind);
+        var lab = _covT(on ? 'cvmCellRemove' : 'cvmCellAdd', { v0: name });
+        var sym = on ? (r.ok.indexOf(kind) !== -1 ? '●' : '○') : '＋';
+        return '<button type="button" class="mb-cov-cell is-pick' + (on ? ' is-on' : '') + '" data-act="mbCovToggle" data-args="' + _covArgs([kind, r.key]) + '"' +
+            ' aria-pressed="' + on + '" title="' + _covEsc(lab) + '" aria-label="' + _covEsc(lab) + '">' + sym + '</button>';
+    }
     if (r.dests.indexOf(kind) === -1) {
         return '<span class="mb-cov-cell is-off" title="' + _covEsc(_covT('mbCovOff', { v0: _covT('mbSpKind_' + kind) })) + '">—</span>';
     }
@@ -110,7 +176,17 @@ function _covHtml() {
     var loSel = '<select class="mb-cov-lo" aria-label="' + _covEsc(_covT('mbSpLoLabel')) + '" data-act="mbCovSetLo" data-on="change" data-args="' + _covArgs(['$value']) + '">' +
         '<option value="">' + _covEsc(_covT('mbCovAllLos')) + '</option>' +
         los.map(function (l) { return '<option value="' + _covEsc(l.id) + '"' + (l.id === mbCovState.lo ? ' selected' : '') + '>' + _covEsc(_cmLoLabel(l)) + '</option>'; }).join('') + '</select>';
-    return '<div class="mb-cov-sum"><div class="mb-cov-bar" role="img" aria-label="' + _covEsc(_covT('mbCovPct', { v0: pct })) + '"><span style="width:' + pct + '%"></span></div>' +
+    /* 3.64.0: the distribution method of the project. */
+    var mode = mbCmMode();
+    var modes = '<div class="mb-cov-modes" role="radiogroup" aria-label="' + _covEsc(_covT('cvmHead')) + '"><span class="mb-cov-modes-h">' + _covEsc(_covT('cvmHead')) + '</span>' +
+        ['default', 'manual', 'ai'].map(function (m) {
+            var k = m === 'default' ? 'cvmDefault' : m === 'manual' ? 'cvmManual' : 'cvmAi';
+            return '<button type="button" role="radio" class="mb-cov-mode' + (m === mode ? ' is-on' : '') + '" aria-checked="' + (m === mode) + '"' +
+                ' data-act="mbCovSetMode" data-args="' + _covArgs([m]) + '">' + _covEsc(_covT(k)) + '</button>';
+        }).join('') +
+        (mode === 'ai' ? '<button type="button" class="mb-sp-btn is-main mb-cov-ai" data-act="mbCovAiSuggest" id="mb-cov-ai-btn">' + _covEsc(_covT('cvmAiRun')) + '</button>' : '') +
+        '</div><p class="mb-cov-legend" dir="auto">' + _covEsc(_covT(mode === 'default' ? 'cvmDefaultTip' : mode === 'manual' ? 'cvmManualTip' : 'cvmAiTip')) + '</p>';
+    return modes + '<div class="mb-cov-sum"><div class="mb-cov-bar" role="img" aria-label="' + _covEsc(_covT('mbCovPct', { v0: pct })) + '"><span style="width:' + pct + '%"></span></div>' +
         '<span>' + _covEsc(_covT('mbCovPct', { v0: pct })) + '</span>' +
         '<span class="mb-sp-st is-built">✓ ' + tot.built + '</span><span class="mb-sp-st is-ok">● ' + tot.ok + '</span><span class="mb-sp-st is-new">○ ' + tot.new + '</span></div>' +
         '<div class="mb-cov-tools">' + loSel +
@@ -122,7 +198,7 @@ function _covHtml() {
 
 function mbCovOpen() {
     var foot = '<button type="button" class="mb-sp-btn is-quiet" data-act="mbCovDefaults">⚙️ ' + _covEsc(_covT('mbSpDefaultsTitle')) + '</button>' +
-        '<button type="button" class="mb-sp-btn is-quiet" data-act="mbCovWorkspace">🧠 ' + _covEsc(_covT('mbCovWorkspace')) + '</button>';
+        '';   /* 3.64.0: the mapping workspace is gone — its AI now suggests the distribution here */
     _covShell(MB_COV_ID, '🗺️ ' + _covEsc(_covT('mbCovTitle')), _covHtml(), foot);
 }
 
@@ -159,9 +235,79 @@ async function mbCovGo(kind, key) {
     }
 }
 
-function mbCovWorkspace() {
-    mbCovClose(MB_COV_ID);
-    switchTab('mapping');
+/* ── 3.64.0: the distribution method, and choosing by hand ───── */
+
+function _covAfterChange() {
+    mbCovRender();
+    if (typeof mbSpRefresh === 'function') mbSpRefresh();
+    if (typeof mbLibrarySave === 'function') mbLibrarySave();
+}
+
+function mbCovSetMode(mode) {
+    if (MB_CM_MODES.indexOf(mode) === -1 || mode === mbCmMode()) return;
+    mbState.cmMode = mode;
+    _covAfterChange();
+}
+
+/** A cell of Coverage in manual / AI mode: this item goes there, or not. */
+function mbCovToggle(kind, key) {
+    var module = _mbCurrentModule();
+    var r = module && mbContentMapRows(module).find(function (x) { return x.key === key; });
+    if (!r || r.built.indexOf(kind) !== -1) return;
+    var d = r.dests.indexOf(kind) !== -1 ? r.dests.filter(function (k) { return k !== kind; }) : r.dests.concat([kind]);
+    _cmPut(module, r, 'd', d);
+    _covAfterChange();
+}
+
+/* «🤖 Suggest the distribution»: the items that are neither approved nor
+   built, with their field and task, go to the AI service the translation
+   already uses (suggest_panel.js _spCallAI); its answer becomes each
+   item's destinations — suggestions, still to be approved in the panels. */
+function _covAiPrompt(items) {
+    var src = {};
+    items.forEach(function (it, i) { src[String(i + 1)] = { field: it.field, task: it.task, item: it.text }; });
+    return 'You are an expert in competency-based TVET curriculum design (DACUM, CBT).\n' +
+        'For each Task Analysis item below, choose where it belongs in a training module:\n' +
+        '- "info": knowledge the learner must understand — the information sheet.\n' +
+        '- "activity": something the learner does or practises — the activity / job sheet (steps, tools, safety while working).\n' +
+        '- "assessment": a criterion or standard the trainer judges competence against — the assessment form.\n' +
+        'An item may belong to more than one, or to none ([]) when it adds nothing to the training. Do not rewrite the items.\n\n' +
+        'ITEMS\n' + JSON.stringify(src) + '\n\n' +
+        'OUTPUT FORMAT\nReturn ONLY a JSON object with exactly the same ids: {"d":{"1":["info","activity"],"2":["assessment"]}}';
+}
+
+async function mbCovAiSuggest() {
+    var module = _mbCurrentModule();
+    if (!module) return;
+    var rows = mbContentMapRows(module).filter(function (r) {
+        return r.taskId !== MB_LO_PC && !r.ok.length && !r.built.length;
+    });
+    if (!rows.length) { showStatus(_covT('cvmAiNone'), 'info'); return; }
+    var btn = document.getElementById('mb-cov-ai-btn');
+    if (btn) { btn.disabled = true; btn.textContent = _covT('cvmAiBusy'); }
+    var done = 0;
+    try {
+        for (var i = 0; i < rows.length; i += 80) {
+            var batch = rows.slice(i, i + 80);
+            var items = batch.map(function (r) {
+                return { field: _mbFieldLabel(r.field), task: _mbTaskLabel(r.taskId), text: _mbCleanItem(r.edited || r.text) };
+            });
+            var out = await _spCallAI(_covAiPrompt(items));
+            var d = (out && out.d) || {};
+            batch.forEach(function (r, j) {
+                var kinds = _cmCleanKinds(d[String(j + 1)]);
+                if (!kinds) return;
+                _cmPut(module, r, 'd', kinds);
+                done++;
+            });
+        }
+        showStatus(_covT('cvmAiDone', { v0: done }), 'success');
+    } catch (e) {
+        console.warn('[Coverage] AI distribution failed:', e);
+        showStatus(_covT('cvmAiFail', { v0: (e && e.message) || e }), 'error');
+    } finally {
+        _covAfterChange();
+    }
 }
 
 /* ── Distribution settings ─────────────────────────────────── */
@@ -204,7 +350,7 @@ function _covDefaultsHtml(draft, marks) {
 
 function _covDraft() {
     var d = {};
-    MB_CM_DEFAULT_FIELDS.forEach(function (g) { d[g] = mbCmDefaultKinds(g); });
+    MB_CM_DEFAULT_FIELDS.forEach(function (g) { d[g] = mbCmFieldKinds(g); });
     return d;
 }
 

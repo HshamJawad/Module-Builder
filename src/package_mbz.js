@@ -39,6 +39,7 @@ function mbPackageProjectPart(shared) {
         /* 3.62.0: the project's own marks, which the module's sheets may use,
            and which mark each Task Analysis field is written as. */
         marks: { customMarks: shared.customMarks || [], cmMarks: shared.cmMarks || {} },
+        cmMode: shared.cmMode || 'default',   // 3.64.0 — the distribution method
         cover: {
             coversAdditionalInfo:  shared.coversAdditionalInfo,
             coversAdditionalNotes: shared.coversAdditionalNotes,

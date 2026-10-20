@@ -103,7 +103,8 @@ function mbCollectShared() {
         moduleTemplate:         (typeof mbTemplate === 'function') ? mbTemplate() : 'standard',   // 3.59.0
         lgAsm:                  mbState.lgAsm || null,                                          // 3.59.0 — learner_guide.js
         cmMarks:                mbState.cmMarks || {},                                          // 3.62.0 — custom_marks.js
-        customMarks:            mbState.customMarks || []
+        customMarks:            mbState.customMarks || [],
+        cmMode:                 mbState.cmMode || 'default'                                     // 3.64.0 — content_map.js
     };
 }
 
@@ -128,7 +129,8 @@ function _mbDefaultShared() {
         tvqfBasic: {}, tvqfExtended: {}, cmDefaults: {},
         moduleTemplate: 'standard',   // 3.59.0 — module_template.js
         lgAsm: null,                  // 3.59.0 — learner_guide.js
-        cmMarks: {}, customMarks: []  // 3.62.0 — custom_marks.js
+        cmMarks: {}, customMarks: [], // 3.62.0 — custom_marks.js
+        cmMode: 'default'             // 3.64.0 — content_map.js
     };
 }
 
@@ -145,6 +147,7 @@ function mbApplyProjectShared(data) {
         /* 3.62.0: the project's marks before any sheet is painted with them. */
         mbState.customMarks = (typeof mbNormalizeCustomMarks === 'function') ? mbNormalizeCustomMarks(data.customMarks) : [];
         mbState.cmMarks = (typeof mbNormalizeCmMarks === 'function') ? mbNormalizeCmMarks(data.cmMarks) : {};
+        mbState.cmMode = (['default', 'manual', 'ai'].indexOf(data.cmMode) !== -1) ? data.cmMode : 'default';   // 3.64.0
         if (mbLib.project) mbLib.project.template = mbState.moduleTemplate;
         if (typeof mbApplyTemplateUI === 'function') mbApplyTemplateUI();
         mbState.coversAdditionalInfo  = biUpgrade(data.coversAdditionalInfo);

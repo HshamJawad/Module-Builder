@@ -7,7 +7,7 @@ const { openApp, tab } = require('../helpers');
 test('the side navigation order, and each part in its own tab', async ({ page }) => {
   const errors = await openApp(page, { lang: 'en' });
   const names = await page.locator('#mb-sidenav .tabs .tab').evaluateAll(b => b.map(x => x.getAttribute('data-args') || x.id));
-  expect(names).toEqual(['["basic-info"]', 'mb-cov-nav', '["module-info"]', '["covers"]', '["intro"]', '["info"]', '["activity"]',
+  expect(names).toEqual(['["basic-info"]', '["module-info"]', '["covers"]', '["intro"]', '["info"]', '["activity"]',
     '["assessment"]', '["references"]', '["back-cover"]', 'mb-settings-nav', '["help"]']);
   const inTab = (id) => page.evaluate(i => document.getElementById(i).closest('.tab-content').id, id);
   expect(await inTab('covers-table-container')).toBe('module-info-tab');

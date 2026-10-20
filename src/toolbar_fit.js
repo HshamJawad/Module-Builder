@@ -166,7 +166,9 @@
             /* Someone who has asked for less motion gets no animation on
                a bar that resizes itself while they type. */
             '@media (prefers-reduced-motion:no-preference){',
-            '.figma-toolbar .figma-btn{transition:padding .12s,font-size .12s;}}'
+            '.figma-toolbar .figma-btn{transition:padding .12s,font-size .12s;}}',
+            /* 3.64.0: no animation while a pass measures — see fit(). */
+            '.figma-toolbar.tb-measuring .figma-btn{transition:none !important;}'
         ].join('');
         document.head.appendChild(s);
     }
@@ -234,6 +236,13 @@
     function fit() {
         if (!bar || !bar.isConnected) return;
         busy = true;
+        /* 3.64.0: a pass measured the buttons half-way through their
+           padding / font-size transition, so it saw a width that was
+           neither level, chose a different one, and the next pass did
+           the same — the bar twitched for as long as the page was open
+           (the folder's «📁 Allow» button made it reach that width).
+           Measured with the transition off, every reading is final. */
+        bar.classList.add('tb-measuring');
 
         var i = 0;
         for (; i < LEVELS.length; i++) {
@@ -243,6 +252,8 @@
         var atFloor = (i >= LEVELS.length);
         if (atFloor) applyLevel(LEVELS.length - 1);
         track.classList.toggle('tb-scroll', atFloor && overflows());
+        void bar.offsetWidth;            // settle the styles before the transition returns
+        bar.classList.remove('tb-measuring');
 
         /* Cleared after the frame, not on this line: the writes above
            have not been laid out yet, and the observations they cause
