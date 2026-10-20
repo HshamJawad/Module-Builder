@@ -332,8 +332,18 @@ function mbBuildModuleHtml(model, opts) {
                     return '<li><a href="' + href + '">' + _hxEsc(x.line) + '</a></li>';
                 }).join('') + '</ul></div>';
         }
+        /* 3.59.0: the Learner guide's introduction sits on the unit's page. */
+        (o.sequence || []).forEach(function (it) {
+            if (it.kind !== 'lgIntro') return;
+            var x = it.intro;
+            inner += '<div class="mx-sub">' + _hxEsc(x.heading) + '</div>';
+            if (x.body) inner += '<p>' + _hxText(x.body) + '</p>';
+            if (x.items.length) inner += '<p><strong>' + _hxEsc(x.lead) + '</strong></p><ol>' +
+                x.items.map(function (i) { return '<li>' + _hxText(i) + '</li>'; }).join('') + '</ol>';
+        });
         if (inc('outcomes')) {
-            add(oid, t('outcome') + ' ' + o.index, _hxSection(oid, t('outcome') + ' ' + o.index, o.title, inner));
+            if (o.heading) add(oid, o.heading, _hxSection(oid, '', o.heading, inner));
+            else add(oid, t('outcome') + ' ' + o.index, _hxSection(oid, t('outcome') + ' ' + o.index, o.title, inner));
         }
 
         var renderInfo = function (sh, i) {   // 3.43.0: called in document order
@@ -371,6 +381,7 @@ function mbBuildModuleHtml(model, opts) {
             }
 
             var infoLbl = sh.label || t('infoSheet');   // 3.42.0
+            if (sh.heading) { add(sid, sh.number + ' ' + infoLbl, _hxSection(sid, '', sh.heading, h)); return; }   // 3.59.0
             add(sid, infoLbl + ' ' + sh.number,
                 _hxSection(sid, infoLbl + ' ' + sh.number, sh.title, h));
         };
@@ -427,6 +438,7 @@ function mbBuildModuleHtml(model, opts) {
             }
 
             var actLbl = sh.label || t('activitySheet');   // 3.42.0
+            if (sh.heading) { add(aid, sh.number + ' ' + actLbl, _hxSection(aid, '', sh.heading, h)); return; }   // 3.59.0
             add(aid, actLbl + ' ' + sh.number,
                 _hxSection(aid, actLbl + ' ' + sh.number, sh.title, h));
         };
@@ -439,6 +451,17 @@ function mbBuildModuleHtml(model, opts) {
                 if (inc('infoSheets')) renderInfo(it.sheet, o.infoSheets.indexOf(it.sheet));
             } else if (it.kind === 'activity') {
                 if (inc('activitySheets')) renderAct(it.sheet, o.activitySheets.indexOf(it.sheet));
+            } else if (it.kind === 'lgIntro') {
+                /* on the unit's page, above */
+            } else if (it.kind === 'lgReflection') {
+                if (!inc('outcomes')) return;
+                var r = it.reflection, rid = oid + '-refl';
+                var rh = r.questions.map(function (q, qi) {
+                    return '<div class="mx-block"><p><strong>' + _hxText(q) + '</strong></p>' +
+                        (forPrint ? new Array(r.lines + 1).join('<p class="mx-lines">' + new Array(80).join('.') + '</p>')
+                                  : '<textarea class="mx-refl" rows="' + (r.lines + 1) + '" data-note="' + rid + '-' + qi + '" style="width:100%;"></textarea>') + '</div>';
+                }).join('');
+                add(rid, r.heading, _hxSection(rid, '', r.heading, rh));
             } else if (inc('outcomes')) {
                 var b = it.block, bid = oid + '-sec-' + (++secN);
                 var bh = (b.body ? '<p>' + _hxText(b.body) + '</p>' : '') + _hxTables(b.tables);
@@ -448,7 +471,49 @@ function mbBuildModuleHtml(model, opts) {
         });
     });
 
-    if (model.assessment.length && inc('assessment')) {
+    /* 3.59.0: the Learner guide — the glossary first, then its assessment unit. */
+    var lgA = model.lgAssessment || null;
+    if (model.template === 'learnerGuide') {
+        if (model.glossary && model.glossary.tables.length && inc('glossary')) {
+            var lgG = model.glossary.title || t('glossary');
+            add('glossary', lgG, _hxSection('glossary', '', lgG, _hxTables(model.glossary.tables)));
+        }
+        if (lgA && inc('assessment')) {
+            var ah = '';
+            if (lgA.intro.trim()) ah += '<div class="mx-sub">' + _hxEsc(lgA.introHead) + '</div><p>' + _hxText(lgA.intro) + '</p>';
+            if (lgA.portfolio.trim()) ah += '<div class="mx-sub">' + _hxEsc(lgA.portfolioHead) + '</div><p>' + _hxText(lgA.portfolio) + '</p>';
+            if (lgA.content.trim()) ah += '<p>' + _hxText(lgA.content) + '</p>';
+            lgA.blocks.forEach(function (b) {
+                if (b.title) ah += '<div class="mx-sub">' + _hxEsc(b.title) + '</div>';
+                if (b.body) ah += '<p>' + _hxText(b.body) + '</p>';
+                ah += _hxTables(b.tables);
+            });
+            if (lgA.contents.length) {
+                ah += '<div class="mx-sub">' + _hxEsc(lgA.contentsHead) + '</div><table class="mx-tbl"><thead><tr>' +
+                    lgA.contentsCols.map(function (c) { return '<th>' + _hxEsc(c) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+                    lgA.contents.map(function (r) { return '<tr><td>' + _hxText(r.label) + '</td><td>' + _hxText(r.product) + '</td><td>' + _hxEsc(r.contributes) + '</td></tr>'; }).join('') +
+                    '</tbody></table>';
+            }
+            if (model.assessment.length) {
+                ah += '<div class="mx-sub">' + _hxEsc(lgA.tablesHead) + '</div><p class="mx-lead">' + _hxText(lgA.tablesLead) + '</p>';
+                model.assessment.forEach(function (f, fi) {
+                    ah += '<div class="mx-block"><div class="mx-sub">' + _hxEsc(lgA.outcomeHeads[fi]) + '</div>';
+                    if (f.rows.length) ah += '<table class="mx-tbl"><thead><tr>' + lgA.cols.map(function (c) { return '<th>' + _hxEsc(c) + '</th>'; }).join('') +
+                        '</tr></thead><tbody>' + f.rows.map(function (r) {
+                            return '<tr><td>' + _hxText(r.criteria) + '</td><td>' + _hxText(r.activities) + '</td><td>' + _hxText(r.outcomes) + '</td><td>' + _hxText(r.date) + '</td></tr>';
+                        }).join('') + '</tbody></table>';
+                    var lres = (f.results && f.results.length) ? f.results : [t('competent'), t('notYet')];
+                    ah += '<p class="mx-result"><strong>' + t('result') + ':</strong> ' + lres.map(function (x, ri) {
+                        return '<label style="display:inline-flex;align-items:center;gap:6px;margin-inline-end:18px;cursor:pointer;">' +
+                               '<input type="checkbox" data-check="asm-' + fi + '-r-' + ri + '" style="width:18px;height:18px;"> ' + _hxEsc(x) + '</label>';
+                    }).join('') + '</p></div>';
+                });
+            }
+            add('assessment', lgA.heading, _hxSection('assessment', '', lgA.heading, ah));
+        }
+    }
+
+    if (model.template !== 'learnerGuide' && model.assessment.length && inc('assessment')) {
         var as = model.assessment.map(function (f, fi) {
             var h = '<div class="mx-block"><div class="mx-sub">' + t('outcome') + ' ' + f.outcomeIndex + ': ' + _hxEsc(f.outcomeTitle) + '</div>';
             if (f.rows.length) {
@@ -482,7 +547,7 @@ function mbBuildModuleHtml(model, opts) {
     }
 
     /* 3.42.0: Glossary of Terms, before the references. */
-    if (model.glossary && model.glossary.tables.length && inc('glossary')) {
+    if (model.template !== 'learnerGuide' && model.glossary && model.glossary.tables.length && inc('glossary')) {
         var gTitle = model.glossary.title || t('glossary');
         add('glossary', gTitle, _hxSection('glossary', '', gTitle, _hxTables(model.glossary.tables)));
     }

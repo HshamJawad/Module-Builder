@@ -99,7 +99,9 @@ function mbCollectShared() {
         moduleCategories:       mbState.moduleCategories  || null,   // 3.58.0
         tvqfBasic:              mbState.tvqfBasic        || {},
         tvqfExtended:           mbState.tvqfExtended     || {},
-        cmDefaults:             mbState.cmDefaults       || {}
+        cmDefaults:             mbState.cmDefaults       || {},
+        moduleTemplate:         (typeof mbTemplate === 'function') ? mbTemplate() : 'standard',   // 3.59.0
+        lgAsm:                  mbState.lgAsm || null                                           // 3.59.0 — learner_guide.js
     };
 }
 
@@ -121,7 +123,9 @@ function _mbDefaultShared() {
         assessmentResults: null,
         ratingScale: null,
         moduleCategories: null,
-        tvqfBasic: {}, tvqfExtended: {}, cmDefaults: {}
+        tvqfBasic: {}, tvqfExtended: {}, cmDefaults: {},
+        moduleTemplate: 'standard',   // 3.59.0 — module_template.js
+        lgAsm: null                   // 3.59.0 — learner_guide.js
     };
 }
 
@@ -132,6 +136,11 @@ function _mbDefaultShared() {
 function mbApplyProjectShared(data) {
     data = data || _mbDefaultShared();
     try {
+        /* 3.59.0: first, so every renderer below paints for the project's
+           template. An older project has none: the standard one. */
+        mbState.moduleTemplate = (typeof mbTemplateId === 'function') ? mbTemplateId(data.moduleTemplate) : 'standard';
+        if (mbLib.project) mbLib.project.template = mbState.moduleTemplate;
+        if (typeof mbApplyTemplateUI === 'function') mbApplyTemplateUI();
         mbState.coversAdditionalInfo  = biUpgrade(data.coversAdditionalInfo);
         mbState.coversAdditionalNotes = biUpgrade(data.coversAdditionalNotes);
 
@@ -158,6 +167,7 @@ function mbApplyProjectShared(data) {
 
         mbState.moduleCategories = Array.isArray(data.moduleCategories) && data.moduleCategories.length ? data.moduleCategories : null;   // 3.58.0
         mbState.assessmentContent = biUpgrade(data.assessmentContent);
+        mbState.lgAsm = (typeof mbLgNormalizeAsm === 'function') ? mbLgNormalizeAsm(data.lgAsm) : null;   // 3.59.0
         mbState.assessmentBlocks = (typeof mbNormalizeBlocks === 'function') ? mbNormalizeBlocks(data.assessmentBlocks) : (data.assessmentBlocks || []);   // 3.57.0
         if (typeof mbRenderBlocks === 'function') mbRenderBlocks('assessment');
         if (typeof applyProjectTextToDOM === 'function') applyProjectTextToDOM();
@@ -350,6 +360,7 @@ function _mbMetaSnapshot() {
     p.currentModuleId = mbLib.openId || null;
     p.moduleIdCounter = mbState.moduleIdCounter || 0;
     p.loIdCounter     = mbState.loIdCounter || 0;
+    p.template        = (typeof mbTemplate === 'function') ? mbTemplate() : 'standard';   // 3.59.0
     return p;
 }
 
@@ -396,7 +407,7 @@ async function _mbSaveNow(force) {
     /* Project record: order, open module, counters. */
     var meta = _mbMetaSnapshot();
     var fm = mbFingerprint([meta.moduleOrder, meta.currentModuleId, meta.moduleIdCounter, meta.loIdCounter,
-                            meta.name, meta.programId, meta.programName]).fp;
+                            meta.name, meta.programId, meta.programName, meta.template]).fp;
     if (force || changed || fm !== mbLib.fps.meta) {
         meta.updatedAt = changed ? Date.now() : (meta.updatedAt || Date.now());
         await mbStore.putProject(meta);
@@ -675,16 +686,21 @@ function mbLibraryOpenProject(pid, opts) {
 function _mbCreateProjectNow(fields, opts) {
     var meta = _mbNewProjectRecord(fields);
     if (!meta.name) meta.name = _mbLibT('mbLibNewProjectDefault');
+    /* 3.59.0: a new project is of the template it was created for, else
+       of the template on screen. */
+    var shared = _mbDefaultShared();
+    shared.moduleTemplate = meta.template = (typeof mbTemplateId === 'function')
+        ? mbTemplateId(meta.template || (typeof mbTemplate === 'function' ? mbTemplate() : 'standard')) : 'standard';
     return mbStore.putProject(meta)
-        .then(function () { return mbStore.putShared(meta.id, _mbDefaultShared()); })
+        .then(function () { return mbStore.putShared(meta.id, shared); })
         .then(function () { return _mbOpenProjectNow(meta.id, opts); })
         .then(function () { return meta; });
 }
 
-function mbLibraryCreateProject(name) {
+function mbLibraryCreateProject(name, fields) {
     if (typeof mbTabGuard !== 'undefined') setTimeout(function () { mbTabGuard.post({ type: 'projects' }); }, 500);
     return _mbLibQueue(function () {
-        return _mbSaveNow(false).then(function () { return _mbCreateProjectNow({ name: name || '' }); });
+        return _mbSaveNow(false).then(function () { return _mbCreateProjectNow(Object.assign({}, fields || {}, { name: name || '' })); });
     });
 }
 
@@ -819,7 +835,8 @@ function _mbStoreProjectData(data, fields) {
     data = mbAssignProjectUids(biMigrateProject(data));
     var meta = _mbNewProjectRecord(Object.assign({
         moduleIdCounter: data.moduleIdCounter || 0,
-        loIdCounter: data.loIdCounter || 0
+        loIdCounter: data.loIdCounter || 0,
+        template: (typeof mbTemplateId === 'function') ? mbTemplateId(data.moduleTemplate) : 'standard'   // 3.59.0
     }, fields || {}));
     var modules = Array.isArray(data.modules) ? data.modules : [];
     var allForms = data.assessmentFormsData || {};
@@ -1098,6 +1115,8 @@ function mbLibraryBoot(exportData) {
     return _mbLibQueue(function () {
         return mbStore.available().then(function (ok) {
             mbLib.enabled = ok;
+            /* 3.59.0: a DACUM handoff says what to work on — no template window. */
+            mbLib.bootedFromDacum = !!(exportData && exportData.modules && exportData.modules.length);
             if (!ok) return _mbBootInMemory(exportData);
             var migrated = null;
             return _mbMigrateLegacySnapshot().then(function (m) {
@@ -1183,5 +1202,9 @@ function mbLibraryAskAuthor(force) {
 window.addEventListener('mb:libraryready', function () {
     /* After boot, never during: a DACUM import may be asking its own
        question, and two dialogs cannot be open at once. */
-    setTimeout(function () { mbLibraryAskAuthor(false); }, 400);
+    /* 3.59.0: the template window first (module_template.js), then the name. */
+    setTimeout(function () {
+        var first = (typeof mbTemplateStartup === 'function') ? mbTemplateStartup() : Promise.resolve();
+        first.then(function () { mbLibraryAskAuthor(false); }, function () { mbLibraryAskAuthor(false); });
+    }, 400);
 });

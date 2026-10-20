@@ -51,7 +51,11 @@ function mbDefaultSheetKind() {
 function mbSheetLabelCustom(kind, lang) {
     var all = _mbSkSettings().sheetLabels || {};
     var side = all[lang] || {};
-    return String(side[kind] || '').trim();
+    var own = String(side[kind] || '').trim();
+    /* 3.59.0: the Learner guide names its sheets «Knowledge», «Learning
+       activity» and «Worksheet» unless the user typed a name. */
+    if (!own && typeof mbLgSheetName === 'function') own = mbLgSheetName(kind, lang);
+    return own;
 }
 
 /** The name to print: the user's, else the dictionary's. */
@@ -101,7 +105,12 @@ function mbRenderSheetKindSelect(value) {
     if (!sel) return;
     var cur = mbSheetKind(value !== undefined ? value : sel.value);
     var lang = (typeof contentLang === 'function') ? contentLang() : 'en';
-    sel.innerHTML = MB_SHEET_KINDS.map(function (k) {
+    /* 3.59.0: the Learner guide has two kinds of activity sheet — the
+       learning activity and the worksheet (a Job sheet). A sheet of
+       another type keeps it. */
+    var kinds = (typeof mbIsLearnerGuide === 'function' && mbIsLearnerGuide())
+        ? MB_SHEET_KINDS.filter(function (k) { return k === 'activity' || k === 'job' || k === cur; }) : MB_SHEET_KINDS;
+    sel.innerHTML = kinds.map(function (k) {
         var name = mbSheetLabel(k, lang).replace(/[&<>"]/g, function (c) {
             return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
         });

@@ -428,6 +428,10 @@ var WS_DEFAULTS = {
        «sourceDrafts: false» saved while it was off by default does not
        keep it hidden. */
     hideSourceDrafts: false,
+    /* 3.59.0 — module_template.js: the startup window, and whether
+       switching templates converts the open project. */
+    templateChooser:  true,
+    templateConvert:  false,
     /* 3.56.0 — attachments.js: figure / table numbering. Off by default:
        an untouched install exports exactly what it did. */
     figNumbering:     false,
@@ -536,6 +540,8 @@ function wsReadSettings() {
         sheetOrder: (o.sheetOrder === 'interleaved') ? 'interleaved' : 'byType',
         unifiedNumbering: o.unifiedNumbering === true,
         hideSourceDrafts: o.hideSourceDrafts === true,
+        templateChooser: o.templateChooser !== false,
+        templateConvert: o.templateConvert === true,
         figNumbering: o.figNumbering === true,
         figScope: o.figScope === 'module' ? 'module' : 'sheet',
         figWords: _wsValidFigWords(o.figWords)
@@ -1041,6 +1047,8 @@ function _wsPaneMisc() {
                _wsMiscEsc(_wsSkDefault(k, ui)) + '</option>';
     }).join('');
     return '' +
+        /* 3.59.0 — the module template (module_template.js). */
+        ((typeof mbTemplateSettingsHtml === 'function') ? mbTemplateSettingsHtml(_wsDraft) : '') +
         '<h4 class="ws-group">\uD83C\uDFF7\uFE0F ' + _wsT('wsMiscSheetsTitle') + '</h4>' +
         '<p class="ws-note ws-note-sm">\u2139\uFE0F ' + _wsT('wsMiscSheetsNote') + '</p>' +
         '<div class="ws-misc-scroll"><table class="ws-misc-table">' +
@@ -1282,6 +1290,8 @@ function openWordSettings(pane) {
         }
         /* 3.42.0 — Misc. */
         var miscField = e.target && e.target.getAttribute && e.target.getAttribute('data-ws-misc');
+        if (miscField === 'templateChooser') { _wsDraft.templateChooser = !!e.target.checked; _wsTouch(); return; }   // 3.59.0
+        if (miscField === 'templateConvert') { _wsDraft.templateConvert = !!e.target.checked; _wsTouch(); return; }
         if (miscField === 'checklistTime') { _wsDraft.checklistTime = !!e.target.checked; _wsTouch(); return; }
         if (miscField === 'unifiedNumbering') { _wsDraft.unifiedNumbering = !!e.target.checked; _wsTouch(); return; }
         if (miscField === 'sourceDrafts') { _wsDraft.hideSourceDrafts = !e.target.checked; _wsTouch(); return; }

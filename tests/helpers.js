@@ -11,22 +11,23 @@ function fixture(name) {
  * after DACUM Live Pro's "Build in Module Builder": the handoff is in
  * localStorage before the first script runs. Collects page errors.
  */
-async function openApp(page, { handoff = null, lang = null, contentLang = null } = {}) {
+async function openApp(page, { handoff = null, lang = null, contentLang = null, chooser = false } = {}) {
   const errors = [];
   page.on('pageerror', e => errors.push(String(e && e.message || e)));
   if (!page.__mbDialogs) {
     page.__mbDialogs = true;
     page.on('dialog', d => d.accept().catch(() => {}));
   }
-  await page.addInitScript(({ h, lang, cl }) => {
+  await page.addInitScript(({ h, lang, cl, chooser }) => {
     if (sessionStorage.getItem('__mbSeeded')) return;   // once per test, not on reload
     sessionStorage.setItem('__mbSeeded', '1');
     localStorage.setItem('mb_author_asked', '1');      // no first-run name prompt
     localStorage.setItem('mb_author_name', 'Test author');
+    if (!chooser) localStorage.setItem('mb_word_export_settings', JSON.stringify({ templateChooser: false }));   // no template window (3.59.0)
     if (h) localStorage.setItem('dacum_modules_export', h);
     if (lang) localStorage.setItem('dacum_lang', lang);
     if (cl) localStorage.setItem('mb_content_lang', cl);
-  }, { h: handoff ? JSON.stringify(handoff) : null, lang, cl: contentLang });
+  }, { h: handoff ? JSON.stringify(handoff) : null, lang, cl: contentLang, chooser });
   await page.goto('/index.html');
   await page.waitForFunction(() => window.mbLib && window.mbLib.booted === true, null, { timeout: 30_000 });
   await page.waitForTimeout(400);

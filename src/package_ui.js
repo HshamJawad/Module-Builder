@@ -497,6 +497,8 @@
                     occupation: mp.occupation || ''
                 });
                 var shared = _mbDefaultShared();
+                /* 3.59.0: a project made from a package takes its template. */
+                if (pkg.project && typeof mbTemplateId === 'function') shared.moduleTemplate = meta.template = mbTemplateId(pkg.project.template);
                 if (pkg.project) {
                     if (pkg.project.cover) takeCover(shared, pkg.project.cover);
                     mergeLists(shared, pkg.project);
@@ -553,6 +555,11 @@
                     if (!open.meta.occupation && mp.occupation) open.meta.occupation = mp.occupation;
                     if (open.meta.name === t('mbLibNewProjectDefault') || !open.meta.name) {
                         open.meta.name = mp.name || open.meta.programName || open.meta.name;
+                    }
+                    /* 3.59.0: and its template. */
+                    if (pkg.project && typeof mbTemplateId === 'function' && mbTemplateId(pkg.project.template) !== mbState.moduleTemplate) {
+                        mbState.moduleTemplate = open.meta.template = mbTemplateId(pkg.project.template);
+                        sharedChanged = true;
                     }
                     blank.adopted = true;
                 } else {
