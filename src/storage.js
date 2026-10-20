@@ -44,6 +44,7 @@ async function clearForm() {
         if (typeof mbRenderSheetKindSelect === 'function') mbRenderSheetKindSelect(mbDefaultSheetKind());   // 3.42.0
         document.getElementById('resources-container').innerHTML = '';
         document.getElementById('steps-container').innerHTML = '';
+        if (typeof mbAttReset === 'function') { mbAttReset('activity'); mbImgCapsReset('activity'); }   // 3.56.0
         document.getElementById('activity-link-subject').value = '';
         document.getElementById('activity-link-url').value = '';
         document.getElementById('activity-qr-preview').innerHTML = '';
@@ -159,6 +160,7 @@ async function clearAll() {
         document.getElementById('answers-key-number').value = '';
         document.getElementById('answers-key-content').value = '';
         document.getElementById('content-sections-container').innerHTML = '';
+        if (typeof mbAttReset === 'function') { mbAttReset('info'); mbImgCapsReset('info'); }   // 3.56.0
         mbState.contentSectionCount = 0;
         for (let k in mbState.contentSectionImages) delete mbState.contentSectionImages[k];
 
@@ -175,6 +177,7 @@ async function clearAll() {
         mbState.activityQRImage = null;
         document.getElementById('resources-container').innerHTML = '';
         document.getElementById('steps-container').innerHTML = '';
+        if (typeof mbAttReset === 'function') { mbAttReset('activity'); mbImgCapsReset('activity'); }   // 3.56.0
         mbState.resourceCount = 0;
         mbState.stepCount = 0;
         for (let k in mbState.stepImages) delete mbState.stepImages[k];

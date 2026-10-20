@@ -131,11 +131,26 @@ function _hxSlug(s, fallback) {
 
 /* ── Fragments ─────────────────────────────────────────────── */
 
-function _hxImages(images) {
+function _hxImages(images, caps) {
     if (!images || !images.length) return '';
-    return '<div class="mx-imgs">' + images.map(function (src) {
-        return '<img src="' + _hxEsc(src) + '" alt="" loading="lazy">';
+    /* 3.56.0: a caption under a picture, numbered when numbering is on. */
+    return '<div class="mx-imgs">' + images.map(function (src, i) {
+        var cap = caps && caps[i] ? String(caps[i]) : '';
+        var img = '<img src="' + _hxEsc(src) + '" alt="' + _hxEsc(cap) + '" loading="lazy">';
+        return cap ? '<figure class="mx-imgfig">' + img + '<figcaption>' + _hxEsc(cap) + '</figcaption></figure>' : img;
     }).join('') + '</div>';
+}
+
+/* 3.56.0 — attached figures and tables, in the slot chosen for them. */
+function _hxAttachments(list, slot) {
+    return (list || []).filter(function (a) { return a.slot === slot; }).map(function (a) {
+        var src = a.source ? '<div class="mx-src">' + _hxEsc(a.source) + '</div>' : '';
+        if (a.type === 'image') {
+            return '<figure class="mx-fig"><img src="' + _hxEsc(a.image) + '" alt="' + _hxEsc(a.caption) + '" loading="lazy">' +
+                   (a.caption ? '<figcaption>' + _hxEsc(a.caption) + '</figcaption>' : '') + src + '</figure>';
+        }
+        return '<div class="mx-figtable">' + _hxTables([a.table]) + src + '</div>';
+    }).join('');
 }
 
 function _hxMarks(marks) {
@@ -326,13 +341,15 @@ function mbBuildModuleHtml(model, opts) {
             var h = '';
             if (sh.objectiveLead) h += '<p class="mx-lead">' + _hxText(sh.objectiveLead) + '</p>';
             if (sh.objective) h += '<div class="mx-sub">' + t('objective') + '</div><p>' + _hxText(sh.objective) + '</p>';
-            sh.sections.forEach(function (cs) {
+            sh.sections.forEach(function (cs, k) {
+                h += _hxAttachments(sh.attachments, k);
                 h += '<div class="mx-block">';
                 if (cs.heading) h += '<div class="mx-sub">' + _hxEsc(cs.heading) + '</div>';
                 if (cs.text) h += '<p>' + _hxText(cs.text) + '</p>';
-                h += _hxImages(cs.images) + _hxTables(cs.tables) + _hxMarks(cs.marks);
+                h += _hxImages(cs.images, cs.imageCaps) + _hxTables(cs.tables) + _hxMarks(cs.marks);
                 h += '</div>';
             });
+            h += _hxAttachments(sh.attachments, sh.sections.length);
             h += _hxQR(sh.qr, L);
 
             /* The one thing paper cannot do: the answers stay hidden
@@ -377,11 +394,14 @@ function mbBuildModuleHtml(model, opts) {
 
             if (sh.steps.length) {
                 h += '<div class="mx-sub">' + t('steps') + '</div><div class="mx-steps">' +
-                     sh.steps.map(function (s) {
-                         return '<div class="mx-step"><div class="mx-step-n">' + s.index + '</div><div class="mx-step-b">' +
+                     sh.steps.map(function (s, k) {
+                         return _hxAttachments(sh.attachments, k) +
+                                '<div class="mx-step"><div class="mx-step-n">' + s.index + '</div><div class="mx-step-b">' +
                                 (s.text ? '<p>' + _hxText(s.text) + '</p>' : '') +
-                                _hxImages(s.images) + _hxTables(s.tables) + _hxMarks(s.marks) + '</div></div>';
-                     }).join('') + '</div>';
+                                _hxImages(s.images, s.imageCaps) + _hxTables(s.tables) + _hxMarks(s.marks) + '</div></div>';
+                     }).join('') + _hxAttachments(sh.attachments, sh.steps.length) + '</div>';
+            } else {
+                h += _hxAttachments(sh.attachments, 0);   // 3.56.0: attached items only
             }
 
             h += _hxQR(sh.qr, L);
@@ -702,6 +722,13 @@ function _hxCss() {
 '.mx-sec li{margin-bottom:5px}',
 '.mx-imgs{display:flex;flex-wrap:wrap;gap:12px;margin:12px 0}',
 '.mx-imgs img{max-width:340px;border:1px solid #e3e6ef;border-radius:10px}',
+/* 3.56.0: captions and attached figures */
+'.mx-imgfig{margin:0;display:flex;flex-direction:column;gap:4px;max-width:340px}',
+'.mx-imgfig figcaption,.mx-fig figcaption{font-weight:700;color:#39415c;font-size:.92em;text-align:center}',
+'.mx-fig{margin:18px auto;text-align:center;max-width:100%}',
+'.mx-fig img{max-width:100%;max-height:520px;border:1px solid #e3e6ef;border-radius:10px}',
+'.mx-src{font-size:.82em;color:#6b7280;font-style:italic;margin-top:4px}',
+'.mx-figtable{margin:14px 0}',
 /* A table's caption sits with its table, not with the paragraph
    above it: the margin below the title is small and the margin
    above it is not, so the pairing is visible before the words are

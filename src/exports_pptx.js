@@ -561,11 +561,29 @@ function mbBuildPptxDeck(model, cfg, PptxGen) {
         });
     }
 
+    /* 3.56.0: an attached picture gets a slide of its own, where the
+       author placed it; its caption is the slide's heading. Attached
+       tables, like every table, are not part of the deck. */
+    var figSlides = function (list, slotN, fallbackTitle) {
+        (list || []).forEach(function (a) {
+            if (a.slot !== slotN || a.type !== 'image') return;
+            var img = _pxImageData(a.image);
+            if (!img) return;
+            var s = slide();
+            heading(s, a.caption || fallbackTitle || '', true);
+            s.addImage({ data: img, x: 1.2, y: 1.7, sizing: { type: 'contain', w: 10.9, h: a.source ? 4.6 : 5.0 } });
+            if (a.source) {
+                s.addText(a.source, base({ x: 0.7, y: 6.45, w: 11.9, h: 0.5, fontSize: 12, italic: true, color: th.body, align: 'center' }));
+            }
+        });
+    };
+
     /* ── 3. Content cards ──────────────────────────────── */
     if (pxIncludes(cfg, 'cards')) {
         model.outcomes.forEach(function (out) {
             out.infoSheets.forEach(function (sh) {
-                sh.sections.forEach(function (cs) {
+                sh.sections.forEach(function (cs, k) {
+                    figSlides(sh.attachments, k, sh.title);   // 3.56.0
                     var head = cs.heading || sh.title;
                     if (!head && !cs.text) return;
 
@@ -623,6 +641,8 @@ function mbBuildPptxDeck(model, cfg, PptxGen) {
                     }
                 });
 
+                figSlides(sh.attachments, sh.sections.length, sh.title);
+
                 /* ── 4. Self-check: question, then answer ── */
                 if (pxIncludes(cfg, 'selfcheck') && sh.selfCheck) {
                     var q = _pxLines(sh.selfCheck.content);
@@ -640,13 +660,14 @@ function mbBuildPptxDeck(model, cfg, PptxGen) {
     if (pxIncludes(cfg, 'steps')) {
         model.outcomes.forEach(function (out) {
             out.activitySheets.forEach(function (sh) {
-                if (!sh.steps.length) return;
                 var title = sh.title || pxT('steps', L);
+                if (!sh.steps.length) { figSlides(sh.attachments, 0, title); return; }   // 3.56.0
 
                 if (sh.steps.length <= cfg.stepsThreshold) {
                     /* Few enough to give each its own slide: the step
                        number stays visible while the trainee works. */
-                    sh.steps.forEach(function (stp) {
+                    sh.steps.forEach(function (stp, k) {
+                        figSlides(sh.attachments, k, title);   // 3.56.0
                         var s = slide();
                         heading(s, title + ' \u2014 ' + stp.index, true);
                         var lines = _pxLines(stp.text);
@@ -666,10 +687,13 @@ function mbBuildPptxDeck(model, cfg, PptxGen) {
                             });
                         }
                     });
+                    figSlides(sh.attachments, sh.steps.length, title);
                 } else {
                     listSlides(title, sh.steps.map(function (stp) {
                         return _pxLines(stp.text).join(' ') || String(stp.index);
                     }), true);
+                    /* A list on its slides: the attached pictures follow it. */
+                    for (var _k = 0; _k <= sh.steps.length; _k++) figSlides(sh.attachments, _k, title);
                 }
             });
         });

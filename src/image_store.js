@@ -278,7 +278,8 @@ var mbImages = (function () {
         var st = window.mbState || {};
         var openMod = (st.modulesData || []).find(function (m) { return m.id === st.currentModuleId; });
         var SCALARS = ['infoQRImage', 'activityQRImage', 'frontCoverImage', 'backCoverImage'];
-        var roots = { m: openMod, lo: st.learningOutcomesData, c: st.contentSectionImages, s: st.stepImages };
+        var roots = { m: openMod, lo: st.learningOutcomesData, c: st.contentSectionImages, s: st.stepImages,
+                      a: st.attachImages };   // 3.56.0: attached figures (attachments.js)
         SCALARS.forEach(function (k) { roots[k] = st[k]; });
         Object.keys(roots).forEach(function (k) { scan(roots, k); });
         return Promise.all(holders.map(function (hd) {

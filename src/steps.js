@@ -352,6 +352,7 @@ async function removeStep(id) {
         if (element) {
             element.remove();
             delete mbState.stepImages[id];
+            if (typeof mbImgCapsSet === 'function') mbImgCapsSet('activity', id, null);   // 3.56.0
         }
     }
 }
