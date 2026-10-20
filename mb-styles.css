@@ -201,6 +201,11 @@
             text-align: start;
             margin-bottom: 18px;
             padding-bottom: 12px;
+            /* 3.60.0: the «?» help button at the far end of the title. */
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
         }
         .mb-tab-title-bar h1 {
             margin: 0;
@@ -3513,9 +3518,53 @@ body.mb-readonly .container { padding-top: 44px; }
 
 /* ── 3.29.0: Undo / Redo buttons; guidance notes in the sheet tabs ── */
 .figma-btn.mb-hist-btn.is-off { opacity: .45; }
-.mb-guide { margin: 0 0 14px; padding: 8px 14px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; color: #78350f; }
-.mb-guide > summary { cursor: pointer; font-weight: 700; font-size: 0.92em; }
-.mb-guide ul { margin: 8px 0 4px; padding-inline-start: 20px; font-size: 0.88em; line-height: 1.7; }
+/* 3.60.0: the guidance cards became the «?» button of the tab title
+   (src/help_modal.js). */
+.mb-tab-help-btn {
+    flex: 0 0 auto; box-sizing: border-box; position: relative;
+    width: 34px; height: 34px; min-width: 34px; max-width: 34px; min-height: 0; padding: 0;
+    border-radius: 50%; border: 2px solid #6366f1; background: #eef2ff; color: #4338ca;
+    font: inherit; font-size: 1.05em; font-weight: 800; line-height: 1; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: background .15s, color .15s, transform .15s;
+}
+.mb-tab-help-btn[hidden] { display: none; }
+.mb-tab-help-btn:hover { background: #4f46e5; color: #fff; border-color: #4f46e5; transform: scale(1.08); }
+.mb-tab-help-btn:focus-visible { outline: 2px solid #4f46e5; outline-offset: 2px; }
+@media (hover: none) and (pointer: coarse) {
+    .mb-tab-help-btn::after { content: ""; position: absolute; top: 50%; left: 50%; width: 44px; height: 44px; transform: translate(-50%, -50%); }
+}
+.mb-hlp-overlay {
+    position: fixed; inset: 0; z-index: 100020; display: flex; align-items: center; justify-content: center;
+    padding: 20px; background: rgba(0, 0, 0, .55); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+    animation: mbHlpFade .2s ease;
+}
+.mb-hlp-box {
+    background: #fff; border-radius: 16px; width: 100%; max-width: 560px; max-height: 86vh;
+    display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 24px 60px rgba(0, 0, 0, .35);
+    animation: mbHlpSlide .22s ease; text-align: start;
+}
+.mb-hlp-box.is-wide { max-width: 720px; }
+.mb-hlp-box:focus { outline: none; }
+.mb-hlp-top { display: flex; align-items: center; gap: 12px; padding: 18px 22px 14px; flex-shrink: 0;
+    background: linear-gradient(135deg, #eef2ff, #e0e7ff); border-bottom: 1px solid #c7d2fe; }
+.mb-hlp-ico { font-size: 1.6em; line-height: 1; }
+.mb-hlp-title { margin: 0; font-size: 1.05em; font-weight: 800; color: #3730a3; }
+.mb-hlp-body { padding: 14px 22px 20px; overflow-y: auto; }
+.mb-hlp-head { margin: 14px 0 4px; font-size: .95em; font-weight: 800; color: #0f766e; }
+.mb-hlp-head:first-child { margin-top: 4px; }
+.mb-hlp-list { list-style: none; margin: 0 0 8px; padding: 0; }
+.mb-hlp-row { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid #f1f5f9;
+    font-size: .88em; line-height: 1.65; color: #334155; }
+.mb-hlp-row strong { color: #1e293b; }
+.mb-hlp-dot { color: #6366f1; font-weight: 800; flex-shrink: 0; }
+.mb-hlp-note { background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 10px 13px; margin: 6px 0 12px;
+    font-size: .85em; line-height: 1.6; color: #92400e; }
+.mb-hlp-foot { display: flex; justify-content: flex-end; margin-top: 12px; }
+.mb-hlp-ok { padding: 9px 22px; background: #667eea; color: #fff; border: none; border-radius: 8px; font: inherit;
+    font-size: .9em; font-weight: 700; cursor: pointer; }
+@keyframes mbHlpFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes mbHlpSlide { from { transform: translateY(-14px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
 /* ── 3.30.0: Content map (Training Structure Mapping) ─────────── */
 .mb-cm { container-type: inline-size; background: #fffdf5; border: 1px solid #fde68a; border-radius: 10px; padding: 10px 14px; margin: 0 0 18px; }
