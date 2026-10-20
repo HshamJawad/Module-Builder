@@ -64,6 +64,27 @@ function mbSeedObjectiveLead(data, dictKey) {
                 data.objectiveLead[code] = '';
             }
         });
+        /* 3.56.1: a side holding ANOTHER language's untouched default was
+           written by the interface-language switch (contentlang_ui.js) —
+           e.g. the English line in the Arabic side. The editing side gets
+           its own default back; another side is cleared. */
+        BILANG_CODES.forEach(function (code) {
+            var v = data.objectiveLead[code];
+            if (!v || v === window.i18n.tIn(dictKey, code)) return;
+            var foreign = BILANG_CODES.some(function (o) { return o !== code && v === window.i18n.tIn(dictKey, o); });
+            if (foreign) data.objectiveLead[code] = (code === cl) ? window.i18n.tIn(dictKey, cl) : '';
+        });
+        /* A lead nobody edited — every side empty or its own language's
+           default — gets the default on the side now being edited, as a
+           new sheet does. Without this, switching the interface to Arabic
+           showed an empty line where the English default had been. */
+        if (!data.objectiveLead[cl]) {
+            var untouched = BILANG_CODES.every(function (code) {
+                var v = data.objectiveLead[code];
+                return !v || v === window.i18n.tIn(dictKey, code);
+            });
+            if (untouched) data.objectiveLead[cl] = window.i18n.tIn(dictKey, cl);
+        }
     }
 }
 

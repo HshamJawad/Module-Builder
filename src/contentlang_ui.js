@@ -278,7 +278,10 @@ window.addEventListener('mb:contentlangchange', function () {
    state and renderers that do not exist yet. app.js sets this once the
    boot sequence is complete. */
 var _mbBooted = false;
-function mbMarkBooted() { _mbBooted = true; }
+/* The content side the sheet fields show (3.56.1). */
+var _mbShownContentLang = null;
+function mbMarkBooted() { _mbBooted = true; _mbShownContentLang = contentLang(); }
+window.addEventListener('mb:contentlangchange', function () { _mbShownContentLang = contentLang(); });
 
 window.addEventListener('mb:langchange', function () {
     if (!_mbBooted) return;
@@ -293,10 +296,23 @@ window.addEventListener('mb:langchange', function () {
        active then. Rebuilding them from state is the only refresh —
        flush first, exactly as the content-language switch does, or the
        rebuild discards whatever is on screen. */
+    /* 3.56.1: with no content language chosen, the content side follows
+       the interface. By the time this event fires contentLang() already
+       answers with the NEW language, while the fields still hold the text
+       of the OLD side — so the flush wrote, say, the English «After
+       studying this information sheet…» into the Arabic side, and it
+       stayed there. The flush now writes to the side that is on screen. */
+    var shown = _mbShownContentLang;
     if (mbState.currentLOId && typeof saveCurrentSheetToLO === 'function') {
-        saveCurrentSheetToLO();
+        if (shown && shown !== contentLang()) {
+            _mbFlushLang = shown;
+            try { saveCurrentSheetToLO(); } finally { _mbFlushLang = null; }
+        } else {
+            saveCurrentSheetToLO();
+        }
         if (typeof loadCurrentLOSheets === 'function') loadCurrentLOSheets();
     }
+    _mbShownContentLang = contentLang();
     renderContentLangSwitch();
     renderExportLangSwitch();
     if (typeof renderWorkTeam    === 'function') renderWorkTeam();

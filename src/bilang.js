@@ -268,7 +268,13 @@ function biMigrateProject(data) {
 
 /* Key lives in MB_KEYS now; persistence.js owns the backend. */
 
+/* 3.56.1: the side a flush must write to while the interface language
+   is being switched (contentlang_ui.js). Set only for the length of that
+   one save. */
+var _mbFlushLang = null;
+
 function contentLang() {
+    if (_mbFlushLang && BILANG_CODES.indexOf(_mbFlushLang) !== -1) return _mbFlushLang;
     var v = mbGetSetting(MB_KEYS.contentLang);
     if (BILANG_CODES.indexOf(v) !== -1) return v;
     /* No stored choice yet: follow the interface language rather than

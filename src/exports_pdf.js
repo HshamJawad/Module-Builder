@@ -448,11 +448,11 @@ function _pdfBuild(pdf, model, lang) {
     /* Front cover, when there is one: full page, then break. */
     if (model.cover.frontImage) {
         try {
-            var p = pdf.getImageProperties(model.cover.frontImage);
-            var cw = w.CW, ch = p.height * (cw / p.width);
-            var maxH = w.BOTTOM - w.M;
-            if (ch > maxH) { ch = maxH; cw = p.width * (ch / p.height); }
-            pdf.addImage(model.cover.frontImage, _pdfImgFormat(model.cover.frontImage), w.M, w.M, cw, ch);
+            /* 3.56.1: the whole A4 page, edge to edge, as the Word export
+               does (_exportCoverPage: 794 × 1123 px, no margins). It sat
+               inside the text margins before. */
+            pdf.getImageProperties(model.cover.frontImage);   // throws on an unreadable picture
+            pdf.addImage(model.cover.frontImage, _pdfImgFormat(model.cover.frontImage), 0, 0, w.W, w.H);
             w.newPage();
         } catch (e) { console.warn('[PDF] front cover skipped:', e && e.message); }
     }
@@ -699,11 +699,8 @@ function _pdfBuild(pdf, model, lang) {
     if (model.cover.backImage) {
         try {
             w.newPage();
-            var p2 = pdf.getImageProperties(model.cover.backImage);
-            var bw = w.CW, bh = p2.height * (bw / p2.width);
-            var mh = w.BOTTOM - w.M;
-            if (bh > mh) { bh = mh; bw = p2.width * (bh / p2.height); }
-            pdf.addImage(model.cover.backImage, _pdfImgFormat(model.cover.backImage), w.M, w.M, bw, bh);
+            pdf.getImageProperties(model.cover.backImage);
+            pdf.addImage(model.cover.backImage, _pdfImgFormat(model.cover.backImage), 0, 0, w.W, w.H);   // 3.56.1: full page
         } catch (e) { console.warn('[PDF] back cover skipped:', e && e.message); }
     }
 
