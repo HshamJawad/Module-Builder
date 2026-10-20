@@ -3471,17 +3471,9 @@ body.mb-readonly .container { padding-top: 44px; }
 .mb-fld-status { overflow-wrap: anywhere; color: #475569; }
 .mb-fld-status.is-ok { color: #047857; }
 .mb-fld-status.is-warn { color: #b45309; }
-.mb-fld-bar {
-  position: fixed; z-index: 99975; inset-inline: 12px; bottom: 16px;
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 10px;
-  padding: 10px 14px; background: #eff6ff; color: #1e3a8a; border: 1px solid #93c5fd; border-radius: 10px;
-  font-weight: 600; font-size: .9em; text-align: center; box-shadow: 0 6px 18px rgba(15,23,42,.15);
-}
-.mb-fld-bar[hidden] { display: none; }
-.mb-fld-bar button { padding: 5px 12px !important; border-radius: 8px; font-weight: 700; cursor: pointer; }
-.mb-fld-bar button[data-fb="allow"] { background: #1d4ed8 !important; border-color: #1d4ed8 !important; color: #fff !important; }
-/* Beat the global silver-button rule (0,3,1). */
-.mb-fld-bar.mb-fld-bar button[data-fb="allow"] { background: #1d4ed8 !important; border-color: #1d4ed8 !important; color: #fff !important; }
+/* 3.62.2: the folder permission is a toolbar button, not a bar (folder_sync.js). */
+.mb-fld-chip[hidden] { display: none !important; }
+.figma-btn.mb-fld-chip { color: #1d4ed8 !important; border-color: #93c5fd !important; background: #eff6ff !important; font-weight: 700; }
 .mb-ro-banner.mb-ro-banner button[data-ro="take"] { background: #b45309 !important; border-color: #b45309 !important; color: #fff !important; }
 
 /* ── Context bar: Module + Learning Outcome (3.23.0) ──────────────

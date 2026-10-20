@@ -184,6 +184,9 @@
     function keepLabelsReadable() {
         if (!track) return;
         track.querySelectorAll('.figma-btn').forEach(function (b) {
+            /* 3.62.2: a button whose tooltip says more than its label
+               (the folder's «📁 Allow») keeps its own. */
+            if (b.hasAttribute('data-own-title')) return;
             var span = b.querySelector('span:not(.figma-btn-icon)');
             var text = span ? span.textContent.trim() : '';
             if (!text) return;

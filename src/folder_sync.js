@@ -327,31 +327,26 @@ var mbFolderSync = (function () {
         });
     }
 
-    /* ── The permission bar ───────────────────────────────────────
-       The browser forgets the permission between sessions. Writes then
-       wait — and an author who never opens the panel would never know
-       the backup had stopped. So a bar says so, with the one click the
-       browser needs. */
-    var bar = null, dismissed = false;
+    /* ── The permission button ────────────────────────────────────
+       The browser forgets the permission at every load (an update is a
+       load too). Writes then wait — and an author who never opens the
+       panel would never know the backup had stopped. 3.62.2: a small
+       «📁 Allow» button in the toolbar says so (the sentence is its
+       tooltip), instead of a bar across the page at every load; the
+       work stays saved in the browser until it is pressed. */
+    var chip = null;
     function paintBar() {
-        var need = !!st.rec && st.perm !== 'granted' && !dismissed && !(window.mbLib && mbLib.readOnly);
-        if (!need) { if (bar) bar.hidden = true; return; }
-        if (!bar) {
-            bar = document.createElement('div');
-            bar.className = 'mb-fld-bar';
-            bar.setAttribute('role', 'status');
-            document.body.appendChild(bar);
-            bar.addEventListener('click', function (e) {
-                var b = e.target.closest('[data-fb]');
-                if (!b) return;
-                if (b.getAttribute('data-fb') === 'allow') allow();
-                else { dismissed = true; paintBar(); }
-            });
-        }
-        bar.hidden = false;
-        bar.innerHTML = '<span>📁 ' + t('mbFldBar', { v0: st.rec.name }) + '</span>' +
-            '<button type="button" data-fb="allow">' + t('mbFldAllow') + '</button>' +
-            '<button type="button" data-fb="later" aria-label="' + t('dgDismiss') + '">✕</button>';
+        if (!chip) chip = document.getElementById('mb-fld-chip');
+        if (!chip) return;
+        var need = !!st.rec && st.perm !== 'granted' && !(window.mbLib && mbLib.readOnly);
+        chip.hidden = !need;
+        if (!need) return;
+        var tip = t('mbFldBar', { v0: st.rec.name });
+        chip.title = tip;
+        chip.setAttribute('aria-label', tip);
+        var lab = chip.querySelector('.mb-fld-chip-label');
+        if (lab) lab.textContent = t('mbFldAllow');
+        if (!chip.__mbBound) { chip.__mbBound = true; chip.addEventListener('click', function () { allow(); }); }
     }
     window.addEventListener('mb:folderchanged', paintBar);
     window.addEventListener('mb:langchange', paintBar);
