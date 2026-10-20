@@ -181,6 +181,19 @@ function _spRowHtml(module, r, kind, los) {
             acts += '<button type="button" class="mb-sp-ico is-del" data-act="mbSpRemove" data-args="' + _spArgs([kind, r.key]) + '" title="' + _spEsc(_spT('mbSpRemoveTip')) + '" aria-label="' + _spEsc(_spT('mbSpRemoveTip')) + '">✕</button>';
         }
     }
+    /* 3.62.0: the mark this item is written as (custom_marks.js). */
+    var markSel = '';
+    if (kind !== 'assessment' && typeof mbCmRowMark === 'function' && MB_CM_MARK_FIELDS.indexOf(_cmFieldGroup(r.field, r.taskId)) !== -1) {
+        var fm = mbCmFieldMark(_cmFieldGroup(r.field, r.taskId));
+        var fmt = fm ? mbFindMarkType(fm) : null;
+        var defLab = _spT('cmkItemDefault', { v0: fmt ? fmt.icon + ' ' + mbMarkLabel(fmt) : _spT('cmkNone') });
+        var cur = typeof r.mark === 'string' ? (r.mark && mbFindMarkType(r.mark) ? r.mark : '') : '__default';
+        markSel = '<select class="mb-sp-mark" aria-label="' + _spEsc(_spT('cmkItemMark')) + '" title="' + _spEsc(_spT('cmkItemMark')) + '"' +
+            ' data-act="mbSpSetMark" data-on="change" data-args="' + _spArgs([kind, r.key, '$value']) + '"' + (built ? ' disabled' : '') + '>' +
+            '<option value="__default"' + (cur === '__default' ? ' selected' : '') + '>' + _spEsc(defLab) + '</option>' +
+            mbMarkOptionsHtml(cur === '__default' ? null : cur).replace('<option value="">', '<option value=""' + (cur === '' ? ' selected' : '') + '>') +
+            '</select>';
+    }
     var also = r.dests.filter(function (k) { return k !== kind; });
     var alsoHtml = also.length ? '<span class="mb-sp-also" title="' + _spEsc(_spT('mbSpAlsoIn')) + '">' +
         also.map(function (k) { return MB_CM_ICON[k]; }).join('') + '</span>' : '';
@@ -189,7 +202,7 @@ function _spRowHtml(module, r, kind, los) {
             _spArgs([kind, r.key, '$checked']) + '"' + (checked ? ' checked' : '') + (built ? ' disabled' : '') + '>' +
         _spSourceChip(r) +
         '<div class="mb-sp-body">' + text + '</div>' +
-        '<div class="mb-sp-side">' + _spStateChip(r, kind) + alsoHtml + loSel + '<span class="mb-sp-acts">' + acts + '</span></div>' +
+        '<div class="mb-sp-side">' + _spStateChip(r, kind) + alsoHtml + loSel + markSel + '<span class="mb-sp-acts">' + acts + '</span></div>' +
     '</div>';
 }
 
@@ -410,6 +423,14 @@ function mbSpSend(kind, key, value) {
     if (!m) { _spRenderKind(kind); return; }
     return m[1] === 'move' ? mbSpMove(kind, key, m[2]) : mbSpAlso(kind, key, m[2]);
 }
+/** 3.62.0: the mark one item is written as ('__default' = its field's). */
+function mbSpSetMark(kind, key, value) {
+    if (value === '__custom') return;
+    _spPut(key, 'mk', value === '__default' ? null : String(value || ''));
+    if (typeof mbLibrarySave === 'function') mbLibrarySave();
+    _spRenderKind(kind);
+}
+
 function mbSpSetLo(kind, key, loId) {
     _spPut(key, 'lo', String(loId || ''));
     mbSpRefresh();
@@ -505,6 +526,15 @@ function _spEntryIn(module, r, kind, lang) {
         var d = mbTaDecision(module, r.taskId, r.itemIndex);
         if (d) dec = { cue: _spIn(module, d.cue, lang), error: _spIn(module, d.error, lang), expert: _spIn(module, d.expert, lang) };
     }
+    /* 3.62.0: written as a mark (⛔ Warning …) when its field or the item
+       says so (custom_marks.js) — the mark's header replaces the label. */
+    var mk = (kind !== 'assessment' && typeof mbCmRowMark === 'function') ? mbCmRowMark(r) : '';
+    if (mk) {
+        var mt = text;
+        if (dec && dec.cue) mt += '\n' + tag('mbSpCue', dec.cue);
+        if (kind === 'info' && dec && dec.error) mt += '\n' + tag('mbSpConsequence', dec.error);
+        return { place: 'mark', mark: mk, text: mt };
+    }
     if (kind === 'info') {
         if (MB_CM_BASIC.indexOf(g) !== -1) {
             return { place: 'section', heading: _spL('mbSpSupportSkills', lang), body: tag('mbSpBasic_' + g, text), merge: true };
@@ -558,8 +588,31 @@ function _spEntry(module, r, kind) {
         if (!e) return;
         out.sides[c] = e;
         out.place = e.place; out.top = !!e.top; out.merge = !!e.merge;
+        if (e.mark) out.mark = e.mark;
     });
     return out;
+}
+
+/* 3.62.0: a mark is one text (marks are not bilingual on the sheets):
+   the content language's, else the first side there is. */
+function _spMarkText(e) {
+    var cl = contentLang();
+    if (e.sides[cl]) return e.sides[cl].text;
+    var c = _spCodes().find(function (x) { return e.sides[x]; });
+    return c ? e.sides[c].text : '';
+}
+/** Put the marks among `entries` on `holder.marks`, once each. */
+function _spPutMarks(holder, entries) {
+    if (!Array.isArray(holder.marks)) holder.marks = [];
+    var n = 0;
+    entries.forEach(function (e) {
+        if (e.place !== 'mark' || !Object.keys(e.sides).length) return;
+        var t = _spMarkText(e);
+        if (!t || holder.marks.some(function (m) { return m && m.key === e.mark && _mbNorm(m.text) === _mbNorm(t); })) return;
+        holder.marks.push({ key: e.mark, text: t });
+        n++;
+    });
+    return n;
 }
 
 function _spSel(r) { return { taskId: r.taskId, field: r.field, itemIndex: r.itemIndex, itemText: r.text }; }
@@ -581,11 +634,11 @@ function _spBi(e, key) {
     return v;
 }
 
-function _spFillInfo(sheet, entries) {
+function _spFillInfo(sheet, entries, fallbackHeading) {
     if (!Array.isArray(sheet.contentSections)) sheet.contentSections = [];
     var n = 0;
     entries.forEach(function (e) {
-        if (!Object.keys(e.sides).length) return;
+        if (!Object.keys(e.sides).length || e.place === 'mark') return;
         var have = sheet.contentSections.find(function (c) { return _spMatches(c.heading, e, 'heading'); });
         if (have) {
             if (!e.merge) return;
@@ -607,6 +660,15 @@ function _spFillInfo(sheet, entries) {
         sheet.contentSections.push({ contentId: '', marks: [], tables: [], uid: mbUid(), heading: _spBi(e, 'heading'), text: _spBi(e, 'body') });
         n++;
     });
+    /* 3.62.0: the marks go on the first section of the task's sheet — a
+       section named after the task when the sheet has none yet. */
+    if (entries.some(function (e) { return e.place === 'mark'; })) {
+        if (!sheet.contentSections.length) {
+            sheet.contentSections.push({ contentId: '', marks: [], tables: [], uid: mbUid(),
+                                         heading: fallbackHeading || biNew(), text: biNew() });
+        }
+        n += _spPutMarks(sheet.contentSections[0], entries);
+    }
     return n;
 }
 
@@ -619,7 +681,7 @@ function _spFillActivity(sheet, entries) {
     while (topCount < sheet.steps.length && sheet.steps[topCount] && sheet.steps[topCount]._spTop) topCount++;
     var n = 0;
     entries.forEach(function (e) {
-        if (!e.place || !Object.keys(e.sides).length) return;
+        if (!e.place || e.place === 'mark' || !Object.keys(e.sides).length) return;
         var list = sheet[e.place];
         if (list.some(function (x) { return _spMatches(holder[e.place](x), e, 'text'); })) return;
         n++;
@@ -632,6 +694,14 @@ function _spFillActivity(sheet, entries) {
             var c = _spBi(e, 'text'); c.uid = mbUid(); sheet.criteria.push(c); sheet.includeCriteria = true;
         }
     });
+    /* 3.62.0: the marks go on the first work step (after the conditions
+       and warnings put before the work); a sheet with no step yet gets
+       one, which prints with its marks only. */
+    if (entries.some(function (e) { return e.place === 'mark'; })) {
+        if (!sheet.steps.length) sheet.steps.push({ stepId: '', marks: [], tables: [], uid: mbUid(), text: biNew() });
+        var at = sheet.steps[topCount] || sheet.steps[0];
+        n += _spPutMarks(at, entries);
+    }
     return n;
 }
 
@@ -810,7 +880,7 @@ function _spWrite(module, rows, kind, into) {
         if (!sheet) return;
         if (!_mbBiHasAny(sheet.title)) sheet.title = _spTitleFor(module, g.rows[0]);
         var entries = g.rows.map(function (r) { return _spEntry(module, r, kind); });
-        out.items += kind === 'info' ? _spFillInfo(sheet, entries) : _spFillActivity(sheet, entries);
+        out.items += kind === 'info' ? _spFillInfo(sheet, entries, _spTitleFor(module, g.rows[0])) : _spFillActivity(sheet, entries);
         sheet._aiSource = sheet._aiSource || {};
         sheet._aiSource.sourceSelections = (sheet._aiSource.sourceSelections || []).concat(g.rows.map(_spSel));
         out.sheets++;

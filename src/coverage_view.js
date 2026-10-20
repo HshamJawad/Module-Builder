@@ -173,21 +173,33 @@ function _covFieldLabel(group) {
     return _mbFieldLabel(group);
 }
 
-function _covDefaultsHtml(draft) {
+/* 3.62.0: the mark a field is written as (custom_marks.js) — the column
+   beside the information sheet's. */
+function _covMarkCell(g, cur) {
+    if (typeof MB_CM_MARK_FIELDS === 'undefined' || MB_CM_MARK_FIELDS.indexOf(g) === -1) return '<span></span>';
+    return '<span><select class="mb-cov-mark" data-def-mark="' + g + '" aria-label="' + _covEsc(_covFieldLabel(g) + ' → ' + _covT('cmkColHead')) + '">' +
+        mbMarkOptionsHtml(cur || '') + '<option value="__custom">' + _covEsc(_covT('cmkCustom')) + '</option></select></span>';
+}
+
+function _covDefaultsHtml(draft, marks) {
+    marks = marks || {};
     var head = '<div class="mb-cov-def is-head" aria-hidden="true"><span>' + _covEsc(_covT('mbSpDefField')) + '</span>' +
+        '<span>🏷️ <span class="mb-cov-kl">' + _covEsc(_covT('cmkColHead')) + '</span></span>' +
         MB_CM_KINDS.map(function (k) { return '<span title="' + _covEsc(_covT('mbSpKind_' + k)) + '">' + MB_CM_ICON[k] + ' <span class="mb-cov-kl">' + _covEsc(_covT('mbSpKindShort_' + k)) + '</span></span>'; }).join('') + '</div>';
     var rows = MB_CM_DEFAULT_FIELDS.map(function (g) {
         var cur = draft[g];
         var changed = !_cmSameKinds(cur, MB_CM_DEFAULTS[g] || ['info']);
         return '<div class="mb-cov-def' + (changed ? ' is-changed' : '') + '"><span dir="auto">' + (MB_SP_FIELD_ICON[g] || '•') + ' ' + _covEsc(_covFieldLabel(g)) +
             (changed ? ' <em>' + _covEsc(_covT('mbSpDefChanged')) + '</em>' : '') + '</span>' +
+            _covMarkCell(g, marks[g]) +
             MB_CM_KINDS.map(function (k) {
                 var lab = _covFieldLabel(g) + ' → ' + _covT('mbSpKind_' + k);
                 return '<span><input type="checkbox" aria-label="' + _covEsc(lab) + '" data-def-group="' + g + '" data-def-kind="' + k + '"' +
                     (cur.indexOf(k) !== -1 ? ' checked' : '') + (g === 'lopc' && k !== 'assessment' ? ' disabled' : '') + '></span>';
             }).join('') + '</div>';
     }).join('');
-    return '<p class="mb-cov-legend" dir="auto">' + _covEsc(_covT('mbSpDefIntro')) + '</p>' + head + rows;
+    return '<p class="mb-cov-legend" dir="auto">' + _covEsc(_covT('mbSpDefIntro')) + '</p>' +
+        '<p class="mb-cov-legend" dir="auto">🏷️ ' + _covEsc(_covT('cmkIntro')) + '</p>' + head + rows;
 }
 
 function _covDraft() {
@@ -199,11 +211,59 @@ function _covDraft() {
 function mbCovDefaults() {
     mbCovClose(MB_COV_ID);
     var draft = _covDraft();
+    var marks = {};
+    if (typeof MB_CM_MARK_FIELDS !== 'undefined') MB_CM_MARK_FIELDS.forEach(function (g) { marks[g] = mbCmFieldMark(g); });
     var foot = '<button type="button" class="mb-sp-btn is-quiet" data-act="mbCovDefaultsReset">↺ ' + _covEsc(_covT('mbSpDefReset')) + '</button>' +
+        /* 3.62.0 */
+        '<button type="button" class="mb-sp-btn is-quiet" data-act="mbCovMarksSuggest">' + _covEsc(_covT('cmkSuggest')) + '</button>' +
+        '<button type="button" class="mb-sp-btn is-quiet" data-act="mbManageCustomMarks">' + _covEsc(_covT('cmkManage')) + '</button>' +
         '<span class="mb-sp-gap"></span>' +
         '<button type="button" class="mb-sp-btn" data-act="mbCovClose" data-args="' + _covArgs(['mb-def-overlay']) + '">' + _covEsc(_covT('mbSpCancel')) + '</button>' +
         '<button type="button" class="mb-sp-btn is-main" data-act="mbCovDefaultsSave">💾 ' + _covEsc(_covT('mbSpSave')) + '</button>';
-    _covShell('mb-def-overlay', '⚙️ ' + _covEsc(_covT('mbSpDefaultsTitle')), _covDefaultsHtml(draft), foot);
+    _covShell('mb-def-overlay', '⚙️ ' + _covEsc(_covT('mbSpDefaultsTitle')), _covDefaultsHtml(draft, marks), foot);
+}
+
+/* 3.62.0 — the marks column. */
+function _covReadMarks() {
+    var ov = document.getElementById('mb-def-overlay');
+    var m = {};
+    if (!ov) return m;
+    ov.querySelectorAll('select[data-def-mark]').forEach(function (s) {
+        m[s.getAttribute('data-def-mark')] = s.value === '__custom' ? '' : s.value;
+    });
+    return m;
+}
+/** Repaint the options of every mark select (a mark was added, renamed
+ *  or deleted), keeping what each one shows. */
+function mbCovRepaintMarks() {
+    var ov = document.getElementById('mb-def-overlay');
+    if (!ov) return;
+    ov.querySelectorAll('select[data-def-mark]').forEach(function (s) {
+        var v = s.value;
+        s.innerHTML = mbMarkOptionsHtml('') + '<option value="__custom">' + _covEsc(_covT('cmkCustom')) + '</option>';
+        s.value = (v && v !== '__custom' && mbFindMarkType(v)) ? v : '';
+    });
+}
+/** «🏷️ Suggested marks»: the column filled with the suggested marks. */
+function mbCovMarksSuggest() {
+    var ov = document.getElementById('mb-def-overlay');
+    if (!ov) return;
+    ov.querySelectorAll('select[data-def-mark]').forEach(function (s) {
+        var k = MB_CM_MARK_SUGGEST[s.getAttribute('data-def-mark')];
+        if (k) s.value = k;
+    });
+}
+if (typeof document !== 'undefined') {
+    /* «➕ Custom mark…» in a select opens the window, then picks the new mark. */
+    document.addEventListener('change', function (e) {
+        var s = e.target;
+        if (!s || !s.matches || !s.matches('select[data-def-mark]') || s.value !== '__custom') return;
+        s.value = '';
+        mbCustomMarkDialog(null).then(function (key) {
+            mbCovRepaintMarks();
+            if (key) s.value = key;
+        });
+    });
 }
 
 function _covReadDraft() {
@@ -223,7 +283,7 @@ function mbCovDefaultsReset() {
     if (!ov) return;
     var d = {};
     MB_CM_DEFAULT_FIELDS.forEach(function (g) { d[g] = (MB_CM_DEFAULTS[g] || ['info']).slice(); });
-    ov.querySelector('.mb-cov-body').innerHTML = _covDefaultsHtml(d);
+    ov.querySelector('.mb-cov-body').innerHTML = _covDefaultsHtml(d, {});   // 3.62.0: no marks either
 }
 
 function mbCovDefaultsSave() {
@@ -234,6 +294,10 @@ function mbCovDefaultsSave() {
         if (!_cmSameKinds(d[g], MB_CM_DEFAULTS[g] || ['info'])) own[g] = d[g];
     });
     mbState.cmDefaults = own;
+    /* 3.62.0: the marks column — only the fields given a mark. */
+    var mk = _covReadMarks(), cm = {};
+    Object.keys(mk).forEach(function (g) { if (mk[g]) cm[g] = mk[g]; });
+    mbState.cmMarks = cm;
     mbCovClose('mb-def-overlay');
     if (typeof mbSpRefresh === 'function') mbSpRefresh();
     if (typeof mbLibrarySave === 'function') mbLibrarySave();

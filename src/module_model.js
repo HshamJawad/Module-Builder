@@ -89,6 +89,8 @@ function _mmArr(v) { return Array.isArray(v) ? v : (v ? [v] : []); }
 
 function _mmLabel(type, fallbackKey) {
     if (!type) return fallbackKey;
+    /* 3.62.0: in the model's language; a project mark has its own name. */
+    if (typeof mbMarkLabel === 'function') { try { return mbMarkLabel(type, _MM_LANG || undefined) || fallbackKey; } catch (e) { /* fall through */ } }
     const key = type.label || type.key;
     try {
         if (typeof window !== 'undefined' && window.i18n && typeof window.i18n.t === 'function') {
@@ -117,9 +119,11 @@ function _mmMarks(list) {
                and label belong to the mark type, not to this model, and
                not to whichever exporter happens to be running. */
             let type = null;
-            if (typeof MARK_TYPES !== 'undefined' && Array.isArray(MARK_TYPES)) {
+            if (typeof mbFindMarkType === 'function') type = mbFindMarkType(m.key);   // 3.62.0: the project's own too
+            else if (typeof MARK_TYPES !== 'undefined' && Array.isArray(MARK_TYPES)) {
                 type = MARK_TYPES.find(function (x) { return x.key === m.key; }) || null;
             }
+            if (!type && typeof MARK_TYPES !== 'undefined') type = MARK_TYPES.find(function (x) { return x.key === 'note'; }) || null;
             return {
                 key: m.key,
                 text: _mmStr(m.text),

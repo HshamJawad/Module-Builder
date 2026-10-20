@@ -68,6 +68,13 @@ async function _mbDocxPrepareImages(los) {
     return map;
 }
 
+/* 3.62.0: a mark's type, built-in or the project's own; a deleted type
+   prints as a note rather than not at all (custom_marks.js). */
+function _mbDocxMarkType(key) {
+    var f = (typeof mbFindMarkType === 'function') ? mbFindMarkType(key) : MARK_TYPES.find(function (x) { return x.key === key; });
+    return f || MARK_TYPES.find(function (x) { return x.key === 'note'; });
+}
+
 async function exportToDocx() {
     /* 3.14.0 — a programme compile (package_ui.js) sets mbExportSink to
        receive each module's document instead of a download, and to be
@@ -591,7 +598,7 @@ async function exportToDocx() {
                     const sMarks = collectMarks(`step-marks-${stepId}`);
                     sMarks.forEach(m => {
                         if (m.text && m.text.trim()) {
-                            const mt = MARK_TYPES.find(x => x.key === m.key);
+                            const mt = _mbDocxMarkType(m.key);
                             if (mt) {
                                 children.push(new Paragraph({ children: [new TextRun({ text: '' })], spacing: { after: 80 } }));
                                 children.push(buildMarkDocxTable(mt, m.text));
@@ -1733,7 +1740,7 @@ async function exportToDocx() {
                     const borders = { top: { style: BorderStyle.SINGLE, size: 1, color: '000000' }, bottom: { style: BorderStyle.SINGLE, size: 1, color: '000000' }, left: { style: BorderStyle.SINGLE, size: 1, color: '000000' }, right: { style: BorderStyle.SINGLE, size: 1, color: '000000' }, insideHorizontal: { style: BorderStyle.SINGLE, size: 1, color: '000000' }, insideVertical: { style: BorderStyle.SINGLE, size: 1, color: '000000' } };
                     ch.push(new Table({ rows: tRows, width: { size: 9072, type: WidthType.DXA }, borders }));
                     ch.push(new Paragraph({ children: [new TextRun({ text: '' })], spacing: { after: 200 } }));
-                    if (cs.marks) { cs.marks.forEach(m => { if (m.text && m.text.trim()) { const mt = MARK_TYPES.find(x => x.key === m.key); if (mt) { ch.push(buildMarkDocxTable(mt, m.text)); } } }); }
+                    if (cs.marks) { cs.marks.forEach(m => { if (m.text && m.text.trim()) { const mt = _mbDocxMarkType(m.key); if (mt) { ch.push(buildMarkDocxTable(mt, m.text)); } } }); }
                     // Export user-created tables
                     if (cs.tables && cs.tables.length) {
                         cs.tables.forEach(t => _pushUserTable(t, ch));
@@ -1841,7 +1848,7 @@ async function exportToDocx() {
                         ch.push(new Table({ rows: sRows, width: { size: 9072, type: WidthType.DXA }, borders: bdr2 }));
                         ch.push(new Paragraph({ children: [new TextRun({ text: '' })], spacing: { after: 200 } }));
                     }
-                    if (step.marks) { step.marks.forEach(m => { if (m.text && m.text.trim()) { const mt = MARK_TYPES.find(x => x.key === m.key); if (mt) { ch.push(buildMarkDocxTable(mt, m.text)); } } }); }
+                    if (step.marks) { step.marks.forEach(m => { if (m.text && m.text.trim()) { const mt = _mbDocxMarkType(m.key); if (mt) { ch.push(buildMarkDocxTable(mt, m.text)); } } }); }
                     /* Steps can carry tables now, the same as content
                        cards, and through the same builder. */
                     if (step.tables && step.tables.length) {

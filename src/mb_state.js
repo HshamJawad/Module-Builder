@@ -185,7 +185,12 @@ var mbState = {
     moduleTemplate: 'standard',
     /* 3.59.0: the Learner guide's assessment unit texts — learner_guide.js.
        null = the tool's own text in the export language. */
-    lgAsm: null
+    lgAsm: null,
+
+    /* 3.62.0 — custom_marks.js: which mark each Task Analysis field is
+       written as ({ safetyOSH: 'warning', … }), and the project's own marks. */
+    cmMarks: {},
+    customMarks: []
 };
 
 /* Map of textarea id → mbState key, for the four fields above. */

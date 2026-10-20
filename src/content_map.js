@@ -430,6 +430,9 @@ function mbContentMapRows(module) {
                     taskLo: (taskId === MB_CC_TASK || taskId === MB_LO_PC) ? '' : (owner[taskId] || ''),
                     directLos: direct[taskId] || [],
                     refAdd: mine ? arr(s.ra) : [], refDel: mine ? arr(s.rd) : [],
+                    /* 3.62.0: the mark this item is written as, when chosen for
+                       it alone ('' = as text); null follows its field (custom_marks.js). */
+                    mark: (mine && typeof s.mk === 'string') ? s.mk : null,
                     mine: mine && (lo !== sugLo || !_cmSameKinds(dests, sugDests) || arr(s.ra).length > 0 || arr(s.rd).length > 0 || !!edited),
                     same: same || null };
         if (extra) Object.keys(extra).forEach(function (k) { row[k] = extra[k]; });
@@ -786,11 +789,13 @@ function _cmPut(module, row, prop, value) {
         if (typeof value !== 'string' || !value.trim() || value === row.text) { delete s.x; delete s.xl; }
     } else if (prop === 'xl') {
         if (typeof value !== 'string' || !value || s.x === undefined) delete s.xl;
+    } else if (prop === 'mk') {
+        if (typeof value !== 'string') delete s.mk;           // null: back to the field's mark
     } else if (!Array.isArray(value) || !value.length) {
         delete s[prop];
     }
     if (s.lo === undefined && s.d === undefined && s.ok === undefined && s.x === undefined &&
-        s.ra === undefined && s.rd === undefined) delete store.rows[row.key];
+        s.ra === undefined && s.rd === undefined && s.mk === undefined) delete store.rows[row.key];
 }
 
 function mbCmSet(key, prop, value) {

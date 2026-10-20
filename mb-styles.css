@@ -3765,7 +3765,7 @@ html[dir="rtl"] .mb-sp[open] > summary::before { transform: rotate(-90deg); }
 .mb-cov-overlay .mb-cov-box button.mb-cov-cell.is-ok { background: #dbeafe !important; color: #1e40af !important; border-color: #93c5fd !important; }
 .mb-cov-overlay .mb-cov-box button.mb-cov-cell.is-new { background: #fffbeb !important; color: #92400e !important; border-color: #fcd34d !important; }
 .mb-cov-cell.is-off { color: #cbd5e1; }
-.mb-cov-def { grid-template-columns: minmax(0, 1fr) repeat(3, 84px); }
+.mb-cov-def { grid-template-columns: minmax(0, 1fr) 170px repeat(3, 84px); }   /* 3.62.0: + the mark */
 .mb-cov-def > span { text-align: center; }
 .mb-cov-def > span:first-child { text-align: start; font-size: 0.88em; overflow-wrap: anywhere; }
 .mb-cov-def.is-changed > span:first-child em { font-style: normal; font-size: 0.78em; font-weight: 700; color: #b45309; background: #fef3c7; border-radius: 999px; padding: 0 6px; }
@@ -3774,6 +3774,7 @@ html[dir="rtl"] .mb-sp[open] > summary::before { transform: rotate(-90deg); }
     .mb-cov-overlay { padding: 0; align-items: stretch; }
     .mb-cov-box { max-height: 100vh; border-radius: 0; }
     .mb-cov-row, .mb-cov-def { grid-template-columns: minmax(0, 1fr) repeat(3, 40px); gap: 4px; padding: 5px 8px; }
+    .mb-cov-def { grid-template-columns: minmax(0, 1fr) 110px repeat(3, 40px); }
     .mb-cov-kl { display: none; }        /* the icons name the columns; the legend explains them */
 }
 
@@ -4024,3 +4025,23 @@ html[dir="rtl"] .mb-tpl-btn.is-active { box-shadow: inset -3px 0 0 #0f766e !impo
 .lg-preview th, .lg-preview td { border: 1px solid #d1d5db; padding: 6px 8px; text-align: start; }
 .lg-preview th { background: #f0fdfa; }
 .lg-empty { color: #6b7280; font-style: italic; margin: 0; }
+
+/* ── Marks from the Task Analysis, and the project's own (3.62.0) — src/custom_marks.js ── */
+select.mb-cov-mark, select.mb-sp-mark { width: 100%; max-width: 100%; min-width: 0; padding: 4px 6px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; font: inherit; font-size: 0.82em; }
+select.mb-sp-mark { width: auto; max-width: 190px; }
+.mark-dropdown-item.mark-dropdown-custom { border-top: 1px solid #e5e7eb; font-weight: 700; color: #0f766e; }
+.mb-cmk-dialog { max-width: 440px; }
+.mb-cmk-title { margin: 0 0 12px; font-size: 1.1em; color: #0f172a; }
+.mb-cmk-label { display: block; margin: 12px 0 6px; font-weight: 600; color: #374151; font-size: 0.92em; }
+.mb-cmk-dialog .mb-dialog-input { margin-top: 0; }
+.mb-cmk-pick { display: flex; flex-wrap: wrap; gap: 6px; }
+button.mb-cmk-opt { width: 36px; height: 36px; min-height: 0; padding: 0 !important; border-radius: 8px !important; font-size: 1.15em; line-height: 1; cursor: pointer; }
+button.mb-cmk-opt.is-on { outline: 3px solid #0f766e; outline-offset: 1px; }
+/* Above the silver rule for every button (button:not(.tab)…, 0,3,1). */
+.mb-cmk-dialog .mb-cmk-pick button.mb-cmk-opt.mb-cmk-sw { background: var(--sw) !important; background-color: var(--sw) !important; border-color: var(--sw) !important; }
+.mb-cmk-preview { margin-top: 14px; border: 1.5px solid #475569; border-radius: 6px; overflow: hidden; font-size: 0.92em; }
+.mb-cmk-list { list-style: none; margin: 0 0 10px; padding: 0; }
+.mb-cmk-list li { display: flex; align-items: center; gap: 6px; padding: 6px 0; border-bottom: 1px solid #f1f5f9; }
+.mb-cmk-chip { color: #fff; border-radius: 6px; padding: 3px 10px; font-weight: 700; font-size: 0.9em; }
+.mb-cmk-gap { flex: 1 1 auto; }
+.mb-cmk-empty { color: #64748b; font-style: italic; }
