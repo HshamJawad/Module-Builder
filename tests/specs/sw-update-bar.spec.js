@@ -114,3 +114,37 @@ test('after «Update now» the reloaded page shows no second bar', async ({ page
   await expect(page.locator('.mb-update-bar.is-open')).toHaveCount(0);
   expect(errors).toEqual([]);
 });
+
+// 3.65.2: a real release changes index.html too (?v= on every script).
+// Opened after it, the page loads the new files from the network and
+// already RUNS the new build; the worker for that build finishes
+// installing later (it downloads ~2 MB first, often past the reload
+// guard). That is not a new version for this page: no bar offering the
+// version it already runs.
+function publishPage(version) {
+  publish(version);
+  const idx = path.join(dir, 'index.html');
+  fs.writeFileSync(idx, fs.readFileSync(idx, 'utf8').replace(/\?v=\d+(?:\.\d+)*/g, `?v=${version}`));
+}
+
+test('a page already running the release offers no update to that same release', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', e => errors.push(String(e && e.message || e)));
+  await page.addInitScript(() => {
+    localStorage.setItem('mb_author_asked', '1');
+    localStorage.setItem('mb_author_name', 'Test author');
+    localStorage.setItem('mb_word_export_settings', JSON.stringify({ templateChooser: false }));
+  });
+  publishPage('3.92.0');
+  await page.goto('/index.html');
+  await page.waitForFunction(() => navigator.serviceWorker.controller !== null, null, { timeout: 20_000 });
+  await page.waitForTimeout(800);
+  publishPage('3.92.1');
+  await page.goto('/index.html');
+  // the new worker installs and takes over
+  await page.waitForFunction(() => window.__mbSwUpdated === true, null, { timeout: 20_000 });
+  await page.waitForTimeout(2500);
+  expect(await page.evaluate(() => document.querySelector('script[src*="v="]').getAttribute('src'))).toContain('v=3.92.1');
+  await expect(page.locator('.mb-update-bar.is-open')).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
