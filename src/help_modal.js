@@ -227,14 +227,6 @@ function mbSyncHelpButton() {
     var label = name ? _hlpT(MB_HELP_GUIDES[name].title) : _hlpT('hlpButton');
     b.setAttribute('title', label);
     b.setAttribute('aria-label', label);
-    /* 3.64.0: 🗺️ Coverage beside it, on the same three tabs (coverage_view.js). */
-    var c = document.getElementById('mb-tab-cov');
-    if (c) {
-        c.hidden = !name;
-        var ct = (window.i18n ? window.i18n.t('mbCovTitle') : 'Coverage');
-        c.setAttribute('title', ct);
-        c.setAttribute('aria-label', ct);
-    }
 }
 
 (function watchHelpButton() {

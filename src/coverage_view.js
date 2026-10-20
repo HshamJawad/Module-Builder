@@ -9,8 +9,9 @@
 //   A cell opens its tab on the item's outcome, with the item marked in
 //   the tab's "Suggested content" panel. Nothing is edited here: the
 //   panels are where items are approved, moved and built.
-//   The mapping workspace (AI proposal, source browser) stays one click
-//   away at the foot.
+//   3.64.0: the distribution method — default, manual (tick the cells)
+//   or AI (one button: choose it and ask). 3.65.0: opened from the
+//   «Suggested content» card only.
 //
 // DISTRIBUTION SETTINGS (⚙️)
 //   Where each Task Analysis field goes by default, for the whole
@@ -20,7 +21,6 @@
 
 if (window.i18n && window.i18n.extend) window.i18n.extend({
     en: {
-        mbCovNavShort: 'Coverage',
         cvmHead: 'Distribution method',
         cvmDefault: 'Default',
         cvmManual: 'Manual',
@@ -28,7 +28,10 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         cvmDefaultTip: 'Each Task Analysis field goes to the sheets set in ⚙️ Distribution settings.',
         cvmManualTip: 'Nothing is sent anywhere by itself: click the cells of an item (📄 🛠️ ✅) to choose where it goes. The outcome criteria still go to the assessment form.',
         cvmAiTip: 'The AI suggests where each item goes; the suggestions appear in the cells and in Suggested content, to review and approve. Items already approved or built are not changed. Click a cell to change it.',
-        cvmAiRun: '🤖 Suggest the distribution',
+        cvmAiRun: '🤖 Suggest the distribution with AI',
+        cvmAiPartial: 'The items distributed before the error keep the AI suggestion; the others were not changed.',
+        cvmAiTipManual: 'Choose «Manual» and tick the cells yourself',
+        cvmAiTipDefault: 'Choose «Default» to follow the distribution settings',
         cvmAiBusy: 'The AI is working…',
         cvmAiDone: 'AI suggestion: {v0} items distributed — review them, then approve in Suggested content.',
         cvmAiNone: 'Nothing to distribute: every item is approved or built.',
@@ -37,7 +40,6 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         cvmCellRemove: 'Remove from {v0}'
     },
     fr: {
-        mbCovNavShort: 'Couverture',
         cvmHead: 'Méthode de répartition',
         cvmDefault: 'Par défaut',
         cvmManual: 'Manuelle',
@@ -45,7 +47,10 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         cvmDefaultTip: 'Chaque champ de l’analyse des tâches va aux fiches fixées dans ⚙️ Paramètres de répartition.',
         cvmManualTip: 'Rien n’est envoyé de soi-même : cliquez les cases d’un élément (📄 🛠️ ✅) pour choisir où il va. Les critères du résultat vont toujours au formulaire d’évaluation.',
         cvmAiTip: 'L’IA propose où va chaque élément ; les propositions apparaissent dans les cases et dans le Contenu suggéré, à revoir et à valider. Les éléments déjà validés ou construits ne changent pas. Cliquez une case pour la changer.',
-        cvmAiRun: '🤖 Proposer la répartition',
+        cvmAiRun: '🤖 Proposer la répartition par l’IA',
+        cvmAiPartial: 'Les éléments répartis avant l’erreur gardent la proposition de l’IA ; les autres n’ont pas changé.',
+        cvmAiTipManual: 'Choisissez « Manuelle » et cochez les cases vous-même',
+        cvmAiTipDefault: 'Choisissez « Par défaut » pour suivre les réglages de répartition',
         cvmAiBusy: 'L’IA travaille…',
         cvmAiDone: 'Proposition de l’IA : {v0} éléments répartis — revoyez-les, puis validez dans le Contenu suggéré.',
         cvmAiNone: 'Rien à répartir : chaque élément est validé ou construit.',
@@ -54,7 +59,6 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         cvmCellRemove: 'Retirer de {v0}'
     },
     ar: {
-        mbCovNavShort: 'التغطية',
         cvmHead: 'طريقة التوزيع',
         cvmDefault: 'افتراضي',
         cvmManual: 'يدوي',
@@ -62,7 +66,10 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         cvmDefaultTip: 'كل فقرة من تحليل المهام تذهب إلى الأوراق المحددة في ⚙️ إعداد التوزيع.',
         cvmManualTip: 'لا يُوزَّع شيء تلقائياً: انقر خانات البند (📄 🛠️ ✅) لتختار أين يذهب. معايير المحصلة تذهب دائماً إلى استمارة التقييم.',
         cvmAiTip: 'يقترح الذكاء الاصطناعي أين يذهب كل بند؛ تظهر الاقتراحات في الخانات وفي «المحتوى المقترح» لتراجعها وتصادق عليها. البنود المصادق عليها أو المبنية لا تتغير. انقر خانة لتغييرها.',
-        cvmAiRun: '🤖 اقترح التوزيع',
+        cvmAiRun: '🤖 اقتراح التوزيع بالذكاء الاصطناعي',
+        cvmAiPartial: 'البنود التي وُزِّعت قبل الخطأ تبقى على اقتراح الذكاء الاصطناعي، والبقية لم تتغير.',
+        cvmAiTipManual: 'اختر «يدوي» وانقر الخانات بنفسك',
+        cvmAiTipDefault: 'اختر «افتراضي» ليتبع التوزيع «إعداد التوزيع»',
         cvmAiBusy: 'الذكاء الاصطناعي يعمل…',
         cvmAiDone: 'اقتراح الذكاء الاصطناعي: وُزِّع {v0} بنداً — راجعها ثم صادق عليها في «المحتوى المقترح».',
         cvmAiNone: 'لا يوجد ما يُوزَّع: كل البنود مصادق عليها أو مبنية.',
@@ -180,11 +187,13 @@ function _covHtml() {
     var mode = mbCmMode();
     var modes = '<div class="mb-cov-modes" role="radiogroup" aria-label="' + _covEsc(_covT('cvmHead')) + '"><span class="mb-cov-modes-h">' + _covEsc(_covT('cvmHead')) + '</span>' +
         ['default', 'manual', 'ai'].map(function (m) {
-            var k = m === 'default' ? 'cvmDefault' : m === 'manual' ? 'cvmManual' : 'cvmAi';
-            return '<button type="button" role="radio" class="mb-cov-mode' + (m === mode ? ' is-on' : '') + '" aria-checked="' + (m === mode) + '"' +
-                ' data-act="mbCovSetMode" data-args="' + _covArgs([m]) + '">' + _covEsc(_covT(k)) + '</button>';
+            /* 3.65.0: «AI» and «Suggest the distribution» are one button —
+               it chooses the method and asks at once; pressed again, it
+               asks again. */
+            var k = m === 'default' ? 'cvmDefault' : m === 'manual' ? 'cvmManual' : 'cvmAiRun';
+            return '<button type="button" role="radio" class="mb-cov-mode' + (m === 'ai' ? ' is-ai' : '') + (m === mode ? ' is-on' : '') + '" aria-checked="' + (m === mode) + '"' +
+                (m === 'ai' ? ' id="mb-cov-ai-btn" data-act="mbCovAiRun"' : ' data-act="mbCovSetMode" data-args="' + _covArgs([m]) + '"') + '>' + _covEsc(_covT(k)) + '</button>';
         }).join('') +
-        (mode === 'ai' ? '<button type="button" class="mb-sp-btn is-main mb-cov-ai" data-act="mbCovAiSuggest" id="mb-cov-ai-btn">' + _covEsc(_covT('cvmAiRun')) + '</button>' : '') +
         '</div><p class="mb-cov-legend" dir="auto">' + _covEsc(_covT(mode === 'default' ? 'cvmDefaultTip' : mode === 'manual' ? 'cvmManualTip' : 'cvmAiTip')) + '</p>';
     return modes + '<div class="mb-cov-sum"><div class="mb-cov-bar" role="img" aria-label="' + _covEsc(_covT('mbCovPct', { v0: pct })) + '"><span style="width:' + pct + '%"></span></div>' +
         '<span>' + _covEsc(_covT('mbCovPct', { v0: pct })) + '</span>' +
@@ -249,6 +258,12 @@ function mbCovSetMode(mode) {
     _covAfterChange();
 }
 
+/** 3.65.0: the AI method — chosen and asked in one press. */
+function mbCovAiRun() {
+    if (mbCmMode() !== 'ai') { mbState.cmMode = 'ai'; _covAfterChange(); }
+    return mbCovAiSuggest();
+}
+
 /** A cell of Coverage in manual / AI mode: this item goes there, or not. */
 function mbCovToggle(kind, key) {
     var module = _mbCurrentModule();
@@ -304,7 +319,10 @@ async function mbCovAiSuggest() {
         showStatus(_covT('cvmAiDone', { v0: done }), 'success');
     } catch (e) {
         console.warn('[Coverage] AI distribution failed:', e);
-        showStatus(_covT('cvmAiFail', { v0: (e && e.message) || e }), 'error');
+        /* 3.65.0: the AI service warning, as in DACUM Live Pro. Batches
+           already applied stay; the line says so. */
+        if (typeof mbShowAIError === 'function') mbShowAIError(e, { safeKey: done ? 'cvmAiPartial' : 'aiSvcSafeGeneric', tipKeys: ['cvmAiTipManual', 'cvmAiTipDefault'] });
+        else showStatus(_covT('cvmAiFail', { v0: (e && e.message) || e }), 'error');
     } finally {
         _covAfterChange();
     }

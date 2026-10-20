@@ -193,7 +193,7 @@ test('add to the open sheet', async ({ page }) => {
 test('coverage view: counts, a mark opens the item in its tab; the old mapping tab is gone', async ({ page }) => {
   const errors = await openApp(page, { handoff: HANDOFF });
   await tab(page, 'info');
-  await page.click('#mb-tab-cov');
+  await page.locator('#mb-sp-info [data-act="mbCovOpen"]').click();
   const ov = page.locator('#mb-cov-overlay');
   await expect(ov).toContainText('Coverage');
   await expect(ov.locator('.mb-cov-sum')).toContainText('0% built');
@@ -203,7 +203,7 @@ test('coverage view: counts, a mark opens the item in its tab; the old mapping t
   await expect(row(page, 'info', 'Board types')).toHaveClass(/is-flash/);
   // 3.64.0: no structure-mapping page and no button to it
   await expect(page.locator('#mapping-tab')).toHaveCount(0);
-  await page.click('#mb-tab-cov');
+  await page.locator('#mb-sp-info [data-act="mbCovOpen"]').click();
   await expect(page.locator('[data-act="mbCovWorkspace"]')).toHaveCount(0);
   expect(errors).toEqual([]);
 });

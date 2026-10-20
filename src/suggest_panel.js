@@ -1039,7 +1039,8 @@ async function _spCallAI(prompt) {
             body: JSON.stringify({ prompt: prompt }), signal: controller.signal
         });
     } finally { clearTimeout(timer); }
-    if (!res.ok) throw new Error('HTTP ' + res.status);
+    /* 3.65.0: classified, for the AI service warning (ai_error.js). */
+    if (!res.ok) throw (typeof mbAIErrorFromResponse === 'function' ? await mbAIErrorFromResponse(res) : new Error('HTTP ' + res.status));
     var data = await res.json();
     var raw = '';
     if (data && Array.isArray(data.content)) raw = data.content.map(function (b) { return (b && b.text) || ''; }).join('');
@@ -1135,7 +1136,8 @@ async function mbSpTranslate(el) {
             }
         } catch (e) {
             console.warn('[Suggested] translation failed:', e);
-            showStatus(_spT('mbSpTranslateFailed'), 'error');
+            if (typeof mbShowAIError === 'function') mbShowAIError(e, { safeKey: done ? null : 'aiSvcSafeGeneric' });
+            else showStatus(_spT('mbSpTranslateFailed'), 'error');
             setBusy(false);
             mbSpRefresh();
             return;
