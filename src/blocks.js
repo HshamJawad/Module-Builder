@@ -76,6 +76,17 @@ var MB_BLOCK_HOSTS = {
         titleList: 'lo-block-titles',
         seedKey:   null,
         pageBreak: false
+    },
+    /* 3.57.0: more content under the Assessment Content box of the
+       Assessment Unit tab — a title and a text (and tables), printed
+       after the first content, before the forms. */
+    assessment: {
+        section:   'assessment-blocks-section',
+        container: 'assessment-blocks-container',
+        remove:    'removeAssessmentBlock',
+        titleList: null,
+        seedKey:   null,
+        pageBreak: false
     }
 };
 
@@ -98,6 +109,10 @@ function mbBlockList(host) {
     if (host === 'intro') {
         if (!Array.isArray(mbState.introBlocks)) mbState.introBlocks = [];
         return mbState.introBlocks;
+    }
+    if (host === 'assessment') {   // 3.57.0
+        if (!Array.isArray(mbState.assessmentBlocks)) mbState.assessmentBlocks = [];
+        return mbState.assessmentBlocks;
     }
     var lo = mbCurrentLOObject();
     if (!lo) return null;
@@ -316,6 +331,7 @@ function mbRenderBlocks(host) {
 function mbRenderAllBlocks() {
     mbRenderBlocks('intro');
     mbRenderBlocks('lo');
+    mbRenderBlocks('assessment');
 }
 
 /* ── Live capture for the table widget ───────────────────────
@@ -337,8 +353,9 @@ function mbRenderAllBlocks() {
 var _mbBlockTableTimer = null;
 
 function _mbBlockHostOf(el) {
-    var box = el.closest ? el.closest('#intro-blocks-container, #lo-blocks-container') : null;
+    var box = el.closest ? el.closest('#intro-blocks-container, #lo-blocks-container, #assessment-blocks-container') : null;
     if (!box) return null;
+    if (box.id === MB_BLOCK_HOSTS.assessment.container) return 'assessment';
     return (box.id === MB_BLOCK_HOSTS.intro.container) ? 'intro' : 'lo';
 }
 
@@ -533,7 +550,13 @@ async function _mbRemoveBlock(host, uid) {
     showStatus(window.i18n.t('dgSectionDeleted'), 'success');
 }
 
+async function addAssessmentBlock() {   // 3.57.0
+    _mbAddBlock('assessment');
+    showStatus(window.i18n.t('dgSectionAdded'), 'success');
+}
+
 function removeIntroBlock(host, uid) { return _mbRemoveBlock('intro', uid); }
+function removeAssessmentBlock(host, uid) { return _mbRemoveBlock('assessment', uid); }
 function removeLoBlock(host, uid)    { return _mbRemoveBlock('lo',    uid); }
 
 /* ── Wiring ──────────────────────────────────────────────────

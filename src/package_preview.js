@@ -87,6 +87,7 @@
             introBlocks: [],
             includeLearningGuide: false,
             assessmentContent: biNew(),
+            assessmentBlocks: [],
             infoQRImage: null,
             activityQRImage: null
         });

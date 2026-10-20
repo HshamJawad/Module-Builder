@@ -166,11 +166,11 @@ function renderAssessmentForms() {
                     <table style="width: 100%; border-collapse: collapse; border: 1px solid #d1d5db;">
                         <thead>
                             <tr style="background: #f3f4f6;">
-                                <th style="border: 1px solid #d1d5db; padding: 10px; text-align: left; font-size: 0.9em;"><span data-i18n="expAssessmentCriteria">${window.i18n.t('expAssessmentCriteria')}</span></th>
-                                <th style="border: 1px solid #d1d5db; padding: 10px; text-align: left; font-size: 0.9em;"><span data-i18n="expNameNumberActivities">${window.i18n.t('expNameNumberActivities')}</span></th>
-                                <th style="border: 1px solid #d1d5db; padding: 10px; text-align: left; font-size: 0.9em;"><span data-i18n="expOutcomesMethod">${window.i18n.t('expOutcomesMethod')}</span></th>
-                                <th style="border: 1px solid #d1d5db; padding: 10px; text-align: left; font-size: 0.9em;"><span data-i18n="expEvidenceVerification">${window.i18n.t('expEvidenceVerification')}</span></th>
-                                <th style="border: 1px solid #d1d5db; padding: 10px; text-align: left; font-size: 0.9em;"><span data-i18n="expCompletionDateNotes">${window.i18n.t('expCompletionDateNotes')}</span></th>
+                                <th style="border: 1px solid #d1d5db; padding: 10px; text-align: start; font-size: 0.9em;"><span data-i18n="expAssessmentCriteria">${window.i18n.t('expAssessmentCriteria')}</span></th>
+                                <th style="border: 1px solid #d1d5db; padding: 10px; text-align: start; font-size: 0.9em;"><span data-i18n="expNameNumberActivities">${window.i18n.t('expNameNumberActivities')}</span></th>
+                                <th style="border: 1px solid #d1d5db; padding: 10px; text-align: start; font-size: 0.9em;"><span data-i18n="expOutcomesMethod">${window.i18n.t('expOutcomesMethod')}</span></th>
+                                <th style="border: 1px solid #d1d5db; padding: 10px; text-align: start; font-size: 0.9em;"><span data-i18n="expEvidenceVerification">${window.i18n.t('expEvidenceVerification')}</span></th>
+                                <th style="border: 1px solid #d1d5db; padding: 10px; text-align: start; font-size: 0.9em;"><span data-i18n="expCompletionDateNotes">${window.i18n.t('expCompletionDateNotes')}</span></th>
                                 <th style="border: 1px solid #d1d5db; padding: 10px; text-align: center; width: 60px;"><span data-i18n="rxActions">${window.i18n.t('rxActions')}</span></th>
                             </tr>
                         </thead>

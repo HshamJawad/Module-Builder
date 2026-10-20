@@ -89,6 +89,7 @@ function mbCollectShared() {
         introBlocks:            mbState.introBlocks      || [],
         includeLearningGuide:   !!mbState.includeLearningGuide,
         assessmentContent:      mbState.assessmentContent,
+        assessmentBlocks:       mbState.assessmentBlocks || [],   // 3.57.0
         referencesTitle:        mbState.referencesTitle  || null,
         referencesData:         mbState.referencesData   || [],
         refIdCounter:           mbState.refIdCounter     || 1,
@@ -113,7 +114,7 @@ function _mbDefaultShared() {
         coverFrameworkSeeded: true,
         teamMembers: [], teamMemberIdCounter: 0,
         introAdditionalDetails: biNew(), introBlocks: [], includeLearningGuide: false,
-        assessmentContent: biNew(),
+        assessmentContent: biNew(), assessmentBlocks: [],
         referencesTitle: null, referencesData: [{ id: 1, value: '' }], refIdCounter: 1,
         glossary: { title: null, tables: [] },
         assessmentResults: null,
@@ -154,6 +155,8 @@ function mbApplyProjectShared(data) {
         if (typeof mbRenderLearningGuideToggle === 'function') mbRenderLearningGuideToggle();
 
         mbState.assessmentContent = biUpgrade(data.assessmentContent);
+        mbState.assessmentBlocks = (typeof mbNormalizeBlocks === 'function') ? mbNormalizeBlocks(data.assessmentBlocks) : (data.assessmentBlocks || []);   // 3.57.0
+        if (typeof mbRenderBlocks === 'function') mbRenderBlocks('assessment');
         if (typeof applyProjectTextToDOM === 'function') applyProjectTextToDOM();
 
         /* null, never a literal: null is what mbSeedReferencesTitle()
