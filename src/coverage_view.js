@@ -216,7 +216,20 @@ function mbCovRender() {
     var ov = document.getElementById(MB_COV_ID);
     if (!ov) return;
     var body = ov.querySelector('.mb-cov-body');
-    if (body) body.innerHTML = _covHtml();
+    if (!body) return;
+    /* 3.65.1: the pressed button is replaced, which dropped the focus to
+       the page — and Escape no longer closed the window. The same
+       button (by its data-act and args) takes the focus back. */
+    var a = document.activeElement, sel = '';
+    if (a && body.contains(a) && a.getAttribute('data-act')) {
+        sel = '[data-act="' + a.getAttribute('data-act') + '"]' + (a.getAttribute('data-args') ? '[data-args="' + CSS.escape(a.getAttribute('data-args')) + '"]' : '');
+    }
+    body.innerHTML = _covHtml();
+    if (!sel && !(a && a.isConnected)) sel = '.mb-cov-mode.is-on';
+    if (sel) {
+        var b = body.querySelector(sel) || ov.querySelector('.mb-cov-box');
+        if (b && b.focus) b.focus({ preventScroll: true });
+    }
 }
 
 function mbCovSetLo(v) { mbCovState.lo = v || ''; mbCovRender(); }

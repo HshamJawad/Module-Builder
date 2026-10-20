@@ -126,3 +126,51 @@ test('Arabic: the distribution methods and the warning', async ({ page }) => {
   await expect(page.locator('#mb-ai-err')).toHaveAttribute('dir', 'rtl');
   expect(errors).toEqual([]);
 });
+
+test('3.65.1: the card stays — with Coverage — when it has nothing to list (Manual, no Task Analysis, Learner guide)', async ({ page }) => {
+  const errors = await openApp(page, { handoff: HANDOFF, lang: 'ar' });
+  await tab(page, 'info');
+  await openCov(page, 'info');
+  await ov(page).locator('.mb-cov-mode', { hasText: 'يدوي' }).click();
+  await page.keyboard.press('Escape');
+  // Manual: nothing sent to the sheet, the card shrinks to a line and the buttons
+  const card = page.locator('#mb-sp-info .mb-sp.is-compact');
+  await expect(card).toContainText('لا يوجد بند مُرسل إلى هذه الورقة');
+  await card.locator('[data-act="mbCovOpen"]').click();
+  await expect(ov(page)).toBeVisible();
+  await page.keyboard.press('Escape');
+  // a module with no Task Analysis
+  await page.evaluate(() => {
+    const m = mbState.modulesData.find(x => x.id === mbState.currentModuleId);
+    m.taskAnalysisSource = null;
+    (m.learningOutcomes || []).forEach(lo => { lo.performanceCriteria = []; });
+    mbSpRefresh();
+  });
+  for (const t of ['info', 'activity', 'assessment']) {
+    await tab(page, t);
+    await expect(page.locator(`#mb-sp-${t} .mb-sp.is-compact`)).toContainText('لا يوجد بعدُ تحليل مهام');
+    await expect(page.locator(`#mb-sp-${t} [data-act="mbCovOpen"]`)).toBeVisible();
+  }
+  expect(errors).toEqual([]);
+});
+
+test('3.65.1: the Learner guide template has the card and Coverage too', async ({ page }) => {
+  const errors = await openApp(page, { handoff: HANDOFF });
+  await page.evaluate(() => { const s = wsReadSettings(); s.templateConvert = true; wsWriteSettings(s); });
+  await page.evaluate(() => mbSwitchTemplate('learnerGuide', { ask: false }));
+  await page.waitForFunction(() => mbState.moduleTemplate === 'learnerGuide');
+  for (const t of ['info', 'activity', 'assessment']) {
+    await tab(page, t);
+    await expect(page.locator(`#mb-sp-${t} [data-act="mbCovOpen"]`)).toBeVisible();
+  }
+  expect(errors).toEqual([]);
+});
+
+test('3.65.1: no «Cover Page Information» sub-heading in Module Information', async ({ page }) => {
+  const errors = await openApp(page, { lang: 'ar' });
+  await tab(page, 'module-info');
+  await expect(page.locator('[data-i18n="mbCoverPageInformation"]')).toHaveCount(0);
+  await expect(page.locator('#module-info-tab')).not.toContainText('معلومات صفحة الغلاف');
+  await expect(page.locator('#covers-additional-info')).toBeVisible();
+  expect(errors).toEqual([]);
+});
