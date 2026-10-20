@@ -212,10 +212,15 @@ function _spRenderKind(kind) {
     var module = _spModule();
     var hasSource = !!(module && ((module.taskAnalysisSource && Object.keys(module.taskAnalysisSource.taskAnalysis || {}).length) ||
         (module.learningOutcomes || []).some(function (lo) { return (lo.performanceCriteria || []).length; })));
-    if (!module || !hasSource) { host.innerHTML = ''; _spBadges(); return; }
+    if (!module) { host.innerHTML = ''; _spBadges(); return; }
+    /* 3.65.1: 🗺️ Coverage opens only from this card (3.65.0), so the
+       card no longer vanishes when it has nothing to list — a module
+       with no Task Analysis, or no item sent to this sheet (the
+       «Manual» method) — it shrinks to a line and the two buttons. */
+    if (!hasSource) { host.innerHTML = _spCompactHtml(kind, 'mbSpNoSource'); _spBadges(); return; }
     var rows = _spRows(module);
     var mine = rows.filter(function (r) { return r.dests.indexOf(kind) !== -1; });
-    if (!mine.length) { host.innerHTML = ''; _spBadges(rows); return; }
+    if (!mine.length) { host.innerHTML = _spCompactHtml(kind, 'mbSpNoneHere'); _spBadges(rows); return; }
     var los = _cmLos(module);
     var view = mbSpView[kind];
     var shown = _spShown(rows, kind);
@@ -281,6 +286,16 @@ function _spRenderKind(kind) {
         try { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); } catch (e) { /* ignore */ }
     }
     _spBadges(rows);
+}
+
+/* 3.65.1: the card with nothing to list — why, and the way to Coverage. */
+function _spCompactHtml(kind, msgKey) {
+    return '<div class="mb-sp is-compact" data-kind="' + kind + '">' +
+        '<div class="mb-sp-compact-head"><span class="mb-sp-title">✨ ' + _spEsc(_spT('mbSpTitle')) + '</span>' +
+            '<span class="mb-sp-gap"></span>' +
+            '<button type="button" class="mb-sp-btn is-quiet" data-act="mbCovOpen">🗺️ ' + _spEsc(_spT('mbCovTitle')) + '</button>' +
+            '<button type="button" class="mb-sp-btn is-quiet" data-act="mbCovDefaults">⚙️ ' + _spEsc(_spT('mbSpDefaultsTitle')) + '</button></div>' +
+        '<p class="mb-sp-empty" dir="auto">' + _spEsc(_spT(msgKey)) + '</p></div>';
 }
 
 /* 3.34.0: items of this panel with no text in the content language. */

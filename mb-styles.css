@@ -3661,6 +3661,8 @@ html[dir="rtl"] .mb-sp[open] > summary::before { transform: rotate(-90deg); }
 .mb-sp-intro { margin: 8px 0 10px; font-size: 0.84em; line-height: 1.6; color: #0c4a6e; }
 .mb-sp-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; }
 .mb-sp-gap { flex: 1 1 auto; }
+.mb-sp-compact-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }   /* 3.65.1 */
+.mb-sp.is-compact .mb-sp-empty { margin: 6px 0 0; }
 .mb-sp-filter { width: auto; max-width: 100%; padding: 6px 8px; border: 1px solid #93c5fd; border-radius: 8px; background: #fff; font-size: 0.85em; }
 #info-tab .mb-sp-btn, #activity-tab .mb-sp-btn, #assessment-tab .mb-sp-btn, .mb-cov-overlay .mb-cov-box button.mb-sp-btn {
     width: auto; min-height: 36px; padding: 6px 12px !important; margin: 0; border-radius: 8px; font-size: 0.84em; font-weight: 700; cursor: pointer;
