@@ -639,11 +639,20 @@ function _pdfBuild(pdf, model, lang) {
     });
 
     /* Assessment */
-    if (model.assessment.length) {
+    /* 3.57.0: the Assessment Content and its further sections, first. */
+    var _ai = model.assessmentIntro || { content: '', blocks: [] };
+    var _aiAny = !!(_ai.content || _ai.blocks.length);
+    if (model.assessment.length || _aiAny) {
         w.newPage();
         w.heading(t('assessment'), 2);
+        if (_ai.content) w.text(_ai.content);
+        _ai.blocks.forEach(function (b) {
+            if (b.title) w.label(b.title);
+            if (b.body.trim()) w.text(b.body);
+            _pdfBlockTables(w, b, S);
+        });
         model.assessment.forEach(function (f, idx) {
-            if (idx) w.newPage();
+            if (idx || _aiAny) w.newPage();
             w.label(t('portfolio') + ' — ' + t('outcome') + ' ' + f.outcomeIndex + ': ' + f.outcomeTitle);
             if (f.rows.length) {
                 w.table([t('colCriteria'), t('colActivities'), t('colOutcomes'), t('colVerification'), t('colDate')],

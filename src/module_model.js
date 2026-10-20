@@ -267,6 +267,19 @@ function mbBuildModuleModel(lang, state) {
 
         outcomes: [],
         assessment: [],
+        /* 3.57.0: the Assessment Content box and the content added under
+           it — printed before the forms, as in Word. Same rule as Word
+           (blocks.js mbBlocksFilled): a section with no text and no
+           table is left out. */
+        assessmentIntro: {
+            content: _mmStr(st.assessmentContent).trim() ? _mmStr(st.assessmentContent) : '',
+            blocks: _mmArr(st.assessmentBlocks)
+                .map(function (b) {
+                    return { title: _mmStr(b && b.title).trim(), body: _mmStr(b && b.body),
+                             tables: _mmTables(b && b.tables) };
+                })
+                .filter(function (b) { return b.body.trim() || b.tables.length; })
+        },
 
         /* 3.42.0: Glossary of Terms — exported before the references. */
         glossary: {

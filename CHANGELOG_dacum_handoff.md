@@ -1,9 +1,10 @@
 # الإصدار 3.57.0 (٢٠ تشرين الأول ٢٠٢٦) — محتوى إضافي في وحدة التقييم، وعناوين الاستمارة باتجاه الكتابة
 
 **ملف جديد:** `tests/specs/assessment-blocks.spec.js`.
-**ملفات معدّلة:** `src/blocks.js`، `src/assessment.js`، `src/exports_docx.js`، `src/module_library.js`، `src/mb_state.js`، `src/storage.js`، `src/autosave.js`، `src/package_preview.js`، `src/mb-translations.js`، `index.html` (‎?v=3.57.0)، `sw.js` (‏mb-3.57.0)، `version.json`، `ROADMAP.md`، `tests/README.md`.
+**ملفات معدّلة:** `src/blocks.js`، `src/assessment.js`، `src/exports_docx.js`، `src/module_model.js`، `src/exports_html.js`، `src/exports_pdf.js`، `src/module_library.js`، `src/mb_state.js`، `src/storage.js`، `src/autosave.js`، `src/package_preview.js`، `src/mb-translations.js`، `index.html` (‎?v=3.57.0)، `sw.js` (‏mb-3.57.0)، `version.json`، `ROADMAP.md`، `tests/README.md`.
 
-- **«➕ إضافة محتوى إضافي»** تحت مربع «محتوى التقييم»: كل قسم عنوان ونص (وجداول اختيارية)، ثنائي اللغة، بالمكوّن نفسه الذي تستخدمه أقسام التقديم والمحصلات (`blocks.js`، المضيف `assessment`). يُحفظ مع المشروع (`assessmentBlocks`)، ويُطبع في Word بعد المحتوى الأول وقبل الاستمارات. القسم الفارغ لا يُصدَّر.
+- **«➕ إضافة محتوى إضافي»** تحت مربع «محتوى التقييم»: كل قسم عنوان ونص (وجداول اختيارية)، ثنائي اللغة، بالمكوّن نفسه الذي تستخدمه أقسام التقديم والمحصلات (`blocks.js`، المضيف `assessment`). يُحفظ مع المشروع (`assessmentBlocks`)، ويُطبع بعد المحتوى الأول وقبل الاستمارات. القسم الفارغ لا يُصدَّر.
+- **«محتوى التقييم» في PDF وHTML:** كان يُصدَّر في Word وحده. صار هو والأقسام الإضافية في PDF وHTML أيضاً، أول قسم «وحدة التقييم» قبل الاستمارات (`model.assessmentIntro` في `module_model.js`).
 - **عناوين أعمدة استمارة التقييم** تبدأ من جهة اتجاه الكتابة (اليمين في العربية) بدل اليسار.
 
 ---

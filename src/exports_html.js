@@ -448,8 +448,14 @@ function mbBuildModuleHtml(model, opts) {
         });
     });
 
-    if (model.assessment.length && inc('assessment')) {
-        var as = model.assessment.map(function (f, fi) {
+    /* 3.57.0: the Assessment Content and its further sections, first. */
+    var _ai = model.assessmentIntro || { content: '', blocks: [] };
+    var _aiHtml = (_ai.content ? '<p>' + _hxText(_ai.content) + '</p>' : '') + _ai.blocks.map(function (b) {
+        return '<div class="mx-block">' + (b.title ? '<div class="mx-sub">' + _hxEsc(b.title) + '</div>' : '') +
+               (b.body.trim() ? '<p>' + _hxText(b.body) + '</p>' : '') + _hxTables(b.tables) + '</div>';
+    }).join('');
+    if ((model.assessment.length || _aiHtml) && inc('assessment')) {
+        var as = _aiHtml + model.assessment.map(function (f, fi) {
             var h = '<div class="mx-block"><div class="mx-sub">' + t('outcome') + ' ' + f.outcomeIndex + ': ' + _hxEsc(f.outcomeTitle) + '</div>';
             if (f.rows.length) {
                 h += '<table class="mx-tbl"><thead><tr><th>' + t('colCriteria') + '</th><th>' + t('colActivities') +

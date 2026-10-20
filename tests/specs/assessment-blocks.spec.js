@@ -33,6 +33,27 @@ test('more assessment content: added, typed, kept, exported after the first', as
   expect(b).toBeGreaterThan(a);
   expect(c).toBeGreaterThan(b);
 
+  // HTML and PDF too, before the forms (3.57.0).
+  const out = await page.evaluate(() => {
+    syncProjectTextFromDOM();
+    const m = mbBuildModuleModel('en');
+    const html = mbBuildModuleHtml(m, {});
+    const pdf = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4' });
+    const lines = [];
+    const orig = pdf.text.bind(pdf);
+    pdf.text = function (txt) { lines.push(String(txt)); return orig.apply(pdf, arguments); };
+    _pdfBuild(pdf, m, 'en');
+    return { intro: m.assessmentIntro, html, pdf: lines.join('|') };
+  });
+  expect(out.intro.content).toBe('General instructions');
+  expect(out.intro.blocks.map(b => b.title)).toEqual(['Assessment methods']);
+  for (const doc of [out.html, out.pdf]) {
+    const x = doc.indexOf('General instructions'), y = doc.indexOf('Assessment methods'), z = doc.indexOf('Observation and oral questions');
+    expect(x).toBeGreaterThan(-1);
+    expect(y).toBeGreaterThan(x);
+    expect(z).toBeGreaterThan(y);
+  }
+
   // Kept with the project (shared record) and painted back.
   const shared = await page.evaluate(() => mbCollectShared());
   expect(shared.assessmentBlocks[0].title.en).toBe('Assessment methods');
