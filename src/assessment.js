@@ -269,6 +269,7 @@ function renderAssessmentForms() {
         formDiv.innerHTML = formHTML;
         container.appendChild(formDiv);
     });
+    if (typeof mbAutoGrowAll === 'function') mbAutoGrowAll(container);   // 3.61.0: Chrome before 123 (criteria.js)
 }
 
 async function addNewAssessmentForm() {

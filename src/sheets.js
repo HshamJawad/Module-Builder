@@ -297,7 +297,8 @@ function saveCurrentSheetToLO() {
        switch, every outcome switch and every new module. Restricting the
        selector to inputs collects exactly the rows this function was
        always meant to read. */
-    document.querySelectorAll('input.criteria-text').forEach(item => {
+    /* 3.61.0: a <textarea> now (criteria.js); never the read-only <div>. */
+    document.querySelectorAll('input.criteria-text, textarea.criteria-text').forEach(item => {
         if (typeof item.value === 'string' && (item.value.trim() || mbRowHasOtherSide(storedAct.criteria, mbRowUid(item), null))) {
             incomingCriteria.push({ text: item.value, uid: mbRowUid(item) });
         }
@@ -633,6 +634,7 @@ function loadActivitySheetAtIndex(lo, index) {
                 }
             });
         }
+        if (typeof mbAutoGrowAll === 'function') mbAutoGrowAll(document.getElementById('criteria-tbody'));   // 3.61.0
         
         toggleCriteriaSection();
     } else {

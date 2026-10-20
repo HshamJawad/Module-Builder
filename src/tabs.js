@@ -20,6 +20,8 @@ async function switchTab(tabName) {
     if (selectedTabContent) {
         selectedTabContent.classList.add('active');
         mbScrollToTabTop(selectedTabContent);
+        /* 3.61.0: boxes filled while the tab was hidden take their height now. */
+        if (typeof mbAutoGrowAll === 'function') mbAutoGrowAll(selectedTabContent);
     }
     
     /* Activate the corresponding tab button.

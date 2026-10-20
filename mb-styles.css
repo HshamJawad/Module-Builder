@@ -579,6 +579,25 @@
             text-align: start;   /* logical: follows the element's dir */
         }
 
+        /* 3.61.0: a criterion grows with its text (criteria.js). */
+        .criteria-table textarea.criteria-text {
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            min-height: 34px;
+            max-height: 320px;
+            padding: 6px 8px;
+            font: inherit;
+            font-size: 1em;
+            line-height: 1.5;
+            text-align: start;
+            resize: vertical;
+            overflow-y: auto;
+            overflow-wrap: anywhere;
+            field-sizing: content;
+        }
+
+        .criteria-table textarea.criteria-text:focus,
         .criteria-table input[type="text"]:focus {
             outline: 1px solid #667eea;
         }
