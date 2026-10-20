@@ -6,7 +6,7 @@ const { openApp, tab } = require('../helpers');
 test('the heading follows the open tab, the language and the side navigation', async ({ page }) => {
   const errors = await openApp(page);
   const h = page.locator('#mb-tab-title');
-  await expect(h).toHaveText('🏠 Basic Info');
+  await expect(h).toHaveText('🏠 Module');   // 3.63.0: was «Basic Info»
   await tab(page, 'references');
   await expect(h).toHaveText('📚 References');
   // a dialog button (Settings) does not change it
