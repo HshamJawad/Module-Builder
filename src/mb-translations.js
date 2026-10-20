@@ -3469,6 +3469,19 @@
         return vars[k] !== undefined ? vars[k] : m;
       });
     },
+    /* 3.59.0: a feature file brings its own words ({ en: {…}, fr: {…},
+       ar: {…} }) instead of growing this file by three hundred lines.
+       Keys already here win, so an extension can never rename a word
+       the tool already prints. */
+    extend: function (dicts) {
+      Object.keys(dicts || {}).forEach(function (code) {
+        if (!TRANSLATIONS[code]) return;
+        var src = dicts[code] || {};
+        Object.keys(src).forEach(function (k) {
+          if (TRANSLATIONS[code][k] === undefined) TRANSLATIONS[code][k] = src[k];
+        });
+      });
+    },
     lockLang: lockLang,
     isLangLocked: isLangLocked,
     aiDirective: aiDirective,

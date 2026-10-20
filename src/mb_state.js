@@ -178,7 +178,14 @@ var mbState = {
        rendered (see learning_guide.js), so there is no copy of the
        sheet titles here to fall out of date when a sheet is renamed.
        Default off: it is an editorial choice, not a default layout. */
-    includeLearningGuide: false
+    includeLearningGuide: false,
+
+    /* 3.59.0: the project's module template — module_template.js.
+       Shared project data; 'standard' is the tool as it always was. */
+    moduleTemplate: 'standard',
+    /* 3.59.0: the Learner guide's assessment unit texts — learner_guide.js.
+       null = the tool's own text in the export language. */
+    lgAsm: null
 };
 
 /* Map of textarea id → mbState key, for the four fields above. */

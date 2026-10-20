@@ -303,6 +303,8 @@ function saveCurrentSheetToLO() {
         }
     });
     activityData.criteria = biMergeStringsById(storedAct.criteria, incomingCriteria);
+    /* 3.59.0: Learner guide — does it count, and what is handed in. */
+    if (typeof mbLgCollectActivityRow === 'function') mbLgCollectActivityRow(activityData);
 
     if (_mbActivitySheetHasContent(activityData)) {
         if (!lo.activitySheets || lo.activitySheets.length === 0) {
@@ -484,6 +486,7 @@ function loadInfoSheetAtIndex(lo, index) {
 
 function loadActivitySheetAtIndex(lo, index) {
     updateActivitySheetNav(lo);
+    if (typeof mbLgPaintActivityRow === 'function') mbLgPaintActivityRow((lo.activitySheets || [])[index] || null);   // 3.59.0
     const loIndex = mbState.learningOutcomesData.indexOf(lo);
     // Load Activity Sheet if exists
     if (lo.activitySheets && lo.activitySheets.length > 0 && lo.activitySheets[index]) {

@@ -1,0 +1,552 @@
+// ============================================================
+// /src/learner_guide.js
+// The «Learner Guide» template (3.59.0) — module_template.js
+//
+// WHAT THE TEMPLATE IS
+// A module written as a learner's guide: each learning outcome is a
+// LEARNING UNIT numbered as one sequence —
+//     1- Learning unit: <outcome>
+//        1-1 Introduction          (lo.lgIntro)
+//        1-2 Knowledge: …          (information sheets)
+//        1-3 Learning activity: …  (activity sheets, type 'activity')
+//        1-4 Worksheet: …          (activity sheets, type 'job')
+//        1-5 Reflection            (lo.lgReflection)
+// then the Glossary, then an ASSESSMENT UNIT: an introduction, the
+// portfolio of evidence, the table of the portfolio's contents (derived
+// from the sheets, never typed) and the assessment table of each
+// outcome (the existing assessment forms).
+//
+// WHAT IT LEAVES OUT
+// Self-check and answer key, the training resources table, the
+// performance criteria checklist and the Learning Guide table. Their
+// data stays in the project (the template can be switched back); the
+// interface hides them (data-tpl-only) and the exporters skip them.
+//
+// WHERE THINGS ARE STORED
+//   lo.lgIntro       { body: pair, items: pair }      items: one per line
+//   lo.lgReflection  { title: pair, questions: pair, lines: n, contributes: 'yes'|'no'|'' }
+//   activity.lgContributes   '' (default: yes) | 'yes' | 'no'
+//   activity.lgProduct       pair — '' = the default for its type
+//   mbState.lgAsm    { intro: pair|null, portfolio: pair|null }
+//                    null = the tool's own text, in the export language
+//
+// ORDER AND NUMBERS come from lo_sequence.js, which this template turns
+// to «interleaved» and «one number sequence», and which lists lgIntro
+// and lgReflection in their places.
+// ============================================================
+
+if (window.i18n && window.i18n.extend) window.i18n.extend({
+    en: {
+        lgUnitCard: 'Learning unit (Learner guide)',
+        lgUnitNote: 'The introduction opens the learning unit and the reflection closes it. Empty parts are not exported.',
+        lgIntroTitle: 'Introduction',
+        lgIntroBodyPh: 'Introduce the subject of this learning unit…',
+        lgIntroItemsLabel: 'You will learn how to: (one item per line)',
+        lgIntroItemsPh: 'One item per line…',
+        lgFillItems: 'Fill from the knowledge sheet titles',
+        lgReflTitle: 'Reflection',
+        lgReflTitlePh: 'Reflection on learning unit {v0}',
+        lgReflQuestionsLabel: 'Reflection questions (one per line)',
+        lgReflQuestionsPh: 'What was the most difficult part of this unit for you, and why?',
+        lgReflLines: 'Answer lines per question',
+        lgReflContributes: 'The reflection contributes to the assessment',
+        lgActRowTitle: 'Portfolio of evidence',
+        lgContributes: 'Contributes to the assessment?',
+        lgContributesDefault: 'Default (yes)',
+        lgpYes: 'Yes',
+        lgpNo: 'No',
+        lgProduct: 'Learner product:',
+        lgAsmCard: 'Assessment unit (Learner guide)',
+        lgAsmNote: 'The tool writes these texts; edit them freely. The table of the portfolio’s contents is built from the sheets, and each outcome’s assessment table from its assessment form below.',
+        lgAsmIntro: 'Introduction',
+        lgAsmPortfolio: 'Portfolio of evidence',
+        lgAsmRestore: 'Restore the default text',
+        lgAsmContents: 'Contents of the portfolio',
+        lgAsmContentsEmpty: 'No learning activity, worksheet or reflection has a title yet.',
+        lgUnitHead: '{v0}- Learning unit: {v1}',
+        lgIntroHead: '{v0} Introduction',
+        lgYouWillLearn: 'In this learning unit you will learn how to:',
+        lgKnowledge: 'Knowledge',
+        lgActivity: 'Learning activity',
+        lgWorksheet: 'Worksheet',
+        lgReflDefault: 'Reflection on learning unit {v0}',
+        lgGlossary: 'Glossary',
+        lgGlossaryTerm: 'Term',
+        lgGlossaryDesc: 'Description',
+        lgAsmUnitHead: '{v0}- Assessment unit',
+        lgAsmIntroHead: '{v0}-1 Introduction',
+        lgAsmPortfolioHead: '{v0}-2 Portfolio of evidence',
+        lgAsmContentsHead: '{v0}-3 Contents of the portfolio',
+        lgAsmTablesHead: '{v0}-4 Assessment tables for the unit {v1}',
+        lgAsmTablesLead: 'Your teacher will keep records of your achievements and will also fill in and sign the tables below, and you will sign them too. The tables are then your record of your results while studying this unit. You must meet all the assessment criteria and achieve all the learning outcomes to be «competent» in this unit.',
+        lgColActivity: 'Learning activities',
+        lgColCriteria: 'Assessment criteria',
+        lgColActNum: 'Name and number of the learning activity',
+        lgColOutput: 'Output',
+        lgColDate: 'Completion date',
+        lgColProduct: 'Learner products',
+        lgColContributes: 'Contributes to the assessment?',
+        lgProdObservation: 'Direct observation',
+        lgProdWorksheet: 'Worksheet',
+        lgAsmOutcomeHead: 'Learning outcome {v0}: {v1}',
+        lgDefaultAsmIntro: 'The assessment of this unit is based on the assessment of your portfolio of evidence. The portfolio assessment is based on the learning activities you completed during the unit. All worksheets from the learning activities, together with any other evidence of your work (such as photos, drawings and notes), must be submitted to your teacher as a portfolio for assessment. If you wrote any of your answers in this learner guide, write your name on its front cover and put it in the portfolio too. Your teacher will return your portfolio to you.\n\nTo complete this unit successfully, you must achieve all the learning outcomes and meet all the assessment criteria of the unit. The learning outcomes and assessment criteria are shown in the assessment tables below.\n\nOnce you have finished the unit and have had the opportunity to meet all the assessment criteria, the teacher will confirm whether you meet all the criteria, or whether there are one or more criteria you do not yet meet.\n\nIf you meet all the assessment criteria, you and the teacher will sign below the table to acknowledge that you have achieved the learning outcomes (that is, you are competent in them). These tables are then your record of your results while studying this unit.\n\nIf you need more assessment attempts to meet certain criteria, you will need to agree a time and place for another assessment with your teacher. In exceptional circumstances a third assessment attempt will be provided.',
+        lgDefaultAsmPortfolio: 'As you progress through the unit and complete the learning activities, you will build up a collection of completed activities. This portfolio may include your learner guide if you wrote your answers in it.\n\nYour portfolio will be a useful resource for you as you develop your professional practice and reflect on your progress. The contents of your portfolio must match the activities and products listed in the table below. These learning activities are designed to help you learn the knowledge and skills needed to complete the unit’s assessments; some of them do not contribute to the assessment of the unit, but completing them is still important and they must be included in your portfolio.\n\nYour portfolio will be available to your teacher, who will use it as the basis for assessing and discussing your progress through the unit and what you need to do to achieve its learning outcomes.'
+    },
+    fr: {
+        lgUnitCard: 'Unité d’apprentissage (Guide de l’apprenant)',
+        lgUnitNote: 'L’introduction ouvre l’unité d’apprentissage et la réflexion la termine. Les parties vides ne sont pas exportées.',
+        lgIntroTitle: 'Introduction',
+        lgIntroBodyPh: 'Présentez le sujet de cette unité d’apprentissage…',
+        lgIntroItemsLabel: 'Vous apprendrez à : (un élément par ligne)',
+        lgIntroItemsPh: 'Un élément par ligne…',
+        lgFillItems: 'Remplir avec les titres des fiches de connaissances',
+        lgReflTitle: 'Réflexion',
+        lgReflTitlePh: 'Réflexion sur l’unité d’apprentissage {v0}',
+        lgReflQuestionsLabel: 'Questions de réflexion (une par ligne)',
+        lgReflQuestionsPh: 'Quelle a été la partie la plus difficile de cette unité pour vous, et pourquoi ?',
+        lgReflLines: 'Lignes de réponse par question',
+        lgReflContributes: 'La réflexion contribue à l’évaluation',
+        lgActRowTitle: 'Portfolio de preuves',
+        lgContributes: 'Contribue à l’évaluation ?',
+        lgContributesDefault: 'Par défaut (oui)',
+        lgpYes: 'Oui',
+        lgpNo: 'Non',
+        lgProduct: 'Production de l’apprenant :',
+        lgAsmCard: 'Unité d’évaluation (Guide de l’apprenant)',
+        lgAsmNote: 'L’outil rédige ces textes ; modifiez-les librement. Le tableau du contenu du portfolio est construit à partir des fiches, et le tableau d’évaluation de chaque résultat à partir de son formulaire ci-dessous.',
+        lgAsmIntro: 'Introduction',
+        lgAsmPortfolio: 'Portfolio de preuves',
+        lgAsmRestore: 'Rétablir le texte par défaut',
+        lgAsmContents: 'Contenu du portfolio',
+        lgAsmContentsEmpty: 'Aucune activité, fiche de travail ou réflexion n’a encore de titre.',
+        lgUnitHead: '{v0}- Unité d’apprentissage : {v1}',
+        lgIntroHead: '{v0} Introduction',
+        lgYouWillLearn: 'Dans cette unité d’apprentissage, vous apprendrez à :',
+        lgKnowledge: 'Connaissances',
+        lgActivity: 'Activité d’apprentissage',
+        lgWorksheet: 'Fiche de travail',
+        lgReflDefault: 'Réflexion sur l’unité d’apprentissage {v0}',
+        lgGlossary: 'Glossaire',
+        lgGlossaryTerm: 'Terme',
+        lgGlossaryDesc: 'Description',
+        lgAsmUnitHead: '{v0}- Unité d’évaluation',
+        lgAsmIntroHead: '{v0}-1 Introduction',
+        lgAsmPortfolioHead: '{v0}-2 Portfolio de preuves',
+        lgAsmContentsHead: '{v0}-3 Contenu du portfolio',
+        lgAsmTablesHead: '{v0}-4 Tableaux d’évaluation de l’unité {v1}',
+        lgAsmTablesLead: 'Votre enseignant conservera ses propres relevés de vos acquis et remplira et signera également les tableaux ci-dessous, que vous signerez aussi. Ces tableaux seront ensuite votre relevé de résultats pendant l’étude de cette unité. Vous devez satisfaire à tous les critères d’évaluation et atteindre tous les résultats d’apprentissage pour être « compétent » dans cette unité.',
+        lgColActivity: 'Activités d’apprentissage',
+        lgColCriteria: 'Critères d’évaluation',
+        lgColActNum: 'Intitulé et numéro de l’activité',
+        lgColOutput: 'Production',
+        lgColDate: 'Date de réalisation',
+        lgColProduct: 'Productions de l’apprenant',
+        lgColContributes: 'Contribue à l’évaluation ?',
+        lgProdObservation: 'Observation directe',
+        lgProdWorksheet: 'Fiche de travail',
+        lgAsmOutcomeHead: 'Résultat d’apprentissage {v0} : {v1}',
+        lgDefaultAsmIntro: 'L’évaluation de cette unité repose sur l’évaluation de votre portfolio de preuves, constitué des activités d’apprentissage réalisées pendant l’unité. Toutes les fiches de travail des activités, avec toute autre preuve de votre travail (photos, dessins, notes), doivent être remises à votre enseignant sous forme de portfolio. Si vous avez écrit des réponses dans ce guide, inscrivez votre nom sur sa couverture et placez-le aussi dans le portfolio. Votre enseignant vous rendra votre portfolio.\n\nPour réussir cette unité, vous devez atteindre tous les résultats d’apprentissage et satisfaire à tous les critères d’évaluation, présentés dans les tableaux d’évaluation ci-dessous.\n\nUne fois l’unité terminée, et après avoir eu l’occasion de satisfaire à tous les critères, l’enseignant confirmera si vous les remplissez tous, ou s’il reste un ou plusieurs critères non satisfaits.\n\nSi vous remplissez tous les critères, vous et l’enseignant signerez sous le tableau pour attester que vous avez atteint les résultats d’apprentissage. Ces tableaux constitueront votre relevé de résultats.\n\nSi vous avez besoin d’autres tentatives pour satisfaire à certains critères, convenez d’un moment et d’un lieu avec votre enseignant. Dans des circonstances exceptionnelles, une troisième tentative sera proposée.',
+        lgDefaultAsmPortfolio: 'Au fil de l’unité, en réalisant les activités d’apprentissage, vous rassemblerez un ensemble d’activités terminées. Ce portfolio peut inclure votre guide de l’apprenant si vous y avez écrit vos réponses.\n\nVotre portfolio vous sera utile pour développer votre pratique professionnelle et réfléchir à vos progrès. Son contenu doit correspondre aux activités et productions du tableau ci-dessous. Ces activités vous aident à acquérir les connaissances et les compétences nécessaires aux évaluations de l’unité ; certaines ne contribuent pas à l’évaluation, mais il reste important de les réaliser et de les inclure dans votre portfolio.\n\nVotre portfolio sera à la disposition de votre enseignant, qui s’en servira pour évaluer et discuter vos progrès et ce qu’il vous reste à faire pour atteindre les résultats d’apprentissage.'
+    },
+    ar: {
+        lgUnitCard: 'الوحدة التعلمية (دليل المتعلم)',
+        lgUnitNote: 'المقدمة تفتتح الوحدة التعلمية، والتأمل يختمها. الأجزاء الفارغة لا تُصدَّر.',
+        lgIntroTitle: 'المقدمة',
+        lgIntroBodyPh: 'عرّف بموضوع هذه الوحدة التعلمية…',
+        lgIntroItemsLabel: 'ستتعلم في هذه الوحدة التعلمية كيفية: (بند في كل سطر)',
+        lgIntroItemsPh: 'بند في كل سطر…',
+        lgFillItems: 'التعبئة من عناوين أوراق المعرفة',
+        lgReflTitle: 'التأمل',
+        lgReflTitlePh: 'التأمل في الوحدة التعلمية {v0}',
+        lgReflQuestionsLabel: 'أسئلة التأمل (سؤال في كل سطر)',
+        lgReflQuestionsPh: 'ما هو الجزء الأكثر صعوبة في فهمك لهذه الوحدة ولماذا؟',
+        lgReflLines: 'أسطر الإجابة لكل سؤال',
+        lgReflContributes: 'التأمل يساهم في التقييم',
+        lgActRowTitle: 'محفظة الأدلة',
+        lgContributes: 'يساهم في التقييم؟',
+        lgContributesDefault: 'افتراضي (نعم)',
+        lgpYes: 'نعم',
+        lgpNo: 'كلا',
+        lgProduct: 'منتج الطالب:',
+        lgAsmCard: 'وحدة التقييم (دليل المتعلم)',
+        lgAsmNote: 'هذه النصوص من الأداة، ويمكنك تعديلها. جدول محتويات المحفظة يُبنى من الأوراق، وجدول التقييم لكل محصلة من استمارة التقييم أدناه.',
+        lgAsmIntro: 'المقدمة',
+        lgAsmPortfolio: 'سجل الأعمال (محفظة الأدلة)',
+        lgAsmRestore: 'استعادة النص الافتراضي',
+        lgAsmContents: 'محتويات سجل الأعمال (المحفظة)',
+        lgAsmContentsEmpty: 'لا يوجد نشاط تعلمي أو ورقة عمل أو تأمل له عنوان بعد.',
+        lgUnitHead: '{v0}- الوحدة التعلمية: {v1}',
+        lgIntroHead: '{v0} المقدمة',
+        lgYouWillLearn: 'ستتعلم في هذه الوحدة التعلمية كيفية:',
+        lgKnowledge: 'المعرفة',
+        lgActivity: 'النشاط التعلمي',
+        lgWorksheet: 'ورقة العمل',
+        lgReflDefault: 'التأمل في الوحدة التعلمية {v0}',
+        lgGlossary: 'المصطلحات',
+        lgGlossaryTerm: 'المصطلح',
+        lgGlossaryDesc: 'الوصف',
+        lgAsmUnitHead: '{v0}- وحدة التقييم',
+        lgAsmIntroHead: '{v0}-1 المقدمة',
+        lgAsmPortfolioHead: '{v0}-2 سجل الأعمال (محفظة الأدلة)',
+        lgAsmContentsHead: '{v0}-3 محتويات سجل الأعمال (المحفظة)',
+        lgAsmTablesHead: '{v0}-4 جداول التقييم للوحدة {v1}',
+        lgAsmTablesLead: 'سوف يحتفظ المعلم بسجلاته الخاصة بإنجازاتك وسوف يقوم أيضاً بملء وتوقيع الجداول أدناه، وسوف تعمل أنت أيضاً على التوقيع على هذا الجدول. ستكون هذه الجداول بعد ذلك سجلاً لك للحفاظ على نتائجك أثناء دراسة هذه الوحدة. يجب أن تستوفي جميع معايير التقييم وتحقق جميع محصلات التعلم لكي تكون «كفوءاً» لهذه الوحدة.',
+        lgColActivity: 'نشاطات التعلم',
+        lgColCriteria: 'معايير التقييم',
+        lgColActNum: 'اسم ورقم النشاط التعلمي',
+        lgColOutput: 'الناتج',
+        lgColDate: 'تأريخ الإنجاز',
+        lgColProduct: 'منتجات الطالب',
+        lgColContributes: 'المساهمة في التقييم؟',
+        lgProdObservation: 'الملاحظة المباشرة',
+        lgProdWorksheet: 'ورقة عمل',
+        lgAsmOutcomeHead: 'محصلة التعلم {v0}: {v1}',
+        lgDefaultAsmIntro: 'يعتمد تقييم هذه الوحدة على تقييم الحافظة (سجل الأعمال). يعتمد تقييم الحافظة على أنشطة التعلم التي أكملتها خلال الوحدة. يجب تقديم جميع أوراق العمل من الأنشطة التعلمية إلى جانب أي دليل آخر على عملك (مثل الصور والرسومات والملاحظات) كمحفظة للتقييم لمعلمك. إذا كنت قد كتبت أياً من إجاباتك في دليل المتعلم، فاكتب اسمك على الغلاف الأمامي لدليل المتعلم وضعه في المحفظة أيضاً. سيعيد معلمك محفظتك إليك.\n\nلإكمال هذه الوحدة بنجاح، يجب عليك تحقيق جميع محصلات التعلم وتلبية جميع معايير التقييم للوحدة. تظهر محصلات التعلم ومعايير التقييم في جداول التقييم أدناه.\n\nبمجرد الانتهاء من الوحدة، وإتاحة الفرصة لك لتلبية جميع معايير التقييم، سيؤكد المعلم ما إذا كنت تستوفي جميع المعايير، أو إذا كان هناك معيار واحد أو أكثر لا تفي به.\n\nإذا كنت تستوفي جميع معايير التقييم، فسوف تقوم أنت والمعلم بالتوقيع أسفل الجدول للإقرار بأنك قد حققت محصلات التعلم (أي أنك مؤهل في محصلات التعلم). ستكون هذه الجداول بعد ذلك سجلاً لك للاحتفاظ بنتائجك أثناء دراسة هذه الوحدة.\n\nإذا كنت بحاجة إلى مزيد من محاولات التقييم للوفاء بمعايير معينة، فستحتاج إلى التفاوض على وقت ومكان لإجراء تقييم آخر مع معلمك. في ظروف استثنائية، سيتم توفير محاولة تقييم ثالثة.',
+        lgDefaultAsmPortfolio: 'أثناء تقدمك في الوحدة وإكمال أنشطة التعلم، ستقوم بتجميع مجموعة من الأنشطة المكتملة. قد تتضمن هذه الحافظة دليل المتعلم الخاص بك إذا كنت قد كتبت إجاباتك في هذا الكتيب.\n\nستكون محفظتك مصدراً مفيداً لك أثناء تطوير ممارستك المهنية والتفكير في تقدمك. يجب أن تتطابق محتويات محفظتك مع الأنشطة والمنتجات المدرجة في الجدول أدناه. تم تصميم أنشطة التعلم هذه لمساعدتك على تعلم المعرفة والمهارات المطلوبة لإكمال تقييمات الوحدة، وبعضها لا يساهم في تقييم الوحدة، لكن لا يزال إكمالها مهماً وتحتاج إلى تضمينها في محفظتك.\n\nستكون محفظتك متاحة لمعلمك الذي سيستخدمها كأساس لتقييم ومناقشة كيفية تقدمك خلال الوحدة وما عليك القيام به لتحقيق محصلات تعلم الوحدة.'
+    }
+});
+
+/* ── Small helpers ────────────────────────────────────────────── */
+
+function _lgT(key, vars) {
+    if (!window.i18n) return key;
+    return vars ? window.i18n.tf(key, vars) : window.i18n.t(key);
+}
+/** A word of the tool in an explicit language (the export's). */
+function _lgTIn(key, lang, vars) {
+    if (!window.i18n || !window.i18n.tIn) return key;
+    return vars ? window.i18n.tfIn(key, lang, vars) : window.i18n.tIn(key, lang);
+}
+function _lgEsc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+}
+/* Any language of a pair, or a flattened string — the export hands this
+   file flattened outcomes, the editor hands it pairs. */
+function _lgStr(v, lang) {
+    if (v === null || v === undefined) return '';
+    if (typeof v === 'string') return v;
+    if (typeof v === 'object') {
+        if (lang && typeof v[lang] === 'string' && v[lang].trim()) return v[lang];
+        var codes = (typeof BILANG_CODES !== 'undefined') ? BILANG_CODES : ['en', 'ar', 'fr'];
+        for (var i = 0; i < codes.length; i++) {
+            if (typeof v[codes[i]] === 'string' && v[codes[i]].trim()) return v[codes[i]];
+        }
+    }
+    return '';
+}
+function _lgLines(s) {
+    return String(s || '').split('\n').map(function (l) { return l.replace(/^\s*(?:[-•*]|\d+[.)-])\s*/, '').trim(); })
+        .filter(function (l) { return l; });
+}
+function _lgLang() { return (typeof contentLang === 'function') ? contentLang() : 'en'; }
+function _lgOn() { return typeof mbIsLearnerGuide === 'function' && mbIsLearnerGuide(); }
+
+/* ── Is it printed? ───────────────────────────────────────────── */
+
+function mbLgIntroFilled(lo) {
+    var x = lo && lo.lgIntro;
+    return !!(x && (_lgStr(x.body).trim() || _lgStr(x.items).trim()));
+}
+function mbLgReflectionFilled(lo) {
+    var x = lo && lo.lgReflection;
+    return !!(x && _lgStr(x.questions).trim());
+}
+
+/* ── Names of the sheets in this template ─────────────────────── */
+
+/** The template's own name for a sheet type, or '' (sheet_kinds.js asks
+ *  this when the user has typed no name in Settings → Misc). */
+function mbLgSheetName(kind, lang) {
+    if (!_lgOn()) return '';
+    var key = kind === 'info' ? 'lgKnowledge' : kind === 'activity' ? 'lgActivity' : kind === 'job' ? 'lgWorksheet' : '';
+    return key ? _lgTIn(key, lang) : '';
+}
+
+/** «1-2 Knowledge: title» — the heading of a sheet in this template. */
+function mbLgSheetHeading(kind, num, title, lang) {
+    var label = (typeof mbSheetLabel === 'function') ? mbSheetLabel(kind, lang) : '';
+    var s = (num ? num + ' ' : '') + label;
+    if (title) s += ': ' + title;
+    return s;
+}
+
+/** Product and contribution of an activity sheet in the portfolio. */
+function mbLgActProduct(act, lang) {
+    var own = _lgStr(act && act.lgProduct, lang).trim();
+    if (own) return own;
+    var kind = (typeof mbSheetKind === 'function') ? mbSheetKind(act && act.sheetType) : 'activity';
+    return _lgTIn(kind === 'job' ? 'lgProdWorksheet' : 'lgProdObservation', lang);
+}
+function mbLgActContributes(act) {
+    return !(act && act.lgContributes === 'no');
+}
+
+/** The reflection's heading text (number not included). */
+function mbLgReflectionTitle(lo, loIndex, lang) {
+    var own = _lgStr(lo && lo.lgReflection && lo.lgReflection.title, lang).trim();
+    return own || _lgTIn('lgReflDefault', lang, { v0: loIndex + 1 });
+}
+function mbLgReflectionLines(lo) {
+    var n = parseInt(lo && lo.lgReflection && lo.lgReflection.lines, 10);
+    return (isFinite(n) && n >= 1 && n <= 12) ? n : 2;
+}
+
+/**
+ * The rows of «Contents of the portfolio», in document order:
+ *   [{ number, label, product, contributes }]
+ * Activity sheets of every type and filled reflections. `los` may be
+ * flattened (export) or not (screen).
+ */
+function mbLgPortfolioRows(los, lang) {
+    var rows = [];
+    (los || []).forEach(function (lo, loIndex) {
+        var acts = lo.activitySheets || [];
+        var seq = (typeof mbLoSequence === 'function') ? mbLoSequence(lo) : [];
+        seq.forEach(function (it) {
+            if (it.kind === 'activity') {
+                var a = acts[it.index];
+                var title = _lgStr(a && a.title, lang).trim();
+                if (!title) return;
+                var kind = (typeof mbSheetKind === 'function') ? mbSheetKind(a.sheetType) : 'activity';
+                var num = (typeof mbSeqNumber === 'function') ? mbSeqNumber(lo, loIndex, 'activity', it.index) : '';
+                rows.push({ number: num, label: mbLgSheetHeading(kind, num, title, lang),
+                            product: mbLgActProduct(a, lang), contributes: mbLgActContributes(a) });
+            } else if (it.kind === 'lgReflection' && mbLgReflectionFilled(lo)) {
+                var n = (typeof mbSeqLgNumber === 'function') ? mbSeqLgNumber(lo, loIndex, 'lgReflection') : '';
+                rows.push({ number: n, label: ((n ? n + ' ' : '') + mbLgReflectionTitle(lo, loIndex, lang)),
+                            product: _lgTIn('lgProdWorksheet', lang),
+                            contributes: !!(lo.lgReflection && lo.lgReflection.contributes === 'yes') });
+            }
+        });
+    });
+    return rows;
+}
+
+/** The assessment unit's texts in one language: the author's, or the
+ *  tool's when never edited (null). '' when the author emptied it. */
+function mbLgAsmText(which, lang, state) {
+    var st = state || mbState;
+    var v = st && st.lgAsm ? st.lgAsm[which] : null;
+    var key = which === 'intro' ? 'lgDefaultAsmIntro' : 'lgDefaultAsmPortfolio';
+    if (v === null || v === undefined) return _lgTIn(key, lang);
+    return (typeof v === 'string') ? v : ((typeof biGetStrict === 'function') ? biGetStrict(v, lang) : _lgStr(v, lang));
+}
+
+/** Shared data → state (module_library.js). */
+function mbLgNormalizeAsm(v) {
+    var out = { intro: null, portfolio: null };
+    if (v && typeof v === 'object') {
+        if (v.intro !== null && v.intro !== undefined) out.intro = biUpgrade(v.intro);
+        if (v.portfolio !== null && v.portfolio !== undefined) out.portfolio = biUpgrade(v.portfolio);
+    }
+    return out;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   EDITOR — the learning unit card (Basic Info) and the activity row
+   ══════════════════════════════════════════════════════════════ */
+
+function _lgSave() {
+    if (typeof saveCurrentModuleLOData === 'function') saveCurrentModuleLOData();
+    if (typeof mbSeqPaintNumberFields === 'function') { try { mbSeqPaintNumberFields(); } catch (e) { /* no sheet */ } }
+}
+
+/** The card under the outcome sections, for the selected outcome. */
+function mbRenderLgUnit(force) {
+    var host = document.getElementById('lg-unit-section');
+    if (!host) return;
+    var lo = (typeof mbCurrentLOObject === 'function') ? mbCurrentLOObject() : null;
+    if (!lo || !_lgOn()) { host.style.display = 'none'; host.innerHTML = ''; host.removeAttribute('data-render-key'); return; }
+    host.style.display = '';
+    var lang = _lgLang();
+    var loIndex = mbState.learningOutcomesData.indexOf(lo);
+    /* Not while the author is typing here (history.js snapshots on every
+       focus, which repaints the outcome card): the fields bind live. */
+    var key = lo.id + '|' + loIndex + '|' + lang + '|' + ((window.i18n && window.i18n.getLang) ? window.i18n.getLang() : '');
+    var act = document.activeElement;
+    if (force !== true && host.getAttribute('data-render-key') === key && act && act !== document.body && host.contains(act)) return;
+    host.setAttribute('data-render-key', key);
+    var intro = lo.lgIntro || {}, refl = lo.lgReflection || {};
+    var g = function (v) { return _lgEsc((typeof biGetStrict === 'function') ? biGetStrict(v, lang) : _lgStr(v, lang)); };
+    var dir = (typeof biIsRtl === 'function' && biIsRtl(lang)) ? 'rtl' : 'ltr';
+    var field = function (f, kind, ph, val, rows) {
+        if (kind === 'textarea') {
+            return '<textarea class="mb-block-body lg-field" rows="' + (rows || 4) + '" dir="' + dir + '" data-lg-field="' + f + '"' +
+                ' data-act="mbLgEdit" data-on="input" data-args=\'["' + f + '"]\' placeholder="' + _lgEsc(ph) + '">' + val + '</textarea>';
+        }
+        return '<input class="mb-block-title lg-field" type="text" dir="' + dir + '" data-lg-field="' + f + '"' +
+            ' data-act="mbLgEdit" data-on="input" data-args=\'["' + f + '"]\' placeholder="' + _lgEsc(ph) + '" value="' + val + '"/>';
+    };
+    var lines = mbLgReflectionLines(lo);
+    host.innerHTML =
+        '<div class="mb-blocks-head"><label class="mb-blocks-label">🧭 ' + _lgEsc(_lgT('lgUnitCard')) + '</label>' +
+          '<span class="mb-blocks-note">' + _lgEsc(_lgT('lgUnitNote')) + '</span></div>' +
+        '<div class="mb-block lg-part">' +
+          '<div class="lg-part-head">' + _lgEsc(_lgT('lgIntroTitle')) + '</div>' +
+          field('intro.body', 'textarea', _lgT('lgIntroBodyPh'), g(intro.body), 4) +
+          '<label class="lg-sub">' + _lgEsc(_lgT('lgIntroItemsLabel')) + '</label>' +
+          field('intro.items', 'textarea', _lgT('lgIntroItemsPh'), g(intro.items), 4) +
+          '<button type="button" class="mb-block-add lg-fill" data-act="mbLgFillItems">⬇️ ' + _lgEsc(_lgT('lgFillItems')) + '</button>' +
+        '</div>' +
+        '<div class="mb-block lg-part">' +
+          '<div class="lg-part-head">' + _lgEsc(_lgT('lgReflTitle')) + '</div>' +
+          field('refl.title', 'input', _lgT('lgReflTitlePh', { v0: loIndex + 1 }), g(refl.title)) +
+          '<label class="lg-sub">' + _lgEsc(_lgT('lgReflQuestionsLabel')) + '</label>' +
+          field('refl.questions', 'textarea', _lgT('lgReflQuestionsPh'), g(refl.questions), 5) +
+          '<div class="lg-row">' +
+            '<label>' + _lgEsc(_lgT('lgReflLines')) + ' <input type="number" min="1" max="12" class="lg-lines" value="' + lines + '"' +
+              ' data-act="mbLgEdit" data-on="change" data-args=\'["refl.lines"]\'/></label>' +
+            '<label class="lg-check"><input type="checkbox"' + (refl.contributes === 'yes' ? ' checked' : '') +
+              ' data-act="mbLgEdit" data-on="change" data-args=\'["refl.contributes"]\'/> ' + _lgEsc(_lgT('lgReflContributes')) + '</label>' +
+          '</div>' +
+        '</div>';
+}
+
+/** Every field of the card writes its pair at once (blocks.js rule). */
+function mbLgEdit(field, el) {
+    var lo = (typeof mbCurrentLOObject === 'function') ? mbCurrentLOObject() : null;
+    if (!lo || !el) return;
+    var parts = String(field).split('.');
+    var objKey = parts[0] === 'intro' ? 'lgIntro' : 'lgReflection';
+    if (!lo[objKey] || typeof lo[objKey] !== 'object') lo[objKey] = {};
+    var obj = lo[objKey], k = parts[1];
+    if (k === 'lines') {
+        var n = parseInt(el.value, 10);
+        obj.lines = (isFinite(n) && n >= 1 && n <= 12) ? n : 2;
+    } else if (k === 'contributes') {
+        obj.contributes = el.checked ? 'yes' : 'no';
+    } else {
+        biPut(obj, k, el.value);
+    }
+    _lgSave();
+}
+
+/** «You will learn how to:» from the titles of the outcome's knowledge sheets. */
+function mbLgFillItems() {
+    var lo = (typeof mbCurrentLOObject === 'function') ? mbCurrentLOObject() : null;
+    if (!lo) return;
+    if (typeof saveCurrentSheetToLO === 'function') { try { saveCurrentSheetToLO(); } catch (e) { /* no sheet on screen */ } }
+    var lang = _lgLang();
+    var titles = (lo.infoSheets || []).map(function (s) { return _lgStr(s && s.title, lang).trim(); }).filter(Boolean);
+    if (!titles.length) return;
+    if (!lo.lgIntro || typeof lo.lgIntro !== 'object') lo.lgIntro = {};
+    biPut(lo.lgIntro, 'items', titles.join('\n'));
+    _lgSave();
+    mbRenderLgUnit(true);
+}
+
+/* The row on the activity sheet: does it count, and what does the learner hand in. */
+function mbLgPaintActivityRow(act) {
+    var sel = document.getElementById('lg-act-contributes');
+    var inp = document.getElementById('lg-act-product');
+    if (!sel || !inp) return;
+    var lang = _lgLang();
+    sel.innerHTML = '<option value="">' + _lgEsc(_lgT('lgContributesDefault')) + '</option>' +
+        '<option value="yes">' + _lgEsc(_lgT('lgpYes')) + '</option>' +
+        '<option value="no">' + _lgEsc(_lgT('lgpNo')) + '</option>';
+    sel.value = (act && (act.lgContributes === 'yes' || act.lgContributes === 'no')) ? act.lgContributes : '';
+    inp.value = (act && typeof biGetStrict === 'function') ? biGetStrict(act.lgProduct, lang) : '';
+    mbLgPaintProductPlaceholder();
+}
+function mbLgPaintProductPlaceholder() {
+    var inp = document.getElementById('lg-act-product');
+    var kindSel = document.getElementById('activity-sheet-type');
+    if (!inp) return;
+    var kind = (typeof mbSheetKind === 'function') ? mbSheetKind(kindSel && kindSel.value) : 'activity';
+    inp.placeholder = _lgT(kind === 'job' ? 'lgProdWorksheet' : 'lgProdObservation');
+}
+/** sheets.js: the two fields onto the activity being saved. */
+function mbLgCollectActivityRow(activityData) {
+    var sel = document.getElementById('lg-act-contributes');
+    var inp = document.getElementById('lg-act-product');
+    if (sel) {
+        if (sel.value === 'yes' || sel.value === 'no') activityData.lgContributes = sel.value;
+        else delete activityData.lgContributes;
+    }
+    if (inp && (inp.value || (activityData.lgProduct && typeof biIs === 'function' && biIs(activityData.lgProduct)))) {
+        biPut(activityData, 'lgProduct', inp.value);
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   EDITOR — the assessment unit card (Assessment tab)
+   ══════════════════════════════════════════════════════════════ */
+
+function mbRenderLgAsm(force) {
+    var host = document.getElementById('lg-asm-section');
+    if (!host) return;
+    if (!_lgOn()) { host.innerHTML = ''; host.removeAttribute('data-render-key'); return; }
+    if (!mbState.lgAsm) mbState.lgAsm = { intro: null, portfolio: null };
+    var lang = _lgLang();
+    var key = lang + '|' + ((window.i18n && window.i18n.getLang) ? window.i18n.getLang() : '');
+    var act = document.activeElement;
+    if (force !== true && host.getAttribute('data-render-key') === key && act && act !== document.body && host.contains(act)) return;
+    host.setAttribute('data-render-key', key);
+    var dir = (typeof biIsRtl === 'function' && biIsRtl(lang)) ? 'rtl' : 'ltr';
+    var box = function (which, labelKey) {
+        return '<div class="mb-block lg-part">' +
+            '<div class="lg-part-head">' + _lgEsc(_lgT(labelKey)) +
+              ' <button type="button" class="lg-restore" data-act="mbLgAsmRestore" data-args=\'["' + which + '"]\'>↺ ' + _lgEsc(_lgT('lgAsmRestore')) + '</button></div>' +
+            '<textarea class="mb-block-body lg-field" rows="8" dir="' + dir + '" data-lg-asm="' + which + '"' +
+              ' data-act="mbLgAsmEdit" data-on="input" data-args=\'["' + which + '"]\'>' + _lgEsc(mbLgAsmText(which, lang)) + '</textarea></div>';
+    };
+    host.innerHTML =
+        '<div class="mb-blocks-head"><label class="mb-blocks-label">📁 ' + _lgEsc(_lgT('lgAsmCard')) + '</label>' +
+          '<span class="mb-blocks-note">' + _lgEsc(_lgT('lgAsmNote')) + '</span></div>' +
+        box('intro', 'lgAsmIntro') + box('portfolio', 'lgAsmPortfolio') +
+        '<div class="mb-block lg-part"><div class="lg-part-head">' + _lgEsc(_lgT('lgAsmContents')) + '</div>' +
+          '<div id="lg-portfolio-preview">' + mbLgPortfolioPreviewHtml() + '</div></div>';
+}
+
+function mbLgPortfolioPreviewHtml() {
+    if (typeof saveCurrentSheetToLO === 'function') { try { saveCurrentSheetToLO(); } catch (e) { /* nothing on screen */ } }
+    var lang = _lgLang();
+    var rows = mbLgPortfolioRows(mbState.learningOutcomesData || [], lang);
+    if (!rows.length) return '<p class="lg-empty">' + _lgEsc(_lgT('lgAsmContentsEmpty')) + '</p>';
+    return '<table class="lg-preview"><thead><tr><th>' + _lgEsc(_lgT('lgColActivity')) + '</th><th>' + _lgEsc(_lgT('lgColProduct')) +
+        '</th><th>' + _lgEsc(_lgT('lgColContributes')) + '</th></tr></thead><tbody>' +
+        rows.map(function (r) {
+            return '<tr><td dir="auto">' + _lgEsc(r.label) + '</td><td dir="auto">' + _lgEsc(r.product) + '</td><td>' +
+                _lgEsc(_lgT(r.contributes ? 'lgpYes' : 'lgpNo')) + '</td></tr>';
+        }).join('') + '</tbody></table>';
+}
+
+function mbLgAsmEdit(which, el) {
+    if (!el) return;
+    if (!mbState.lgAsm) mbState.lgAsm = { intro: null, portfolio: null };
+    var cur = mbState.lgAsm[which];
+    if (cur === null || cur === undefined) {
+        /* First edit: every other language keeps the tool's text, so an
+           Arabic edit does not empty the English export. */
+        var key = which === 'intro' ? 'lgDefaultAsmIntro' : 'lgDefaultAsmPortfolio';
+        cur = {};
+        (typeof BILANG_CODES !== 'undefined' ? BILANG_CODES : ['en', 'ar', 'fr']).forEach(function (c) { cur[c] = _lgTIn(key, c); });
+        mbState.lgAsm[which] = cur;
+    }
+    biPut(mbState.lgAsm, which, el.value);
+}
+
+function mbLgAsmRestore(which) {
+    if (!mbState.lgAsm) mbState.lgAsm = { intro: null, portfolio: null };
+    mbState.lgAsm[which] = null;
+    mbRenderLgAsm(true);
+    if (typeof mbLibrarySave === 'function') mbLibrarySave();
+}
+
+/* ── Wiring ───────────────────────────────────────────────────── */
+
+function _lgRepaintAll() {
+    try { mbRenderLgUnit(); } catch (e) { /* not ready */ }
+    try { mbRenderLgAsm(); } catch (e) { /* not ready */ }
+    try { if (typeof mbRenderSheetKindSelect === 'function') mbRenderSheetKindSelect(); } catch (e) { /* not ready */ }
+    try { if (typeof mbRepaintSheetNames === 'function') mbRepaintSheetNames(); } catch (e) { /* not ready */ }
+    try { if (typeof mbSeqPaintNumberFields === 'function') mbSeqPaintNumberFields(); } catch (e) { /* not ready */ }
+}
+window.addEventListener('mb:templatechange', _lgRepaintAll);
+window.addEventListener('mb:langchange', _lgRepaintAll);
+window.addEventListener('mb:contentlangchange', _lgRepaintAll);
+document.addEventListener('change', function (e) {
+    if (e.target && e.target.id === 'activity-sheet-type') mbLgPaintProductPlaceholder();
+});

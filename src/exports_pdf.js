@@ -503,7 +503,7 @@ function _pdfBuild(pdf, model, lang) {
     /* Outcomes and their sheets */
     model.outcomes.forEach(function (o) {
         w.newPage();
-        w.heading(t('outcome') + ' ' + o.index + ': ' + o.title, 2);
+        w.heading(o.heading || (t('outcome') + ' ' + o.index + ': ' + o.title), 2);   // 3.59.0: the Learner guide's unit
         if (o.description) w.text(o.description);
         if (o.criteria.length) {
             w.label(t('criteria'));
@@ -522,7 +522,7 @@ function _pdfBuild(pdf, model, lang) {
 
         var renderInfo = function (sh) {   // 3.43.0: called in document order
             w.newPage();
-            w.heading((sh.label || t('infoSheet')) + ' ' + sh.number + ': ' + sh.title, 3);
+            w.heading(sh.heading || ((sh.label || t('infoSheet')) + ' ' + sh.number + ': ' + sh.title), 3);
             if (sh.objectiveLead) w.text(sh.objectiveLead);
             if (sh.objective) { w.label(t('objective')); w.text(sh.objective, { indent: 4 }); }
 
@@ -567,7 +567,7 @@ function _pdfBuild(pdf, model, lang) {
 
         var renderAct = function (sh) {
             w.newPage();
-            w.heading((sh.label || t('activitySheet')) + ' ' + sh.number + ': ' + sh.title, 3);
+            w.heading(sh.heading || ((sh.label || t('activitySheet')) + ' ' + sh.number + ': ' + sh.title), 3);
             if (sh.objectiveLead) w.text(sh.objectiveLead);
             if (sh.objective) { w.label(t('objective')); w.text(sh.objective, { indent: 4 }); }
             if (sh.duration) w.text(t('duration') + ': ' + sh.duration + ' ' + t('minutes'), { bold: true });
@@ -634,12 +634,64 @@ function _pdfBuild(pdf, model, lang) {
         (o.sequence || []).forEach(function (it) {
             if (it.kind === 'info') renderInfo(it.sheet);
             else if (it.kind === 'activity') renderAct(it.sheet);
+            else if (it.kind === 'lgIntro') {
+                /* 3.59.0: on the unit's page. */
+                w.heading(it.intro.heading, 3);
+                if (it.intro.body) w.text(it.intro.body);
+                if (it.intro.items.length) {
+                    w.text(it.intro.lead, { bold: true });
+                    it.intro.items.forEach(function (x, i) { w.text((i + 1) + '. ' + x, { indent: 5 }); });
+                }
+            } else if (it.kind === 'lgReflection') {
+                w.newPage();
+                w.heading(it.reflection.heading, 3);
+                it.reflection.questions.forEach(function (q) {
+                    w.text(q, { bold: true });
+                    for (var k = 0; k < it.reflection.lines; k++) w.text(new Array(90).join('.'));
+                    w.gap(2);
+                });
+            }
             else renderBlock(it.block);
         });
     });
 
+    /* 3.59.0: the Learner guide — the glossary, then its assessment unit. */
+    var lgA = model.lgAssessment || null;
+    var lgDoc = model.template === 'learnerGuide';
+    if (lgDoc && model.glossary && model.glossary.tables.length) _pdfGlossary(w, model, t, S);
+    if (lgDoc && lgA) {
+        w.newPage();
+        w.heading(lgA.heading, 2);
+        if (lgA.intro.trim()) { w.heading(lgA.introHead, 3); w.text(lgA.intro); }
+        if (lgA.portfolio.trim()) { w.heading(lgA.portfolioHead, 3); w.text(lgA.portfolio); }
+        if (lgA.content.trim()) w.text(lgA.content);
+        lgA.blocks.forEach(function (b) { if (b.title) w.label(b.title); if (b.body) w.text(b.body); _pdfBlockTables(w, b, S); });
+        if (lgA.contents.length) {
+            w.heading(lgA.contentsHead, 3);
+            w.table(lgA.contentsCols, lgA.contents.map(function (r) { return [r.label, r.product, r.contributes]; }),
+                [w.CW * 0.5, w.CW * 0.3, w.CW * 0.2], { size: S.body });
+        }
+        if (model.assessment.length) {
+            w.newPage();
+            w.heading(lgA.tablesHead, 3);
+            w.text(lgA.tablesLead);
+            model.assessment.forEach(function (f, idx) {
+                w.label(lgA.outcomeHeads[idx]);
+                if (f.rows.length) w.table(lgA.cols, f.rows.map(function (r) { return [r.criteria, r.activities, r.outcomes, r.date]; }),
+                    [w.CW * 0.34, w.CW * 0.3, w.CW * 0.18, w.CW * 0.18], { size: S.body });
+                var lres = (f.results && f.results.length) ? f.results : [t('competent'), t('notYet')];
+                w.text(t('result') + ':  ' + lres.map(function (x) { return '[  ] ' + x; }).join('     '), { bold: true });
+                w.table(null, [
+                    [t('trainer'), f.teacherName, t('signature') + ': ______________', f.teacherDate],
+                    [t('learner'), f.learnerName, t('signature') + ': ______________', f.learnerDate]
+                ], [w.CW * 0.16, w.CW * 0.3, w.CW * 0.36, w.CW * 0.18], { size: S.body });
+                w.gap(4);
+            });
+        }
+    }
+
     /* Assessment */
-    if (model.assessment.length) {
+    if (!lgDoc && model.assessment.length) {
         w.newPage();
         w.heading(t('assessment'), 2);
         model.assessment.forEach(function (f, idx) {
@@ -673,19 +725,7 @@ function _pdfBuild(pdf, model, lang) {
     }
 
     /* 3.42.0: Glossary of Terms — its own page, before the references. */
-    if (model.glossary && model.glossary.tables.length) {
-        w.newPage();
-        w.heading(model.glossary.title || t('glossary'), 2);
-        model.glossary.tables.forEach(function (tb) {
-            if (tb.title) w.label(tb.title);
-            if (tb.subtitle) w.text(tb.subtitle);
-            if (!tb.cells.length) return;
-            var cols = tb.cells[0].length || 1;
-            var cw = [];
-            for (var i = 0; i < cols; i++) cw.push(w.CW / cols);
-            w.table(tb.cells[0], tb.cells.slice(1), cw, { size: S.utable });
-        });
-    }
+    if (!lgDoc && model.glossary && model.glossary.tables.length) _pdfGlossary(w, model, t, S);
 
     /* References */
     if (model.references.items.length) {
@@ -711,6 +751,22 @@ function _pdfBuild(pdf, model, lang) {
    wide cell, the QR in a narrow one beside it — the same shape the Word
    export produces, so the two documents match. It was a vertical stack,
    which matched nothing. */
+/* 3.42.0: the glossary's page (3.59.0: a function — the Learner guide
+   prints it before its assessment unit). */
+function _pdfGlossary(w, model, t, S) {
+    w.newPage();
+    w.heading(model.glossary.title || t('glossary'), 2);
+    model.glossary.tables.forEach(function (tb) {
+        if (tb.title) w.label(tb.title);
+        if (tb.subtitle) w.text(tb.subtitle);
+        if (!tb.cells.length) return;
+        var cols = tb.cells[0].length || 1;
+        var cw = [];
+        for (var i = 0; i < cols; i++) cw.push(w.CW / cols);
+        w.table(tb.cells[0], tb.cells.slice(1), cw, { size: S.utable });
+    });
+}
+
 /* A block's tables, printed exactly as a content card's are. Written
    once because the introduction sections and the outcome sections are
    the same object, and two copies of this loop would drift. */

@@ -34,6 +34,8 @@
 function _seqSettings() {
     var s = {};
     try { if (typeof _wsGet === 'function') s = _wsGet() || {}; } catch (e) { s = {}; }
+    /* 3.59.0: the Learner guide template is written as one sequence. */
+    if (typeof mbIsLearnerGuide === 'function' && mbIsLearnerGuide()) return { interleaved: true, unified: true };
     return {
         interleaved: s.sheetOrder === 'interleaved',
         unified: s.unifiedNumbering === true
@@ -91,6 +93,11 @@ function mbLoSequence(lo) {
     var infos  = Array.isArray(lo.infoSheets) ? lo.infoSheets : [];
     var acts   = Array.isArray(lo.activitySheets) ? lo.activitySheets : [];
 
+    /* 3.59.0: the Learner guide opens each unit with its introduction
+       and closes it with its reflection (learner_guide.js). */
+    var lg = typeof mbIsLearnerGuide === 'function' && mbIsLearnerGuide();
+    if (lg) out.push({ kind: 'lgIntro' });
+
     blocks.forEach(function (b) { if (mbBlockPlace(b) === 'before') out.push({ kind: 'block', block: b, place: 'before' }); });
 
     if (!mbSeqInterleaved()) {
@@ -116,6 +123,7 @@ function mbLoSequence(lo) {
     }
 
     blocks.forEach(function (b) { if (mbBlockPlace(b) === 'after') out.push({ kind: 'block', block: b, place: 'after' }); });
+    if (lg) out.push({ kind: 'lgReflection' });
     return out;
 }
 
@@ -126,10 +134,13 @@ function _seqPosition(lo, kind, ref) {
     for (var i = 0; i < seq.length; i++) {
         var it = seq[i], counts;
         if (it.kind === 'block') counts = _seqBlockCounts(it.block);
+        else if (it.kind === 'lgIntro') counts = typeof mbLgIntroFilled === 'function' && mbLgIntroFilled(lo);
+        else if (it.kind === 'lgReflection') counts = typeof mbLgReflectionFilled === 'function' && mbLgReflectionFilled(lo);
         else counts = _seqSheetCounts(it.kind === 'info' ? infos[it.index] : acts[it.index]);
         if (!counts) continue;
         pos++;
-        if (it.kind === kind && (kind === 'block' ? it.block === ref : it.index === ref)) return pos;
+        if (it.kind === kind && (kind === 'block' ? it.block === ref
+            : (kind === 'lgIntro' || kind === 'lgReflection') ? true : it.index === ref)) return pos;
     }
     return 0;
 }
@@ -149,6 +160,13 @@ function mbSeqNumber(lo, loIndex, kind, index) {
     var stored = _seqStr(sh && sh.sheetNumber).trim();
     if (stored) return stored;
     return (typeof getAutoSheetNumber === 'function') ? getAutoSheetNumber(loIndex, index) : (loIndex + 1) + '-' + (index + 1);
+}
+
+/** 3.59.0: the number of a Learner guide introduction or reflection. */
+function mbSeqLgNumber(lo, loIndex, kind) {
+    if (!lo) return '';
+    var p = _seqPosition(lo, kind, null);
+    return p ? (loIndex + 1) + '-' + p : '';
 }
 
 /** The number of a placed outcome section: only with unified numbering. */

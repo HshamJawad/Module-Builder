@@ -169,7 +169,7 @@ function renderAssessmentForms() {
                                 <th style="border: 1px solid #d1d5db; padding: 10px; text-align: start; font-size: 0.9em;"><span data-i18n="expAssessmentCriteria">${window.i18n.t('expAssessmentCriteria')}</span></th>
                                 <th style="border: 1px solid #d1d5db; padding: 10px; text-align: start; font-size: 0.9em;"><span data-i18n="expNameNumberActivities">${window.i18n.t('expNameNumberActivities')}</span></th>
                                 <th style="border: 1px solid #d1d5db; padding: 10px; text-align: start; font-size: 0.9em;"><span data-i18n="expOutcomesMethod">${window.i18n.t('expOutcomesMethod')}</span></th>
-                                <th style="border: 1px solid #d1d5db; padding: 10px; text-align: start; font-size: 0.9em;"><span data-i18n="expEvidenceVerification">${window.i18n.t('expEvidenceVerification')}</span></th>
+                                <th data-tpl-only="standard" style="border: 1px solid #d1d5db; padding: 10px; text-align: start; font-size: 0.9em;"><span data-i18n="expEvidenceVerification">${window.i18n.t('expEvidenceVerification')}</span></th>
                                 <th style="border: 1px solid #d1d5db; padding: 10px; text-align: start; font-size: 0.9em;"><span data-i18n="expCompletionDateNotes">${window.i18n.t('expCompletionDateNotes')}</span></th>
                                 <th style="border: 1px solid #d1d5db; padding: 10px; text-align: center; width: 60px;"><span data-i18n="rxActions">${window.i18n.t('rxActions')}</span></th>
                             </tr>
@@ -192,7 +192,7 @@ function renderAssessmentForms() {
                         <textarea class="mb-asm-cell" rows="1" dir="auto"
                             data-act="updateAssessmentCell" data-on="change" data-args='["${lo.id}",${rowIndex},"outcomes","$value"]'>${escapeHtml(row.outcomes || '')}</textarea>
                     </td>
-                    <td style="border: 1px solid #d1d5db; padding: 8px;">
+                    <td data-tpl-only="standard" style="border: 1px solid #d1d5db; padding: 8px;">
                         <textarea class="mb-asm-cell" rows="1" dir="auto"
                             data-act="updateAssessmentCell" data-on="change" data-args='["${lo.id}",${rowIndex},"verification","$value"]'>${escapeHtml(row.verification || '')}</textarea>
                     </td>

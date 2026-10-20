@@ -33,6 +33,9 @@ function _mbPkgParse(u8) { return JSON.parse(fflate.strFromU8(u8)); }
 function mbPackageProjectPart(shared) {
     shared = shared || {};
     return {
+        /* 3.59.0: the module template of the project (module_template.js).
+           A package without one was made with the standard template. */
+        template: shared.moduleTemplate || 'standard',
         cover: {
             coversAdditionalInfo:  shared.coversAdditionalInfo,
             coversAdditionalNotes: shared.coversAdditionalNotes,

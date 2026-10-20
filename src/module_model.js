@@ -223,8 +223,16 @@ function mbBuildModuleModel(lang, state) {
     const modules = _mmArr(st.modulesData);
     const currentModule = modules.find(function (m) { return m.id === st.currentModuleId; }) || modules[0] || null;
 
+    /* 3.59.0: the module template (module_template.js, learner_guide.js). */
+    const lg = (typeof mbIsLearnerGuide === 'function') && mbIsLearnerGuide();
+    const _lgT = function (key, vars) {
+        if (!window.i18n || !window.i18n.tIn) return key;
+        return vars ? window.i18n.tfIn(key, lang, vars) : window.i18n.tIn(key, lang);
+    };
+
     const model = {
         lang: lang,
+        template: lg ? 'learnerGuide' : 'standard',
         rtl: (typeof biIsRtl === 'function') ? biIsRtl(lang) : (lang === 'ar'),
         /* 3.58.0: the full title when the module has one. */
         title: currentModule ? (_mmStr(currentModule.fullTitle).trim() || _mmStr(currentModule.title)) : '',
@@ -300,7 +308,8 @@ function mbBuildModuleModel(lang, state) {
            3.31.0: one whose items are all written in other outcomes
            still appears, with its "see also" lines. */
         const seeAlso = seeAlsoOf(lo);
-        if (!mmOutcomeHasContent(lo) && !seeAlso.length) return;
+        const lgOwn = lg && (mbLgIntroFilled(lo) || mbLgReflectionFilled(lo));   // 3.59.0
+        if (!mmOutcomeHasContent(lo) && !seeAlso.length && !lgOwn) return;
 
         const out = {
             index: loIndex + 1,
@@ -326,6 +335,8 @@ function mbBuildModuleModel(lang, state) {
             activitySheets: [],
             seeAlso: seeAlso
         };
+        /* 3.59.0: «1- Learning unit: …» — the Learner guide's heading. */
+        out.heading = lg ? _lgT('lgUnitHead', { v0: loIndex + 1, v1: out.title }) : '';
 
         _mmArr(lo.infoSheets).forEach(function (sh, si) {
             if (!mmSheetHasContent(sh)) return;
@@ -358,10 +369,12 @@ function mbBuildModuleModel(lang, state) {
                    does, and omitted entirely when the author wrote no
                    questions — an empty self-check tells the trainee to
                    answer questions that are not in the document. */
-                selfCheck: _mmStr(sh.selfCheckContent).trim()
+                /* 3.59.0: «1-2 Knowledge: …» in the Learner guide. */
+                heading: lg ? mbLgSheetHeading('info', number, _mmStr(sh.title), lang) : '',
+                selfCheck: (!lg && _mmStr(sh.selfCheckContent).trim())
                     ? { number: (typeof mbSeqSubNumber === 'function') ? mbSeqSubNumber(lo, loIndex, si, sh.selfCheckNumber) : (_mmStr(sh.selfCheckNumber) || number), content: _mmStr(sh.selfCheckContent) }
                     : null,
-                answersKey: _mmStr(sh.answersKeyContent).trim()
+                answersKey: (!lg && _mmStr(sh.answersKeyContent).trim())
                     ? { number: (typeof mbSeqSubNumber === 'function') ? mbSeqSubNumber(lo, loIndex, si, sh.answersKeyNumber) : (_mmStr(sh.answersKeyNumber) || number), content: _mmStr(sh.answersKeyContent) }
                     : null,
                 /* The QR IMAGE is global to the tool (mbState.infoQRImage),
@@ -396,7 +409,8 @@ function mbBuildModuleModel(lang, state) {
                 objectiveLead: _mmStr(sh.objectiveLead),
                 objective: _mmStr(sh.objective),
                 duration: _mmStr(sh.duration),
-                resources: _mmArr(sh.resources)
+                heading: lg ? mbLgSheetHeading(kind, number, _mmStr(sh.title), lang) : '',   // 3.59.0
+                resources: _mmArr(lg ? [] : sh.resources)
                     .map(function (r) { return { name: _mmStr(r && r.name), quantity: _mmStr(r && r.quantity) }; })
                     .filter(function (r) { return r.name.trim(); }),
                 steps: (_waAct = _mmWithAttachments('activity', sh, function (stp, idx) {
@@ -435,7 +449,7 @@ function mbBuildModuleModel(lang, state) {
                     instruction: _mmStr(sh.criteriaInstruction),
                     footer: _mmStr(sh.criteriaFooter),
                     rows: (function () {
-                        const rows = _mmArr(sh.criteria)
+                        const rows = _mmArr(lg ? [] : sh.criteria)
                             .map(function (c) { return _mmStr(c && (c.text !== undefined ? c.text : c)); })
                             .filter(function (t) { return t.trim(); });
                         if (rows.length && timeRow) rows.push(timeRow);
@@ -465,6 +479,23 @@ function mbBuildModuleModel(lang, state) {
             } else if (it.kind === 'activity') {
                 const sh = out.activitySheets.find(function (x) { return x.srcIndex === it.index; });
                 if (sh) out.sequence.push({ kind: 'activity', sheet: sh });
+            } else if (it.kind === 'lgIntro') {
+                /* 3.59.0: the learning unit's introduction and reflection. */
+                if (lg && mbLgIntroFilled(lo)) out.sequence.push({ kind: 'lgIntro', intro: {
+                    heading: _lgT('lgIntroHead', { v0: mbSeqLgNumber(lo, loIndex, 'lgIntro') }).trim(),
+                    body: _mmStr(lo.lgIntro.body),
+                    lead: _lgT('lgYouWillLearn'),
+                    items: _mmStr(lo.lgIntro.items).split('\n').map(function (l) { return l.replace(/^\s*(?:[-•*]|\d+[.)-])\s*/, '').trim(); }).filter(Boolean)
+                } });
+            } else if (it.kind === 'lgReflection') {
+                if (lg && mbLgReflectionFilled(lo)) {
+                    const n = mbSeqLgNumber(lo, loIndex, 'lgReflection');
+                    out.sequence.push({ kind: 'lgReflection', reflection: {
+                        heading: ((n ? n + ' ' : '') + mbLgReflectionTitle(lo, loIndex, lang)).trim(),
+                        questions: _mmStr(lo.lgReflection.questions).split('\n').map(function (q) { return q.trim(); }).filter(Boolean),
+                        lines: mbLgReflectionLines(lo)
+                    } });
+                }
             } else {
                 const b = it.block;
                 const blk = { title: _mmStr(b && b.title), body: _mmStr(b && b.body), tables: _mmTables(b && b.tables),
@@ -513,6 +544,38 @@ function mbBuildModuleModel(lang, state) {
             learnerDate: _mmStr(form.learnerDate)
         });
     });
+
+    /* 3.59.0: the Learner guide's assessment unit (learner_guide.js) —
+       numbered after the last learning unit, the forms in four columns. */
+    if (lg) {
+        const N = (model.outcomes.length ? model.outcomes[model.outcomes.length - 1].index : _mmArr(st.learningOutcomesData).length) + 1;
+        const asmBlocks = (typeof mbBlocksFilled === 'function') ? mbBlocksFilled(st.assessmentBlocks) : [];
+        const code = currentModule ? _mmStr(currentModule.moduleCode || currentModule.moduleNumber).trim() : '';
+        model.lgAssessment = {
+            number: N,
+            heading: _lgT('lgAsmUnitHead', { v0: N }),
+            introHead: _lgT('lgAsmIntroHead', { v0: N }),
+            intro: mbLgAsmText('intro', lang, st),
+            portfolioHead: _lgT('lgAsmPortfolioHead', { v0: N }),
+            portfolio: mbLgAsmText('portfolio', lang, st),
+            content: _mmStr(st.assessmentContent),
+            blocks: asmBlocks.map(function (b) { return { title: _mmStr(b.title), body: _mmStr(b.body), tables: _mmTables(b.tables) }; }),
+            contentsHead: _lgT('lgAsmContentsHead', { v0: N }),
+            contents: mbLgPortfolioRows(_mmArr(st.learningOutcomesData), lang).map(function (r) {
+                return { label: r.label, product: r.product, contributes: _lgT(r.contributes ? 'lgpYes' : 'lgpNo') };
+            }),
+            tablesHead: _lgT('lgAsmTablesHead', { v0: N, v1: code }).trim(),
+            tablesLead: _lgT('lgAsmTablesLead'),
+            outcomeHead: function (f) { return _lgT('lgAsmOutcomeHead', { v0: f.outcomeIndex, v1: f.outcomeTitle }); },
+            cols: [_lgT('lgColCriteria'), _lgT('lgColActNum'), _lgT('lgColOutput'), _lgT('lgColDate')],
+            contentsCols: [_lgT('lgColActivity'), _lgT('lgColProduct'), _lgT('lgColContributes')]
+        };
+        const any = model.lgAssessment.contents.length || model.assessment.length ||
+                    model.lgAssessment.content.trim() || model.lgAssessment.blocks.length;
+        if (!any) model.lgAssessment = null;
+        else model.lgAssessment.outcomeHeads = model.assessment.map(model.lgAssessment.outcomeHead);
+        if (model.lgAssessment) delete model.lgAssessment.outcomeHead;
+    }
 
     return model;
 }

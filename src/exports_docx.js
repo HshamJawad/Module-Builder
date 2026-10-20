@@ -1649,9 +1649,25 @@ async function exportToDocx() {
             });
         };
 
+        /* 3.59.0: the project's module template (module_template.js).
+           The Learner guide prints «1-2 Knowledge: …», leaves out the
+           self-check, the answer key, the resources table, the checklist
+           and the Learning Guide table, and adds the introduction, the
+           reflection and its own assessment unit (learner_guide.js). */
+        const _lgDoc = (typeof mbIsLearnerGuide === 'function') && mbIsLearnerGuide();
+        const _lgPara = (text, o) => new Paragraph({
+            children: [new TextRun({ text: text, size: (o && o.size) || _wsBody(), bold: !!(o && o.bold),
+                                     color: (o && o.color) || undefined, rightToLeft: _mbRtl() })],
+            alignment: (o && o.center) ? AlignmentType.CENTER : _mbStart(AlignmentType), bidirectional: _mbRtl(),
+            spacing: { before: (o && o.before) || 0, after: (o && o.after !== undefined) ? o.after : 150 }
+        });
+        const _lgHead = (text, big) => _lgPara(text, { size: big ? _wsSection() : _wsSub(), bold: true, color: _wsHeadColor(), before: big ? 200 : 240, after: big ? 400 : 200 });
+        const _lgTextCh = (text, ch) => String(text || '').split('\n').forEach(line => { if (line.trim()) ch.push(_lgPara(line)); });
+
         /* 3.42.0: sheet headings follow the type and the names set in
            Settings → Misc; untouched, they are today's templates. */
         const _sheetHeadText = (kind, num, title, tplKey) => {
+            if (_lgDoc && typeof mbLgSheetHeading === 'function') return mbLgSheetHeading(kind, num, title, _mbLang());
             const own = (typeof mbSheetLabelExplicit === 'function') ? mbSheetLabelExplicit(kind, _mbLang()) : '';
             return own ? mbSheetHeading(own, num, title) : _mbTf(tplKey, { v0: num, v1: title });
         };
@@ -1733,14 +1749,14 @@ async function exportToDocx() {
                     ch.push(new Paragraph({ children: [new TextRun({ text: '', size: _wsBody() })], spacing: { after: 200 } }));
                 }
             }
-            if (info.selfCheckContent && info.selfCheckContent.trim()) {
+            if (!_lgDoc && info.selfCheckContent && info.selfCheckContent.trim()) {
                 const scNum = (typeof mbSeqSubNumber === 'function') ? mbSeqSubNumber(_loSeq, loIndex, sheetIndex, info.selfCheckNumber) : (info.selfCheckNumber || num);
                 const scCh = [];
                 scCh.push(new Paragraph({ children: [new TextRun({ text: _mbTf('expSelfCheck', { v0: scNum }), bold: true, size: _wsBody(), color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 400 } }));
                 info.selfCheckContent.split('\n').forEach(line => { if (line.trim()) scCh.push(new Paragraph({ children: [new TextRun({ text: line, size: _wsBody(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 150 } })); });
                 ch.__selfCheckSection = scCh;
             }
-            if (info.answersKeyContent && info.answersKeyContent.trim()) {
+            if (!_lgDoc && info.answersKeyContent && info.answersKeyContent.trim()) {
                 const akNum = (typeof mbSeqSubNumber === 'function') ? mbSeqSubNumber(_loSeq, loIndex, sheetIndex, info.answersKeyNumber) : (info.answersKeyNumber || num);
                 const akCh = [];
                 akCh.push(new Paragraph({ children: [new TextRun({ text: _mbTf('expAnswersKey', { v0: akNum }), bold: true, size: _wsBody(), color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 400 } }));
@@ -1774,7 +1790,7 @@ async function exportToDocx() {
                 ch.push(new Paragraph({ children: [new TextRun({ text: _mbT('expDuration'), bold: true, size: _wsBody(), color: _wsHeadColor(), rightToLeft: _mbRtl() }), new TextRun({ text: _mbTf('expMinutes', { v0: activity.duration }), size: _wsBody(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 300 } }));
             }
             const validRes = (activity.resources || []).filter(r => r.name && r.name.trim());
-            if (validRes.length > 0) {
+            if (!_lgDoc && validRes.length > 0) {
                 ch.push(new Paragraph({ children: [new TextRun({ text: _mbT('expTrainingResources'), bold: true, size: _wsBody(), color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 200, before: 200 } }));
                 const bdr = { top:{style:BorderStyle.SINGLE,size:1,color:'000000'}, bottom:{style:BorderStyle.SINGLE,size:1,color:'000000'}, left:{style:BorderStyle.SINGLE,size:1,color:'000000'}, right:{style:BorderStyle.SINGLE,size:1,color:'000000'}, insideHorizontal:{style:BorderStyle.SINGLE,size:1,color:'000000'}, insideVertical:{style:BorderStyle.SINGLE,size:1,color:'000000'} };
                 /* `wide` replaces the old `t.includes('Mat')` check, which
@@ -1844,7 +1860,7 @@ async function exportToDocx() {
                 const timeRow = mbTimeCriterion(activity.duration, _mbLang());
                 if (timeRow) validCriteria.push(timeRow);
             }
-            if (validCriteria.length > 0) {
+            if (!_lgDoc && validCriteria.length > 0) {
                 /* The user's own wording wins; our own boilerplate — even
                    when an older build stored it as a value — is re-emitted
                    in the EXPORT language. `|| _mbT(...)` alone only helped
@@ -1898,6 +1914,7 @@ async function exportToDocx() {
         };
 
         // Loop ALL LOs in order: LO heading → all info sheets → all activity sheets
+        let _lgUnits = 0;   // 3.59.0: the number of the last learning unit printed
         let _seeRefs = null;
         if (typeof mbContentMapRefs === 'function') { try { _seeRefs = mbContentMapRefs(_mbCurrentModule()); } catch (e) { _seeRefs = null; } }
         mbState.learningOutcomesData.forEach((lo, loIndex) => {
@@ -1912,7 +1929,8 @@ async function exportToDocx() {
                the cover rows: presence is not content. */
             const loHasSheets =
                 (lo.infoSheets     || []).some(sh => (sh.title || '').trim()) ||
-                (lo.activitySheets || []).some(sh => (sh.title || '').trim());
+                (lo.activitySheets || []).some(sh => (sh.title || '').trim()) ||
+                (_lgDoc && (mbLgIntroFilled(lo) || mbLgReflectionFilled(lo)));   // 3.59.0
             /* 3.31.0: items of this outcome written in another one ("see
                also", content map). An outcome whose items all live in
                other outcomes' sheets still gets its page, with those lines. */
@@ -1921,15 +1939,28 @@ async function exportToDocx() {
             if (!loHasSheets && !seeAlso.length) return;
 
             const loHdTitle = mbLoPlainTitle(lo.title || '');
-            const loHdText = _mbTitledAlready(loHdTitle, 'expLearningOutcomeN')
+            const loHdText = _lgDoc ? _mbTf('lgUnitHead', { v0: loIndex + 1, v1: loHdTitle })   // 3.59.0
+                : _mbTitledAlready(loHdTitle, 'expLearningOutcomeN')
                 ? loHdTitle
                 : _mbTf('expLearningOutcomeN', { v0: loIndex + 1, v1: loHdTitle });
+            if (_lgDoc) _lgUnits = Math.max(_lgUnits, loIndex + 1);
             const loHdCh = [new Paragraph({ children: [new TextRun({ text: loHdText, size: _wsSection(), bold: true, color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 400, before: 200 } })];
             if (seeAlso.length) {
                 loHdCh.push(new Paragraph({ children: [new TextRun({ text: mbSeeAlsoLabel('head', _exportLang), size: _wsBody(), bold: true, rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { before: 120, after: 120 } }));
                 seeAlso.forEach(x => {
                     loHdCh.push(new Paragraph({ children: [new TextRun({ text: '• ' + x.line, size: _wsBody(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 80 } }));
                 });
+            }
+            /* 3.59.0: the learning unit's introduction, on its page. */
+            if (_lgDoc && mbLgIntroFilled(lo)) {
+                const n = mbSeqLgNumber(lo, loIndex, 'lgIntro');
+                loHdCh.push(_lgHead(_mbTf('lgIntroHead', { v0: n }).trim()));
+                _lgTextCh(lo.lgIntro.body, loHdCh);
+                const items = String(lo.lgIntro.items || '').split('\n').map(l => l.replace(/^\s*(?:[-•*]|\d+[.)-])\s*/, '').trim()).filter(Boolean);
+                if (items.length) {
+                    loHdCh.push(_lgPara(_mbT('lgYouWillLearn'), { bold: true, before: 120 }));
+                    items.forEach((it, i) => loHdCh.push(_lgPara((i + 1) + '. ' + it, { after: 100 })));
+                }
             }
             /* 3.43.0: sections placed at the start of the outcome, on its page. */
             if (typeof mbLoSequence === 'function') {
@@ -1947,7 +1978,7 @@ async function exportToDocx() {
             }
             sections.push({ properties: { bidi: _mbRtl() }, children: loHdCh });
 
-            if (mbState.includeLearningGuide) {
+            if (!_lgDoc && mbState.includeLearningGuide) {
                 if (typeof mbBuildLearningGuideModel !== 'function') {
                     console.warn('Learning Guide is enabled but src/learning_guide.js is not loaded — no guide will be exported.');
                     if (typeof showStatus === 'function') showStatus('learning_guide.js not loaded — Learning Guide skipped', 'error');
@@ -1993,14 +2024,131 @@ async function exportToDocx() {
                 // Criteria as separate page AFTER activity sheet
                 if (ch.__criteriaSection) sections.push({ properties: { bidi: _mbRtl() }, children: ch.__criteriaSection });
             };
+            /* 3.59.0: the reflection that closes a learning unit — its
+               questions, each followed by lines to write on. */
+            const _reflOut = () => {
+                if (!_lgDoc || !mbLgReflectionFilled(lo)) return;
+                const ch = [];
+                const n = mbSeqLgNumber(lo, loIndex, 'lgReflection');
+                ch.push(_lgHead(((n ? n + ' ' : '') + mbLgReflectionTitle(lo, loIndex, _mbLang())).trim()));
+                const lines = mbLgReflectionLines(lo);
+                String(lo.lgReflection.questions || '').split('\n').map(q => q.trim()).filter(Boolean).forEach(q => {
+                    ch.push(_lgPara(q, { bold: true, before: 200, after: 120 }));
+                    for (let k = 0; k < lines; k++) ch.push(_lgPara('.'.repeat(110), { color: '808080', after: 160 }));
+                });
+                sections.push({ properties: { bidi: _mbRtl() }, children: ch });
+            };
             _seqItems.forEach(it => {
                 if (it.kind === 'info') _infoOut(it.index);
                 else if (it.kind === 'activity') _actOut(it.index);
+                else if (it.kind === 'lgReflection') _reflOut();
+                else if (it.kind === 'lgIntro') { /* on the unit's page, above */ }
                 else if (it.place === 'after' && mbBlocksFilled([it.block]).length) {
                     sections.push({ properties: { bidi: _mbRtl() }, children: _blockCh(it.block) });
                 }
             });
         });
+
+        function _pushGlossary() {
+            if (!(typeof mbGlossaryHasContent === 'function' && mbGlossaryHasContent(mbState.glossary))) return;
+            const glCh = [];
+            glCh.push(new Paragraph({
+                children: [new TextRun({
+                    text: (mbState.glossary.title || _mbT('expGlossary')),
+                    size: _wsSection(), bold: true, color: _wsHeadColor(), rightToLeft: _mbRtl()
+                })],
+                alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(),
+                spacing: { after: 400 }
+            }));
+            (mbState.glossary.tables || []).forEach(t => _pushUserTable(t, glCh));
+            sections.push({ properties: { bidi: _mbRtl() }, children: glCh });
+        }
+        if (_lgDoc) _pushGlossary();   // 3.59.0
+
+        /* 3.59.0: the Learner guide's assessment unit —
+             N- Assessment unit
+             N-1 Introduction, N-2 Portfolio of evidence (the tool's text
+                 or the author's, learner_guide.js), any assessment content
+             N-3 Contents of the portfolio (derived from the sheets)
+             N-4 Assessment tables: one per outcome, from its form.
+           N follows the last learning unit printed. */
+        function _lgAssessmentUnit() {
+            const { Table, TableRow, TableCell, WidthType, BorderStyle } = mbDocxLib();
+            const L = _mbLang();
+            const rows = mbLgPortfolioRows(mbState.learningOutcomesData, L);
+            const _filled = (typeof mbAssessmentFormFilled === 'function') ? mbAssessmentFormFilled : (f => !!f);
+            const formLos = mbState.learningOutcomesData.filter(lo => _filled(mbState.assessmentFormsData[lo.id]));
+            const intro = mbLgAsmText('intro', L, mbState);
+            const portfolio = mbLgAsmText('portfolio', L, mbState);
+            const asmText = String(mbState.assessmentContent || '');
+            const asmBlk = (typeof mbBlocksFilled === 'function') ? mbBlocksFilled(mbState.assessmentBlocks) : [];
+            if (!rows.length && !formLos.length && !asmText.trim() && !asmBlk.length) return;
+
+            const N = (_lgUnits || mbState.learningOutcomesData.length) + 1;
+            const bd = { style: BorderStyle.SINGLE, size: 1, color: '000000' };
+            const borders = { top: bd, bottom: bd, left: bd, right: bd, insideHorizontal: bd, insideVertical: bd };
+            const cell = (t, o) => new TableCell({
+                children: String(t || '').split('\n').map(line => new Paragraph({
+                    children: [new TextRun({ text: line, bold: !!(o && o.bold), size: _wsTable(), color: (o && o.head) ? _wsTblText() : undefined, rightToLeft: _mbRtl() })],
+                    alignment: (o && o.center) ? AlignmentType.CENTER : _mbStart(AlignmentType), bidirectional: _mbRtl()
+                })),
+                shading: (o && o.head) ? { fill: _wsTblFill(), type: 'clear' } : undefined,
+                width: (o && o.w) ? { size: o.w, type: WidthType.PERCENTAGE } : undefined,
+                margins: { top: 100, bottom: 100, left: 100, right: 100 }
+            });
+
+            const ch = [];
+            ch.push(_lgHead(_mbTf('lgAsmUnitHead', { v0: N }), true));
+            if (intro.trim()) { ch.push(_lgHead(_mbTf('lgAsmIntroHead', { v0: N }))); _lgTextCh(intro, ch); }
+            if (portfolio.trim()) { ch.push(_lgHead(_mbTf('lgAsmPortfolioHead', { v0: N }))); _lgTextCh(portfolio, ch); }
+            if (asmText.trim()) _lgTextCh(asmText, ch);
+            asmBlk.forEach(block => {
+                const bt = (block.title || '').trim();
+                if (bt) ch.push(_lgPara(bt, { bold: true, color: _wsHeadColor(), before: 240 }));
+                _lgTextCh(block.body, ch);
+                (block.tables || []).forEach(t => _pushUserTable(t, ch));
+            });
+            if (rows.length) {
+                ch.push(_lgHead(_mbTf('lgAsmContentsHead', { v0: N })));
+                const tr = [new TableRow({ tableHeader: true, children: [
+                    cell(_mbT('lgColActivity'), { bold: true, head: true, center: true, w: 50 }),
+                    cell(_mbT('lgColProduct'), { bold: true, head: true, center: true, w: 30 }),
+                    cell(_mbT('lgColContributes'), { bold: true, head: true, center: true, w: 20 })] })];
+                rows.forEach(r => tr.push(new TableRow({ children: [
+                    cell(r.label), cell(r.product), cell(_mbT(r.contributes ? 'lgpYes' : 'lgpNo'), { center: true })] })));
+                ch.push(new Table({ rows: tr, width: { size: 9072, type: WidthType.DXA }, borders }));
+            }
+            sections.push({ properties: { bidi: _mbRtl() }, children: ch });
+
+            if (!formLos.length) return;
+            const m = (mbState.modulesData || []).find(x => x.id === mbState.currentModuleId) || {};
+            const code = String(m.moduleCode || m.moduleNumber || '').trim();
+            const fc = [];
+            fc.push(_lgHead(_mbTf('lgAsmTablesHead', { v0: N, v1: code }).trim()));
+            fc.push(_lgPara(_mbT('lgAsmTablesLead'), { after: 300 }));
+            formLos.forEach((lo, k) => {
+                const idx = mbState.learningOutcomesData.indexOf(lo);
+                const f = mbState.assessmentFormsData[lo.id];
+                fc.push(_lgPara(_mbTf('lgAsmOutcomeHead', { v0: idx + 1, v1: mbLoPlainTitle(lo.title || '') }),
+                                { bold: true, color: _wsHeadColor(), before: k ? 400 : 120, after: 200 }));
+                const tr = [new TableRow({ tableHeader: true, children: [
+                    cell(_mbT('lgColCriteria'), { bold: true, head: true, center: true, w: 34 }),
+                    cell(_mbT('lgColActNum'), { bold: true, head: true, center: true, w: 30 }),
+                    cell(_mbT('lgColOutput'), { bold: true, head: true, center: true, w: 18 }),
+                    cell(_mbT('lgColDate'), { bold: true, head: true, center: true, w: 18 })] })];
+                (f.rows || []).filter(r => r && ((r.criteria || '').trim() || (r.activities || '').trim() || (r.outcomes || '').trim() || (r.date || '').trim()))
+                    .forEach(r => tr.push(new TableRow({ children: [cell(r.criteria), cell(r.activities), cell(r.outcomes), cell(r.date)] })));
+                fc.push(new Table({ rows: tr, width: { size: 9072, type: WidthType.DXA }, borders }));
+                const res = (typeof mbAsmResultLabels === 'function') ? mbAsmResultLabels(L) : [_mbT('expCompetent'), _mbT('expNotYetCompetent')];
+                fc.push(_lgPara(_mbT('expResult'), { bold: true, before: 240, after: 120 }));
+                res.forEach(lab => fc.push(_lgPara('☐ ' + lab, { after: 100 })));
+                fc.push(_lgPara(_mbTf('expSignatureLine', { v0: _mbT('expTrainerName'), v1: f.teacherName || '_______________________',
+                    v2: f.teacherSignature || '_______________________', v3: f.teacherDate || '_______________________' }), { before: 240, after: 200 }));
+                fc.push(_lgPara(_mbTf('expSignatureLine', { v0: _mbT('expLearnerName'), v1: f.learnerName || '_______________________',
+                    v2: f.learnerSignature || '_______________________', v3: f.learnerDate || '_______________________' }), { after: 200 }));
+            });
+            sections.push({ properties: { bidi: _mbRtl() }, children: fc });
+        }
 
         // Assessment Unit Section (Simple)
         console.log('Preparing Assessment Unit section...');
@@ -2020,7 +2168,9 @@ async function exportToDocx() {
         const hasAssessmentForms = mbState.learningOutcomesData.some(lo => _asmFilled(mbState.assessmentFormsData[lo.id]));
         console.log('Assessment content:', hasAssessmentContent, 'Assessment forms:', hasAssessmentForms);
         
-        if (hasAssessmentContent || hasAssessmentForms) {
+        if (_lgDoc) {
+            _lgAssessmentUnit();
+        } else if (hasAssessmentContent || hasAssessmentForms) {
             console.log('Creating assessment section...');
             const { Table, TableRow, TableCell, WidthType, BorderStyle } = mbDocxLib();
             const assessmentChildren = [];
@@ -2338,19 +2488,9 @@ async function exportToDocx() {
 
 
         // ── Glossary of Terms (3.42.0) — its own page, before the references ──
-        if (typeof mbGlossaryHasContent === 'function' && mbGlossaryHasContent(mbState.glossary)) {
-            const glCh = [];
-            glCh.push(new Paragraph({
-                children: [new TextRun({
-                    text: (mbState.glossary.title || _mbT('expGlossary')),
-                    size: _wsSection(), bold: true, color: _wsHeadColor(), rightToLeft: _mbRtl()
-                })],
-                alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(),
-                spacing: { after: 400 }
-            }));
-            (mbState.glossary.tables || []).forEach(t => _pushUserTable(t, glCh));
-            sections.push({ properties: { bidi: _mbRtl() }, children: glCh });
-        }
+        /* 3.59.0: the Learner guide prints it after the last learning
+           unit, before the assessment unit (see above). */
+        if (!_lgDoc) _pushGlossary();
 
         // ── References page ──────────────────────────────────────────
         syncReferencesFromDOM();

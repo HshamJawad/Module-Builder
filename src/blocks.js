@@ -301,9 +301,26 @@ function mbRenderBlocks(host) {
     if (list === null) {
         box.innerHTML = '';
         if (section) section.style.display = 'none';
+        if (host === 'lo' && typeof mbRenderLgUnit === 'function') mbRenderLgUnit();   // 3.59.0
         return;
     }
     if (section) section.style.display = '';
+
+    /* 3.59.0: not while the author is typing in one of these boxes.
+       history.js snapshots the module on every focus (saveCurrentSheetToLO
+       → updateLOSummary → here), and a rebuild at that moment replaced the
+       box being typed in: the first keystroke went nowhere. The rows bind
+       live, so the screen is already current; only a different outcome,
+       language or list of sections needs a rebuild. */
+    var key = (host === 'lo' ? mbState.currentLOId : host) + '|' + contentLang() + '|' +
+              list.map(function (b) { return b.uid; }).join(',');
+    var act = document.activeElement;
+    if (box.getAttribute('data-render-key') === key && act && act !== document.body && box.contains(act)) {
+        if (host === 'lo' && typeof mbRenderLgUnit === 'function') mbRenderLgUnit();
+        if (host === 'assessment' && typeof mbRenderLgAsm === 'function') mbRenderLgAsm();
+        return;
+    }
+    box.setAttribute('data-render-key', key);
 
     /* Collect BEFORE the wipe. innerHTML below destroys every widget on
        screen, and a content-language switch calls this function — so
@@ -326,6 +343,9 @@ function mbRenderBlocks(host) {
             }
         });
     }
+    /* 3.59.0: the Learner guide's unit card follows the outcome card. */
+    if (host === 'lo' && typeof mbRenderLgUnit === 'function') mbRenderLgUnit();
+    if (host === 'assessment' && typeof mbRenderLgAsm === 'function') mbRenderLgAsm();
 }
 
 function mbRenderAllBlocks() {

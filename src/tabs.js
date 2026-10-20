@@ -90,6 +90,8 @@ async function switchTab(tabName) {
             });
         }
         renderAssessmentForms();
+        /* 3.59.0: the Learner guide's portfolio follows the sheets. */
+        if (typeof mbRenderLgAsm === 'function') mbRenderLgAsm();
     }
 }
 
