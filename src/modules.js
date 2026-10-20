@@ -203,7 +203,13 @@ function _mbApplyDacumModuleFields(module, dacumModule, exportData) {
     const cat = dacumModule.category;
     if (cat && typeof cat === 'object' && String(cat.id || '').trim()) {
         module.category = { id: String(cat.id), label: String(cat.label || cat.id) };
+        /* 3.58.0: a category the project does not list yet joins the list
+           of the Module Management card (module_identity.js). */
+        if (typeof mbEnsureModuleCategory === 'function') mbEnsureModuleCategory(module.category);
     } else delete module.category;
+    /* 3.58.0 — DACUM Live Pro 3.131: the full (official) title. */
+    const full = String(dacumModule.fullTitle || '').trim();
+    if (full) module.fullTitle = full; else delete module.fullTitle;
     const pr = exportData.programmeRequirements;
     if (pr && typeof pr === 'object' && Object.keys(pr).length) module.dacumProgramme = pr;
     else delete module.dacumProgramme;
@@ -263,7 +269,9 @@ function mbModuleLabel(m) {
     let ref = num;
     if (code) ref = m.labelMode === 'number' ? (num || code) : (m.labelMode === 'both' && num ? `${num} · ${code}` : code);
     // A code already carries track and level ("CMCN 1-1"), so the tag is not repeated.
-    const cat = m.category && m.category.label ? ` · ${m.category.label}` : '';   // 3.33.0
+    /* 3.33.0; 3.58.0: the label from the project's list (module_identity.js). */
+    const catLabel = (typeof mbModuleCategoryLabel === 'function') ? mbModuleCategoryLabel(m) : (m.category && m.category.label) || '';
+    const cat = catLabel ? ` · ${catLabel}` : '';
     return (ref ? ref + ' — ' : '') + m.title + (code ? '' : mbModuleTag(m)) + cat;
 }
 
@@ -426,6 +434,8 @@ function updateModuleSummary() {
     }
     
     summary.style.display = 'block';
+    /* 3.58.0: category and full title (module_identity.js). */
+    if (typeof mbRenderModuleIdentity === 'function') mbRenderModuleIdentity();
     
     const loCount = module.learningOutcomes.length;
     const sheetsCount = module.learningOutcomes.reduce((sum, lo) => 

@@ -96,6 +96,7 @@ function mbCollectShared() {
         glossary:               mbState.glossary         || null,
         assessmentResults:      mbState.assessmentResults || null,   // 3.50.0
         ratingScale:            mbState.ratingScale       || null,   // 3.51.0
+        moduleCategories:       mbState.moduleCategories  || null,   // 3.58.0
         tvqfBasic:              mbState.tvqfBasic        || {},
         tvqfExtended:           mbState.tvqfExtended     || {},
         cmDefaults:             mbState.cmDefaults       || {}
@@ -119,6 +120,7 @@ function _mbDefaultShared() {
         glossary: { title: null, tables: [] },
         assessmentResults: null,
         ratingScale: null,
+        moduleCategories: null,
         tvqfBasic: {}, tvqfExtended: {}, cmDefaults: {}
     };
 }
@@ -154,6 +156,7 @@ function mbApplyProjectShared(data) {
         mbState.includeLearningGuide = !!data.includeLearningGuide;
         if (typeof mbRenderLearningGuideToggle === 'function') mbRenderLearningGuideToggle();
 
+        mbState.moduleCategories = Array.isArray(data.moduleCategories) && data.moduleCategories.length ? data.moduleCategories : null;   // 3.58.0
         mbState.assessmentContent = biUpgrade(data.assessmentContent);
         mbState.assessmentBlocks = (typeof mbNormalizeBlocks === 'function') ? mbNormalizeBlocks(data.assessmentBlocks) : (data.assessmentBlocks || []);   // 3.57.0
         if (typeof mbRenderBlocks === 'function') mbRenderBlocks('assessment');
@@ -222,7 +225,8 @@ function _mbStashModuleCover(module) {
 function _mbModuleCoverDefaults(module) {
     var cur = module.curriculum || {};
     return {
-        cvUnitTitle:  mbPlainText(module.title),
+        /* 3.58.0: the full title when the module has one. */
+        cvUnitTitle:  (typeof mbModuleFullTitle === 'function') ? mbModuleFullTitle(module) : mbPlainText(module.title),
         cvModuleCode: module.moduleCode || '',
         /* 3.18.0: TVQF/NQF level from DACUM when given, else the programme level. */
         cvLevel:      module.nqfLevel ? String(module.nqfLevel) : (module.level ? String(module.level) : ''),
