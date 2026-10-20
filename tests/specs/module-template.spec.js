@@ -74,3 +74,14 @@ test('Settings → Misc shows the template buttons and the two options', async (
   await expect(page.locator('[data-ws-misc="templateConvert"]')).not.toBeChecked();
   expect(errors).toEqual([]);
 });
+
+test('the template window is shown once per tab, not again after a reload', async ({ page }) => {
+  const errors = await openApp(page, { chooser: true });
+  await expect(page.locator('.mb-tpl-dialog')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await page.reload();
+  await page.waitForFunction(() => window.mbLib && mbLib.booted === true);
+  await page.waitForTimeout(1200);
+  await expect(page.locator('.mb-tpl-dialog')).toHaveCount(0);
+  expect(errors).toEqual([]);
+});

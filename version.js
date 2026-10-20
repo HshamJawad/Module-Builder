@@ -494,6 +494,14 @@
        once more only for the badge's title. */
     function onWorkerUpdate() {
         if (updateReady) { showBanner(); return; }
+        /* 3.62.1: not on the load that «Update now» itself started. The new
+           worker announces itself when it has INSTALLED (sw_register.js);
+           a press that comes quickly reloads the page before that worker
+           has taken control, and its take-over then lands on the reloaded
+           page — a second bar for the update just applied. The guard says
+           this tab reloaded for an update moments ago; a release that
+           really arrives later is still found by the version.json check. */
+        if (readGuard()) { console.info('[Version] worker took over after the update — no second offer'); return; }
         fetch(SRC + '?t=' + Date.now(), { cache: 'no-store' })
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (d) { if (d && d.version) latest = String(d.version); })
