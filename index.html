@@ -23,7 +23,7 @@
 <!-- Error handler must load before any app script -->
 <script src="error-handler2.js"></script>
 <script defer src="version.js"></script>
-<link href="mb-styles.css?v=3.62.2" rel="stylesheet"/>
+<link href="mb-styles.css?v=3.63.0" rel="stylesheet"/>
 <!-- Inline favicon. Without one the browser requests /favicon.ico on
      every load and logs a 404 — harmless, but it sits in the console
      next to real errors and makes them harder to see. -->
@@ -253,12 +253,14 @@
 <div class="tabs">
 <button class="tab active" data-act="switchTab" data-args='["basic-info"]' data-i18n="mbBasicInfo">🏠 Basic Info</button>
 <button class="tab" data-act="mbCovOpen" data-i18n="mbCovNav" id="mb-cov-nav">🗺️ Coverage</button>
+<button class="tab" data-act="switchTab" data-args='["module-info"]' data-i18n="mbModuleInfoTab">📋 Module Information</button>
+<button class="tab" data-act="switchTab" data-args='["covers"]' data-i18n="mbFrontCoverTab">🖼️ Front Cover</button>
+<button class="tab" data-act="switchTab" data-args='["intro"]' data-i18n="mbIntroductionPages">Introduction Pages</button>
 <button class="tab" data-act="switchTab" data-args='["info"]' data-i18n="mbInformationSheet">Information Sheet</button>
 <button class="tab" data-act="switchTab" data-args='["activity"]' data-i18n="mbActivityJobSheet">Activity/ Job Sheet</button>
 <button class="tab" data-act="switchTab" data-args='["assessment"]' data-i18n="mbAssessmentUnit">Assessment Unit</button>
-<button class="tab" data-act="switchTab" data-args='["covers"]' data-i18n="mbCovers">Covers</button>
-<button class="tab" data-act="switchTab" data-args='["intro"]' data-i18n="mbIntroductionPages">Introduction Pages</button>
 <button class="tab" data-act="switchTab" data-args='["references"]' data-i18n="mbReferences">📚 References</button>
+<button class="tab" data-act="switchTab" data-args='["back-cover"]' data-i18n="mbBackCoverTab">🖼️ Back Cover</button>
 <!-- 3.38.0: Settings at the foot of the rail, above Help (also in the Export menu) -->
 <button class="tab mb-nav-settings" data-act="openWordSettings" data-i18n="mbSettingsNav" id="mb-settings-nav" type="button">⚙️ Settings</button>
 <button class="tab" data-act="switchTab" data-args='["help"]' data-i18n="mbHelp">❓ Help</button>
@@ -372,36 +374,18 @@
 </div>
 </div>
 </div>
+<!-- 3.63.0: Proceed Button -->
+<div style="text-align: center; margin-top: 30px; padding: 20px 0;">
+<button data-act="proceedToTab" data-args='["module-info"]' data-i18n="mbProceedToModuleInfo" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 32px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3); transition: all 0.3s ease;">
+                        Proceed to Module Information →
+                    </button>
+</div>
 </div>
 <!-- End Basic Info Tab -->
 <!-- Covers Tab -->
-<div class="tab-content" id="covers-tab">
+<!-- 3.63.0: Module Information — the module information table, moved out of the Covers tab -->
+<div class="tab-content" id="module-info-tab">
 <div class="form-group">
-<!-- ══ FRONT COVER ══ -->
-<div style="margin-bottom: 30px; padding: 20px; background: #f0f9ff; border-radius: 12px; border: 2px solid #38bdf8;">
-<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
-<span data-i18n="mbFrontCover" style="font-size: 1.1em; font-weight: 700; color: #0369a1;">🖼️ Front Cover</span>
-<span data-i18n="mbOptionalExportedAsTheVeryFirst" style="font-size: 0.85em; color: #6b7280;">(Optional — exported as the very first page)</span>
-</div>
-<div style="background:#e0f2fe; border-left:4px solid #0369a1; border-radius:6px; padding:10px 14px; margin-bottom:16px; font-size:0.86em; color:#075985; line-height:1.6;">
-                        💡 <strong data-i18n="mbTip">Tip:</strong><span data-i18n="txUploadAn">Upload an</span><strong data-i18n="mbA4SizedImage210297Mm">A4-sized image (210 × 297 mm)</strong><span data-i18n="txForBestResults">for best results.</span><br/><span data-i18n="txRecommended">Recommended:</span><strong data-i18n="mb24803508Px">2480 × 3508 px</strong><span data-i18n="txAt300DpiOr">at 300 dpi — or</span><strong data-i18n="mb12401754Px">1240 × 1754 px</strong><span data-i18n="txAt150Dpi">at 150 dpi.</span><br/><span data-i18n="txSmallerImagesWillBeAutomaticallySt">Smaller images will be automatically stretched to fill the full A4 page.</span></div>
-<div data-dropzone="front" id="front-cover-upload-area" style="border:2px dashed #38bdf8; border-radius:10px; padding:24px; text-align:center; background:white; cursor:pointer; transition:background 0.2s;">
-<div id="front-cover-placeholder" style="pointer-events:none;">
-<div style="font-size:2.5em; margin-bottom:8px;">🖼️</div>
-<div data-i18n="mbClickOrDragDropToUpload" style="font-weight:600; color:#0369a1; margin-bottom:4px;">Click or drag &amp; drop to upload front cover image</div>
-<div data-i18n="mbPngJpgWebpWillBeStretched" style="font-size:0.85em; color:#6b7280;">PNG, JPG, WEBP — will be stretched to fill full A4 page (210 × 297 mm)</div>
-</div>
-<div id="front-cover-preview-wrap" style="display:none; pointer-events:none;">
-<img alt="Front Cover Preview" id="front-cover-preview" src="" style="max-width:100%; max-height:320px; border-radius:6px; box-shadow:0 4px 16px rgba(0,0,0,0.15); display:block; margin:0 auto;"/>
-<div id="front-cover-size-info" style="margin-top:8px; font-size:0.82em; color:#6b7280;"></div>
-<div data-i18n="mbImageLoadedWillBeTheFirst" style="margin-top:6px; font-size:0.88em; color:#059669; font-weight:600;">✓ Image loaded — will be the first page on export. Click to replace.</div>
-</div>
-</div>
-<input accept="image/*" data-act="handleFrontCoverUpload" data-on="change" id="front-cover-image-input" style="display:none;" type="file"/>
-<div id="front-cover-delete-row" style="display:none; margin-top:12px; text-align:right;">
-<button data-act="deleteFrontCoverImage"  style="background:#ef4444; color:white; border:none; padding:7px 18px; border-radius:7px; cursor:pointer; font-weight:600; font-size:0.88em; display:inline-flex; align-items:center; gap:6px;"><svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg><span data-i18n="mbRemoveFrontCoverImage">Remove Front Cover Image</span></button>
-</div>
-</div>
 <label data-i18n="mbCoverPageInformation" style="font-size: 1.2em; font-weight: 600; color: #667eea;">📋 Cover Page Information</label>
 <!-- Additional Information Section -->
 <div style="margin-top: 20px; padding: 15px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
@@ -434,29 +418,40 @@
 </div>
 <textarea class="mb-content-field" data-i18n="mbEnterAnyAdditionalNotesToAppear" data-i18n-attr="placeholder" id="covers-additional-notes" placeholder="Enter any additional notes to appear after the module information table..." rows="4" style="width: 100%; padding: 10px; border: 2px solid #d1d5db; border-radius: 6px; font-size: 1em;"></textarea>
 </div>
-<!-- Back Cover Section -->
-<div style="margin-top: 30px; padding: 20px; background: #faf5ff; border-radius: 12px; border: 2px solid #a78bfa;">
-<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
-<span data-i18n="mbBackCover" style="font-size: 1.1em; font-weight: 700; color: #7c3aed;">🖼️ Back Cover</span>
-<span data-i18n="mbOptionalExportedAsTheLastPage" style="font-size: 0.85em; color: #6b7280;">(Optional — exported as the last page)</span>
+<!-- Proceed Button -->
+<div style="text-align: center; margin-top: 30px; padding: 20px 0;">
+<button data-act="proceedToTab" data-args='["covers"]' data-i18n="mbProceedToFrontCover" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 32px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3); transition: all 0.3s ease;">
+                        Proceed to Front Cover →
+                    </button>
 </div>
-<div style="background:#ede9fe; border-left:4px solid #7c3aed; border-radius:6px; padding:10px 14px; margin-bottom:16px; font-size:0.86em; color:#5b21b6; line-height:1.6;">
+</div>
+</div>
+<!-- Front Cover Tab (3.63.0: was «Covers») -->
+<div class="tab-content" id="covers-tab">
+<div class="form-group">
+<!-- ══ FRONT COVER ══ -->
+<div style="margin-bottom: 30px; padding: 20px; background: #f0f9ff; border-radius: 12px; border: 2px solid #38bdf8;">
+<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+<span data-i18n="mbFrontCover" style="font-size: 1.1em; font-weight: 700; color: #0369a1;">🖼️ Front Cover</span>
+<span data-i18n="mbOptionalExportedAsTheVeryFirst" style="font-size: 0.85em; color: #6b7280;">(Optional — exported as the very first page)</span>
+</div>
+<div style="background:#e0f2fe; border-left:4px solid #0369a1; border-radius:6px; padding:10px 14px; margin-bottom:16px; font-size:0.86em; color:#075985; line-height:1.6;">
                         💡 <strong data-i18n="mbTip">Tip:</strong><span data-i18n="txUploadAn">Upload an</span><strong data-i18n="mbA4SizedImage210297Mm">A4-sized image (210 × 297 mm)</strong><span data-i18n="txForBestResults">for best results.</span><br/><span data-i18n="txRecommended">Recommended:</span><strong data-i18n="mb24803508Px">2480 × 3508 px</strong><span data-i18n="txAt300DpiOr">at 300 dpi — or</span><strong data-i18n="mb12401754Px">1240 × 1754 px</strong><span data-i18n="txAt150Dpi">at 150 dpi.</span><br/><span data-i18n="txSmallerImagesWillBeAutomaticallySt">Smaller images will be automatically stretched to fill the full A4 page.</span></div>
-<div data-dropzone="back" id="back-cover-upload-area" style="border:2px dashed #a78bfa; border-radius:10px; padding:24px; text-align:center; background:white; cursor:pointer; transition:background 0.2s;">
-<div id="back-cover-placeholder" style="pointer-events:none;">
+<div data-dropzone="front" id="front-cover-upload-area" style="border:2px dashed #38bdf8; border-radius:10px; padding:24px; text-align:center; background:white; cursor:pointer; transition:background 0.2s;">
+<div id="front-cover-placeholder" style="pointer-events:none;">
 <div style="font-size:2.5em; margin-bottom:8px;">🖼️</div>
-<div data-i18n="mbClickOrDragDropToUpload2" style="font-weight:600; color:#7c3aed; margin-bottom:4px;">Click or drag &amp; drop to upload back cover image</div>
+<div data-i18n="mbClickOrDragDropToUpload" style="font-weight:600; color:#0369a1; margin-bottom:4px;">Click or drag &amp; drop to upload front cover image</div>
 <div data-i18n="mbPngJpgWebpWillBeStretched" style="font-size:0.85em; color:#6b7280;">PNG, JPG, WEBP — will be stretched to fill full A4 page (210 × 297 mm)</div>
 </div>
-<div id="back-cover-preview-wrap" style="display:none; pointer-events:none;">
-<img alt="Back Cover Preview" id="back-cover-preview" src="" style="max-width:100%; max-height:320px; border-radius:6px; box-shadow:0 4px 16px rgba(0,0,0,0.15); display:block; margin:0 auto;"/>
-<div id="back-cover-size-info" style="margin-top:8px; font-size:0.82em; color:#6b7280;"></div>
-<div data-i18n="mbImageLoadedWillFillFullA4" style="margin-top:6px; font-size:0.88em; color:#059669; font-weight:600;">✓ Image loaded — will fill full A4 page on export. Click to replace.</div>
+<div id="front-cover-preview-wrap" style="display:none; pointer-events:none;">
+<img alt="Front Cover Preview" id="front-cover-preview" src="" style="max-width:100%; max-height:320px; border-radius:6px; box-shadow:0 4px 16px rgba(0,0,0,0.15); display:block; margin:0 auto;"/>
+<div id="front-cover-size-info" style="margin-top:8px; font-size:0.82em; color:#6b7280;"></div>
+<div data-i18n="mbImageLoadedWillBeTheFirst" style="margin-top:6px; font-size:0.88em; color:#059669; font-weight:600;">✓ Image loaded — will be the first page on export. Click to replace.</div>
 </div>
 </div>
-<input accept="image/*" data-act="handleBackCoverUpload" data-on="change" id="back-cover-image-input" style="display:none;" type="file"/>
-<div id="back-cover-delete-row" style="display:none; margin-top:12px; text-align:right;">
-<button data-act="deleteBackCoverImage"  style="background:#ef4444; color:white; border:none; padding:7px 18px; border-radius:7px; cursor:pointer; font-weight:600; font-size:0.88em; display:inline-flex; align-items:center; gap:6px;"><svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg><span data-i18n="mbRemoveBackCoverImage">Remove Back Cover Image</span></button>
+<input accept="image/*" data-act="handleFrontCoverUpload" data-on="change" id="front-cover-image-input" style="display:none;" type="file"/>
+<div id="front-cover-delete-row" style="display:none; margin-top:12px; text-align:right;">
+<button data-act="deleteFrontCoverImage"  style="background:#ef4444; color:white; border:none; padding:7px 18px; border-radius:7px; cursor:pointer; font-weight:600; font-size:0.88em; display:inline-flex; align-items:center; gap:6px;"><svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg><span data-i18n="mbRemoveFrontCoverImage">Remove Front Cover Image</span></button>
 </div>
 </div>
 <!-- Proceed Button -->
@@ -1032,6 +1027,42 @@ The AI analyzes only this module's own data (Learning Outcomes, Performance Crit
 <button data-act="addGlossaryTable" id="btn-add-glossary-table" style="background: #0ea5e9; color: white; border: none; padding: 7px 16px; border-radius: 6px; cursor: pointer; font-size: 0.88em; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">📋 <span data-i18n="mbAddGlossaryTable">Add glossary table</span></button>
 </div>
 </div>
+<!-- Proceed Button -->
+<div style="text-align: center; margin-top: 30px; padding: 20px 0;">
+<button data-act="proceedToTab" data-args='["back-cover"]' data-i18n="mbProceedToBackCover" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 32px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3); transition: all 0.3s ease;">
+                        Proceed to Back Cover →
+                    </button>
+</div>
+</div>
+<!-- 3.63.0: Back Cover — its own tab, last, as it is the last page of the export -->
+<div class="tab-content" id="back-cover-tab">
+<div class="form-group">
+<!-- Back Cover Section -->
+<div style="margin-top: 30px; padding: 20px; background: #faf5ff; border-radius: 12px; border: 2px solid #a78bfa;">
+<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+<span data-i18n="mbBackCover" style="font-size: 1.1em; font-weight: 700; color: #7c3aed;">🖼️ Back Cover</span>
+<span data-i18n="mbOptionalExportedAsTheLastPage" style="font-size: 0.85em; color: #6b7280;">(Optional — exported as the last page)</span>
+</div>
+<div style="background:#ede9fe; border-left:4px solid #7c3aed; border-radius:6px; padding:10px 14px; margin-bottom:16px; font-size:0.86em; color:#5b21b6; line-height:1.6;">
+                        💡 <strong data-i18n="mbTip">Tip:</strong><span data-i18n="txUploadAn">Upload an</span><strong data-i18n="mbA4SizedImage210297Mm">A4-sized image (210 × 297 mm)</strong><span data-i18n="txForBestResults">for best results.</span><br/><span data-i18n="txRecommended">Recommended:</span><strong data-i18n="mb24803508Px">2480 × 3508 px</strong><span data-i18n="txAt300DpiOr">at 300 dpi — or</span><strong data-i18n="mb12401754Px">1240 × 1754 px</strong><span data-i18n="txAt150Dpi">at 150 dpi.</span><br/><span data-i18n="txSmallerImagesWillBeAutomaticallySt">Smaller images will be automatically stretched to fill the full A4 page.</span></div>
+<div data-dropzone="back" id="back-cover-upload-area" style="border:2px dashed #a78bfa; border-radius:10px; padding:24px; text-align:center; background:white; cursor:pointer; transition:background 0.2s;">
+<div id="back-cover-placeholder" style="pointer-events:none;">
+<div style="font-size:2.5em; margin-bottom:8px;">🖼️</div>
+<div data-i18n="mbClickOrDragDropToUpload2" style="font-weight:600; color:#7c3aed; margin-bottom:4px;">Click or drag &amp; drop to upload back cover image</div>
+<div data-i18n="mbPngJpgWebpWillBeStretched" style="font-size:0.85em; color:#6b7280;">PNG, JPG, WEBP — will be stretched to fill full A4 page (210 × 297 mm)</div>
+</div>
+<div id="back-cover-preview-wrap" style="display:none; pointer-events:none;">
+<img alt="Back Cover Preview" id="back-cover-preview" src="" style="max-width:100%; max-height:320px; border-radius:6px; box-shadow:0 4px 16px rgba(0,0,0,0.15); display:block; margin:0 auto;"/>
+<div id="back-cover-size-info" style="margin-top:8px; font-size:0.82em; color:#6b7280;"></div>
+<div data-i18n="mbImageLoadedWillFillFullA4" style="margin-top:6px; font-size:0.88em; color:#059669; font-weight:600;">✓ Image loaded — will fill full A4 page on export. Click to replace.</div>
+</div>
+</div>
+<input accept="image/*" data-act="handleBackCoverUpload" data-on="change" id="back-cover-image-input" style="display:none;" type="file"/>
+<div id="back-cover-delete-row" style="display:none; margin-top:12px; text-align:right;">
+<button data-act="deleteBackCoverImage"  style="background:#ef4444; color:white; border:none; padding:7px 18px; border-radius:7px; cursor:pointer; font-weight:600; font-size:0.88em; display:inline-flex; align-items:center; gap:6px;"><svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg><span data-i18n="mbRemoveBackCoverImage">Remove Back Cover Image</span></button>
+</div>
+</div>
+</div>
 </div>
 <!-- Help Tab -->
 <div class="tab-content" id="help-tab">
@@ -1172,81 +1203,81 @@ The AI analyzes only this module's own data (Learning Outcomes, Performance Crit
            app.js           boot.
            autosave.js      last; observes a fully built page.
          ═══════════════════════════════════════════════════════════════ -->
-<script src="src/persistence.js?v=3.62.2"></script>
-<script src="src/project_store.js?v=3.62.2"></script>
-<script src="src/image_store.js?v=3.62.2"></script>
-<script src="src/mb-translations.js?v=3.62.2"></script>
-<script src="src/mb_state.js?v=3.62.2"></script>
-<script src="src/module_template.js?v=3.62.2"></script>
-<script src="src/bilang.js?v=3.62.2"></script>
-<script src="src/dacum_i18n.js?v=3.62.2"></script>
-<script src="src/uid.js?v=3.62.2"></script>
-<script src="src/image_prep.js?v=3.62.2"></script>
-<script src="src/image_paste.js?v=3.62.2"></script>
-<script src="src/dialog.js?v=3.62.2"></script>
-<script src="src/docx_bidi.js?v=3.62.2"></script>
-<script src="src/ui.js?v=3.62.2"></script>
-<script src="src/tabs.js?v=3.62.2"></script>
-<script src="src/covers.js?v=3.62.2"></script>
-<script src="src/cover_images.js?v=3.62.2"></script>
-<script src="src/workteam.js?v=3.62.2"></script>
-<script src="src/modules.js?v=3.62.2"></script>
-<script src="src/outcomes.js?v=3.62.2"></script>
-<script src="src/blocks.js?v=3.62.2"></script>
-<script src="src/learning_guide.js?v=3.62.2"></script>
-<script src="src/sheets.js?v=3.62.2"></script>
-<script src="src/content.js?v=3.62.2"></script>
-<script src="src/criteria.js?v=3.62.2"></script>
-<script src="src/assessment.js?v=3.62.2"></script>
-<script src="src/assessment_results.js?v=3.62.2"></script>
-<script src="src/rating_scale.js?v=3.62.2"></script>
-<script src="src/module-ai.js?v=3.62.2"></script>
-<script src="src/content_map.js?v=3.62.2"></script>
-<script src="src/suggest_panel.js?v=3.62.2"></script>
-<script src="src/coverage_view.js?v=3.62.2"></script>
-<script src="src/ta_finder.js?v=3.62.2"></script>
-<script src="src/references.js?v=3.62.2"></script>
-<script src="src/glossary.js?v=3.62.2"></script>
-<script src="src/sheet_kinds.js?v=3.62.2"></script>
-<script src="src/lo_sequence.js?v=3.62.2"></script>
-<script src="src/learner_guide.js?v=3.62.2"></script>
-<script src="src/help_modal.js?v=3.62.2"></script>
-<script src="src/resources.js?v=3.62.2"></script>
-<script src="src/custom_marks.js?v=3.62.2"></script>
-<script src="src/marks.js?v=3.62.2"></script>
-<script src="src/steps.js?v=3.62.2"></script>
-<script src="src/attachments.js?v=3.62.2"></script>
-<script src="src/module_identity.js?v=3.62.2"></script>
-<script src="src/storage.js?v=3.62.2"></script>
-<script src="src/module_card.js?v=3.62.2"></script>
-<script src="src/module_library.js?v=3.62.2"></script>
-<script src="src/tab_guard.js?v=3.62.2"></script>
-<script src="src/package_mbz.js?v=3.62.2"></script>
-<script src="src/package_ui.js?v=3.62.2"></script>
-<script src="src/package_preview.js?v=3.62.2"></script>
-<script src="src/folder_sync.js?v=3.62.2"></script>
-<script src="src/module_library_ui.js?v=3.62.2"></script>
-<script src="src/module_model.js?v=3.62.2"></script>
-<script src="src/exports_html.js?v=3.62.2"></script>
-<script src="src/font_cairo.js?v=3.62.2"></script>
-<script src="src/arabic-font.js?v=3.62.2"></script>
-<script src="src/pdf_arabic.js?v=3.62.2"></script>
-<script src="src/exports_pdf.js?v=3.62.2"></script>
-<script src="src/link_modal.js?v=3.62.2"></script>
-<script src="src/source_ai.js?v=3.62.2"></script>
-<script src="src/export_menu.js?v=3.62.2"></script>
-<script src="src/shortcuts.js?v=3.62.2"></script>
-<script src="src/exports_pptx.js?v=3.62.2"></script>
-<script src="src/word_settings.js?v=3.62.2"></script>
-<script src="src/export_ui.js?v=3.62.2"></script>
-<script src="src/exports_docx.js?v=3.62.2"></script>
-<script src="src/contentlang_ui.js?v=3.62.2"></script>
-<script src="src/history.js?v=3.62.2"></script>
-<script src="src/events.js?v=3.62.2"></script>
+<script src="src/persistence.js?v=3.63.0"></script>
+<script src="src/project_store.js?v=3.63.0"></script>
+<script src="src/image_store.js?v=3.63.0"></script>
+<script src="src/mb-translations.js?v=3.63.0"></script>
+<script src="src/mb_state.js?v=3.63.0"></script>
+<script src="src/module_template.js?v=3.63.0"></script>
+<script src="src/bilang.js?v=3.63.0"></script>
+<script src="src/dacum_i18n.js?v=3.63.0"></script>
+<script src="src/uid.js?v=3.63.0"></script>
+<script src="src/image_prep.js?v=3.63.0"></script>
+<script src="src/image_paste.js?v=3.63.0"></script>
+<script src="src/dialog.js?v=3.63.0"></script>
+<script src="src/docx_bidi.js?v=3.63.0"></script>
+<script src="src/ui.js?v=3.63.0"></script>
+<script src="src/tabs.js?v=3.63.0"></script>
+<script src="src/covers.js?v=3.63.0"></script>
+<script src="src/cover_images.js?v=3.63.0"></script>
+<script src="src/workteam.js?v=3.63.0"></script>
+<script src="src/modules.js?v=3.63.0"></script>
+<script src="src/outcomes.js?v=3.63.0"></script>
+<script src="src/blocks.js?v=3.63.0"></script>
+<script src="src/learning_guide.js?v=3.63.0"></script>
+<script src="src/sheets.js?v=3.63.0"></script>
+<script src="src/content.js?v=3.63.0"></script>
+<script src="src/criteria.js?v=3.63.0"></script>
+<script src="src/assessment.js?v=3.63.0"></script>
+<script src="src/assessment_results.js?v=3.63.0"></script>
+<script src="src/rating_scale.js?v=3.63.0"></script>
+<script src="src/module-ai.js?v=3.63.0"></script>
+<script src="src/content_map.js?v=3.63.0"></script>
+<script src="src/suggest_panel.js?v=3.63.0"></script>
+<script src="src/coverage_view.js?v=3.63.0"></script>
+<script src="src/ta_finder.js?v=3.63.0"></script>
+<script src="src/references.js?v=3.63.0"></script>
+<script src="src/glossary.js?v=3.63.0"></script>
+<script src="src/sheet_kinds.js?v=3.63.0"></script>
+<script src="src/lo_sequence.js?v=3.63.0"></script>
+<script src="src/learner_guide.js?v=3.63.0"></script>
+<script src="src/help_modal.js?v=3.63.0"></script>
+<script src="src/resources.js?v=3.63.0"></script>
+<script src="src/custom_marks.js?v=3.63.0"></script>
+<script src="src/marks.js?v=3.63.0"></script>
+<script src="src/steps.js?v=3.63.0"></script>
+<script src="src/attachments.js?v=3.63.0"></script>
+<script src="src/module_identity.js?v=3.63.0"></script>
+<script src="src/storage.js?v=3.63.0"></script>
+<script src="src/module_card.js?v=3.63.0"></script>
+<script src="src/module_library.js?v=3.63.0"></script>
+<script src="src/tab_guard.js?v=3.63.0"></script>
+<script src="src/package_mbz.js?v=3.63.0"></script>
+<script src="src/package_ui.js?v=3.63.0"></script>
+<script src="src/package_preview.js?v=3.63.0"></script>
+<script src="src/folder_sync.js?v=3.63.0"></script>
+<script src="src/module_library_ui.js?v=3.63.0"></script>
+<script src="src/module_model.js?v=3.63.0"></script>
+<script src="src/exports_html.js?v=3.63.0"></script>
+<script src="src/font_cairo.js?v=3.63.0"></script>
+<script src="src/arabic-font.js?v=3.63.0"></script>
+<script src="src/pdf_arabic.js?v=3.63.0"></script>
+<script src="src/exports_pdf.js?v=3.63.0"></script>
+<script src="src/link_modal.js?v=3.63.0"></script>
+<script src="src/source_ai.js?v=3.63.0"></script>
+<script src="src/export_menu.js?v=3.63.0"></script>
+<script src="src/shortcuts.js?v=3.63.0"></script>
+<script src="src/exports_pptx.js?v=3.63.0"></script>
+<script src="src/word_settings.js?v=3.63.0"></script>
+<script src="src/export_ui.js?v=3.63.0"></script>
+<script src="src/exports_docx.js?v=3.63.0"></script>
+<script src="src/contentlang_ui.js?v=3.63.0"></script>
+<script src="src/history.js?v=3.63.0"></script>
+<script src="src/events.js?v=3.63.0"></script>
 <!-- Toolbar fit. Loaded after events.js so the bar's data-act handlers
      are bound before anything measures it, and it binds nothing of its
      own on those buttons — it reads widths and sets one class. -->
-<script src="src/toolbar_fit.js?v=3.62.2"></script>
+<script src="src/toolbar_fit.js?v=3.63.0"></script>
 <!-- Side-rail toggle. Inlined rather than shipped as src/sidenav.js so
      the feature has no second file to deploy: it is 30 lines, it binds
      one listener to one button, and it touches nothing the dispatch
@@ -1452,8 +1483,8 @@ The AI analyzes only this module's own data (Learning Outcomes, Performance Crit
     }
 })();
 </script>
-<script src="src/sw_register.js?v=3.62.2"></script>
-<script src="src/app.js?v=3.62.2"></script>
-<script src="src/autosave.js?v=3.62.2"></script>
+<script src="src/sw_register.js?v=3.63.0"></script>
+<script src="src/app.js?v=3.63.0"></script>
+<script src="src/autosave.js?v=3.63.0"></script>
 </body>
 </html>
