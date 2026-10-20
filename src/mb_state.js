@@ -170,6 +170,7 @@ var mbState = {
        with a fixed id; this is a variable-length list rendered by
        blocks.js, which binds each box straight to its pair. */
     introBlocks: [],
+    assessmentBlocks: [],       // 3.57.0: more Assessment Content (blocks.js)
 
     /* ── Learning Guide ─────────────────────────────────────────
        One boolean, and deliberately nothing else. The guide table

@@ -2003,7 +2003,9 @@ async function exportToDocx() {
         // Assessment Unit Section (Simple)
         console.log('Preparing Assessment Unit section...');
         const assessmentSimpleContent = mbState.assessmentContent || '';
-        const hasAssessmentContent = assessmentSimpleContent.trim() !== '';
+        /* 3.57.0: the more content added under the first (blocks.js). */
+        const asmBlocks = (typeof mbBlocksFilled === 'function') ? mbBlocksFilled(mbState.assessmentBlocks) : [];
+        const hasAssessmentContent = assessmentSimpleContent.trim() !== '' || asmBlocks.length > 0;
         /* mbAssessmentFormFilled, not `!!formsData[lo.id]`: opening the
            Assessment tab creates a blank form for EVERY outcome in the
            module, so presence proved only that the tab had been opened.
@@ -2041,7 +2043,7 @@ async function exportToDocx() {
             
             // Assessment Content (Simple textarea content)
             if (hasAssessmentContent) {
-                const contentLines = assessmentSimpleContent.split('\n');
+                const contentLines = assessmentSimpleContent.trim() ? assessmentSimpleContent.split('\n') : [];
                 contentLines.forEach(line => {
                     assessmentChildren.push(new Paragraph({
                         children: [
@@ -2055,6 +2057,27 @@ async function exportToDocx() {
                         bidirectional: _mbRtl(),
                         spacing: { after: 150 },
                     }));
+                });
+                /* 3.57.0: each further content — its title in the heading
+                   style, its text, its tables. */
+                asmBlocks.forEach(block => {
+                    const bt = (block.title || '').trim();
+                    if (bt) {
+                        assessmentChildren.push(new Paragraph({
+                            children: [new TextRun({ text: bt, bold: true, size: _wsBody(), color: _wsHeadColor(), rightToLeft: _mbRtl() })],
+                            alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(),
+                            spacing: { before: 240, after: 150 },
+                        }));
+                    }
+                    (block.body || '').split('\n').forEach(line => {
+                        if (!line.trim()) return;
+                        assessmentChildren.push(new Paragraph({
+                            children: [new TextRun({ text: line, size: _wsBody(), rightToLeft: _mbRtl() })],
+                            alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(),
+                            spacing: { after: 150 },
+                        }));
+                    });
+                    (block.tables || []).forEach(t => _pushUserTable(t, assessmentChildren));
                 });
             }
             

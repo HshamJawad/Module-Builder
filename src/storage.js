@@ -194,6 +194,8 @@ async function clearAll() {
         // ── Assessment tab ────────────────────────────────────────
         const assessContent = document.getElementById('assessment-simple-content');
         if (assessContent) assessContent.value = '';
+        mbState.assessmentBlocks = [];                                  // 3.57.0
+        if (typeof mbRenderBlocks === 'function') mbRenderBlocks('assessment');
         mbState.assessmentFormsData = {};
         mbState.assessmentResults = null;   // 3.50.0 — the default options
         mbState.ratingScale = null;         // 3.51.0 — the default scale

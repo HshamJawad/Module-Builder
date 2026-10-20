@@ -234,6 +234,7 @@
                 !!d.frontCoverImage || !!d.backCoverImage ||
                 (d.teamMembers || []).length > 0 ||
                 (d.introBlocks || []).length > 0 ||
+                (d.assessmentBlocks || []).length > 0 ||
                 (d.referencesData || []).some(r => _txt(r && r.value)) ||
                 (typeof mbGlossaryHasContent === 'function' && mbGlossaryHasContent(d.glossary)) ||
                 Object.keys(d.assessmentFormsData || {}).length > 0 ||
