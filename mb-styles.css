@@ -3857,3 +3857,26 @@ button.mb-asm-edit { padding: 6px 12px !important; border: 1px solid #cbd5e1 !im
     width: 100% !important; box-sizing: border-box; padding: 5px 8px !important; min-height: 0 !important;
     border: 1px solid #e2e8f0; border-radius: 6px; font: inherit; font-size: .8em !important; margin: 0 !important;
 }
+
+/* ── 3.58.0: category and full title in Module Management (src/module_identity.js) ── */
+.mb-mi-row { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center;
+    padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px solid #e0f2fe; }
+.mb-mi-field { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-weight: 600; color: #0c4a6e; font-size: .92em; }
+.mb-mi-field > span { white-space: nowrap; }
+.mb-mi-field.mb-mi-full { flex: 1 1 100%; }
+.mb-mi-field input, .mb-mi-field select {
+    padding: 8px 10px !important; border: 1.5px solid #bae6fd !important; border-radius: 8px; font: inherit; font-weight: 500;
+    background: #fff; margin: 0 !important; min-height: 0 !important; }
+.mb-mi-field.mb-mi-full input { flex: 1 1 auto; width: auto !important; min-width: 0; }
+.mb-cat-overlay { position: fixed; inset: 0; z-index: 10060; display: flex; align-items: center; justify-content: center;
+    padding: 20px; background: rgba(15,23,42,.5); font-family: inherit; }
+.mb-cat-box { background: #fff; border-radius: 14px; max-width: 440px; width: 100%; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,.3); }
+.mb-cat-head { padding: 14px 18px; background: linear-gradient(135deg,#f0f9ff,#e0f2fe); border-bottom: 1px solid #bae6fd; font-weight: 800; color: #075985; }
+.mb-cat-body { padding: 14px 18px; }
+.mb-cat-hint { margin: 0 0 10px; font-size: .86em; color: #475569; line-height: 1.6; }
+#mb-cat-lines { width: 100%; box-sizing: border-box; min-height: 130px; font: inherit; font-size: .92em; padding: 10px; border: 1.5px solid #bae6fd; border-radius: 8px; }
+.mb-cat-foot { display: flex; gap: 8px; justify-content: space-between; flex-wrap: wrap; margin-top: 12px; }
+.mb-cat-foot span { display: flex; gap: 8px; }
+.mb-cat-foot button { padding: 8px 14px; border: 1px solid #e2e8f0; background: #fff; border-radius: 8px; cursor: pointer; font: inherit; }
+.mb-cat-foot button.is-primary { background: #0284c7 !important; color: #fff !important; border-color: #0284c7; font-weight: 700; }
+@media (max-width: 600px) { .mb-mi-field { flex: 1 1 100%; flex-wrap: wrap; } .mb-mi-field select { flex: 1 1 auto; } }

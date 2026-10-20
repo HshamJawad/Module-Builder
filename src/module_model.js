@@ -226,7 +226,8 @@ function mbBuildModuleModel(lang, state) {
     const model = {
         lang: lang,
         rtl: (typeof biIsRtl === 'function') ? biIsRtl(lang) : (lang === 'ar'),
-        title: currentModule ? _mmStr(currentModule.title) : '',
+        /* 3.58.0: the full title when the module has one. */
+        title: currentModule ? (_mmStr(currentModule.fullTitle).trim() || _mmStr(currentModule.title)) : '',
         generatedAt: new Date().toISOString(),
 
         cover: {

@@ -1150,11 +1150,13 @@ async function exportToDocx() {
             // No page break needed here - sections automatically start on new pages
             
             // Module Title - Large heading
-            if (currentModule && currentModule.title && currentModule.title.trim()) {
+            /* 3.58.0: the full title when the module has one (module_identity.js). */
+            const _modTitle = currentModule ? (String(currentModule.fullTitle || '').trim() || currentModule.title || '') : '';
+            if (currentModule && _modTitle && _modTitle.trim()) {
                 overviewChildren.push(new Paragraph({
                     children: [
                         new TextRun({
-                            text: currentModule.title,
+                            text: _modTitle,
                             size: _wsTitle(), // module title
                             bold: true,
                             color: _wsHeadColor(), // Blue color
