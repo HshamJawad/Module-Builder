@@ -492,6 +492,22 @@
        version.json check alone cannot, because a page opened after the
        merge already reads the new number as its own. The number is read
        once more only for the badge's title. */
+    /* 3.65.2: the build this page RUNS — the ?v= its own scripts were
+       loaded with (index.html carries the release number on every tag).
+       Online, every page and script comes from the network first
+       (sw.js), so a page opened or reloaded after a release already
+       runs it; a worker that finishes installing that same release
+       later — it downloads ~2 MB first, often longer than the reload
+       guard's 20 s — is not a new version for this page. */
+    function pageBuild() {
+        var tags = document.querySelectorAll('script[src*="v="]');
+        for (var i = 0; i < tags.length; i++) {
+            var m = /[?&]v=(\d+(?:\.\d+)*)/.exec(tags[i].getAttribute('src') || '');
+            if (m) return m[1];
+        }
+        return null;
+    }
+
     function onWorkerUpdate() {
         if (updateReady) { showBanner(); return; }
         /* 3.62.1: not on the load that «Update now» itself started. The new
@@ -506,7 +522,14 @@
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (d) { if (d && d.version) latest = String(d.version); })
             .catch(function () {})
-            .then(function () { onUpdateAvailable(latest || loaded || ''); });
+            .then(function () {
+                var mine = pageBuild();
+                if (mine && latest && !isNewer(latest, mine)) {
+                    console.info('[Version] worker for ' + latest + ' installed — this page already runs ' + mine + '; nothing to offer');
+                    return;
+                }
+                onUpdateAvailable(latest || loaded || '');
+            });
     }
     window.addEventListener('mb:sw-updated', onWorkerUpdate);
 
