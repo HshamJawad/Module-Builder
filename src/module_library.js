@@ -893,7 +893,7 @@ function mbLibraryCollectImages() {
     return _mbLibQueue(function () {
         var mod = _mbOpenModuleObj();
         return mbImages.collect([mod, mod ? _mbFormsOf(mod) : null, mbCollectShared(),
-                                 mbState.contentSectionImages, mbState.stepImages,
+                                 mbState.contentSectionImages, mbState.stepImages, mbState.attachImages || {},
                                  mbState.infoQRImage, mbState.activityQRImage]).then(function (n) {
             if (n) console.info('[Library] unused pictures deleted:', n);
             return n;

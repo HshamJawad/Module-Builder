@@ -85,6 +85,7 @@ function _mbInfoSheetHasContent(d) {
            _mbBiHasAny(d.selfCheckContent) ||
            _mbBiHasAny(d.answersKeyContent) ||
            !!(d.contentSections && d.contentSections.length) ||
+           !!(d.attachments && d.attachments.length) ||          // 3.56.0
            _mbFilled(d.linkSubject) ||
            _mbFilled(d.linkUrl) ||
            !!d.qrImage;
@@ -95,6 +96,7 @@ function _mbActivitySheetHasContent(d) {
     return _mbBiHasAny(d.title) ||
            _mbBiHasAny(d.objective) ||
            !!(d.steps     && d.steps.length) ||
+           !!(d.attachments && d.attachments.length) ||          // 3.56.0
            !!(d.resources && d.resources.length) ||
            !!(d.criteria  && d.criteria.length) ||
            _mbFilled(d.linkSubject) ||
@@ -161,10 +163,15 @@ function saveCurrentSheetToLO() {
             mbRowHasOtherSide(storedInfo.contentSections, mbRowUid(content), 'text') ||
             mbRowHasOtherSide(storedInfo.contentSections, mbRowUid(content), 'heading')) {
             incomingSections.push({ text: content.value, heading, contentId: cid, marks, tables,
+                                    /* 3.56.0: captions of its pictures (attachments.js) */
+                                    imageCaptions: (typeof mbImgCapsGet === 'function')
+                                        ? mbImgCapsGet('info', cid, (mbState.contentSectionImages[cid] || []).length) : [],
                                     uid: mbRowUid(content) });
         }
     });
     infoData.contentSections = biMergeArrayById(storedInfo.contentSections, incomingSections, ['text', 'heading']);
+    /* 3.56.0: attached figures and tables (attachments.js). */
+    if (typeof mbAttCollect === 'function') infoData.attachments = mbAttCollect('info', storedInfo.attachments);
 
     /* ── When is a sheet worth storing? ─────────────────────────
        The v2 test was `title.trim() || objective.trim()`, carried
@@ -249,10 +256,13 @@ function saveCurrentSheetToLO() {
         if (step.value.trim() || hasImages || mbRowHasOtherSide(storedAct.steps, mbRowUid(step), 'text')) {
             incomingSteps.push({ text: step.value, stepId: sid, marks: collectMarks(`step-marks-${sid}`),
                 tables: collectContentTables(`step-${sid}`),
+                imageCaptions: (typeof mbImgCapsGet === 'function')
+                    ? mbImgCapsGet('activity', sid, (mbState.stepImages[sid] || []).length) : [],   // 3.56.0
                                  uid: mbRowUid(step) });
         }
     });
     activityData.steps = biMergeArrayById(storedAct.steps, incomingSteps, ['text']);
+    if (typeof mbAttCollect === 'function') activityData.attachments = mbAttCollect('activity', storedAct.attachments);   // 3.56.0
 
     // Collect criteria
     const incomingCriteria = [];
@@ -366,6 +376,7 @@ function loadInfoSheetAtIndex(lo, index) {
         for (let key in mbState.contentSectionImages) {
             delete mbState.contentSectionImages[key];
         }
+        if (typeof mbImgCapsReset === 'function') mbImgCapsReset('info');   // 3.56.0
         
         /* 3.54.3: the same re-keying the steps got in 3.52.0. Section
            images are keyed by the card's DOM id (`contentId`), and the
@@ -389,6 +400,7 @@ function loadInfoSheetAtIndex(lo, index) {
                 if (keyedSections && _csKeyed(contentData) && savedCsImages[contentData.contentId]) {
                     restoredCsImages[mbState.contentSectionCount] = savedCsImages[contentData.contentId];
                 }
+                if (typeof mbImgCapsSet === 'function') mbImgCapsSet('info', mbState.contentSectionCount, contentData.imageCaptions);
                 const lastContent = document.querySelector(`[data-content-id="${mbState.contentSectionCount}"]`);
                 if (lastContent) {
                     lastContent.value = biGetStrict(contentData.text, contentLang());
@@ -445,6 +457,8 @@ function loadInfoSheetAtIndex(lo, index) {
         mbState.contentSectionCount = 0;
         addContentSection();
     }
+    /* 3.56.0: the sheet's attached figures and tables (attachments.js). */
+    if (typeof mbAttLoad === 'function') mbAttLoad('info', (lo.infoSheets || [])[index] || null);
 } // end loadInfoSheetAtIndex
 
 function loadActivitySheetAtIndex(lo, index) {
@@ -510,6 +524,7 @@ function loadActivitySheetAtIndex(lo, index) {
         for (let key in mbState.stepImages) {
             delete mbState.stepImages[key];
         }
+        if (typeof mbImgCapsReset === 'function') mbImgCapsReset('activity');   // 3.56.0
         
         /* Step images are keyed by the card's DOM id (`stepId`), and the
            cards are renumbered 1…N on every load. Restoring the stored
@@ -529,6 +544,7 @@ function loadActivitySheetAtIndex(lo, index) {
                     && savedImages[stepData.stepId]) {
                     restoredImages[mbState.stepCount] = savedImages[stepData.stepId];
                 }
+                if (typeof mbImgCapsSet === 'function') mbImgCapsSet('activity', mbState.stepCount, stepData && stepData.imageCaptions);
                 const lastStep = document.querySelector(`[data-step-id="${mbState.stepCount}"]`);
                 if (lastStep) {
                     lastStep.value = biGetStrict(stepData.text, contentLang());
@@ -617,6 +633,7 @@ function loadActivitySheetAtIndex(lo, index) {
         addStep();
         toggleCriteriaSection();
     }
+    if (typeof mbAttLoad === 'function') mbAttLoad('activity', (lo.activitySheets || [])[index] || null);   // 3.56.0
 } // end loadActivitySheetAtIndex
 
 // ── Info sheet navigation helpers ──────────────────────────────
@@ -783,6 +800,7 @@ async function removeCurrentInfoSheet() {
         document.getElementById('answers-key-number').value = '';
         document.getElementById('answers-key-content').value = '';
         document.getElementById('content-sections-container').innerHTML = '';
+        if (typeof mbAttReset === 'function') { mbAttReset('info'); mbImgCapsReset('info'); }   // 3.56.0
         mbState.contentSectionCount = 0;
         addContentSection();
         updateInfoSheetNav(lo);
@@ -873,6 +891,7 @@ async function removeCurrentActivitySheet() {
         mbState.activityQRImage = null;
         document.getElementById('resources-container').innerHTML = '';
         document.getElementById('steps-container').innerHTML = '';
+        if (typeof mbAttReset === 'function') { mbAttReset('activity'); mbImgCapsReset('activity'); }   // 3.56.0
         document.getElementById('criteria-tbody').innerHTML = '';
         /* include-criteria removed */
         mbState.resourceCount = 0; mbState.stepCount = 0; mbState.criteriaCount = 0;

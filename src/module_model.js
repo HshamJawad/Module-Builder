@@ -160,6 +160,37 @@ function _mmTables(list) {
     });
 }
 
+/* 3.56.0 — attachments.js. The rows of a sheet in printed order with its
+   attached items between them: `rows` are the model rows that survive
+   `keep`, and each attached item knows its slot — how many of those rows
+   come before it. Built from mbAttPlan so every exporter agrees. */
+function _mmWithAttachments(kind, sh, toRow, keep) {
+    var plan = (typeof mbAttPlan === 'function') ? mbAttPlan(kind, sh)
+        : { items: _mmArr(kind === 'info' ? sh.contentSections : sh.steps), slots: [] };
+    var rows = [], atts = [];
+    var pushAtts = function (list) {
+        _mmArr(list).forEach(function (a) {
+            var tables = a.type === 'table' ? _mmTables([a.table]) : [];
+            atts.push({
+                slot: rows.length,
+                type: a.type,
+                image: a.type === 'image' ? a.image : null,
+                table: tables[0] || null,
+                caption: a.type === 'image' ? _mmStr(a.__caption !== undefined ? a.__caption : a.caption).trim() : '',
+                source: (typeof mbFigSourceLine === 'function') ? mbFigSourceLine(a, _MM_LANG) : ''
+            });
+        });
+    };
+    plan.items.forEach(function (row, k) {
+        pushAtts(plan.slots[k]);
+        var m = toRow(row, k);
+        if (keep(m)) rows.push(m);
+    });
+    pushAtts(plan.slots[plan.items.length]);
+    return { rows: rows, attachments: atts.filter(function (a) { return a.image || a.table; }) };
+}
+var _MM_LANG = 'en';
+
 function _mmImages(bag, id) {
     if (!bag || !id) return [];
     return _mmArr(bag[id]).filter(function (im) { return im; });
@@ -185,6 +216,9 @@ function mbBuildModuleModel(lang, state) {
     /* 3.16.0: DACUM texts in the export language (dacum_i18n.js). Only on
        the flattened COPY — never on the raw state passed in. */
     const st = (flat !== raw && typeof mbLocalizeDacum === 'function') ? mbLocalizeDacum(flat, lang) : flat;
+    /* 3.56.0: numbered captions of figures and tables, on the copy only. */
+    _MM_LANG = lang;
+    if (flat !== raw && typeof mbFigPrepare === 'function') mbFigPrepare(st, lang);
 
     const modules = _mmArr(st.modulesData);
     const currentModule = modules.find(function (m) { return m.id === st.currentModuleId; }) || modules[0] || null;
@@ -294,6 +328,7 @@ function mbBuildModuleModel(lang, state) {
 
         _mmArr(lo.infoSheets).forEach(function (sh, si) {
             if (!mmSheetHasContent(sh)) return;
+            var _waInfo = null;   // 3.56.0
             const number = (typeof mbSeqNumber === 'function') ? mbSeqNumber(lo, loIndex, 'info', si) : _mmSheetNumber(sh, loIndex, si);
             out.infoSheets.push({
                 srcIndex: si,
@@ -303,18 +338,21 @@ function mbBuildModuleModel(lang, state) {
                 title: _mmStr(sh.title),
                 objectiveLead: _mmStr(sh.objectiveLead),
                 objective: _mmStr(sh.objective),
-                sections: _mmArr(sh.contentSections).map(function (cs) {
+                /* 3.56.0: rows and attached items in printed order. */
+                sections: (_waInfo = _mmWithAttachments('info', sh, function (cs) {
                     return {
                         heading: _mmStr(cs && cs.heading),
                         text: _mmStr(cs && cs.text),
                         images: _mmImages(sh.contentSectionImages, cs && cs.contentId),
+                        imageCaps: _mmArr(cs && cs.__imgCaps).map(_mmStr),
                         marks: _mmMarks(cs && cs.marks),
                         tables: _mmTables(cs && cs.tables)
                     };
-                }).filter(function (cs) {
+                }, function (cs) {
                     return cs.heading.trim() || cs.text.trim() ||
                            cs.images.length || cs.marks.length || cs.tables.length;
-                }),
+                })).rows,
+                attachments: _waInfo.attachments,
                 /* Numbered from the sheet, exactly as the Word export
                    does, and omitted entirely when the author wrote no
                    questions — an empty self-check tells the trainee to
@@ -340,6 +378,7 @@ function mbBuildModuleModel(lang, state) {
 
         _mmArr(lo.activitySheets).forEach(function (sh, si) {
             if (!mmSheetHasContent(sh)) return;
+            var _waAct = null;    // 3.56.0
             const number = (typeof mbSeqNumber === 'function') ? mbSeqNumber(lo, loIndex, 'activity', si) : _mmSheetNumber(sh, loIndex, si);
             const kind = (typeof mbSheetKind === 'function') ? mbSheetKind(sh.sheetType) : 'activity';
             /* 3.42.0: «completed within the required time», added after
@@ -359,7 +398,7 @@ function mbBuildModuleModel(lang, state) {
                 resources: _mmArr(sh.resources)
                     .map(function (r) { return { name: _mmStr(r && r.name), quantity: _mmStr(r && r.quantity) }; })
                     .filter(function (r) { return r.name.trim(); }),
-                steps: _mmArr(sh.steps).map(function (stp, idx) {
+                steps: (_waAct = _mmWithAttachments('activity', sh, function (stp, idx) {
                     return {
                         index: idx + 1,
                         text: _mmStr(stp && stp.text),
@@ -379,10 +418,14 @@ function mbBuildModuleModel(lang, state) {
                            not. The fallback covers any sheet written by a
                            future path that uses the state's name. */
                         images: _mmImages(sh.images || sh.stepImages, stp && stp.stepId),
+                        imageCaps: _mmArr(stp && stp.__imgCaps).map(_mmStr),
                         marks: _mmMarks(stp && stp.marks),
                         tables: _mmTables(stp && stp.tables)
                     };
-                }).filter(function (s) { return s.text.trim() || s.images.length || s.marks.length || s.tables.length; }),
+                }, function (s) { return s.text.trim() || s.images.length || s.marks.length || s.tables.length; })).rows
+                    /* Numbered in printed order: the attached items take no number. */
+                    .map(function (s, i) { s.index = i + 1; return s; }),
+                attachments: _waAct.attachments,
                 criteria: {
                     /* 3.51.0: levels instead of Yes / No when the sheet uses the scale. */
                     scale: (sh.useScale && typeof mbScaleLevels === 'function') ? mbScaleLevels(lang, raw) : null,

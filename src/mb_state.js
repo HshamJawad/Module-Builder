@@ -33,6 +33,10 @@ var mbState = {
        triggered before then threw ReferenceError rather than reading an
        empty object. Found by booting the app under jsdom. */
     stepImages: {},             // { stepId: [images] }
+    /* 3.56.0 (attachments.js): the picture of each attached item on
+       screen, and the captions of the pictures in steps / sections. */
+    attachImages: {},           // { attachmentDomId: image }
+    imageCaptions: {},          // { 's:<stepId>' | 'c:<contentId>': [caption] }
     infoQRImage: null,
     activityQRImage: null,
     frontCoverImage: null,

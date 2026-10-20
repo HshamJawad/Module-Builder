@@ -351,6 +351,27 @@ function _pdfWriter(pdf, style, lang) {
         }
     };
 
+    /** 3.56.0: an attached picture — wider than a step picture, centred,
+        its caption and source under it. */
+    w.figure = function (dataUrl, caption, source) {
+        if (!dataUrl) return;
+        try {
+            var props = pdf.getImageProperties(dataUrl);
+            var maxW = CW * 0.9, maxH = (BOTTOM - M) * 0.6;
+            var ww = maxW, hh = props.height * (ww / props.width);
+            if (hh > maxH) { hh = maxH; ww = props.width * (hh / props.height); }
+            w.need(hh + w.lineH(style.body) * 2 + 4);
+            w.gap(2);
+            pdf.addImage(dataUrl, _pdfImgFormat(dataUrl), M + (CW - ww) / 2, w.y, ww, hh);
+            w.y += hh + 2;
+        } catch (e) {
+            console.warn('[PDF] figure skipped:', e && e.message);
+            return;
+        }
+        if (caption) w.text(caption, { bold: true, color: style.heading, after: source ? 0.5 : 3 });
+        if (source) w.text(source, { size: Math.max(8, style.body - 2), color: '6B7280', after: 3 });
+    };
+
     /** Mark box — header bar in the mark's own theme colour, then the
         text. The mark theme is the author's choice per note, so it is
         NOT overridden by the Word heading colour. */
@@ -389,6 +410,31 @@ function _pdfWriter(pdf, style, lang) {
     };
 
     return w;
+}
+
+/* 3.56.0 — attached items of one slot, and pictures with their captions. */
+function _pdfAttachments(w, list, slot, S) {
+    (list || []).forEach(function (a) {
+        if (a.slot !== slot) return;
+        if (a.type === 'image') { w.figure(a.image, a.caption, a.source); return; }
+        var tb = a.table;
+        if (!tb) return;
+        if (tb.title) w.label(tb.title);
+        if (tb.subtitle) w.text(tb.subtitle);
+        if (tb.cells.length) {
+            var cols = tb.cells[0].length || 1, cw = [];
+            for (var i = 0; i < cols; i++) cw.push(w.CW / cols);
+            w.table(tb.cells[0], tb.cells.slice(1), cw, { size: S.utable });
+        }
+        if (a.source) w.text(a.source, { size: Math.max(8, S.body - 2), color: '6B7280', after: 3 });
+    });
+}
+function _pdfImages(w, images, caps, S) {
+    (images || []).forEach(function (im, i) {
+        w.image(im);
+        var cap = caps && caps[i];
+        if (cap) w.text(cap, { bold: true, size: Math.max(8, S.body - 1), color: S.heading, after: 2 });
+    });
 }
 
 /* ── The document ───────────────────────────────────────────
@@ -480,10 +526,11 @@ function _pdfBuild(pdf, model, lang) {
             if (sh.objectiveLead) w.text(sh.objectiveLead);
             if (sh.objective) { w.label(t('objective')); w.text(sh.objective, { indent: 4 }); }
 
-            sh.sections.forEach(function (cs) {
+            sh.sections.forEach(function (cs, k) {
+                _pdfAttachments(w, sh.attachments, k, S);   // 3.56.0
                 if (cs.heading) w.label(cs.heading);
                 if (cs.text) w.text(cs.text);
-                cs.images.forEach(function (im) { w.image(im); });
+                _pdfImages(w, cs.images, cs.imageCaps, S);
                 cs.tables.forEach(function (tb) {
                     /* The captions print even when the grid is empty —
                        a named table with nothing in it yet is something
@@ -499,6 +546,7 @@ function _pdfBuild(pdf, model, lang) {
                 });
                 cs.marks.forEach(function (m) { w.mark(m); });
             });
+            _pdfAttachments(w, sh.attachments, sh.sections.length, S);
 
             if (sh.qr) _pdfQR(w, sh.qr);
 
@@ -531,11 +579,12 @@ function _pdfBuild(pdf, model, lang) {
                     [w.CW * 0.72, w.CW * 0.28], { size: S.table });
             }
 
-            if (sh.steps.length) {
-                w.label(t('steps'));
-                sh.steps.forEach(function (s) {
+            if (sh.steps.length) w.label(t('steps'));
+            if (sh.steps.length || (sh.attachments || []).length) {
+                sh.steps.forEach(function (s, k) {
+                    _pdfAttachments(w, sh.attachments, k, S);   // 3.56.0
                     w.text(s.index + '. ' + s.text, { indent: 4 });
-                    s.images.forEach(function (im) { w.image(im); });
+                    _pdfImages(w, s.images, s.imageCaps, S);
                     (s.tables || []).forEach(function (tb) {
                         if (tb.title) w.label(tb.title);
                         if (tb.subtitle) w.text(tb.subtitle);
@@ -547,6 +596,7 @@ function _pdfBuild(pdf, model, lang) {
                     });
                     s.marks.forEach(function (m) { w.mark(m); });
                 });
+                _pdfAttachments(w, sh.attachments, sh.steps.length, S);
             }
 
             if (sh.qr) _pdfQR(w, sh.qr);

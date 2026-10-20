@@ -77,6 +77,7 @@ function clearAllForms() {
     document.getElementById('answers-key-number').value = '';
     document.getElementById('answers-key-content').value = '';
     document.getElementById('content-sections-container').innerHTML = '';
+    if (typeof mbAttReset === 'function') { mbAttReset('info'); mbImgCapsReset('info'); }   // 3.56.0
     mbState.contentSectionCount = 0;
     addContentSection();
     
@@ -91,6 +92,7 @@ function clearAllForms() {
     mbState.activityQRImage = null;
     document.getElementById('resources-container').innerHTML = '';
     document.getElementById('steps-container').innerHTML = '';
+    if (typeof mbAttReset === 'function') { mbAttReset('activity'); mbImgCapsReset('activity'); }   // 3.56.0
     document.getElementById('criteria-tbody').innerHTML = '';
     /* include-criteria removed */
     mbState.resourceCount = 0;
@@ -108,6 +110,7 @@ function clearContentSection(id) {
     const gallery = document.getElementById(`content-image-gallery-${id}`);
     if (gallery) gallery.innerHTML = '';
     delete mbState.contentSectionImages[id];
+    if (typeof mbImgCapsSet === 'function') mbImgCapsSet('info', id, null);   // 3.56.0
     const marks = document.getElementById(`content-marks-${id}`);
     if (marks) marks.innerHTML = '';
     const tables = document.getElementById(`content-tables-${id}`);
@@ -120,6 +123,7 @@ function clearStep(id) {
     const gallery = document.getElementById(`step-image-gallery-${id}`);
     if (gallery) gallery.innerHTML = '';
     delete mbState.stepImages[id];
+    if (typeof mbImgCapsSet === 'function') mbImgCapsSet('activity', id, null);   // 3.56.0
     const marks = document.getElementById(`step-marks-${id}`);
     if (marks) marks.innerHTML = '';
 }
@@ -548,6 +552,7 @@ async function removeContentSection(id) {
         if (element) {
             element.remove();
             delete mbState.contentSectionImages[id];
+            if (typeof mbImgCapsSet === 'function') mbImgCapsSet('info', id, null);   // 3.56.0
         }
     }
 }
@@ -589,6 +594,7 @@ function handleContentImageUpload(contentId) {
 function removeContentImage(contentId, imgIndex) {
     if (!mbState.contentSectionImages[contentId]) return;
     mbState.contentSectionImages[contentId].splice(imgIndex, 1);
+    if (typeof mbImgCapsSplice === 'function') mbImgCapsSplice('info', contentId, imgIndex);
     renderContentImageGallery(contentId);
 }
 
@@ -597,10 +603,15 @@ function renderContentImageGallery(contentId) {
     if (!gallery) return;
     const images = mbState.contentSectionImages[contentId] || [];
     if (images.length === 0) { gallery.innerHTML = ''; return; }
+    /* 3.56.0: each picture has an optional caption under it
+       (attachments.js), printed — and numbered when numbering is on. */
     gallery.innerHTML = images.map((src, i) => `
+        <div class="mb-img-cell">
         <div class="content-img-thumb">
             <img src="${src}" alt="Image ${i+1}">
             <button class="content-img-delete" data-act="removeContentImage" data-args='[${contentId},${i}]' title="${window.i18n.t('dgRemoveImage')}" data-i18n-title="dgRemoveImage">×</button>
+        </div>
+        ${(typeof mbImgCapsHtml === 'function') ? mbImgCapsHtml('info', contentId, i) : ''}
         </div>
     `).join('');
 }
@@ -652,6 +663,7 @@ async function clearInfoSheet() {
         document.getElementById('info-title').value = '';
         document.getElementById('info-objective').value = '';
         document.getElementById('content-sections-container').innerHTML = '';
+        if (typeof mbAttReset === 'function') { mbAttReset('info'); mbImgCapsReset('info'); }   // 3.56.0
         document.getElementById('info-link-subject').value = '';
         document.getElementById('info-link-url').value = '';
         document.getElementById('info-qr-preview').innerHTML = '';

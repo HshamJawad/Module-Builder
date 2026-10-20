@@ -19,6 +19,9 @@ function _mbDocxCollectImages(los) {
     (los || []).forEach(lo => {
         (lo.infoSheets || []).forEach(sh => Object.values((sh && sh.contentSectionImages) || {}).forEach(add));
         (lo.activitySheets || []).forEach(sh => Object.values((sh && sh.images) || {}).forEach(add));
+        /* 3.56.0: attached pictures (attachments.js). */
+        (lo.infoSheets || []).concat(lo.activitySheets || []).forEach(sh =>
+            ((sh && sh.attachments) || []).forEach(a => { if (a && a.type === 'image') add(a.image); }));
     });
     return [...out];
 }
@@ -159,6 +162,8 @@ async function exportToDocx() {
     // 3.16.0: DACUM texts in the export language (dacum_i18n.js).
     const _flat = biFlattenDeep(window.mbState, _exportLang);
     const mbState = (typeof mbLocalizeDacum === 'function') ? mbLocalizeDacum(_flat, _exportLang) : _flat;
+    /* 3.56.0: numbered captions of figures and tables, on this copy only. */
+    if (typeof mbFigPrepare === 'function' && _flat !== window.mbState) mbFigPrepare(mbState, _exportLang);
 
     console.log('Export function started');
     
@@ -1331,6 +1336,57 @@ async function exportToDocx() {
             return new ImageRun({ data: prep.data, transformation: { width: w, height: h } });
         };
 
+        /* 3.56.0 — attachments.js. A picture of an attached item uses the
+           width of the page, not of the half cell beside a step. */
+        const _mkFigRun = (src) => {
+            const { ImageRun } = mbDocxLib();
+            const prep = _imgPrep.get(src);
+            if (!prep) { _imgFailed++; throw new Error('image could not be exported'); }
+            const ar = prep.h / prep.w || 1;
+            let w = Math.min(520, prep.w || 520), h = Math.round(w * ar);
+            if (h > 560) { h = 560; w = Math.round(h / ar); }
+            return new ImageRun({ data: prep.data, transformation: { width: w, height: h } });
+        };
+        /* A picture in a step or section cell, with its caption under it. */
+        const _imgCellCh = (src, cap) => {
+            const out = [new Paragraph({ children: [_mkImgRun(src)], alignment: AlignmentType.CENTER })];
+            if (cap && String(cap).trim()) {
+                out.push(new Paragraph({ children: [new TextRun({ text: String(cap), bold: true, size: _wsBody() - 2, color: _wsHeadColor(), rightToLeft: _mbRtl() })],
+                    alignment: AlignmentType.CENTER, bidirectional: _mbRtl(), spacing: { before: 60 } }));
+            }
+            return out;
+        };
+        const _srcPara = (a, center) => {
+            const line = (typeof mbFigSourceLine === 'function') ? mbFigSourceLine(a, _mbLang()) : '';
+            if (!line) return null;
+            return new Paragraph({ children: [new TextRun({ text: line, italics: true, size: _wsBody() - 4, color: '555555', rightToLeft: _mbRtl() })],
+                alignment: center ? AlignmentType.CENTER : _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 200 } });
+        };
+        /* One attached item, where the plan puts it (mbAttPlan). */
+        const _pushAttachment = (a, ch) => {
+            if (!a) return;
+            if (a.type === 'image') {
+                try {
+                    ch.push(new Paragraph({ children: [_mkFigRun(a.image)], alignment: AlignmentType.CENTER, spacing: { before: 200, after: 80 } }));
+                } catch (e) { return; }
+                const src = _srcPara(a, true);
+                if (a.__caption) {
+                    ch.push(new Paragraph({ children: [new TextRun({ text: a.__caption, bold: true, size: _wsBody(), color: _wsHeadColor(), rightToLeft: _mbRtl() })],
+                        alignment: AlignmentType.CENTER, bidirectional: _mbRtl(), spacing: { after: src ? 40 : 200 } }));
+                }
+                if (src) ch.push(src);
+                else if (!a.__caption) ch.push(new Paragraph({ children: [new TextRun({ text: '' })], spacing: { after: 120 } }));
+                return;
+            }
+            if (a.type === 'table' && a.table) {
+                const before = ch.length;
+                _pushUserTable(a.table, ch);
+                const src = _srcPara(a, false);
+                /* Under the table, before the spacer _pushUserTable adds. */
+                if (src && ch.length > before) ch.splice(ch.length - 1, 0, src);
+            }
+        };
+
         // Helper: build a user-created table from saved data
         /* Function declarations, not const arrows.
            ------------------------------------------------------------
@@ -1617,7 +1673,7 @@ async function exportToDocx() {
                 }
                 info.objective.split('\n').forEach(line => { if (line.trim()) ch.push(new Paragraph({ children: [new TextRun({ text: line, size: _wsBody(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 150 } })); });
             }
-            if (info.contentSections) {
+            if (info.contentSections || info.attachments) {   // 3.56.0: a sheet of attached items only
                 /* The card's name, when the author gave it one. Printed in
                    the same blue bold as «Objective:» so a renamed section
                    reads as a real heading and not as body text. An
@@ -1631,7 +1687,12 @@ async function exportToDocx() {
                         alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 150 }
                     }));
                 };
-                info.contentSections.forEach((cs) => {
+                /* 3.56.0: in printed order, with the attached items in the
+                   places chosen for them (attachments.js). */
+                const _plan = (typeof mbAttPlan === 'function') ? mbAttPlan('info', info)
+                    : { items: info.contentSections, slots: info.contentSections.map(() => []).concat([[]]) };
+                _plan.items.forEach((cs, k) => {
+                    (_plan.slots[k] || []).forEach(a => _pushAttachment(a, ch));
                     let imgs = (info.contentSectionImages && info.contentSectionImages[cs.contentId]) || [];
                     if (!Array.isArray(imgs)) imgs = [imgs];
                     /* 3.54.3: pictures with no text yet are printed too. */
@@ -1647,10 +1708,10 @@ async function exportToDocx() {
                     _pushCsHeading(cs);
                     const pt = processTextForWordExport(cs.text || '');
                     const row1 = [new TableCell({ children: String(pt).split('\n').filter((l, i, a) => l.trim() || a.length === 1).map(l => new Paragraph({ children: [new TextRun({ text: l, size: _wsBody(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 80 } })), width: { size: 4536, type: WidthType.DXA }, margins: { top: 150, bottom: 150, left: 150, right: 150 }, verticalAlign: 'center' })];
-                    if (imgs.length > 0) { try { row1.push(new TableCell({ children: [new Paragraph({ children: [_mkImgRun(imgs[0])], alignment: AlignmentType.CENTER })], width: { size: 4536, type: WidthType.DXA }, margins: { top: 150, bottom: 150, left: 150, right: 150 }, verticalAlign: 'center' })); } catch(e) { row1.push(new TableCell({ children: [new Paragraph({ text: '' })], width: { size: 4536, type: WidthType.DXA } })); } }
+                    if (imgs.length > 0) { try { row1.push(new TableCell({ children: _imgCellCh(imgs[0], (cs.__imgCaps || [])[0]), width: { size: 4536, type: WidthType.DXA }, margins: { top: 150, bottom: 150, left: 150, right: 150 }, verticalAlign: 'center' })); } catch(e) { row1.push(new TableCell({ children: [new Paragraph({ text: '' })], width: { size: 4536, type: WidthType.DXA } })); } }
                     else { row1.push(new TableCell({ children: [new Paragraph({ text: '' })], width: { size: 4536, type: WidthType.DXA } })); }
                     const tRows = [new TableRow({ children: row1 })];
-                    for (let ii = 1; ii < imgs.length; ii++) { try { tRows.push(new TableRow({ children: [new TableCell({ children: [new Paragraph({ text: '' })], width: { size: 4536, type: WidthType.DXA } }), new TableCell({ children: [new Paragraph({ children: [_mkImgRun(imgs[ii])], alignment: AlignmentType.CENTER })], width: { size: 4536, type: WidthType.DXA }, margins: { top: 100, bottom: 100, left: 150, right: 150 } })] })); } catch(e) {} }
+                    for (let ii = 1; ii < imgs.length; ii++) { try { tRows.push(new TableRow({ children: [new TableCell({ children: [new Paragraph({ text: '' })], width: { size: 4536, type: WidthType.DXA } }), new TableCell({ children: _imgCellCh(imgs[ii], (cs.__imgCaps || [])[ii]), width: { size: 4536, type: WidthType.DXA }, margins: { top: 100, bottom: 100, left: 150, right: 150 } })] })); } catch(e) {} }
                     const borders = { top: { style: BorderStyle.SINGLE, size: 1, color: '000000' }, bottom: { style: BorderStyle.SINGLE, size: 1, color: '000000' }, left: { style: BorderStyle.SINGLE, size: 1, color: '000000' }, right: { style: BorderStyle.SINGLE, size: 1, color: '000000' }, insideHorizontal: { style: BorderStyle.SINGLE, size: 1, color: '000000' }, insideVertical: { style: BorderStyle.SINGLE, size: 1, color: '000000' } };
                     ch.push(new Table({ rows: tRows, width: { size: 9072, type: WidthType.DXA }, borders }));
                     ch.push(new Paragraph({ children: [new TextRun({ text: '' })], spacing: { after: 200 } }));
@@ -1660,6 +1721,7 @@ async function exportToDocx() {
                         cs.tables.forEach(t => _pushUserTable(t, ch));
                     }
                 });
+                (_plan.slots[_plan.items.length] || []).forEach(a => _pushAttachment(a, ch));
             }
             {
                 const qrT = buildQrTable(info.linkSubject, info.linkUrl, mbState.infoQRImage);
@@ -1730,24 +1792,37 @@ async function exportToDocx() {
                 ch.push(new Table({ rows: resRows, width: { size: 9072, type: WidthType.DXA }, layout: 'fixed', borders: bdr, columnWidths: [3356,1178,3356,1178] }));
                 ch.push(new Paragraph({ children: [new TextRun({ text: '' })], spacing: { after: 200 } }));
             }
-            /* 3.54.3: a step holding only pictures is printed too. */
-            const validSteps = (activity.steps || []).filter(s => (s.text && s.text.trim()) ||
-                [].concat((activity.images && activity.images[s.stepId]) || []).length);
-            if (validSteps.length > 0) {
-                ch.push(new Paragraph({ children: [new TextRun({ text: _mbT('expActivitySteps'), bold: true, size: _wsBody(), color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 200 } }));
+            /* 3.54.3: a step holding only pictures is printed too.
+               3.56.0: so is one holding only a table or a note, as in the
+               PDF and HTML; and the attached items take the places chosen
+               for them, with no step number (attachments.js). */
+            const _plan = (typeof mbAttPlan === 'function') ? mbAttPlan('activity', activity)
+                : (function () {
+                    const it = (activity.steps || []).filter(s => (s.text && s.text.trim()) ||
+                        [].concat((activity.images && activity.images[s.stepId]) || []).length);
+                    return { items: it, slots: it.map(() => []).concat([[]]) };
+                })();
+            const validSteps = _plan.items;
+            const _anyAtt = _plan.slots.some(l => l.length);
+            if (validSteps.length > 0 || _anyAtt) {
+                if (validSteps.length > 0) ch.push(new Paragraph({ children: [new TextRun({ text: _mbT('expActivitySteps'), bold: true, size: _wsBody(), color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 200 } }));
                 validSteps.forEach((step, si) => {
+                    (_plan.slots[si] || []).forEach(a => _pushAttachment(a, ch));
                     ch.push(new Paragraph({ children: [new TextRun({ text: _mbTf('expStepN', { v0: si + 1 }), bold: true, size: _wsBody(), color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 100 } }));
                     const pt = processTextForWordExport(step.text || '');
                     let sImgs = (activity.images && activity.images[step.stepId]) || [];
                     if (!Array.isArray(sImgs)) sImgs = [sImgs];
                     const sr1 = [new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: pt, size: _wsBody(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl() })], width: { size: 4536, type: WidthType.DXA }, margins: { top: 150, bottom: 150, left: 150, right: 150 }, verticalAlign: 'center' })];
-                    if (sImgs.length > 0) { try { sr1.push(new TableCell({ children: [new Paragraph({ children: [_mkImgRun(sImgs[0])], alignment: AlignmentType.CENTER })], width: { size: 4536, type: WidthType.DXA }, margins: { top: 150, bottom: 150, left: 150, right: 150 }, verticalAlign: 'center' })); } catch(e) { sr1.push(new TableCell({ children: [new Paragraph({ text: '' })], width: { size: 4536, type: WidthType.DXA } })); } }
+                    if (sImgs.length > 0) { try { sr1.push(new TableCell({ children: _imgCellCh(sImgs[0], (step.__imgCaps || [])[0]), width: { size: 4536, type: WidthType.DXA }, margins: { top: 150, bottom: 150, left: 150, right: 150 }, verticalAlign: 'center' })); } catch(e) { sr1.push(new TableCell({ children: [new Paragraph({ text: '' })], width: { size: 4536, type: WidthType.DXA } })); } }
                     else { sr1.push(new TableCell({ children: [new Paragraph({ text: '' })], width: { size: 4536, type: WidthType.DXA } })); }
                     const sRows = [new TableRow({ children: sr1 })];
-                    for (let ii=1;ii<sImgs.length;ii++){try{sRows.push(new TableRow({children:[new TableCell({children:[new Paragraph({text:''})],width:{size:4536,type:WidthType.DXA}}),new TableCell({children:[new Paragraph({children:[_mkImgRun(sImgs[ii])],alignment:AlignmentType.CENTER})],width:{size:4536,type:WidthType.DXA},margins:{top:100,bottom:100,left:150,right:150}})]}))}catch(e){}}
+                    for (let ii=1;ii<sImgs.length;ii++){try{sRows.push(new TableRow({children:[new TableCell({children:[new Paragraph({text:''})],width:{size:4536,type:WidthType.DXA}}),new TableCell({children:_imgCellCh(sImgs[ii], (step.__imgCaps || [])[ii]),width:{size:4536,type:WidthType.DXA},margins:{top:100,bottom:100,left:150,right:150}})]}))}catch(e){}}
                     const bdr2 = { top:{style:BorderStyle.SINGLE,size:1,color:'000000'}, bottom:{style:BorderStyle.SINGLE,size:1,color:'000000'}, left:{style:BorderStyle.SINGLE,size:1,color:'000000'}, right:{style:BorderStyle.SINGLE,size:1,color:'000000'}, insideHorizontal:{style:BorderStyle.SINGLE,size:1,color:'000000'}, insideVertical:{style:BorderStyle.SINGLE,size:1,color:'000000'} };
-                    ch.push(new Table({ rows: sRows, width: { size: 9072, type: WidthType.DXA }, borders: bdr2 }));
-                    ch.push(new Paragraph({ children: [new TextRun({ text: '' })], spacing: { after: 200 } }));
+                    /* A step of a table or a note only has no text box to print. */
+                    if ((step.text && step.text.trim()) || sImgs.length) {
+                        ch.push(new Table({ rows: sRows, width: { size: 9072, type: WidthType.DXA }, borders: bdr2 }));
+                        ch.push(new Paragraph({ children: [new TextRun({ text: '' })], spacing: { after: 200 } }));
+                    }
                     if (step.marks) { step.marks.forEach(m => { if (m.text && m.text.trim()) { const mt = MARK_TYPES.find(x => x.key === m.key); if (mt) { ch.push(buildMarkDocxTable(mt, m.text)); } } }); }
                     /* Steps can carry tables now, the same as content
                        cards, and through the same builder. */
@@ -1755,6 +1830,7 @@ async function exportToDocx() {
                         step.tables.forEach(t => _pushUserTable(t, ch));
                     }
                 });
+                (_plan.slots[validSteps.length] || []).forEach(a => _pushAttachment(a, ch));
             }
 
             // ── Performance Criteria — as separate section (new page) ──

@@ -81,6 +81,7 @@ function handleImageUpload(stepId) {
 function removeStepImage(stepId, imgIndex) {
     if (!mbState.stepImages[stepId]) return;
     mbState.stepImages[stepId].splice(imgIndex, 1);
+    if (typeof mbImgCapsSplice === 'function') mbImgCapsSplice('activity', stepId, imgIndex);
     renderStepImageGallery(stepId);
 }
 
@@ -89,10 +90,14 @@ function renderStepImageGallery(stepId) {
     if (!gallery) return;
     const images = mbState.stepImages[stepId] || [];
     if (images.length === 0) { gallery.innerHTML = ''; return; }
+    /* 3.56.0: optional caption under each picture (attachments.js). */
     gallery.innerHTML = images.map((src, i) => `
+        <div class="mb-img-cell">
         <div class="content-img-thumb">
             <img src="${src}" alt="Image ${i+1}">
             <button class="content-img-delete" data-act="removeStepImage" data-args='[${stepId},${i}]' title="${window.i18n.t('dgRemoveImage')}" data-i18n-title="dgRemoveImage">×</button>
+        </div>
+        ${(typeof mbImgCapsHtml === 'function') ? mbImgCapsHtml('activity', stepId, i) : ''}
         </div>
     `).join('');
 }

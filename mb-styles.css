@@ -3814,3 +3814,46 @@ button.mb-asm-edit { padding: 6px 12px !important; border: 1px solid #cbd5e1 !im
     padding: 6px 12px; font-size: .85em; font-weight: 600; cursor: pointer;
 }
 .mb-link-summary-card .mb-ls-edit:hover { border-color: #7c3aed; color: #7c3aed; }
+
+/* ── 3.56.0: attached figures and tables (src/attachments.js) ───── */
+.mb-att-card {
+    margin-top: 18px; padding: 14px 16px; border: 1px dashed #c7d2fe;
+    border-radius: 12px; background: #f8faff;
+}
+.mb-att-card-head { font-weight: 700; color: #3730a3; font-size: 1.02em; }
+.mb-att-hint { margin: 6px 0 10px; font-size: .86em; color: #475569; line-height: 1.55; }
+.mb-att-hint:empty { display: none; }
+.mb-att-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
+.mb-att-item {
+    background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px;
+    display: flex; flex-direction: column; gap: 8px;
+}
+.mb-att-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.mb-att-title { font-weight: 700; color: #1e293b; font-size: .93em; }
+.mb-att-choose, .mb-att-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.mb-att-choose[hidden], .mb-att-body[hidden], .mb-att-fields[hidden],
+.mb-att-ref[hidden], .mb-att-warn[hidden] { display: none !important; }
+.mb-att-body, .mb-att-fields { display: flex; flex-direction: column; gap: 8px; }
+.mb-att-thumb img { max-width: 260px; max-height: 180px; }
+.mb-att-caption, .mb-att-source {
+    width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid #e2e8f0;
+    border-radius: 8px; font: inherit; font-size: .9em;
+}
+.mb-att-note { margin: 0; font-size: .82em; color: #64748b; }
+.mb-att-tablebox:has(.content-table-widget) + .mb-att-addtable { display: none; }
+.mb-att-place { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: .88em; }
+.mb-att-place label { font-weight: 600; color: #334155; margin: 0; }
+.mb-att-place select {
+    padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 8px; font: inherit;
+    font-size: .95em; max-width: 100%; background: #fff;
+}
+.mb-att-ref { min-width: 200px; flex: 1 1 220px; }
+.mb-att-warn { font-size: .84em; color: #b45309; background: #fffbeb; border: 1px solid #fde68a;
+    border-radius: 8px; padding: 6px 10px; }
+/* Pictures in steps and sections: a caption under each (3.56.0). */
+.mb-img-cell { display: inline-flex; flex-direction: column; gap: 4px; width: 160px; }
+.mb-img-cell .content-img-thumb { align-self: flex-start; }
+.mb-img-cell input.mb-img-cap {
+    width: 100% !important; box-sizing: border-box; padding: 5px 8px !important; min-height: 0 !important;
+    border: 1px solid #e2e8f0; border-radius: 6px; font: inherit; font-size: .8em !important; margin: 0 !important;
+}

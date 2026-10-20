@@ -316,6 +316,47 @@ Object.assign(_WS_STRINGS.ar, {
     wsMiscUnified: 'تسلسل أرقام واحد لكل محصلة تعلم (يشمل أقسام بدايتها ونهايتها). تُحسب الأرقام تلقائياً، وتصبح حقول رقم الورقة للقراءة فقط.'
 });
 
+/* 3.56.0 — figure and table numbering (attachments.js) */
+Object.assign(_WS_STRINGS.en, {
+    wsMiscFigTitle: 'Numbering of figures and tables',
+    wsMiscFigNote: 'Numbers every picture and table of the information and activity sheets — those in steps and content sections and the attached ones — in the order they are printed. A caption typed under a picture or as a table’s title follows the number. Off: captions are printed as typed, without numbers.',
+    wsMiscFigOn: 'Number the figures and tables',
+    wsMiscFigScope: 'Numbering',
+    wsMiscFigScopeSheet: 'Per sheet: sheet number, then the figure’s (1-2-1, 1-2-2 …)',
+    wsMiscFigScopeModule: 'One sequence for the whole module (1, 2, 3 …)',
+    wsMiscFigWords: 'Words printed before the number',
+    wsMiscFigWordFig: 'Figure',
+    wsMiscFigWordTab: 'Table',
+    wsMiscFigWordSrc: 'Source',
+    wsMiscFigExample: 'Example:'
+});
+Object.assign(_WS_STRINGS.fr, {
+    wsMiscFigTitle: 'Numérotation des figures et des tableaux',
+    wsMiscFigNote: 'Numérote chaque image et chaque tableau des fiches d\u2019information et d\u2019activité — ceux des étapes et des sections et les éléments joints — dans l\u2019ordre d\u2019impression. La légende saisie sous une image ou comme titre d\u2019un tableau suit le numéro. Désactivé : les légendes sont imprimées telles quelles, sans numéro.',
+    wsMiscFigOn: 'Numéroter les figures et les tableaux',
+    wsMiscFigScope: 'Numérotation',
+    wsMiscFigScopeSheet: 'Par fiche : numéro de la fiche, puis celui de la figure (1-2-1, 1-2-2 …)',
+    wsMiscFigScopeModule: 'Une seule suite pour tout le module (1, 2, 3 …)',
+    wsMiscFigWords: 'Mots imprimés avant le numéro',
+    wsMiscFigWordFig: 'Figure',
+    wsMiscFigWordTab: 'Tableau',
+    wsMiscFigWordSrc: 'Source',
+    wsMiscFigExample: 'Exemple :'
+});
+Object.assign(_WS_STRINGS.ar, {
+    wsMiscFigTitle: 'ترقيم الأشكال والجداول',
+    wsMiscFigNote: 'يرقّم كل صورة وجدول في أوراق المعلومات والنشاط — ما في الخطوات وأقسام المحتوى والعناصر الملحقة — بترتيب طباعتها. ويأتي بعد الرقم العنوانُ المكتوب تحت الصورة أو عنوانُ الجدول. عند إيقافه تُطبع العناوين كما كُتبت دون أرقام.',
+    wsMiscFigOn: 'ترقيم الأشكال والجداول',
+    wsMiscFigScope: 'الترقيم',
+    wsMiscFigScopeSheet: 'حسب الورقة: رقم الورقة ثم رقم الشكل (1-2-1، 1-2-2 …)',
+    wsMiscFigScopeModule: 'تسلسل واحد للوحدة كلها (1، 2، 3 …)',
+    wsMiscFigWords: 'الكلمات التي تُطبع قبل الرقم',
+    wsMiscFigWordFig: 'الشكل',
+    wsMiscFigWordTab: 'الجدول',
+    wsMiscFigWordSrc: 'المصدر',
+    wsMiscFigExample: 'مثال:'
+});
+
 function _wsT(key) {
     var lang = (window.i18n && window.i18n.getLang) ? window.i18n.getLang() : 'en';
     var table = _WS_STRINGS[lang] || _WS_STRINGS.en;
@@ -386,8 +427,29 @@ var WS_DEFAULTS = {
        default (nothing is sent before Generate); a new key, so a
        «sourceDrafts: false» saved while it was off by default does not
        keep it hidden. */
-    hideSourceDrafts: false
+    hideSourceDrafts: false,
+    /* 3.56.0 — attachments.js: figure / table numbering. Off by default:
+       an untouched install exports exactly what it did. */
+    figNumbering:     false,
+    figScope:         'sheet',    /* 'sheet' | 'module' */
+    figWords:         null        /* null = ours; else { en: { fig, tab, src }, fr, ar } */
 };
+
+var WS_FIG_KINDS = ['fig', 'tab', 'src'];
+function _wsValidFigWords(o) {
+    if (!o || typeof o !== 'object') return null;
+    var out = {}, any = false;
+    WS_LABEL_LANGS.forEach(function (l) {
+        var side = (o[l] && typeof o[l] === 'object') ? o[l] : {};
+        out[l] = {};
+        WS_FIG_KINDS.forEach(function (k) {
+            var v = typeof side[k] === 'string' ? side[k].slice(0, 40) : '';
+            out[l][k] = v;
+            if (v.trim()) any = true;
+        });
+    });
+    return any ? out : null;
+}
 
 var WS_HTML_SECTIONS = ['overview', 'intro', 'outcomes', 'infoSheets',
                         'activitySheets', 'assessment', 'glossary', 'references'];
@@ -473,7 +535,10 @@ function wsReadSettings() {
         checklistTime: o.checklistTime !== false,
         sheetOrder: (o.sheetOrder === 'interleaved') ? 'interleaved' : 'byType',
         unifiedNumbering: o.unifiedNumbering === true,
-        hideSourceDrafts: o.hideSourceDrafts === true
+        hideSourceDrafts: o.hideSourceDrafts === true,
+        figNumbering: o.figNumbering === true,
+        figScope: o.figScope === 'module' ? 'module' : 'sheet',
+        figWords: _wsValidFigWords(o.figWords)
     };
     WS_SIZE_FIELDS.forEach(function (f) {
         out[f] = _wsValidSize(o[f], WS_DEFAULTS[f]);
@@ -992,6 +1057,7 @@ function _wsPaneMisc() {
           '</select></div>' +
         '<div class="ws-checks"><label class="ws-check"><input type="checkbox" data-ws-misc="unifiedNumbering"' +
           (_wsDraft.unifiedNumbering === true ? ' checked' : '') + '><span>' + _wsT('wsMiscUnified') + '</span></label></div>' +
+        _wsPaneFig(ui, names) +
         '<h4 class="ws-group">\u2705 ' + _wsT('wsMiscChecklistTitle') + '</h4>' +
         '<div class="ws-checks"><label class="ws-check"><input type="checkbox" data-ws-misc="checklistTime"' +
           (_wsDraft.checklistTime !== false ? ' checked' : '') + '><span>' + _wsT('wsMiscChecklistTime') + '</span></label></div>' +
@@ -1000,6 +1066,61 @@ function _wsPaneMisc() {
         '<p class="ws-note ws-note-sm">\u2139\uFE0F ' + _wsT('wsMiscSrcNote') + '</p>' +
         '<div class="ws-checks"><label class="ws-check"><input type="checkbox" data-ws-misc="sourceDrafts"' +
           (_wsDraft.hideSourceDrafts !== true ? ' checked' : '') + '><span>' + _wsT('wsMiscSrc') + '</span></label></div>';
+}
+
+/* 3.56.0 — numbering of figures and tables (attachments.js). */
+function _wsFigDefault(kind, lang) {
+    var t = (typeof MB_FIG_WORDS === 'object' && MB_FIG_WORDS[lang]) || null;
+    return t ? t[kind] : kind;
+}
+function _wsFigExample() {
+    var ui = (window.i18n && window.i18n.getLang) ? window.i18n.getLang() : 'en';
+    if (typeof mbFigLabel !== 'function') return '';
+    var cfg = { on: true, scope: _wsDraft.figScope === 'module' ? 'module' : 'sheet', words: _wsDraft.figWords };
+    return _wsT('wsMiscFigExample') + ' ' + mbFigLabel('fig', '1-2', 1, ui, cfg) + ' \u00b7 ' +
+           mbFigLabel('fig', '1-2', 2, ui, cfg) + ' \u00b7 ' + mbFigLabel('tab', '1-2', 1, ui, cfg);
+}
+function _wsPaneFig(ui, names) {
+    var words = _wsDraft.figWords || {};
+    var head = '<tr><th></th>' + WS_LABEL_LANGS.map(function (l) { return '<th>' + names[l] + '</th>'; }).join('') + '</tr>';
+    var body = WS_FIG_KINDS.map(function (k) {
+        var rowName = _wsT(k === 'fig' ? 'wsMiscFigWordFig' : k === 'tab' ? 'wsMiscFigWordTab' : 'wsMiscFigWordSrc');
+        return '<tr><th scope="row">' + _wsMiscEsc(rowName) + '</th>' + WS_LABEL_LANGS.map(function (l) {
+            var v = (words[l] && words[l][k]) || '';
+            return '<td><input type="text" class="ws-misc-input" maxlength="40"' +
+                   ' dir="' + (l === 'ar' ? 'rtl' : 'ltr') + '" lang="' + l + '"' +
+                   ' data-ws-figword="' + l + ':' + k + '" value="' + _wsMiscEsc(v) + '"' +
+                   ' placeholder="' + _wsMiscEsc(_wsFigDefault(k, l)) + '"' +
+                   ' aria-label="' + _wsMiscEsc(rowName + ' — ' + names[l]) + '"></td>';
+        }).join('') + '</tr>';
+    }).join('');
+    return '' +
+        '<h4 class="ws-group">\uD83D\uDDBC\uFE0F ' + _wsT('wsMiscFigTitle') + '</h4>' +
+        '<p class="ws-note ws-note-sm">\u2139\uFE0F ' + _wsT('wsMiscFigNote') + '</p>' +
+        '<div class="ws-checks"><label class="ws-check"><input type="checkbox" data-ws-misc="figNumbering"' +
+          (_wsDraft.figNumbering === true ? ' checked' : '') + '><span>' + _wsT('wsMiscFigOn') + '</span></label></div>' +
+        '<div class="ws-row"><label for="ws-misc-figscope">' + _wsT('wsMiscFigScope') + '</label>' +
+          '<select class="ws-select" id="ws-misc-figscope" data-ws-misc="figScope">' +
+            '<option value="sheet"' + (_wsDraft.figScope !== 'module' ? ' selected' : '') + '>' + _wsT('wsMiscFigScopeSheet') + '</option>' +
+            '<option value="module"' + (_wsDraft.figScope === 'module' ? ' selected' : '') + '>' + _wsT('wsMiscFigScopeModule') + '</option>' +
+          '</select></div>' +
+        '<p class="ws-note ws-note-sm" style="margin-bottom:4px">' + _wsT('wsMiscFigWords') + '</p>' +
+        '<div class="ws-misc-scroll"><table class="ws-misc-table">' +
+          '<thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>' +
+        '<p class="ws-note ws-note-sm" id="ws-fig-example" dir="auto">' + _wsMiscEsc(_wsFigExample()) + '</p>';
+}
+function _wsFigRepaintExample() {
+    var el = document.getElementById('ws-fig-example');
+    if (el) el.textContent = _wsFigExample();
+}
+function _wsFigSetWord(lang, kind, value) {
+    var cur = _wsDraft.figWords ? JSON.parse(JSON.stringify(_wsDraft.figWords)) : {};
+    WS_LABEL_LANGS.forEach(function (l) {
+        if (!cur[l]) cur[l] = {};
+        WS_FIG_KINDS.forEach(function (k) { if (typeof cur[l][k] !== 'string') cur[l][k] = ''; });
+    });
+    cur[lang][kind] = String(value || '').slice(0, 40);
+    _wsDraft.figWords = _wsValidFigWords(cur);
 }
 
 /** One typed name into the draft — a NEW object each time, because
@@ -1164,6 +1285,13 @@ function openWordSettings(pane) {
         if (miscField === 'checklistTime') { _wsDraft.checklistTime = !!e.target.checked; _wsTouch(); return; }
         if (miscField === 'unifiedNumbering') { _wsDraft.unifiedNumbering = !!e.target.checked; _wsTouch(); return; }
         if (miscField === 'sourceDrafts') { _wsDraft.hideSourceDrafts = !e.target.checked; _wsTouch(); return; }
+        if (miscField === 'figNumbering') { _wsDraft.figNumbering = !!e.target.checked; _wsTouch(); return; }   // 3.56.0
+        if (miscField === 'figScope') {
+            _wsDraft.figScope = e.target.value === 'module' ? 'module' : 'sheet';
+            _wsFigRepaintExample();
+            _wsTouch();
+            return;
+        }
         if (miscField === 'sheetOrder') {
             _wsDraft.sheetOrder = (e.target.value === 'interleaved') ? 'interleaved' : 'byType';
             _wsTouch();
@@ -1203,6 +1331,14 @@ function openWordSettings(pane) {
     });
 
     ov.addEventListener('input', function (e) {
+        var fw = e.target && e.target.getAttribute && e.target.getAttribute('data-ws-figword');   // 3.56.0
+        if (fw) {
+            var fp = fw.split(':');
+            _wsFigSetWord(fp[0], fp[1], e.target.value);
+            _wsFigRepaintExample();
+            _wsTouch();
+            return;
+        }
         var lk = e.target && e.target.getAttribute && e.target.getAttribute('data-ws-label');
         if (!lk) return;
         var parts = lk.split(':');
