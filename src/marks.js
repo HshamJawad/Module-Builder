@@ -12,22 +12,34 @@ function showAddMarkDropdown(btn, containerId) {
     const menu = document.createElement('div');
     menu.className = 'mark-dropdown-menu';
 
-    MARK_TYPES.forEach(mt => {
+    /* 3.62.0: the project's own marks too, and one to add (custom_marks.js). */
+    const types = (typeof mbMarkTypes === 'function') ? mbMarkTypes() : MARK_TYPES;
+    types.forEach(mt => {
         const item = document.createElement('div');
         item.className = 'mark-dropdown-item';
-        item.innerHTML = `<span>${mt.icon}</span><span>${window.i18n.t(mt.label)}</span>`;
+        item.innerHTML = `<span>${mt.icon}</span><span>${escapeHtml(_mbMarkLabelUi(mt))}</span>`;
         item.onclick = () => {
             menu.remove();
             addMarkToContainer(containerId, mt.key);
         };
         menu.appendChild(item);
     });
+    if (typeof mbCustomMarkDialog === 'function') {
+        const add = document.createElement('div');
+        add.className = 'mark-dropdown-item mark-dropdown-custom';
+        add.innerHTML = `<span>${escapeHtml(window.i18n.t('cmkCustom'))}</span>`;
+        add.onclick = () => {
+            menu.remove();
+            mbCustomMarkDialog(null).then(key => { if (key) addMarkToContainer(containerId, key); });
+        };
+        menu.appendChild(add);
+    }
 
     document.body.appendChild(menu);
 
     // Position below button using actual rendered height
     const rect = btn.getBoundingClientRect();
-    const menuH = menu.offsetHeight || (MARK_TYPES.length * 38 + 12);
+    const menuH = menu.offsetHeight || (types.length * 38 + 50);
     const spaceBelow = window.innerHeight - rect.bottom - 8;
     const spaceAbove = rect.top - 8;
 
@@ -42,6 +54,9 @@ function showAddMarkDropdown(btn, containerId) {
     if (left + 210 > window.innerWidth) left = window.innerWidth - 215;
     if (left < 4) left = 4;
 
+    /* 3.62.0: never past the bottom of the window — the menu is longer
+       now (the project's marks, «Custom mark…») and scrolls inside. */
+    top = Math.max(4, Math.min(top, window.innerHeight - Math.min(menuH, window.innerHeight * 0.7) - 4));
     menu.style.top  = top + 'px';
     menu.style.left = left + 'px';
 
@@ -53,9 +68,17 @@ function showAddMarkDropdown(btn, containerId) {
     }, 10);
 }
 
+/* 3.62.0: a mark's header in the interface language — built-in or the
+   project's own (custom_marks.js). */
+function _mbMarkLabelUi(mt) {
+    return (typeof mbMarkLabel === 'function') ? mbMarkLabel(mt) : window.i18n.t(mt.label);
+}
+
 function addMarkToContainer(containerId, key, text) {
     mbState.markItemCount++;
-    const mt = MARK_TYPES.find(m => m.key === key);
+    /* A mark whose type was deleted keeps its text, shown as a note. */
+    const mt = ((typeof mbFindMarkType === 'function') ? mbFindMarkType(key) : MARK_TYPES.find(m => m.key === key)) ||
+               MARK_TYPES.find(m => m.key === 'note');
     if (!mt) return;
 
     const container = document.getElementById(containerId);
@@ -64,14 +87,14 @@ function addMarkToContainer(containerId, key, text) {
     const markDiv = document.createElement('div');
     markDiv.className = 'mark-item';
     markDiv.id = `mark-item-${mbState.markItemCount}`;
-    markDiv.dataset.markKey = key;
+    markDiv.dataset.markKey = key;   // the stored key, even when shown as a note
     markDiv.style.border = `1.5px solid ${mt.border}`;
     markDiv.innerHTML = `
         <div class="mark-item-header" style="background:${mt.header};color:${mt.headerText};">
-            <span>${mt.icon}&nbsp;&nbsp;${window.i18n.t(mt.label)}</span>
+            <span>${mt.icon}&nbsp;&nbsp;${escapeHtml(_mbMarkLabelUi(mt))}</span>
             <button class="mark-remove-btn" data-act="removeMark" data-args='[${mbState.markItemCount}]' title="${window.i18n.t('dgRemoveMark')}" data-i18n-title="dgRemoveMark" style="color:${mt.headerText};">×</button>
         </div>
-        <textarea data-mark-id="${mbState.markItemCount}" placeholder="${window.i18n.tf('dgEnterMarkContent', { v0: window.i18n.t(mt.label) })}"
+        <textarea data-mark-id="${mbState.markItemCount}" placeholder="${escapeHtml(window.i18n.tf('dgEnterMarkContent', { v0: _mbMarkLabelUi(mt) }))}"
             style="background:${mt.bg};"
             >${text || ''}</textarea>
     `;
@@ -132,7 +155,7 @@ function buildMarkDocxTable(mt, text) {
                    exportLang() falls back to contentLang(), so an author
                    typing Arabic into the English side got an English
                    "NOTE" heading above an Arabic body. */
-                text: _mbT(mt.label),
+                text: (typeof mbMarkLabel === 'function') ? mbMarkLabel(mt, _mbLang()) : _mbT(mt.label),
                 bold: true,
                 size: 22,
                 color: headerTextColor,

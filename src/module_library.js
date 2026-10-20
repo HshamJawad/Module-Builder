@@ -101,7 +101,9 @@ function mbCollectShared() {
         tvqfExtended:           mbState.tvqfExtended     || {},
         cmDefaults:             mbState.cmDefaults       || {},
         moduleTemplate:         (typeof mbTemplate === 'function') ? mbTemplate() : 'standard',   // 3.59.0
-        lgAsm:                  mbState.lgAsm || null                                           // 3.59.0 — learner_guide.js
+        lgAsm:                  mbState.lgAsm || null,                                          // 3.59.0 — learner_guide.js
+        cmMarks:                mbState.cmMarks || {},                                          // 3.62.0 — custom_marks.js
+        customMarks:            mbState.customMarks || []
     };
 }
 
@@ -125,7 +127,8 @@ function _mbDefaultShared() {
         moduleCategories: null,
         tvqfBasic: {}, tvqfExtended: {}, cmDefaults: {},
         moduleTemplate: 'standard',   // 3.59.0 — module_template.js
-        lgAsm: null                   // 3.59.0 — learner_guide.js
+        lgAsm: null,                  // 3.59.0 — learner_guide.js
+        cmMarks: {}, customMarks: []  // 3.62.0 — custom_marks.js
     };
 }
 
@@ -139,6 +142,9 @@ function mbApplyProjectShared(data) {
         /* 3.59.0: first, so every renderer below paints for the project's
            template. An older project has none: the standard one. */
         mbState.moduleTemplate = (typeof mbTemplateId === 'function') ? mbTemplateId(data.moduleTemplate) : 'standard';
+        /* 3.62.0: the project's marks before any sheet is painted with them. */
+        mbState.customMarks = (typeof mbNormalizeCustomMarks === 'function') ? mbNormalizeCustomMarks(data.customMarks) : [];
+        mbState.cmMarks = (typeof mbNormalizeCmMarks === 'function') ? mbNormalizeCmMarks(data.cmMarks) : {};
         if (mbLib.project) mbLib.project.template = mbState.moduleTemplate;
         if (typeof mbApplyTemplateUI === 'function') mbApplyTemplateUI();
         mbState.coversAdditionalInfo  = biUpgrade(data.coversAdditionalInfo);

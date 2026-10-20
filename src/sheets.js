@@ -274,9 +274,14 @@ function saveCurrentSheetToLO() {
         const sid = step.dataset.stepId;
         /* 3.54.3: a step holding only pictures is kept too. */
         const hasImages = (mbState.stepImages[sid] || []).length > 0;
-        if (step.value.trim() || hasImages || mbRowHasOtherSide(storedAct.steps, mbRowUid(step), 'text')) {
-            incomingSteps.push({ text: step.value, stepId: sid, marks: collectMarks(`step-marks-${sid}`),
-                tables: collectContentTables(`step-${sid}`),
+        /* 3.62.0: a step holding only marks or a table is kept too — a
+           step built from the Task Analysis may carry only its warnings. */
+        const stepMarks = collectMarks(`step-marks-${sid}`);
+        const stepTables = collectContentTables(`step-${sid}`);
+        if (step.value.trim() || hasImages || stepMarks.some(m => (m.text || '').trim()) || stepTables.length ||
+            mbRowHasOtherSide(storedAct.steps, mbRowUid(step), 'text')) {
+            incomingSteps.push({ text: step.value, stepId: sid, marks: stepMarks,
+                tables: stepTables,
                 imageCaptions: (typeof mbImgCapsGet === 'function')
                     ? mbImgCapsGet('activity', sid, (mbState.stepImages[sid] || []).length) : [],   // 3.56.0
                                  uid: mbRowUid(step) });

@@ -196,6 +196,7 @@ async function clearAll() {
         if (assessContent) assessContent.value = '';
         mbState.assessmentBlocks = [];                                  // 3.57.0
         mbState.lgAsm = null;                                           // 3.59.0 — the tool's texts again
+        mbState.cmMarks = {}; mbState.customMarks = [];                 // 3.62.0
         if (typeof mbRenderBlocks === 'function') mbRenderBlocks('assessment');
         mbState.assessmentFormsData = {};
         mbState.assessmentResults = null;   // 3.50.0 — the default options

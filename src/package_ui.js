@@ -387,6 +387,20 @@
             dst.ratingScale = mbScaleNormalize(rs);
             added++;
         }
+        /* 3.62.0: the package's own marks that this project lacks (by key);
+           the field settings only when this project has none. */
+        var pm = part.marks || {};
+        if (Array.isArray(pm.customMarks) && pm.customMarks.length) {
+            if (!Array.isArray(dst.customMarks)) dst.customMarks = [];
+            var keys = new Set(dst.customMarks.map(function (m) { return m && m.key; }));
+            pm.customMarks.forEach(function (m) {
+                if (m && m.key && !keys.has(m.key)) { dst.customMarks.push(JSON.parse(JSON.stringify(m))); keys.add(m.key); added++; }
+            });
+        }
+        if (pm.cmMarks && Object.keys(pm.cmMarks).length && !(dst.cmMarks && Object.keys(dst.cmMarks).length)) {
+            dst.cmMarks = JSON.parse(JSON.stringify(pm.cmMarks));
+            added++;
+        }
         var team = (part.team && part.team.teamMembers) || [];
         if (!Array.isArray(dst.teamMembers)) dst.teamMembers = [];
         var names = new Set(dst.teamMembers.map(function (m) { return norm(m && m.name); }));

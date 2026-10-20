@@ -36,6 +36,9 @@ function mbPackageProjectPart(shared) {
         /* 3.59.0: the module template of the project (module_template.js).
            A package without one was made with the standard template. */
         template: shared.moduleTemplate || 'standard',
+        /* 3.62.0: the project's own marks, which the module's sheets may use,
+           and which mark each Task Analysis field is written as. */
+        marks: { customMarks: shared.customMarks || [], cmMarks: shared.cmMarks || {} },
         cover: {
             coversAdditionalInfo:  shared.coversAdditionalInfo,
             coversAdditionalNotes: shared.coversAdditionalNotes,
