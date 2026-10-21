@@ -238,6 +238,8 @@ Object.assign(_WS_STRINGS.en, {
     wsKeysNote:  'Every shortcut needs Ctrl (⌘ on a Mac), so none of them can fire while you are typing. Ctrl + S works inside a field too.',
     /* 3.42.0 — Misc */
     navMisc: 'Misc',
+    wsMiscLgTitle: 'Learner guide names',
+    wsMiscLgNote: 'Used by the «Learner guide» template only: the heading of each learning outcome («1- Learning unit: …»), its three sheets and the optional objectives of a knowledge sheet — on screen and in the exported files. Leave a box empty to keep the default (shown in grey).',
     wsMiscSheetsTitle: 'Sheet names',
     wsMiscSheetsNote: 'The names shown in the tool (for the interface language) and printed in the exported files, per language. Leave a box empty to keep the default (shown in grey). Each activity sheet picks its type under its title.',
     wsMiscType: 'Type',
@@ -268,6 +270,8 @@ Object.assign(_WS_STRINGS.fr, {
     wsKeysTitle: 'Raccourcis clavier',
     wsKeysNote:  'Chaque raccourci exige Ctrl (⌘ sur Mac) : aucun ne peut se déclencher pendant la saisie. Ctrl + S fonctionne aussi dans un champ.',
     navMisc: 'Divers',
+    wsMiscLgTitle: 'Noms du guide de l\u2019apprenant',
+    wsMiscLgNote: 'Pour le modèle « Guide de l\u2019apprenant » seulement : le titre de chaque résultat d\u2019apprentissage (« 1- Unité d\u2019apprentissage : … »), ses trois fiches et les objectifs facultatifs d\u2019une fiche de connaissances — à l\u2019écran et dans les fichiers exportés. Laissez une case vide pour garder le nom par défaut (en gris).',
     wsMiscSheetsTitle: 'Noms des fiches',
     wsMiscSheetsNote: 'Les noms affichés dans l\u2019outil (pour la langue de l\u2019interface) et imprimés dans les fichiers exportés, par langue. Laissez une case vide pour garder le nom par défaut (en gris). Chaque fiche d\u2019activité choisit son type sous son titre.',
     wsMiscType: 'Type',
@@ -298,6 +302,8 @@ Object.assign(_WS_STRINGS.ar, {
     wsKeysTitle: 'اختصارات لوحة المفاتيح',
     wsKeysNote:  'كل اختصار يتطلّب Ctrl (أو ⌘ على ماك)، فلا يمكن أن ينطلق أثناء الكتابة. وCtrl + S يعمل داخل الحقول أيضاً.',
     navMisc: 'متنوع',
+    wsMiscLgTitle: 'أسماء دليل المتعلم',
+    wsMiscLgNote: 'لنموذج «دليل المتعلم» فقط: عنوان كل محصلة تعلم («1- الوحدة التعلمية: …»)، وأوراقها الثلاث، والأهداف الاختيارية لورقة المعرفة — في الأداة وفي الملفات المصدَّرة. اترك الخانة فارغة لإبقاء الاسم الافتراضي (الظاهر بالرمادي).',
     wsMiscSheetsTitle: 'أسماء الأوراق',
     wsMiscSheetsNote: 'الأسماء التي تظهر في الأداة (بلغة الواجهة) وتُطبع في الملفات المصدَّرة، لكل لغة. اترك الخانة فارغة لإبقاء الاسم الافتراضي (الظاهر بالرمادي). وتختار كل ورقة نشاط نوعها تحت عنوانها.',
     wsMiscType: 'النوع',
@@ -436,10 +442,27 @@ var WS_DEFAULTS = {
        an untouched install exports exactly what it did. */
     figNumbering:     false,
     figScope:         'sheet',    /* 'sheet' | 'module' */
-    figWords:         null        /* null = ours; else { en: { fig, tab, src }, fr, ar } */
+    figWords:         null,       /* null = ours; else { en: { fig, tab, src }, fr, ar } */
+    /* 3.67.0 — learner_guide.js: the Learner guide's own names. */
+    lgLabels:         null        /* null = ours; else { en: { unit, info, activity, job, objectives }, fr, ar } */
 };
 
 var WS_FIG_KINDS = ['fig', 'tab', 'src'];
+var WS_LG_KINDS = ['unit', 'info', 'activity', 'job', 'objectives'];   // 3.67.0
+function _wsValidLgLabels(o) {
+    if (!o || typeof o !== 'object') return null;
+    var out = {}, any = false;
+    WS_LABEL_LANGS.forEach(function (l) {
+        var side = (o[l] && typeof o[l] === 'object') ? o[l] : {};
+        out[l] = {};
+        WS_LG_KINDS.forEach(function (k) {
+            var v = typeof side[k] === 'string' ? side[k].slice(0, 80) : '';
+            out[l][k] = v;
+            if (v.trim()) any = true;
+        });
+    });
+    return any ? out : null;
+}
 function _wsValidFigWords(o) {
     if (!o || typeof o !== 'object') return null;
     var out = {}, any = false;
@@ -544,7 +567,8 @@ function wsReadSettings() {
         templateConvert: o.templateConvert === true,
         figNumbering: o.figNumbering === true,
         figScope: o.figScope === 'module' ? 'module' : 'sheet',
-        figWords: _wsValidFigWords(o.figWords)
+        figWords: _wsValidFigWords(o.figWords),
+        lgLabels: _wsValidLgLabels(o.lgLabels)
     };
     WS_SIZE_FIELDS.forEach(function (f) {
         out[f] = _wsValidSize(o[f], WS_DEFAULTS[f]);
@@ -1055,6 +1079,7 @@ function _wsPaneMisc() {
           '<thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>' +
         '<div class="ws-row"><label for="ws-misc-kind">' + _wsT('wsMiscDefaultKind') + '</label>' +
           '<select class="ws-select" id="ws-misc-kind" data-ws-misc="defaultSheetKind">' + kinds + '</select></div>' +
+        _wsPaneLg(ui, names) +
         /* 3.43.0: the order and numbering inside a learning outcome. */
         '<h4 class="ws-group">\uD83D\uDD22 ' + _wsT('wsMiscSeqTitle') + '</h4>' +
         '<p class="ws-note ws-note-sm">\u2139\uFE0F ' + _wsT('wsMiscSeqNote') + '</p>' +
@@ -1074,6 +1099,40 @@ function _wsPaneMisc() {
         '<p class="ws-note ws-note-sm">\u2139\uFE0F ' + _wsT('wsMiscSrcNote') + '</p>' +
         '<div class="ws-checks"><label class="ws-check"><input type="checkbox" data-ws-misc="sourceDrafts"' +
           (_wsDraft.hideSourceDrafts !== true ? ' checked' : '') + '><span>' + _wsT('wsMiscSrc') + '</span></label></div>';
+}
+
+/* 3.67.0 — the Learner guide's names (learner_guide.js). */
+function _wsLgDefault(kind, lang) {
+    return (typeof mbLgLabelDefault === 'function') ? mbLgLabelDefault(kind, lang) : kind;
+}
+function _wsPaneLg(ui, names) {
+    var labels = _wsDraft.lgLabels || {};
+    var head = '<tr><th></th>' + WS_LABEL_LANGS.map(function (l) { return '<th>' + names[l] + '</th>'; }).join('') + '</tr>';
+    var body = WS_LG_KINDS.map(function (k) {
+        var rowName = _wsLgDefault(k, ui);
+        return '<tr><th scope="row">' + _wsMiscEsc(rowName) + '</th>' + WS_LABEL_LANGS.map(function (l) {
+            var v = (labels[l] && labels[l][k]) || '';
+            return '<td><input type="text" class="ws-misc-input" maxlength="80"' +
+                   ' dir="' + (l === 'ar' ? 'rtl' : 'ltr') + '" lang="' + l + '"' +
+                   ' data-ws-lglabel="' + l + ':' + k + '" value="' + _wsMiscEsc(v) + '"' +
+                   ' placeholder="' + _wsMiscEsc(_wsLgDefault(k, l)) + '"' +
+                   ' aria-label="' + _wsMiscEsc(rowName + ' — ' + names[l]) + '"></td>';
+        }).join('') + '</tr>';
+    }).join('');
+    return '' +
+        '<h4 class="ws-group">\uD83E\uDDED ' + _wsT('wsMiscLgTitle') + '</h4>' +
+        '<p class="ws-note ws-note-sm">\u2139\uFE0F ' + _wsT('wsMiscLgNote') + '</p>' +
+        '<div class="ws-misc-scroll"><table class="ws-misc-table" id="ws-lg-names">' +
+          '<thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>';
+}
+function _wsLgSetLabel(lang, kind, value) {
+    var cur = _wsDraft.lgLabels ? JSON.parse(JSON.stringify(_wsDraft.lgLabels)) : {};
+    WS_LABEL_LANGS.forEach(function (l) {
+        if (!cur[l]) cur[l] = {};
+        WS_LG_KINDS.forEach(function (k) { if (typeof cur[l][k] !== 'string') cur[l][k] = ''; });
+    });
+    cur[lang][kind] = String(value || '').slice(0, 80);
+    _wsDraft.lgLabels = _wsValidLgLabels(cur);
 }
 
 /* 3.56.0 — numbering of figures and tables (attachments.js). */
@@ -1346,6 +1405,13 @@ function openWordSettings(pane) {
             var fp = fw.split(':');
             _wsFigSetWord(fp[0], fp[1], e.target.value);
             _wsFigRepaintExample();
+            _wsTouch();
+            return;
+        }
+        var lg = e.target && e.target.getAttribute && e.target.getAttribute('data-ws-lglabel');   // 3.67.0
+        if (lg) {
+            var gp = lg.split(':');
+            _wsLgSetLabel(gp[0], gp[1], e.target.value);
             _wsTouch();
             return;
         }

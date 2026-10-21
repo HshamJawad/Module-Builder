@@ -160,6 +160,8 @@ function saveCurrentSheetToLO() {
     biPut(infoData, 'objective',         document.getElementById('info-objective').value);
     biPut(infoData, 'selfCheckContent',  document.getElementById('self-check-content').value);
     biPut(infoData, 'answersKeyContent', document.getElementById('answers-key-content').value);
+    /* 3.67.0: the Learner guide's optional objectives (learner_guide.js). */
+    if (typeof mbLgCollectObjective === 'function') mbLgCollectObjective(infoData);
 
     // Collect content sections
     const incomingSections = [];
@@ -383,6 +385,7 @@ function loadInfoSheetAtIndex(lo, index) {
         mbSeedObjectiveLead(info, 'mbInfoObjectiveLead');
         document.getElementById('info-objective-lead').value = biGetStrict(info.objectiveLead, contentLang());
         document.getElementById('info-objective').value = biGetStrict(info.objective, contentLang());
+        if (typeof mbLgLoadObjective === 'function') mbLgLoadObjective(info);   // 3.67.0
         document.getElementById('info-link-subject').value = info.linkSubject || '';
         var _ltinfo = document.getElementById('info-link-type');
         if (_ltinfo) _ltinfo.value = info.linkType || '';
@@ -474,6 +477,7 @@ function loadInfoSheetAtIndex(lo, index) {
         document.getElementById('info-title').value = '';
         document.getElementById('info-objective-lead').value = window.i18n.tIn('mbInfoObjectiveLead', contentLang());
         document.getElementById('info-objective').value = '';
+        if (typeof mbLgLoadObjective === 'function') mbLgLoadObjective(null);   // 3.67.0
         document.getElementById('info-link-subject').value = '';
         document.getElementById('info-link-url').value = '';
         document.getElementById('info-qr-preview').innerHTML = '';
@@ -822,6 +826,7 @@ async function removeCurrentInfoSheet() {
         document.getElementById('info-title').value = '';
         document.getElementById('info-objective-lead').value = window.i18n.tIn('mbInfoObjectiveLead', contentLang());
         document.getElementById('info-objective').value = '';
+        if (typeof mbLgLoadObjective === 'function') mbLgLoadObjective(null);   // 3.67.0
         document.getElementById('info-link-subject').value = '';
         document.getElementById('info-link-url').value = '';
         document.getElementById('info-qr-preview').innerHTML = '';

@@ -353,9 +353,37 @@ function mbFigSourceLine(a, lang) {
    ═══════════════════════════════════════════════════════════════ */
 
 var MB_ATT_KINDS = {
-    info:     { list: 'info-attachments',     rows: '#content-sections-container > .content-section-item' },
-    activity: { list: 'activity-attachments', rows: '#steps-container > .step-item' }
+    info:     { list: 'info-attachments',     card: 'info-attachments-card',     rows: '#content-sections-container > .content-section-item' },
+    activity: { list: 'activity-attachments', card: 'activity-attachments-card', rows: '#steps-container > .step-item' }
 };
+
+/* 3.67.0: the card is closed behind its title while it holds no item.
+   The title is a button: on an empty card it opens it with a first
+   item ready (one click, not two); on a card with items it folds and
+   unfolds the list, the count shown beside the title. Removing the last
+   item closes it again. Nothing here is stored — the items are. */
+function _mbAttSync(kind, open) {
+    var k = MB_ATT_KINDS[kind];
+    var card = k && document.getElementById(k.card);
+    var list = k && document.getElementById(k.list);
+    if (!card || !list) return;
+    var n = list.querySelectorAll('.mb-att-item').length;
+    var collapsed = n === 0 ? true : (open === undefined ? card.classList.contains('is-collapsed') : !open);
+    card.classList.toggle('is-collapsed', collapsed);
+    card.classList.toggle('has-items', n > 0);
+    var btn = card.querySelector('.mb-att-toggle');
+    if (btn) btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+    var c = card.querySelector('.mb-att-count');
+    if (c) c.textContent = n ? '(' + n + ')' : '';
+}
+function mbAttToggle(kind) {
+    var k = MB_ATT_KINDS[kind];
+    var card = k && document.getElementById(k.card);
+    var list = k && document.getElementById(k.list);
+    if (!card || !list) return;
+    if (!list.querySelector('.mb-att-item')) { mbAttAdd(kind); return; }
+    _mbAttSync(kind, card.classList.contains('is-collapsed'));
+}
 var _mbAttCount = 0;
 
 function _mbAttImages() {
@@ -516,6 +544,7 @@ function mbAttAdd(kind) {
     if (!list) return;
     var card = _mbAttBuild(kind, {});
     list.appendChild(card);
+    _mbAttSync(kind, true);   // 3.67.0
     _mbAttPaintPlace(card);
     try { card.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) { /* old browser */ }
 }
@@ -546,8 +575,10 @@ async function mbAttRemove(aid) {
     var ok = (typeof mbConfirm === 'function') ? await mbConfirm(_mbAttT('confirmRemove'), { danger: true }) : confirm(_mbAttT('confirmRemove'));
     if (!ok) return;
     var parent = card.parentNode;
+    var kind = card.getAttribute('data-att-kind');
     card.remove();
     delete _mbAttImages()[aid];
+    _mbAttSync(kind);   // 3.67.0: the last one closes the card
     _mbAttTouch(parent);
 }
 
@@ -637,6 +668,7 @@ function mbAttReset(kind) {
         delete _mbAttImages()[card.getAttribute('data-att-id')];
     });
     list.innerHTML = '';
+    _mbAttSync(kind);   // 3.67.0
 }
 
 /** Paint the stored items of `sheet` (null = none). */
@@ -652,6 +684,7 @@ function mbAttLoad(kind, sheet) {
         if (a.type === 'image') _mbAttRenderImage(aid);
         if (a.type === 'table' && a.table && typeof addContentTable === 'function') addContentTable('att-' + aid, a.table);
     });
+    _mbAttSync(kind, list.querySelector('.mb-att-item') ? true : false);   // 3.67.0: open when it holds items
     mbAttRefreshPlaces(kind);
 }
 

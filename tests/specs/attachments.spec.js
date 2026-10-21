@@ -52,7 +52,7 @@ test('activity sheet: an attached picture prints after the chosen step, takes no
   const img = await picture(page, 600, 300);
 
   // ➕ → Picture or diagram → picture, caption, source, «After Step 1».
-  await page.click('[data-act="mbAttAdd"][data-args=\'["activity"]\']');
+  await page.click('#activity-attachments-card .mb-att-toggle');   // 3.67.0: the title opens the empty card with an item
   const card = page.locator('#activity-attachments .mb-att-item');
   await expect(card).toHaveCount(1);
   await card.locator('[data-act="mbAttSetType"]').first().click();
@@ -124,7 +124,7 @@ test('numbering covers the pictures of the steps and the tables, in printed orde
   await expect(page.locator('#step-image-gallery-1 .mb-img-cap')).toHaveValue('Nut positions');
 
   // An attached table at the start of the sheet.
-  await page.click('[data-act="mbAttAdd"][data-args=\'["activity"]\']');
+  await page.click('#activity-attachments-card .mb-att-toggle');   // 3.67.0: the title opens the empty card with an item
   const card = page.locator('#activity-attachments .mb-att-item');
   await card.locator('[data-act="mbAttSetType"]').nth(1).click();
   await expect(card.locator('.content-table-widget')).toHaveCount(1);
@@ -178,7 +178,7 @@ test('information sheet: an attached picture before a chosen section; HTML and P
     tas[0].value = 'About rims'; tas[1].value = 'About tyres';
     return document.querySelectorAll('#content-sections-container > .content-section-item')[1].dataset.uid;
   });
-  await page.click('[data-act="mbAttAdd"][data-args=\'["info"]\']');
+  await page.click('#info-attachments-card .mb-att-toggle');   // 3.67.0
   const card = page.locator('#info-attachments .mb-att-item');
   await card.locator('[data-act="mbAttSetType"]').first().click();
   await page.evaluate((src) => MB_PASTE_TARGETS.attach.put(document.querySelector('#info-attachments .mb-att-item').getAttribute('data-att-id'), src), img);
@@ -232,7 +232,7 @@ test('Arabic interface: the card, the place list and the settings group', async 
   const errors = await openApp(page, { handoff: fixture('dacum-handoff.json'), lang: 'ar', contentLang: 'ar' });
   await tab(page, 'activity');
   await expect(page.locator('#activity-attachments-card .mb-att-card-head')).toContainText('أشكال وجداول ملحقة');
-  await page.click('[data-act="mbAttAdd"][data-args=\'["activity"]\']');
+  await page.click('#activity-attachments-card .mb-att-toggle');   // 3.67.0: the title opens the empty card with an item
   const card = page.locator('#activity-attachments .mb-att-item');
   await expect(card.locator('.mb-att-choose')).toContainText('صورة أو مخطط');
   await card.locator('[data-act="mbAttSetType"]').first().click();

@@ -264,7 +264,8 @@ function mbBuildModuleHtml(model, opts) {
        Word export generates it; the author never types this page. */
     if (model.outcomes.length && inc('overview')) {
         var ov = '<div class="mx-ov">' + model.outcomes.map(function (o) {
-            return '<div class="mx-ov-item"><h4>' + t('outcome') + ' ' + o.index + ': ' + _hxEsc(o.title) + '</h4>' +
+            /* 3.67.0: the Learner guide's «1- Learning unit: …». */
+            return '<div class="mx-ov-item"><h4>' + (o.heading ? _hxEsc(o.heading) : t('outcome') + ' ' + o.index + ': ' + _hxEsc(o.title)) + '</h4>' +
                    (o.description ? '<p>' + _hxText(o.description) + '</p>' : '') +
                    (o.criteria.length
                       ? '<div class="mx-sub">' + t('criteria') + '</div><ol>' +
@@ -350,7 +351,7 @@ function mbBuildModuleHtml(model, opts) {
             var sid = oid + '-info-' + (i + 1);
             var h = '';
             if (sh.objectiveLead) h += '<p class="mx-lead">' + _hxText(sh.objectiveLead) + '</p>';
-            if (sh.objective) h += '<div class="mx-sub">' + t('objective') + '</div><p>' + _hxText(sh.objective) + '</p>';
+            if (sh.objective) h += '<div class="mx-sub">' + (sh.objectiveLabel ? _hxEsc(sh.objectiveLabel) : t('objective')) + '</div><p>' + _hxText(sh.objective) + '</p>';
             sh.sections.forEach(function (cs, k) {
                 h += _hxAttachments(sh.attachments, k);
                 h += '<div class="mx-block">';
@@ -393,7 +394,7 @@ function mbBuildModuleHtml(model, opts) {
             if (sh.duration) meta.push(t('duration') + ': ' + _hxEsc(sh.duration) + ' ' + t('minutes'));
             if (meta.length) h += '<div class="mx-meta">' + meta.join(' · ') + '</div>';
             if (sh.objectiveLead) h += '<p class="mx-lead">' + _hxText(sh.objectiveLead) + '</p>';
-            if (sh.objective) h += '<div class="mx-sub">' + t('objective') + '</div><p>' + _hxText(sh.objective) + '</p>';
+            if (sh.objective) h += '<div class="mx-sub">' + (sh.objectiveLabel ? _hxEsc(sh.objectiveLabel) : t('objective')) + '</div><p>' + _hxText(sh.objective) + '</p>';
 
             if (sh.resources.length) {
                 h += '<div class="mx-sub">' + t('resources') + '</div>' +

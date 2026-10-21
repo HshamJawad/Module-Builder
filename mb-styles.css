@@ -3896,6 +3896,21 @@ button.mb-asm-edit { padding: 6px 12px !important; border: 1px solid #cbd5e1 !im
     border-radius: 12px; background: #f8faff;
 }
 .mb-att-card-head { font-weight: 700; color: #3730a3; font-size: 1.02em; }
+/* 3.67.0: the title is the button that opens the card. */
+.mb-att-toggle {
+    display: inline-flex; align-items: center; gap: 6px; max-width: 100%;
+    padding: 8px 16px; border: 2px dashed #a5b4fc; border-radius: 8px; background: #fff;
+    cursor: pointer; font-family: inherit; text-align: start;
+}
+.mb-att-toggle:hover { border-color: #6366f1; background: #eef2ff; }
+.mb-att-toggle:focus-visible { outline: 2px solid #6366f1; outline-offset: 2px; }
+.mb-att-card:not(.is-collapsed) .mb-att-toggle { border-style: solid; background: #eef2ff; }
+.mb-att-count { font-weight: 600; color: #6366f1; }
+.mb-att-chev { font-size: .85em; transition: transform .15s ease; }
+.mb-att-card:not(.is-collapsed) .mb-att-chev { transform: rotate(180deg); }
+.mb-att-card.is-collapsed { padding: 0; border: 0; background: none; }
+.mb-att-card.is-collapsed .mb-att-card-body { display: none; }
+.mb-att-card.is-collapsed:not(.has-items) .mb-att-chev { display: none; }
 .mb-att-hint { margin: 6px 0 10px; font-size: .86em; color: #475569; line-height: 1.55; }
 .mb-att-hint:empty { display: none; }
 .mb-att-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
@@ -4023,6 +4038,17 @@ html[dir="rtl"] .mb-tpl-btn.is-active { box-shadow: inset -3px 0 0 #0f766e !impo
 .lg-check { display: flex; align-items: center; gap: 6px; cursor: pointer; }
 .lg-fill { align-self: flex-start; }
 .lg-restore { font: inherit; font-size: .8em; font-weight: 600; padding: 4px 10px; border-radius: 6px; border: 1px solid #cbd5e1; background: #fff; color: #475569; cursor: pointer; }
+/* 3.67.0: the optional objectives of a knowledge sheet (Learner guide). */
+.lg-obj-toggle-row { margin: 4px 0 14px; }
+.lg-obj-toggle {
+    display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; cursor: pointer;
+    border: 2px dashed #a5b4fc; border-radius: 8px; background: #f8faff; color: #3730a3;
+    font-weight: 700; font-size: .95em; font-family: inherit;
+}
+.lg-obj-toggle:hover { border-color: #6366f1; background: #eef2ff; }
+.lg-obj-toggle:focus-visible { outline: 2px solid #6366f1; outline-offset: 2px; }
+.lg-obj-toggle.is-on { border-style: solid; background: #eef2ff; }
+.lg-obj-toggle .lg-optional { font-weight: 500; color: #64748b; font-size: .9em; }
 .lg-act-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; padding: 10px 12px; background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 8px; }
 .lg-act-row label { margin: 0; font-weight: 600; }
 .lg-act-row select, .lg-act-row .lg-input { padding: 7px 10px; border: 2px solid #d1d5db; border-radius: 6px; background: #fff; font-size: .95em; }

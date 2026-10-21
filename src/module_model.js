@@ -340,7 +340,8 @@ function mbBuildModuleModel(lang, state) {
             seeAlso: seeAlso
         };
         /* 3.59.0: «1- Learning unit: …» — the Learner guide's heading. */
-        out.heading = lg ? _lgT('lgUnitHead', { v0: loIndex + 1, v1: out.title }) : '';
+        out.heading = lg ? ((typeof mbLgUnitHeading === 'function') ? mbLgUnitHeading(loIndex + 1, out.title, lang)
+            : _lgT('lgUnitHead', { v0: loIndex + 1, v1: out.title })) : '';   // 3.67.0: named in Settings
 
         _mmArr(lo.infoSheets).forEach(function (sh, si) {
             if (!mmSheetHasContent(sh)) return;
@@ -352,8 +353,11 @@ function mbBuildModuleModel(lang, state) {
                 /* 3.42.0: '' = the exporter's own wording (sheet_kinds.js). */
                 label: (typeof mbSheetLabelExplicit === 'function') ? mbSheetLabelExplicit('info', lang) : '',
                 title: _mmStr(sh.title),
-                objectiveLead: _mmStr(sh.objectiveLead),
-                objective: _mmStr(sh.objective),
+                /* 3.67.0: the Learner guide's optional objectives — not
+                   printed while hidden, and the lead only with them. */
+                objectiveLead: (lg && (sh.lgObjective === false || !_mmStr(sh.objective).trim())) ? '' : _mmStr(sh.objectiveLead),
+                objective: (lg && sh.lgObjective === false) ? '' : _mmStr(sh.objective),
+                objectiveLabel: (lg && typeof mbLgLabel === 'function') ? mbLgLabel('objectives', lang) : '',
                 /* 3.56.0: rows and attached items in printed order. */
                 sections: (_waInfo = _mmWithAttachments('info', sh, function (cs) {
                     return {

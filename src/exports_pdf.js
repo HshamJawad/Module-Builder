@@ -488,7 +488,7 @@ function _pdfBuild(pdf, model, lang) {
     if (model.outcomes.length) {
         w.heading(t('overview'), 2);
         model.outcomes.forEach(function (o) {
-            w.label(t('outcome') + ' ' + o.index + ': ' + o.title);
+            w.label(o.heading || (t('outcome') + ' ' + o.index + ': ' + o.title));   // 3.67.0
             if (o.description) w.text(o.description, { indent: 4 });
             if (o.criteria.length) {
                 w.text(t('criteria') + ':', { indent: 4, bold: true, size: S.body });
@@ -524,7 +524,7 @@ function _pdfBuild(pdf, model, lang) {
             w.newPage();
             w.heading(sh.heading || ((sh.label || t('infoSheet')) + ' ' + sh.number + ': ' + sh.title), 3);
             if (sh.objectiveLead) w.text(sh.objectiveLead);
-            if (sh.objective) { w.label(t('objective')); w.text(sh.objective, { indent: 4 }); }
+            if (sh.objective) { w.label(sh.objectiveLabel || t('objective')); w.text(sh.objective, { indent: 4 }); }
 
             sh.sections.forEach(function (cs, k) {
                 _pdfAttachments(w, sh.attachments, k, S);   // 3.56.0
@@ -569,7 +569,7 @@ function _pdfBuild(pdf, model, lang) {
             w.newPage();
             w.heading(sh.heading || ((sh.label || t('activitySheet')) + ' ' + sh.number + ': ' + sh.title), 3);
             if (sh.objectiveLead) w.text(sh.objectiveLead);
-            if (sh.objective) { w.label(t('objective')); w.text(sh.objective, { indent: 4 }); }
+            if (sh.objective) { w.label(sh.objectiveLabel || t('objective')); w.text(sh.objective, { indent: 4 }); }
             if (sh.duration) w.text(t('duration') + ': ' + sh.duration + ' ' + t('minutes'), { bold: true });
 
             if (sh.resources.length) {
