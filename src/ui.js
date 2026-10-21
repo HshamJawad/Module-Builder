@@ -5,7 +5,8 @@
 // ============================================================
 
 
-function showStatus(message, type) {
+/* 3.66.0: `ms` keeps a success message longer than the usual 5 s. */
+function showStatus(message, type, ms) {
     const statusDiv = document.getElementById('status');
     statusDiv.textContent = message;
     statusDiv.className = `status ${type}`;
@@ -14,7 +15,7 @@ function showStatus(message, type) {
     if (type === 'success') {
         setTimeout(() => {
             statusDiv.style.display = 'none';
-        }, 5000);
+        }, ms || 5000);
     }
 }
 
