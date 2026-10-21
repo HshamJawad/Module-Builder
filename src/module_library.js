@@ -1030,9 +1030,38 @@ function _mbPickProjectForDacum(exportData) {
     });
 }
 
+/** 3.66.0: what the status line says after a handoff — what arrived
+ *  (one module named, or how many with up to three named), whether each
+ *  was added or updated, and how many modules the library now holds, so
+ *  a single module sent from its DACUM card is not mistaken for the whole
+ *  library the earlier "send all" left here. */
+function _mbDacumReceipt(received, updatedIds, added, updated, isNew, labelMode) {
+    var ref = function (dm) {
+        var code = String(dm.moduleCode || '').trim();
+        var num = String(dm.moduleNumber || '').trim();
+        var r = code ? (labelMode === 'number' && num ? num : code) : num;
+        return r || String(dm.moduleTitle || '').trim() || dm.moduleId || '';
+    };
+    var head;
+    if (received.length === 1) {
+        head = _mbLibT('mbLibDacumOne', {
+            v0: ref(received[0]),
+            v1: _mbLibT(updatedIds[received[0].moduleId] ? 'mbLibDacumStUpdated' : 'mbLibDacumStAdded')
+        });
+    } else {
+        var names = received.slice(0, 3).map(ref).join(_mbLibT('mbLibDacumListSep'));
+        if (received.length > 3) names += _mbLibT('mbLibDacumListSep') + '…';
+        head = _mbLibT('mbLibDacumMany', { v0: received.length, v1: names, v2: added, v3: updated });
+    }
+    var lib = _mbLibT(isNew ? 'mbLibDacumLibNew' : 'mbLibDacumLib',
+        { v0: mbLib.project.name, v1: mbState.modulesData.length });
+    return head + ' ' + lib;
+}
+
 function _mbDacumImportNow(exportData) {
     var received = exportData.modules || [];
     var added = 0, updated = 0, isNew = false;
+    var updatedIds = {};   // 3.66.0: which received modules were already here
 
     return _mbSaveNow(false).then(function () {
         return _mbPickProjectForDacum(exportData);
@@ -1074,6 +1103,7 @@ function _mbDacumImportNow(exportData) {
                     return _mbWriteModule(fresh, {}, null);
                 }
                 updated++;
+                updatedIds[mid] = true;
                 if (mid === mbLib.openId) {
                     _mbMergeDacumModule(mbState.modulesData[idx], dm, exportData);
                     return null;   // written by the save below
@@ -1101,9 +1131,7 @@ function _mbDacumImportNow(exportData) {
         }
         return target ? _mbOpenNow(target) : null;
     }).then(function () {
-        var loCount = received.reduce(function (n, m) { return n + (m.learningOutcomes || []).length; }, 0);
-        if (isNew) showStatus(_mbLibT('mbLibDacumNewProject', { v0: mbLib.project.name, v1: received.length, v2: loCount }), 'success');
-        else showStatus(_mbLibT('mbLibDacumAdded', { v0: added, v1: updated, v2: mbLib.project.name }), 'success');
+        showStatus(_mbDacumReceipt(received, updatedIds, added, updated, isNew, exportData.labelMode), 'success', 12000);
         _mbLibEmit();
         return true;
     }).catch(function (e) {
