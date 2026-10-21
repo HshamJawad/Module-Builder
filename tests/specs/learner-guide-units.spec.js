@@ -165,3 +165,62 @@ test('attached item saved: the card opens on that sheet with its count, and stay
   await expect(page.locator('#info-attachments-card .mb-att-count')).toHaveText('(1)');
   expect(errors).toEqual([]);
 });
+
+// 3.68.0: the learning activity sheet's objectives are optional too.
+test('activity sheet: objectives behind «🎯 الأهداف (اختياري)», printed only when shown; the knowledge sheet\'s button separate', async ({ page }) => {
+  const errors = await openApp(page, { lang: 'ar', contentLang: 'ar', handoff: fixture('dacum-handoff-ar.json') });
+  await toGuide(page);
+  await tab(page, 'activity');
+  await page.locator('#title').fill('استخدام المفكات');
+  await page.evaluate(() => { saveCurrentSheetToLO(); saveCurrentModuleLOData(); });
+  const group = page.locator('#activity-objective-group');
+  const btn = page.locator('#lg-act-obj-toggle');
+  await expect(group).toBeHidden();
+  await expect(btn).toHaveText('🎯 الأهداف (اختياري)');
+  await expect(btn).toHaveAttribute('aria-expanded', 'false');
+
+  await btn.click();
+  await expect(group).toBeVisible();
+  await expect(page.locator('#objective')).toBeFocused();
+  await expect(page.locator('label[for="objective"]')).toHaveText('الأهداف:');
+  await page.locator('#objective').fill('فك غطاء الحاسوب بأمان');
+  await page.evaluate(() => { saveCurrentSheetToLO(); saveCurrentModuleLOData(); mbLibrarySave(); });
+  let t = await docxText(page);
+  expect(t).toContain('فك غطاء الحاسوب بأمان');
+  let sh = await page.evaluate(() => mbBuildModuleModel('ar').outcomes[0].activitySheets[0]);
+  expect(sh.objective).toBe('فك غطاء الحاسوب بأمان');
+  expect(sh.objectiveLabel).toBe('الأهداف');
+
+  // the knowledge sheet keeps its own state
+  await tab(page, 'info');
+  await expect(page.locator('#info-objective-group')).toBeHidden();
+  await tab(page, 'activity');
+  await expect(group).toBeVisible();
+
+  // kept after a reload, then hidden: kept, not printed
+  await page.waitForTimeout(800);
+  await page.reload();
+  await page.waitForFunction(() => window.mbLib && window.mbLib.booted === true);
+  await tab(page, 'activity');
+  await expect(group).toBeVisible();
+  await btn.click();
+  await expect(group).toBeHidden();
+  t = await docxText(page);
+  expect(t).not.toContain('فك غطاء الحاسوب بأمان');
+  sh = await page.evaluate(() => { saveCurrentSheetToLO(); return mbBuildModuleModel('ar').outcomes[0].activitySheets[0]; });
+  expect(sh.objective).toBe('');
+  expect(sh.objectiveLead).toBe('');
+  await btn.click();
+  await expect(page.locator('#objective')).toHaveValue('فك غطاء الحاسوب بأمان');
+
+  // a new sheet starts without objectives
+  await page.evaluate(() => addNewActivitySheet());
+  await expect(group).toBeHidden();
+
+  // the standard template: as always, no button
+  await page.evaluate(() => mbSwitchTemplate('standard', { ask: false }));
+  await expect(group).toBeVisible();
+  await expect(btn).toBeHidden();
+  await expect(page.locator('label[for="objective"]')).toHaveText('الهدف:');
+  expect(errors).toEqual([]);
+});

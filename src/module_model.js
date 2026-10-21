@@ -414,8 +414,11 @@ function mbBuildModuleModel(lang, state) {
                 type: kind,
                 label: (typeof mbSheetLabelExplicit === 'function') ? mbSheetLabelExplicit(kind, lang) : '',
                 title: _mmStr(sh.title),
-                objectiveLead: _mmStr(sh.objectiveLead),
-                objective: _mmStr(sh.objective),
+                /* 3.68.0: the Learner guide's optional objectives, as on
+                   the knowledge sheet. */
+                objectiveLead: (lg && (sh.lgObjective === false || !_mmStr(sh.objective).trim())) ? '' : _mmStr(sh.objectiveLead),
+                objective: (lg && sh.lgObjective === false) ? '' : _mmStr(sh.objective),
+                objectiveLabel: (lg && typeof mbLgLabel === 'function') ? mbLgLabel('objectives', lang) : '',
                 duration: _mmStr(sh.duration),
                 heading: lg ? mbLgSheetHeading(kind, number, _mmStr(sh.title), lang) : '',   // 3.59.0
                 resources: _mmArr(lg ? [] : sh.resources)

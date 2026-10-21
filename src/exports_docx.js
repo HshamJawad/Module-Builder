@@ -1790,8 +1790,12 @@ async function exportToDocx() {
             if (activity.title && activity.title.trim()) {
                 ch.push(new Paragraph({ children: [new TextRun({ text: _sheetHeadText((typeof mbSheetKind === 'function') ? mbSheetKind(activity.sheetType) : 'activity', num, activity.title, 'expActivitySheetTitled'), size: _wsBody(), bold: true, color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 400 } }));
             }
-            if (activity.objective && activity.objective.trim()) {
-                ch.push(new Paragraph({ children: [new TextRun({ text: _mbT('expObjective'), bold: true, size: _wsBody(), color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 200 } }));
+            /* 3.68.0: the Learner guide prints an activity sheet's
+               objectives only when they are shown, under its own name. */
+            const _aObjOn = !_lgDoc || typeof mbLgObjectivePrinted !== 'function' || mbLgObjectivePrinted(activity);
+            const _aObjLbl = (_lgDoc && typeof mbLgLabel === 'function') ? mbLgLabel('objectives', _mbLang()) + (_mbLang() === 'fr' ? ' :' : ':') : _mbT('expObjective');
+            if (_aObjOn && activity.objective && activity.objective.trim()) {
+                ch.push(new Paragraph({ children: [new TextRun({ text: _aObjLbl, bold: true, size: _wsBody(), color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 200 } }));
                 /* Same blue bold heading style as «Objective:» itself, by
                    request: it reads as part of the heading block, not as
                    the first item of the list. Skipped when empty — a user

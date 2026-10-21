@@ -1,3 +1,12 @@
+# الإصدار 3.68.0 (٢١ تشرين الأول ٢٠٢٦) — دليل المتعلم: الأهداف اختيارية في ورقة النشاط التعلمي
+
+**ملفات معدّلة:** `src/learner_guide.js`، `src/sheets.js`، `src/exports_docx.js`، `src/module_model.js`، `index.html` (‎?v=3.68.0)، `sw.js` (‏mb-3.68.0)، `version.json`، `tests/specs/learner-guide-units.spec.js`، `tests/README.md`.
+
+- **على غرار ورقة المعرفة (3.67.0):** في نموذج «دليل المتعلم» يُخفى قسم الهدف في تبويب «النشاط التعلمي» (بنوعيه: النشاط التعلمي وورقة العمل)، ويظهر مكانه زر «🎯 الأهداف (اختياري)». النقر يُظهر بطاقة الأهداف بعنوان «الأهداف:» (من «أسماء دليل المتعلم» في الإعدادات)، والنقر مرة أخرى يخفيها: يُحفظ النص ولا يُطبع في Word وHTML وPDF، ولا يُطبع السطر التمهيدي وحده.
+- لكل ورقة حالتها (`activity.lgObjective`)، مستقلة عن ورقة المعرفة. ورقة فيها هدف مكتوب من قبل تبقى ظاهرة، والورقة الجديدة تبدأ بلا أهداف. النموذج القياسي كما هو.
+
+---
+
 # الإصدار 3.67.0 (٢١ تشرين الأول ٢٠٢٦) — دليل المتعلم: «الوحدة التعلمية» في كل مكان، والأهداف اختيارية، وزر «أشكال وجداول ملحقة»
 
 **ملفات معدّلة:** `src/learner_guide.js`، `src/sheet_kinds.js`، `src/word_settings.js`، `src/sheets.js`، `src/attachments.js`، `src/exports_docx.js`، `src/exports_html.js`، `src/exports_pdf.js`، `src/module_model.js`، `mb-styles.css`، `index.html` (‎?v=3.67.0)، `sw.js` (‏mb-3.67.0)، `version.json`، `tests/specs/attachments.spec.js`، `tests/README.md`.

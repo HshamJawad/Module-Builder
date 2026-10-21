@@ -258,6 +258,8 @@ function saveCurrentSheetToLO() {
         );
         if (el) biPut(activityData, k, el.value);
     });
+    /* 3.68.0: the Learner guide's optional objectives (learner_guide.js). */
+    if (typeof mbLgCollectObjective === 'function') mbLgCollectObjective(activityData, 'activity');
 
     // Collect resources
     const incomingResources = [];
@@ -521,6 +523,7 @@ function loadActivitySheetAtIndex(lo, index) {
         mbSeedObjectiveLead(activity, 'mbActivityObjectiveLead');
         document.getElementById('objective-lead').value = biGetStrict(activity.objectiveLead, contentLang());
         document.getElementById('objective').value = biGetStrict(activity.objective, contentLang());
+        if (typeof mbLgLoadObjective === 'function') mbLgLoadObjective(activity, 'activity');   // 3.68.0
         document.getElementById('duration').value = activity.duration || '0';
         if (typeof mbRenderSheetKindSelect === 'function') mbRenderSheetKindSelect(activity.sheetType || 'activity');   // 3.42.0
         document.getElementById('activity-link-subject').value = activity.linkSubject || '';
@@ -651,6 +654,7 @@ function loadActivitySheetAtIndex(lo, index) {
         document.getElementById('title').value = '';
         document.getElementById('objective-lead').value = window.i18n.tIn('mbActivityObjectiveLead', contentLang());
         document.getElementById('objective').value = '';
+        if (typeof mbLgLoadObjective === 'function') mbLgLoadObjective(null, 'activity');   // 3.68.0
         document.getElementById('duration').value = '0';
         if (typeof mbRenderSheetKindSelect === 'function') mbRenderSheetKindSelect(mbDefaultSheetKind());   // 3.42.0
         document.getElementById('activity-link-subject').value = '';
@@ -919,6 +923,7 @@ async function removeCurrentActivitySheet() {
         document.getElementById('title').value = '';
         document.getElementById('objective-lead').value = window.i18n.tIn('mbActivityObjectiveLead', contentLang());
         document.getElementById('objective').value = '';
+        if (typeof mbLgLoadObjective === 'function') mbLgLoadObjective(null, 'activity');   // 3.68.0
         document.getElementById('duration').value = '0';
         if (typeof mbRenderSheetKindSelect === 'function') mbRenderSheetKindSelect(mbDefaultSheetKind());   // 3.42.0
         document.getElementById('activity-link-subject').value = '';

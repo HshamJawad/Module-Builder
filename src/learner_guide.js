@@ -70,6 +70,7 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgOptional: 'optional',
         lgObjShowTip: 'Add objectives to this knowledge sheet (optional)',
         lgObjHide: 'Remove the objectives from this sheet',
+        lgActObjShowTip: 'Add objectives to this sheet (optional)',
         lgSelectUnit: '-- Select learning unit --',
         lgIntroHead: '{v0} Introduction',
         lgYouWillLearn: 'In this learning unit you will learn how to:',
@@ -133,6 +134,7 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgOptional: 'facultatif',
         lgObjShowTip: 'Ajouter des objectifs à cette fiche de connaissances (facultatif)',
         lgObjHide: 'Retirer les objectifs de cette fiche',
+        lgActObjShowTip: 'Ajouter des objectifs à cette fiche (facultatif)',
         lgSelectUnit: '-- Choisir une unité d’apprentissage --',
         lgIntroHead: '{v0} Introduction',
         lgYouWillLearn: 'Dans cette unité d’apprentissage, vous apprendrez à :',
@@ -196,6 +198,7 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgOptional: 'اختياري',
         lgObjShowTip: 'إضافة أهداف إلى ورقة المعرفة هذه (اختياري)',
         lgObjHide: 'إزالة الأهداف من هذه الورقة',
+        lgActObjShowTip: 'إضافة أهداف إلى هذه الورقة (اختياري)',
         lgSelectUnit: '— اختر وحدة تعلمية —',
         lgIntroHead: '{v0} المقدمة',
         lgYouWillLearn: 'ستتعلم في هذه الوحدة التعلمية كيفية:',
@@ -324,7 +327,7 @@ function mbLgSheetNameCustom(kind, lang) {
 /* 3.67.0: in this template the interface says «learning unit» where it
    says «learning outcome» (the module bar of each tab), with the name
    from Settings. Called by i18n.t() through sheet_kinds.js. */
-var MB_LG_UI_KEYS = { mbLearningOutcome: 'label', mbSelectLearningOutcome: 'select', mbInfoObjectiveLabel: 'objective' };
+var MB_LG_UI_KEYS = { mbLearningOutcome: 'label', mbSelectLearningOutcome: 'select', mbInfoObjectiveLabel: 'objective', mbObjective: 'objective' };   // 3.68.0: mbObjective = the activity sheet's
 function mbLgUiOverlay(key, lang) {
     var which = MB_LG_UI_KEYS[key];
     if (!which || !_lgOn()) return '';
@@ -541,45 +544,55 @@ function mbLgCollectActivityRow(activityData) {
     }
 }
 
-/* ── 3.67.0: the optional objectives of a knowledge sheet ──────
-   In this template a knowledge sheet has no objectives unless the
-   author asks for them: the objectives part is hidden behind
-   «🎯 Objectives (optional)». info.lgObjective — true: shown, false:
-   hidden (kept, not printed), absent: shown when it has text (a sheet
-   written before 3.67.0, or in the standard template). The standard
-   template ignores the flag. */
+/* ── 3.67.0: the optional objectives of a sheet ───────────────
+   In this template a sheet has no objectives unless the author asks
+   for them: the objectives part is hidden behind «🎯 Objectives
+   (optional)». The knowledge sheet since 3.67.0, the learning activity
+   sheet (its tab, either type) since 3.68.0. sheet.lgObjective — true:
+   shown, false: hidden (kept, not printed), absent: shown when it has
+   text (a sheet written earlier, or in the standard template). The
+   standard template ignores the flag. `kind` is 'info' (default) or
+   'activity'. */
+var _LG_OBJ = {
+    info:     { group: 'info-objective-group',     btn: 'lg-obj-toggle',     ta: 'info-objective', tip: 'lgObjShowTip' },
+    activity: { group: 'activity-objective-group', btn: 'lg-act-obj-toggle', ta: 'objective',      tip: 'lgActObjShowTip' }
+};
+function _lgObjKind(kind) { return kind === 'activity' ? 'activity' : 'info'; }
 function mbLgObjectiveShown(sh) {
     if (sh && sh.lgObjective === true) return true;
     if (sh && sh.lgObjective === false) return false;
     return !!_lgStr(sh && sh.objective).trim();
 }
-/** Exporters: whether a (flattened) knowledge sheet's objectives print. */
+/** Exporters: whether a (flattened) sheet's objectives print. */
 function mbLgObjectivePrinted(sh) {
     return !_lgOn() || !(sh && sh.lgObjective === false);
 }
-function _lgObjGroup() { return document.getElementById('info-objective-group'); }
-/** sheets.js, when a knowledge sheet is put on screen (null = none). */
-function mbLgLoadObjective(sh) {
-    var g = _lgObjGroup();
+function _lgObjGroup(kind) { return document.getElementById(_LG_OBJ[_lgObjKind(kind)].group); }
+/** sheets.js, when a sheet is put on screen (null = none). */
+function mbLgLoadObjective(sh, kind) {
+    var g = _lgObjGroup(kind);
     if (!g) return;
     g.setAttribute('data-lg-obj', mbLgObjectiveShown(sh || null) ? '1' : '0');
-    mbLgPaintObjective();
+    mbLgPaintObjective(kind);
 }
 /** sheets.js, when the sheet on screen is saved. */
-function mbLgCollectObjective(infoData) {
-    var g = _lgObjGroup();
-    if (!g || !_lgOn() || !infoData) return;
+function mbLgCollectObjective(data, kind) {
+    var g = _lgObjGroup(kind);
+    if (!g || !_lgOn() || !data) return;
     var v = g.getAttribute('data-lg-obj');
-    if (v === '1') infoData.lgObjective = true;
-    else if (v === '0') infoData.lgObjective = false;
+    if (v === '1') data.lgObjective = true;
+    else if (v === '0') data.lgObjective = false;
 }
-function mbLgPaintObjective() {
-    var g = _lgObjGroup();
-    var btn = document.getElementById('lg-obj-toggle');
+/** Paint one sheet's objectives part and button (no kind: both). */
+function mbLgPaintObjective(kind) {
+    if (kind === undefined) { mbLgPaintObjective('info'); mbLgPaintObjective('activity'); return; }
+    var cfg = _LG_OBJ[_lgObjKind(kind)];
+    var g = document.getElementById(cfg.group);
+    var btn = document.getElementById(cfg.btn);
     if (!g) return;
     if (!_lgOn()) { g.style.display = ''; return; }
     if (g.getAttribute('data-lg-obj') === null) {
-        var ta = document.getElementById('info-objective');
+        var ta = document.getElementById(cfg.ta);
         g.setAttribute('data-lg-obj', ta && ta.value.trim() ? '1' : '0');
     }
     var shown = g.getAttribute('data-lg-obj') === '1';
@@ -588,24 +601,24 @@ function mbLgPaintObjective() {
         var ui = (window.i18n && window.i18n.getLang) ? window.i18n.getLang() : 'en';
         btn.setAttribute('aria-expanded', shown ? 'true' : 'false');
         btn.classList.toggle('is-on', shown);
-        btn.title = _lgT(shown ? 'lgObjHide' : 'lgObjShowTip');
-        var l = document.getElementById('lg-obj-toggle-label');
-        var o = document.getElementById('lg-obj-toggle-opt');
+        btn.title = _lgT(shown ? 'lgObjHide' : cfg.tip);
+        var l = btn.querySelector('.lg-obj-label');
+        var o = btn.querySelector('.lg-optional');
         if (l) l.textContent = mbLgLabel('objectives', ui);
         if (o) o.textContent = '(' + _lgT('lgOptional') + ')';
     }
 }
 /** The button: show the objectives part (and go to it), or hide it. */
-function mbLgToggleObjective() {
-    var g = _lgObjGroup();
+function mbLgToggleObjective(kind) {
+    var g = _lgObjGroup(kind);
     if (!g) return;
     var show = g.getAttribute('data-lg-obj') !== '1';
     g.setAttribute('data-lg-obj', show ? '1' : '0');
-    mbLgPaintObjective();
+    mbLgPaintObjective(_lgObjKind(kind));
     if (typeof saveCurrentSheetToLO === 'function') { try { saveCurrentSheetToLO(); } catch (e) { /* nothing open */ } }
     if (typeof mbLibrarySave === 'function') { try { mbLibrarySave(); } catch (e) { /* not ready */ } }
     if (show) {
-        var ta = document.getElementById('info-objective');
+        var ta = document.getElementById(_LG_OBJ[_lgObjKind(kind)].ta);
         if (ta) { try { ta.focus(); } catch (e) { /* hidden */ } }
     }
 }
