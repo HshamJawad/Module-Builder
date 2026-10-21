@@ -64,6 +64,13 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgAsmContents: 'Contents of the portfolio',
         lgAsmContentsEmpty: 'No learning activity, worksheet or reflection has a title yet.',
         lgUnitHead: '{v0}- Learning unit: {v1}',
+        lgUnit: 'Learning unit',
+        mbInfoObjectiveLabel: 'Objective:',
+        lgObjectives: 'Objectives',
+        lgOptional: 'optional',
+        lgObjShowTip: 'Add objectives to this knowledge sheet (optional)',
+        lgObjHide: 'Remove the objectives from this sheet',
+        lgSelectUnit: '-- Select learning unit --',
         lgIntroHead: '{v0} Introduction',
         lgYouWillLearn: 'In this learning unit you will learn how to:',
         lgKnowledge: 'Knowledge',
@@ -120,6 +127,13 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgAsmContents: 'Contenu du portfolio',
         lgAsmContentsEmpty: 'Aucune activité, fiche de travail ou réflexion n’a encore de titre.',
         lgUnitHead: '{v0}- Unité d’apprentissage : {v1}',
+        lgUnit: 'Unité d’apprentissage',
+        mbInfoObjectiveLabel: 'Objectif :',
+        lgObjectives: 'Objectifs',
+        lgOptional: 'facultatif',
+        lgObjShowTip: 'Ajouter des objectifs à cette fiche de connaissances (facultatif)',
+        lgObjHide: 'Retirer les objectifs de cette fiche',
+        lgSelectUnit: '-- Choisir une unité d’apprentissage --',
         lgIntroHead: '{v0} Introduction',
         lgYouWillLearn: 'Dans cette unité d’apprentissage, vous apprendrez à :',
         lgKnowledge: 'Connaissances',
@@ -176,6 +190,13 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgAsmContents: 'محتويات سجل الأعمال (المحفظة)',
         lgAsmContentsEmpty: 'لا يوجد نشاط تعلمي أو ورقة عمل أو تأمل له عنوان بعد.',
         lgUnitHead: '{v0}- الوحدة التعلمية: {v1}',
+        lgUnit: 'الوحدة التعلمية',
+        mbInfoObjectiveLabel: 'الهدف:',
+        lgObjectives: 'الأهداف',
+        lgOptional: 'اختياري',
+        lgObjShowTip: 'إضافة أهداف إلى ورقة المعرفة هذه (اختياري)',
+        lgObjHide: 'إزالة الأهداف من هذه الورقة',
+        lgSelectUnit: '— اختر وحدة تعلمية —',
         lgIntroHead: '{v0} المقدمة',
         lgYouWillLearn: 'ستتعلم في هذه الوحدة التعلمية كيفية:',
         lgKnowledge: 'المعرفة',
@@ -256,12 +277,62 @@ function mbLgReflectionFilled(lo) {
 
 /* ── Names of the sheets in this template ─────────────────────── */
 
+/* 3.67.0: the template's own names, each renamed per language in
+   Settings → Misc → «Learner guide names» (settings.lgLabels, '' = the
+   name below). `unit` heads each learning outcome («1- Learning unit:
+   …»), `objectives` is the optional objectives part of a knowledge
+   sheet; info / activity / job are the three sheets. */
+var MB_LG_LABEL_KINDS = ['unit', 'info', 'activity', 'job', 'objectives'];
+var _LG_LABEL_KEYS = { unit: 'lgUnit', info: 'lgKnowledge', activity: 'lgActivity', job: 'lgWorksheet', objectives: 'lgObjectives' };
+
+/** The name the user typed for this part in this language, or ''. */
+function mbLgLabelCustom(kind, lang) {
+    var s = {};
+    try { if (typeof _wsGet === 'function') s = _wsGet() || {}; } catch (e) { s = {}; }
+    var side = (s.lgLabels && s.lgLabels[lang]) || {};
+    return String(side[kind] || '').trim();
+}
+/** The tool's own name for this part. */
+function mbLgLabelDefault(kind, lang) {
+    return _LG_LABEL_KEYS[kind] ? _lgTIn(_LG_LABEL_KEYS[kind], lang) : '';
+}
+/** The name to show and print: the user's, else the tool's. */
+function mbLgLabel(kind, lang) {
+    return mbLgLabelCustom(kind, lang) || mbLgLabelDefault(kind, lang);
+}
+
+/** «1- Learning unit: title» — an outcome's heading in this template. */
+function mbLgUnitHeading(num, title, lang) {
+    var t = String(title || '').trim();
+    return num + '- ' + mbLgLabel('unit', lang) + (t ? ': ' + t : '');
+}
+
 /** The template's own name for a sheet type, or '' (sheet_kinds.js asks
  *  this when the user has typed no name in Settings → Misc). */
 function mbLgSheetName(kind, lang) {
     if (!_lgOn()) return '';
-    var key = kind === 'info' ? 'lgKnowledge' : kind === 'activity' ? 'lgActivity' : kind === 'job' ? 'lgWorksheet' : '';
-    return key ? _lgTIn(key, lang) : '';
+    if (kind !== 'info' && kind !== 'activity' && kind !== 'job') return '';
+    return mbLgLabel(kind, lang);
+}
+/** sheet_kinds.js: a name typed under «Learner guide names» wins over a
+ *  name typed for the standard sheets while this template is on. */
+function mbLgSheetNameCustom(kind, lang) {
+    if (!_lgOn() || (kind !== 'info' && kind !== 'activity' && kind !== 'job')) return '';
+    return mbLgLabelCustom(kind, lang);
+}
+
+/* 3.67.0: in this template the interface says «learning unit» where it
+   says «learning outcome» (the module bar of each tab), with the name
+   from Settings. Called by i18n.t() through sheet_kinds.js. */
+var MB_LG_UI_KEYS = { mbLearningOutcome: 'label', mbSelectLearningOutcome: 'select', mbInfoObjectiveLabel: 'objective' };
+function mbLgUiOverlay(key, lang) {
+    var which = MB_LG_UI_KEYS[key];
+    if (!which || !_lgOn()) return '';
+    if (which === 'label') return '📚 ' + mbLgLabel('unit', lang) + (lang === 'fr' ? ' :' : ':');
+    if (which === 'objective') return mbLgLabel('objectives', lang) + (lang === 'fr' ? ' :' : ':');
+    var own = mbLgLabelCustom('unit', lang);
+    if (!own) return _lgTIn('lgSelectUnit', lang);
+    return lang === 'ar' ? '— اختر: ' + own + ' —' : '-- ' + own + ' --';
 }
 
 /** «1-2 Knowledge: title» — the heading of a sheet in this template. */
@@ -470,6 +541,75 @@ function mbLgCollectActivityRow(activityData) {
     }
 }
 
+/* ── 3.67.0: the optional objectives of a knowledge sheet ──────
+   In this template a knowledge sheet has no objectives unless the
+   author asks for them: the objectives part is hidden behind
+   «🎯 Objectives (optional)». info.lgObjective — true: shown, false:
+   hidden (kept, not printed), absent: shown when it has text (a sheet
+   written before 3.67.0, or in the standard template). The standard
+   template ignores the flag. */
+function mbLgObjectiveShown(sh) {
+    if (sh && sh.lgObjective === true) return true;
+    if (sh && sh.lgObjective === false) return false;
+    return !!_lgStr(sh && sh.objective).trim();
+}
+/** Exporters: whether a (flattened) knowledge sheet's objectives print. */
+function mbLgObjectivePrinted(sh) {
+    return !_lgOn() || !(sh && sh.lgObjective === false);
+}
+function _lgObjGroup() { return document.getElementById('info-objective-group'); }
+/** sheets.js, when a knowledge sheet is put on screen (null = none). */
+function mbLgLoadObjective(sh) {
+    var g = _lgObjGroup();
+    if (!g) return;
+    g.setAttribute('data-lg-obj', mbLgObjectiveShown(sh || null) ? '1' : '0');
+    mbLgPaintObjective();
+}
+/** sheets.js, when the sheet on screen is saved. */
+function mbLgCollectObjective(infoData) {
+    var g = _lgObjGroup();
+    if (!g || !_lgOn() || !infoData) return;
+    var v = g.getAttribute('data-lg-obj');
+    if (v === '1') infoData.lgObjective = true;
+    else if (v === '0') infoData.lgObjective = false;
+}
+function mbLgPaintObjective() {
+    var g = _lgObjGroup();
+    var btn = document.getElementById('lg-obj-toggle');
+    if (!g) return;
+    if (!_lgOn()) { g.style.display = ''; return; }
+    if (g.getAttribute('data-lg-obj') === null) {
+        var ta = document.getElementById('info-objective');
+        g.setAttribute('data-lg-obj', ta && ta.value.trim() ? '1' : '0');
+    }
+    var shown = g.getAttribute('data-lg-obj') === '1';
+    g.style.display = shown ? '' : 'none';
+    if (btn) {
+        var ui = (window.i18n && window.i18n.getLang) ? window.i18n.getLang() : 'en';
+        btn.setAttribute('aria-expanded', shown ? 'true' : 'false');
+        btn.classList.toggle('is-on', shown);
+        btn.title = _lgT(shown ? 'lgObjHide' : 'lgObjShowTip');
+        var l = document.getElementById('lg-obj-toggle-label');
+        var o = document.getElementById('lg-obj-toggle-opt');
+        if (l) l.textContent = mbLgLabel('objectives', ui);
+        if (o) o.textContent = '(' + _lgT('lgOptional') + ')';
+    }
+}
+/** The button: show the objectives part (and go to it), or hide it. */
+function mbLgToggleObjective() {
+    var g = _lgObjGroup();
+    if (!g) return;
+    var show = g.getAttribute('data-lg-obj') !== '1';
+    g.setAttribute('data-lg-obj', show ? '1' : '0');
+    mbLgPaintObjective();
+    if (typeof saveCurrentSheetToLO === 'function') { try { saveCurrentSheetToLO(); } catch (e) { /* nothing open */ } }
+    if (typeof mbLibrarySave === 'function') { try { mbLibrarySave(); } catch (e) { /* not ready */ } }
+    if (show) {
+        var ta = document.getElementById('info-objective');
+        if (ta) { try { ta.focus(); } catch (e) { /* hidden */ } }
+    }
+}
+
 /* ══════════════════════════════════════════════════════════════
    EDITOR — the assessment unit card (Assessment tab)
    ══════════════════════════════════════════════════════════════ */
@@ -543,7 +683,9 @@ function _lgRepaintAll() {
     try { if (typeof mbRenderSheetKindSelect === 'function') mbRenderSheetKindSelect(); } catch (e) { /* not ready */ }
     try { if (typeof mbRepaintSheetNames === 'function') mbRepaintSheetNames(); } catch (e) { /* not ready */ }
     try { if (typeof mbSeqPaintNumberFields === 'function') mbSeqPaintNumberFields(); } catch (e) { /* not ready */ }
+    try { mbLgPaintObjective(); } catch (e) { /* not ready */ }   // 3.67.0
 }
+window.addEventListener('mb:settingschange', function () { try { mbLgPaintObjective(); } catch (e) { /* not ready */ } });
 window.addEventListener('mb:templatechange', _lgRepaintAll);
 window.addEventListener('mb:langchange', _lgRepaintAll);
 window.addEventListener('mb:contentlangchange', _lgRepaintAll);

@@ -49,6 +49,9 @@ function mbDefaultSheetKind() {
 
 /** The name the user typed for this type in this language, or ''. */
 function mbSheetLabelCustom(kind, lang) {
+    /* 3.67.0: in the Learner guide, its own names typed in Settings first. */
+    var lgOwn = (typeof mbLgSheetNameCustom === 'function') ? mbLgSheetNameCustom(kind, lang) : '';
+    if (lgOwn) return lgOwn;
     var all = _mbSkSettings().sheetLabels || {};
     var side = all[lang] || {};
     var own = String(side[kind] || '').trim();
@@ -195,6 +198,11 @@ function mbSheetUiName(which, lang) {
 
 /** Called by i18n.t(): the dictionary's text, or the user's name in its place. */
 function mbSheetNameOverlay(key, lang, text) {
+    /* 3.67.0: the Learner guide's «learning unit» and «objectives». */
+    if (typeof mbLgUiOverlay === 'function') {
+        var lg = mbLgUiOverlay(key, lang);
+        if (lg) return lg;
+    }
     var spec = _MB_SN_KEYS[key];
     if (!spec) return text;
     var L = mbSheetUiName(spec[0], lang);
@@ -206,7 +214,9 @@ function mbSheetNameOverlay(key, lang, text) {
 /** Repaint every element labelled by one of these keys. */
 function mbRepaintSheetNames() {
     if (!window.i18n || typeof document === 'undefined') return;
-    Object.keys(_MB_SN_KEYS).forEach(function (key) {
+    var keys = Object.keys(_MB_SN_KEYS);
+    if (typeof MB_LG_UI_KEYS === 'object') keys = keys.concat(Object.keys(MB_LG_UI_KEYS));   // 3.67.0
+    keys.forEach(function (key) {
         document.querySelectorAll('[data-i18n="' + key + '"],[data-i18n-title="' + key + '"],[data-i18n-placeholder="' + key + '"]').forEach(function (el) {
             var txt = window.i18n.t(key);
             if (el.getAttribute('data-i18n') === key) {

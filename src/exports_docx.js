@@ -1192,7 +1192,11 @@ async function exportToDocx() {
                    enough ("Learning Outcome 1" vs "Learning Outcome 1:")
                    that nobody noticed the guard was missing from two of
                    the three call sites. */
-                const loHeadingText = _mbTitledAlready(loTitle, 'expLearningOutcomeN')
+                /* 3.67.0: the Learner guide calls an outcome a learning
+                   unit here too («1- Learning unit: …»). */
+                const loHeadingText = (typeof mbIsLearnerGuide === 'function' && mbIsLearnerGuide() && typeof mbLgUnitHeading === 'function')
+                    ? mbLgUnitHeading(loNumber, loTitle, _mbLang())
+                    : _mbTitledAlready(loTitle, 'expLearningOutcomeN')
                     ? loTitle
                     : _mbTf('expLearningOutcomeN', { v0: loNumber, v1: loTitle });
                 
@@ -1687,8 +1691,12 @@ async function exportToDocx() {
             if (info.title && info.title.trim()) {
                 ch.push(new Paragraph({ children: [new TextRun({ text: _sheetHeadText('info', num, info.title, 'expInfoSheetTitled'), size: _wsBody(), bold: true, color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 400 } }));
             }
-            if (info.objective && info.objective.trim()) {
-                ch.push(new Paragraph({ children: [new TextRun({ text: _mbT('expObjective'), bold: true, size: _wsBody(), color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 200 } }));
+            /* 3.67.0: the Learner guide prints a knowledge sheet's
+               objectives only when they are shown, under its own name. */
+            const _objOn = !_lgDoc || typeof mbLgObjectivePrinted !== 'function' || mbLgObjectivePrinted(info);
+            const _objLbl = (_lgDoc && typeof mbLgLabel === 'function') ? mbLgLabel('objectives', _mbLang()) + (_mbLang() === 'fr' ? ' :' : ':') : _mbT('expObjective');
+            if (_objOn && info.objective && info.objective.trim()) {
+                ch.push(new Paragraph({ children: [new TextRun({ text: _objLbl, bold: true, size: _wsBody(), color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 200 } }));
                 /* Same blue bold heading style as «Objective:» itself, by
                    request: it reads as part of the heading block, not as
                    the first item of the list. Skipped when empty — a user
@@ -1946,7 +1954,7 @@ async function exportToDocx() {
             if (!loHasSheets && !seeAlso.length) return;
 
             const loHdTitle = mbLoPlainTitle(lo.title || '');
-            const loHdText = _lgDoc ? _mbTf('lgUnitHead', { v0: loIndex + 1, v1: loHdTitle })   // 3.59.0
+            const loHdText = _lgDoc ? mbLgUnitHeading(loIndex + 1, loHdTitle, _mbLang())   // 3.59.0; 3.67.0 named in Settings
                 : _mbTitledAlready(loHdTitle, 'expLearningOutcomeN')
                 ? loHdTitle
                 : _mbTf('expLearningOutcomeN', { v0: loIndex + 1, v1: loHdTitle });
