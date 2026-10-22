@@ -4097,3 +4097,32 @@ button.mb-cmk-opt.is-on { outline: 3px solid #0f766e; outline-offset: 1px; }
 .mb-ai-err-foot { padding: 12px 20px; border-top: 1px solid #eef0f4; display: flex; justify-content: flex-end; flex-shrink: 0; }
 #mb-ai-err button.mb-ai-err-ok { padding: 9px 22px !important; min-height: 0 !important; background: #667eea !important; color: #fff !important; border: none !important; border-radius: 8px !important; font-size: .9em; font-weight: 700; cursor: pointer; font-family: inherit; box-shadow: none !important; }
 #mb-ai-err button.mb-ai-err-ok:hover { background: #5a67d8 !important; }
+
+/* ── 3.69.0: the module overview table (Introduction Pages, src/intro_table.js) ── */
+.it-card { margin-top: 20px; }
+.it-table {
+    width: 100%; border-collapse: collapse; table-layout: fixed;
+    background: #fff; border: 2px solid #667eea; border-radius: 8px; overflow: hidden;
+}
+.it-table th, .it-table td { border: 1px solid #d1d5db; vertical-align: top; padding: 0; }
+.it-table th {
+    width: 28%; padding: 10px 12px; text-align: start; font-weight: 700;
+    color: #3730a3; background: #eef2ff; font-size: .95em; line-height: 1.45;
+}
+.it-table textarea.it-field {
+    display: block; width: 100%; box-sizing: border-box; min-height: 42px;
+    padding: 10px 12px; border: 0; border-radius: 0; background: transparent;
+    font: inherit; font-size: 1em; line-height: 1.5; text-align: start;
+    resize: vertical; overflow-y: hidden; overflow-wrap: anywhere;
+    field-sizing: content;
+}
+.it-table textarea.it-field:focus { outline: 2px solid #667eea; outline-offset: -2px; background: #fafaff; }
+@media (max-width: 560px) {
+    .it-table, .it-table tbody, .it-table tr, .it-table th, .it-table td { display: block; width: 100%; }
+    .it-table th { border-bottom: 0; padding-bottom: 4px; }
+}
+
+/* ── 3.69.0: the learning unit card in Module Information, the Reflection tab ── */
+.lg-unit-wrap { margin-top: 30px; }
+.lg-unit-wrap .lg-unit { margin-top: 0; }
+.lg-refl-empty { margin: 0; color: #6b7280; font-style: italic; }

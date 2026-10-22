@@ -170,6 +170,10 @@ var mbState = {
        with a fixed id; this is a variable-length list rendered by
        blocks.js, which binds each box straight to its pair. */
     introBlocks: [],
+    /* 3.69.0: the module overview table of the Introduction Pages tab —
+       intro_table.js. { title: pair, subject: pair, … } (ten keys);
+       null until a project is opened. */
+    introTable: null,
     assessmentBlocks: [],       // 3.57.0: more Assessment Content (blocks.js)
 
     /* ── Learning Guide ─────────────────────────────────────────
@@ -214,6 +218,7 @@ function syncProjectTextFromDOM() {
     /* The section boxes bind live, so this is a belt-and-braces flush
        for a value set without an input event (a paste by script). */
     if (typeof mbSyncBlocksFromDOM === 'function') mbSyncBlocksFromDOM();
+    if (typeof mbSyncIntroTableFromDOM === 'function') mbSyncIntroTableFromDOM();   // 3.69.0
 }
 
 /** State → DOM, active side only. Call after load or a content-language switch. */

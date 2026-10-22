@@ -289,7 +289,8 @@ function mbBuildModuleHtml(model, opts) {
         toc.pop(); toc.push({ id: 'module-info', label: model.title || t('overview') });
     }
 
-    if (inc('intro') && (model.intro.team.length || model.intro.blocks.length || model.intro.additional)) {
+    var _itRows = (model.intro.table || []);
+    if (inc('intro') && (model.intro.team.length || model.intro.blocks.length || model.intro.additional || _itRows.length)) {
         var it = '';
         if (model.intro.team.length) {
             it += '<div class="mx-sub">' + t('team') + '</div>' +
@@ -298,6 +299,13 @@ function mbBuildModuleHtml(model, opts) {
                   model.intro.team.map(function (m) {
                       return '<tr><td>' + _hxText(m.name) + '</td><td>' + _hxText(m.task) +
                              '</td><td>' + _hxText(m.location) + '</td></tr>';
+                  }).join('') + '</tbody></table>';
+        }
+        /* 3.69.0: the module overview table, 16 cm wide as in Word. */
+        if (_itRows.length) {
+            it += '<table class="mx-tbl mx-it" style="width:16cm;max-width:100%;table-layout:fixed"><colgroup><col style="width:28%"><col></colgroup><tbody>' +
+                  _itRows.map(function (r) {
+                      return '<tr><th scope="row">' + _hxEsc(r.label) + '</th><td>' + _hxText(r.value) + '</td></tr>';
                   }).join('') + '</tbody></table>';
         }
         model.intro.blocks.forEach(function (b) {

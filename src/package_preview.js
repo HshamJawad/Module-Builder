@@ -85,6 +85,7 @@
             assessmentFormsData: forms,
             introAdditionalDetails: biNew(),
             introBlocks: [],
+            introTable: null,
             includeLearningGuide: false,
             assessmentContent: biNew(),
             assessmentBlocks: [],

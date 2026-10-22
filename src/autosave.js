@@ -234,6 +234,7 @@
                 !!d.frontCoverImage || !!d.backCoverImage ||
                 (d.teamMembers || []).length > 0 ||
                 (d.introBlocks || []).length > 0 ||
+                (typeof mbIntroTableFilled === 'function' && mbIntroTableFilled(d.introTable)) ||   // 3.69.0
                 (d.assessmentBlocks || []).length > 0 ||
                 (d.referencesData || []).some(r => _txt(r && r.value)) ||
                 (typeof mbGlossaryHasContent === 'function' && mbGlossaryHasContent(d.glossary)) ||

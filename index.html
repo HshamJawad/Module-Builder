@@ -23,7 +23,7 @@
 <!-- Error handler must load before any app script -->
 <script src="error-handler2.js"></script>
 <script defer src="version.js"></script>
-<link href="mb-styles.css?v=3.68.0" rel="stylesheet"/>
+<link href="mb-styles.css?v=3.69.0" rel="stylesheet"/>
 <!-- Inline favicon. Without one the browser requests /favicon.ico on
      every load and logs a 404 — harmless, but it sits in the console
      next to real errors and makes them harder to see. -->
@@ -259,6 +259,7 @@
 <button class="tab" data-act="switchTab" data-args='["intro"]' data-i18n="mbIntroductionPages">Introduction Pages</button>
 <button class="tab" data-act="switchTab" data-args='["info"]' data-i18n="mbInformationSheet">Information Sheet</button>
 <button class="tab" data-act="switchTab" data-args='["activity"]' data-i18n="mbActivityJobSheet">Activity/ Job Sheet</button>
+<button class="tab" data-act="switchTab" data-args='["reflection"]' data-i18n="lgReflTab" data-tpl-only="learnerGuide">🪞 Reflection</button>
 <button class="tab" data-act="switchTab" data-args='["assessment"]' data-i18n="mbAssessmentUnit">Assessment Unit</button>
 <button class="tab" data-act="switchTab" data-args='["references"]' data-i18n="mbReferences">📚 References</button>
 <button class="tab" data-act="switchTab" data-args='["back-cover"]' data-i18n="mbBackCoverTab">🖼️ Back Cover</button>
@@ -361,21 +362,9 @@
 <option value="شروط التدريب"></option>
 </datalist>
 </div>
-<!-- 3.59.0: Learner guide — introduction and reflection of the selected outcome (src/learner_guide.js) -->
-<div class="mb-blocks mb-blocks--lo lg-unit" data-tpl-only="learnerGuide" id="lg-unit-section" style="display:none;"></div>
-<!-- Performance Criteria Panel -->
-<div id="performance-criteria-panel" style="margin-top: 15px; padding: 20px; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 12px; border: 2px solid #f59e0b; display: none;">
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-<h4 style="color: #92400e; margin: 0; font-size: 1.1em; display: flex; align-items: center; gap: 8px;">
-<span style="font-size: 1.3em;">📋</span><span data-i18n="txPerformanceCriteriaForThisLearning">Performance Criteria for this Learning Outcome</span></h4>
-<button data-act="addPerformanceCriterion" data-i18n="mbAddCriterion" style="background: #10b981; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9em;">
-                        ➕ Add Criterion
-                    </button>
-</div>
-<div id="performance-criteria-content" style="background: white; padding: 15px; border-radius: 8px; max-height: 300px; overflow-y: auto;">
-<p data-i18n="mbNoPerformanceCriteriaAvailable" style="color: #6b7280; margin: 0; font-style: italic;">No performance criteria available</p>
-</div>
-</div>
+<!-- 3.69.0: the Learner guide's learning unit card moved to the Module Information tab, its
+     reflection to its own Reflection tab; the «Performance Criteria for this Learning Outcome»
+     card is gone (the criteria are still kept with the outcome and used by the sheets). -->
 </div>
 <!-- 3.63.0: Proceed Button -->
 <div style="text-align: center; margin-top: 30px; padding: 20px 0;">
@@ -419,6 +408,22 @@
 <span data-i18n="mbExtraInformationAfterTheTable" style="color: #6b7280; font-size: 0.9em;">Extra information after the table</span>
 </div>
 <textarea class="mb-content-field" data-i18n="mbEnterAnyAdditionalNotesToAppear" data-i18n-attr="placeholder" id="covers-additional-notes" placeholder="Enter any additional notes to appear after the module information table..." rows="4" style="width: 100%; padding: 10px; border: 2px solid #d1d5db; border-radius: 6px; font-size: 1em;"></textarea>
+</div>
+<!-- 3.69.0: Learner guide — the learning unit card (its introduction) of the outcome chosen in
+     the bar above it; was under the outcome card in the Module tab. src/learner_guide.js -->
+<div class="lg-unit-wrap" data-tpl-only="learnerGuide" id="lg-unit-wrap">
+<div class="mb-ctx-bar">
+<span data-i18n="mbModule" class="mb-ctx-label">📦 Module:</span>
+<select data-act="switchModuleFromTab" data-args='["moduleinfo"]' data-on="change" id="moduleinfo-module-selector" class="mb-ctx-sel mb-ctx-mod">
+<option data-i18n="mbSelectModule" value="">-- Select Module --</option>
+</select>
+<span class="mb-ctx-sep" aria-hidden="true">›</span>
+<span data-i18n="mbLearningOutcome" class="mb-ctx-label">📚 Learning Outcome:</span>
+<select data-act="switchLearningOutcomeFromTab" data-args='["moduleinfo"]' data-on="change" id="moduleinfo-lo-selector" class="mb-ctx-sel mb-ctx-lo">
+<option data-i18n="mbSelectLearningOutcome" value="">-- Select Learning Outcome --</option>
+</select>
+</div>
+<div class="mb-blocks mb-blocks--lo lg-unit" id="lg-unit-section" style="display:none;"></div>
 </div>
 <!-- Proceed Button -->
 <div style="text-align: center; margin-top: 30px; padding: 20px 0;">
@@ -468,6 +473,9 @@
 <div class="tab-content" id="intro-tab">
 <div class="form-group">
 <label data-i18n="mbIntroductionPages2" style="font-size: 1.2em; font-weight: 600; color: #667eea;">📄 Introduction Pages</label>
+<!-- 3.69.0: the module overview table — fixed headings in EN / FR / AR, the author writes the
+     content; boxes grow with their text. Exported 16 cm wide on its own page. src/intro_table.js -->
+<div class="mb-blocks it-card" id="intro-table-section"></div>
 <!-- Work Team Section -->
 <div style="margin-top: 20px;">
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -898,15 +906,41 @@
 <div class="mb-scale-host" id="act-scale-host"></div>
 </div>
 </div>
-<!-- Proceed Button -->
+</div>
+<!-- Proceed Button (3.69.0: outside the standard-only checklist group, so the Learner guide has it too) -->
 <div style="text-align: center; margin-top: 30px; padding: 20px 0;">
-<button data-act="proceedToTab" data-args='["assessment"]' data-i18n="mbProceedToAssessmentUnit" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 32px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3); transition: all 0.3s ease;">
+<button data-tpl-only="standard lowLiteracy" data-act="proceedToTab" data-args='["assessment"]' data-i18n="mbProceedToAssessmentUnit" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 32px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3); transition: all 0.3s ease;">
                     Proceed to Assessment Unit →
+                </button>
+<button data-tpl-only="learnerGuide" data-act="proceedToTab" data-args='["reflection"]' data-i18n="lgProceedToReflection" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 32px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3); transition: all 0.3s ease;">
+                    Proceed to Reflection →
                 </button>
 </div>
 </div>
-</div>
 <!-- End Activity/Job Sheet Tab -->
+<!-- 3.69.0: Reflection (Learner guide) — closes each learning unit, so it has its own tab with
+     the learning unit bar. src/learner_guide.js -->
+<div class="tab-content" id="reflection-tab" data-tpl-only="learnerGuide">
+<div class="title-section">
+<div class="mb-ctx-bar">
+<span data-i18n="mbModule" class="mb-ctx-label">📦 Module:</span>
+<select data-act="switchModuleFromTab" data-args='["reflection"]' data-on="change" id="reflection-module-selector" class="mb-ctx-sel mb-ctx-mod">
+<option data-i18n="mbSelectModule" value="">-- Select Module --</option>
+</select>
+<span class="mb-ctx-sep" aria-hidden="true">›</span>
+<span data-i18n="mbLearningOutcome" class="mb-ctx-label">📚 Learning Outcome:</span>
+<select data-act="switchLearningOutcomeFromTab" data-args='["reflection"]' data-on="change" id="reflection-lo-selector" class="mb-ctx-sel mb-ctx-lo">
+<option data-i18n="mbSelectLearningOutcome" value="">-- Select Learning Outcome --</option>
+</select>
+</div>
+<div class="mb-blocks mb-blocks--lo lg-unit lg-refl" id="lg-reflection-section"></div>
+<div style="text-align: center; margin-top: 30px; padding: 20px 0;">
+<button data-act="proceedToTab" data-args='["assessment"]' data-i18n="mbProceedToAssessmentUnit" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 32px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3); transition: all 0.3s ease;">
+                        Proceed to Assessment →
+                    </button>
+</div>
+</div>
+</div>
 <!-- Assessment Unit Tab -->
 <div class="tab-content" id="assessment-tab">
 <div class="form-group">
@@ -1165,82 +1199,83 @@
            app.js           boot.
            autosave.js      last; observes a fully built page.
          ═══════════════════════════════════════════════════════════════ -->
-<script src="src/persistence.js?v=3.68.0"></script>
-<script src="src/project_store.js?v=3.68.0"></script>
-<script src="src/image_store.js?v=3.68.0"></script>
-<script src="src/mb-translations.js?v=3.68.0"></script>
-<script src="src/mb_state.js?v=3.68.0"></script>
-<script src="src/module_template.js?v=3.68.0"></script>
-<script src="src/bilang.js?v=3.68.0"></script>
-<script src="src/dacum_i18n.js?v=3.68.0"></script>
-<script src="src/uid.js?v=3.68.0"></script>
-<script src="src/image_prep.js?v=3.68.0"></script>
-<script src="src/image_paste.js?v=3.68.0"></script>
-<script src="src/dialog.js?v=3.68.0"></script>
-<script src="src/docx_bidi.js?v=3.68.0"></script>
-<script src="src/ui.js?v=3.68.0"></script>
-<script src="src/tabs.js?v=3.68.0"></script>
-<script src="src/covers.js?v=3.68.0"></script>
-<script src="src/cover_images.js?v=3.68.0"></script>
-<script src="src/workteam.js?v=3.68.0"></script>
-<script src="src/modules.js?v=3.68.0"></script>
-<script src="src/outcomes.js?v=3.68.0"></script>
-<script src="src/blocks.js?v=3.68.0"></script>
-<script src="src/learning_guide.js?v=3.68.0"></script>
-<script src="src/sheets.js?v=3.68.0"></script>
-<script src="src/content.js?v=3.68.0"></script>
-<script src="src/criteria.js?v=3.68.0"></script>
-<script src="src/assessment.js?v=3.68.0"></script>
-<script src="src/assessment_results.js?v=3.68.0"></script>
-<script src="src/rating_scale.js?v=3.68.0"></script>
-<script src="src/module-ai.js?v=3.68.0"></script>
-<script src="src/content_map.js?v=3.68.0"></script>
-<script src="src/ai_error.js?v=3.68.0"></script>
-<script src="src/suggest_panel.js?v=3.68.0"></script>
-<script src="src/coverage_view.js?v=3.68.0"></script>
-<script src="src/ta_finder.js?v=3.68.0"></script>
-<script src="src/references.js?v=3.68.0"></script>
-<script src="src/glossary.js?v=3.68.0"></script>
-<script src="src/sheet_kinds.js?v=3.68.0"></script>
-<script src="src/lo_sequence.js?v=3.68.0"></script>
-<script src="src/learner_guide.js?v=3.68.0"></script>
-<script src="src/help_modal.js?v=3.68.0"></script>
-<script src="src/resources.js?v=3.68.0"></script>
-<script src="src/custom_marks.js?v=3.68.0"></script>
-<script src="src/marks.js?v=3.68.0"></script>
-<script src="src/steps.js?v=3.68.0"></script>
-<script src="src/attachments.js?v=3.68.0"></script>
-<script src="src/module_identity.js?v=3.68.0"></script>
-<script src="src/storage.js?v=3.68.0"></script>
-<script src="src/module_card.js?v=3.68.0"></script>
-<script src="src/module_library.js?v=3.68.0"></script>
-<script src="src/tab_guard.js?v=3.68.0"></script>
-<script src="src/package_mbz.js?v=3.68.0"></script>
-<script src="src/package_ui.js?v=3.68.0"></script>
-<script src="src/package_preview.js?v=3.68.0"></script>
-<script src="src/folder_sync.js?v=3.68.0"></script>
-<script src="src/module_library_ui.js?v=3.68.0"></script>
-<script src="src/module_model.js?v=3.68.0"></script>
-<script src="src/exports_html.js?v=3.68.0"></script>
-<script src="src/font_cairo.js?v=3.68.0"></script>
-<script src="src/arabic-font.js?v=3.68.0"></script>
-<script src="src/pdf_arabic.js?v=3.68.0"></script>
-<script src="src/exports_pdf.js?v=3.68.0"></script>
-<script src="src/link_modal.js?v=3.68.0"></script>
-<script src="src/source_ai.js?v=3.68.0"></script>
-<script src="src/export_menu.js?v=3.68.0"></script>
-<script src="src/shortcuts.js?v=3.68.0"></script>
-<script src="src/exports_pptx.js?v=3.68.0"></script>
-<script src="src/word_settings.js?v=3.68.0"></script>
-<script src="src/export_ui.js?v=3.68.0"></script>
-<script src="src/exports_docx.js?v=3.68.0"></script>
-<script src="src/contentlang_ui.js?v=3.68.0"></script>
-<script src="src/history.js?v=3.68.0"></script>
-<script src="src/events.js?v=3.68.0"></script>
+<script src="src/persistence.js?v=3.69.0"></script>
+<script src="src/project_store.js?v=3.69.0"></script>
+<script src="src/image_store.js?v=3.69.0"></script>
+<script src="src/mb-translations.js?v=3.69.0"></script>
+<script src="src/mb_state.js?v=3.69.0"></script>
+<script src="src/module_template.js?v=3.69.0"></script>
+<script src="src/bilang.js?v=3.69.0"></script>
+<script src="src/dacum_i18n.js?v=3.69.0"></script>
+<script src="src/uid.js?v=3.69.0"></script>
+<script src="src/image_prep.js?v=3.69.0"></script>
+<script src="src/image_paste.js?v=3.69.0"></script>
+<script src="src/dialog.js?v=3.69.0"></script>
+<script src="src/docx_bidi.js?v=3.69.0"></script>
+<script src="src/ui.js?v=3.69.0"></script>
+<script src="src/tabs.js?v=3.69.0"></script>
+<script src="src/covers.js?v=3.69.0"></script>
+<script src="src/cover_images.js?v=3.69.0"></script>
+<script src="src/workteam.js?v=3.69.0"></script>
+<script src="src/modules.js?v=3.69.0"></script>
+<script src="src/outcomes.js?v=3.69.0"></script>
+<script src="src/blocks.js?v=3.69.0"></script>
+<script src="src/intro_table.js?v=3.69.0"></script>
+<script src="src/learning_guide.js?v=3.69.0"></script>
+<script src="src/sheets.js?v=3.69.0"></script>
+<script src="src/content.js?v=3.69.0"></script>
+<script src="src/criteria.js?v=3.69.0"></script>
+<script src="src/assessment.js?v=3.69.0"></script>
+<script src="src/assessment_results.js?v=3.69.0"></script>
+<script src="src/rating_scale.js?v=3.69.0"></script>
+<script src="src/module-ai.js?v=3.69.0"></script>
+<script src="src/content_map.js?v=3.69.0"></script>
+<script src="src/ai_error.js?v=3.69.0"></script>
+<script src="src/suggest_panel.js?v=3.69.0"></script>
+<script src="src/coverage_view.js?v=3.69.0"></script>
+<script src="src/ta_finder.js?v=3.69.0"></script>
+<script src="src/references.js?v=3.69.0"></script>
+<script src="src/glossary.js?v=3.69.0"></script>
+<script src="src/sheet_kinds.js?v=3.69.0"></script>
+<script src="src/lo_sequence.js?v=3.69.0"></script>
+<script src="src/learner_guide.js?v=3.69.0"></script>
+<script src="src/help_modal.js?v=3.69.0"></script>
+<script src="src/resources.js?v=3.69.0"></script>
+<script src="src/custom_marks.js?v=3.69.0"></script>
+<script src="src/marks.js?v=3.69.0"></script>
+<script src="src/steps.js?v=3.69.0"></script>
+<script src="src/attachments.js?v=3.69.0"></script>
+<script src="src/module_identity.js?v=3.69.0"></script>
+<script src="src/storage.js?v=3.69.0"></script>
+<script src="src/module_card.js?v=3.69.0"></script>
+<script src="src/module_library.js?v=3.69.0"></script>
+<script src="src/tab_guard.js?v=3.69.0"></script>
+<script src="src/package_mbz.js?v=3.69.0"></script>
+<script src="src/package_ui.js?v=3.69.0"></script>
+<script src="src/package_preview.js?v=3.69.0"></script>
+<script src="src/folder_sync.js?v=3.69.0"></script>
+<script src="src/module_library_ui.js?v=3.69.0"></script>
+<script src="src/module_model.js?v=3.69.0"></script>
+<script src="src/exports_html.js?v=3.69.0"></script>
+<script src="src/font_cairo.js?v=3.69.0"></script>
+<script src="src/arabic-font.js?v=3.69.0"></script>
+<script src="src/pdf_arabic.js?v=3.69.0"></script>
+<script src="src/exports_pdf.js?v=3.69.0"></script>
+<script src="src/link_modal.js?v=3.69.0"></script>
+<script src="src/source_ai.js?v=3.69.0"></script>
+<script src="src/export_menu.js?v=3.69.0"></script>
+<script src="src/shortcuts.js?v=3.69.0"></script>
+<script src="src/exports_pptx.js?v=3.69.0"></script>
+<script src="src/word_settings.js?v=3.69.0"></script>
+<script src="src/export_ui.js?v=3.69.0"></script>
+<script src="src/exports_docx.js?v=3.69.0"></script>
+<script src="src/contentlang_ui.js?v=3.69.0"></script>
+<script src="src/history.js?v=3.69.0"></script>
+<script src="src/events.js?v=3.69.0"></script>
 <!-- Toolbar fit. Loaded after events.js so the bar's data-act handlers
      are bound before anything measures it, and it binds nothing of its
      own on those buttons — it reads widths and sets one class. -->
-<script src="src/toolbar_fit.js?v=3.68.0"></script>
+<script src="src/toolbar_fit.js?v=3.69.0"></script>
 <!-- Side-rail toggle. Inlined rather than shipped as src/sidenav.js so
      the feature has no second file to deploy: it is 30 lines, it binds
      one listener to one button, and it touches nothing the dispatch
@@ -1446,8 +1481,8 @@
     }
 })();
 </script>
-<script src="src/sw_register.js?v=3.68.0"></script>
-<script src="src/app.js?v=3.68.0"></script>
-<script src="src/autosave.js?v=3.68.0"></script>
+<script src="src/sw_register.js?v=3.69.0"></script>
+<script src="src/app.js?v=3.69.0"></script>
+<script src="src/autosave.js?v=3.69.0"></script>
 </body>
 </html>

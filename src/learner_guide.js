@@ -38,7 +38,12 @@
 if (window.i18n && window.i18n.extend) window.i18n.extend({
     en: {
         lgUnitCard: 'Learning unit (Learner guide)',
-        lgUnitNote: 'The introduction opens the learning unit and the reflection closes it. Empty parts are not exported.',
+        lgUnitNote: 'The introduction opens the learning unit; its reflection, which closes it, is in the Reflection tab. Empty parts are not exported.',
+        lgReflTab: '🪞 Reflection',
+        lgProceedToReflection: 'Proceed to Reflection →',
+        lgReflCard: 'Reflection — closes the learning unit',
+        lgReflNote: 'For the learning unit chosen in the bar above. Empty parts are not exported.',
+        lgReflNoUnit: 'Choose a learning unit in the bar above to write its reflection.',
         lgIntroTitle: 'Introduction',
         lgIntroBodyPh: 'Introduce the subject of this learning unit…',
         lgIntroItemsLabel: 'You will learn how to: (one item per line)',
@@ -102,7 +107,12 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
     },
     fr: {
         lgUnitCard: 'Unité d’apprentissage (Guide de l’apprenant)',
-        lgUnitNote: 'L’introduction ouvre l’unité d’apprentissage et la réflexion la termine. Les parties vides ne sont pas exportées.',
+        lgUnitNote: 'L’introduction ouvre l’unité d’apprentissage ; sa réflexion, qui la termine, est dans l’onglet Réflexion. Les parties vides ne sont pas exportées.',
+        lgReflTab: '🪞 Réflexion',
+        lgProceedToReflection: 'Passer à la réflexion →',
+        lgReflCard: 'Réflexion — termine l’unité d’apprentissage',
+        lgReflNote: 'Pour l’unité d’apprentissage choisie dans la barre ci-dessus. Les parties vides ne sont pas exportées.',
+        lgReflNoUnit: 'Choisissez une unité d’apprentissage dans la barre ci-dessus pour rédiger sa réflexion.',
         lgIntroTitle: 'Introduction',
         lgIntroBodyPh: 'Présentez le sujet de cette unité d’apprentissage…',
         lgIntroItemsLabel: 'Vous apprendrez à : (un élément par ligne)',
@@ -166,7 +176,12 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
     },
     ar: {
         lgUnitCard: 'الوحدة التعلمية (دليل المتعلم)',
-        lgUnitNote: 'المقدمة تفتتح الوحدة التعلمية، والتأمل يختمها. الأجزاء الفارغة لا تُصدَّر.',
+        lgUnitNote: 'المقدمة تفتتح الوحدة التعلمية، أما التأمل الذي يختمها ففي تبويب «التأمل». الأجزاء الفارغة لا تُصدَّر.',
+        lgReflTab: '🪞 التأمل',
+        lgProceedToReflection: 'المتابعة إلى التأمل ←',
+        lgReflCard: 'التأمل — خاتمة الوحدة التعلمية',
+        lgReflNote: 'للوحدة التعلمية المختارة في الشريط أعلاه. الأجزاء الفارغة لا تُصدَّر.',
+        lgReflNoUnit: 'اختر وحدة تعلمية من الشريط أعلاه لكتابة تأملها.',
         lgIntroTitle: 'المقدمة',
         lgIntroBodyPh: 'عرّف بموضوع هذه الوحدة التعلمية…',
         lgIntroItemsLabel: 'ستتعلم في هذه الوحدة التعلمية كيفية: (بند في كل سطر)',
@@ -419,7 +434,7 @@ function mbLgNormalizeAsm(v) {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   EDITOR — the learning unit card (Basic Info) and the activity row
+   EDITOR — the learning unit card (Module Information, Reflection) and the activity row
    ══════════════════════════════════════════════════════════════ */
 
 function _lgSave() {
@@ -427,18 +442,35 @@ function _lgSave() {
     if (typeof mbSeqPaintNumberFields === 'function') { try { mbSeqPaintNumberFields(); } catch (e) { /* no sheet */ } }
 }
 
-/** The card under the outcome sections, for the selected outcome. */
+/** 3.69.0: the learning unit card is in two places — its introduction in
+ *  the Module Information tab (#lg-unit-section), its reflection in the
+ *  Reflection tab (#lg-reflection-section), each for the outcome chosen in
+ *  the bar above it. Both write the same outcome (lo.lgIntro /
+ *  lo.lgReflection); nothing moved in the data or the export. */
 function mbRenderLgUnit(force) {
-    var host = document.getElementById('lg-unit-section');
+    _lgRenderPart('intro', force);
+    _lgRenderPart('refl', force);
+}
+
+function _lgRenderPart(part, force) {
+    var host = document.getElementById(part === 'intro' ? 'lg-unit-section' : 'lg-reflection-section');
     if (!host) return;
     var lo = (typeof mbCurrentLOObject === 'function') ? mbCurrentLOObject() : null;
-    if (!lo || !_lgOn()) { host.style.display = 'none'; host.innerHTML = ''; host.removeAttribute('data-render-key'); return; }
+    if (!_lgOn()) { host.style.display = 'none'; host.innerHTML = ''; host.removeAttribute('data-render-key'); return; }
+    if (!lo) {
+        host.removeAttribute('data-render-key');
+        if (part === 'intro') { host.style.display = 'none'; host.innerHTML = ''; return; }
+        /* The Reflection tab is never blank: it says what to do. */
+        host.style.display = '';
+        host.innerHTML = '<p class="lg-refl-empty">' + _lgEsc(_lgT('lgReflNoUnit')) + '</p>';
+        return;
+    }
     host.style.display = '';
     var lang = _lgLang();
     var loIndex = mbState.learningOutcomesData.indexOf(lo);
     /* Not while the author is typing here (history.js snapshots on every
        focus, which repaints the outcome card): the fields bind live. */
-    var key = lo.id + '|' + loIndex + '|' + lang + '|' + ((window.i18n && window.i18n.getLang) ? window.i18n.getLang() : '');
+    var key = part + '|' + lo.id + '|' + loIndex + '|' + lang + '|' + ((window.i18n && window.i18n.getLang) ? window.i18n.getLang() : '');
     var act = document.activeElement;
     if (force !== true && host.getAttribute('data-render-key') === key && act && act !== document.body && host.contains(act)) return;
     host.setAttribute('data-render-key', key);
@@ -453,17 +485,23 @@ function mbRenderLgUnit(force) {
         return '<input class="mb-block-title lg-field" type="text" dir="' + dir + '" data-lg-field="' + f + '"' +
             ' data-act="mbLgEdit" data-on="input" data-args=\'["' + f + '"]\' placeholder="' + _lgEsc(ph) + '" value="' + val + '"/>';
     };
+    if (part === 'intro') {
+        host.innerHTML =
+            '<div class="mb-blocks-head"><label class="mb-blocks-label">🧭 ' + _lgEsc(_lgT('lgUnitCard')) + '</label>' +
+              '<span class="mb-blocks-note">' + _lgEsc(_lgT('lgUnitNote')) + '</span></div>' +
+            '<div class="mb-block lg-part">' +
+              '<div class="lg-part-head">' + _lgEsc(_lgT('lgIntroTitle')) + '</div>' +
+              field('intro.body', 'textarea', _lgT('lgIntroBodyPh'), g(intro.body), 4) +
+              '<label class="lg-sub">' + _lgEsc(_lgT('lgIntroItemsLabel')) + '</label>' +
+              field('intro.items', 'textarea', _lgT('lgIntroItemsPh'), g(intro.items), 4) +
+              '<button type="button" class="mb-block-add lg-fill" data-act="mbLgFillItems">⬇️ ' + _lgEsc(_lgT('lgFillItems')) + '</button>' +
+            '</div>';
+        return;
+    }
     var lines = mbLgReflectionLines(lo);
     host.innerHTML =
-        '<div class="mb-blocks-head"><label class="mb-blocks-label">🧭 ' + _lgEsc(_lgT('lgUnitCard')) + '</label>' +
-          '<span class="mb-blocks-note">' + _lgEsc(_lgT('lgUnitNote')) + '</span></div>' +
-        '<div class="mb-block lg-part">' +
-          '<div class="lg-part-head">' + _lgEsc(_lgT('lgIntroTitle')) + '</div>' +
-          field('intro.body', 'textarea', _lgT('lgIntroBodyPh'), g(intro.body), 4) +
-          '<label class="lg-sub">' + _lgEsc(_lgT('lgIntroItemsLabel')) + '</label>' +
-          field('intro.items', 'textarea', _lgT('lgIntroItemsPh'), g(intro.items), 4) +
-          '<button type="button" class="mb-block-add lg-fill" data-act="mbLgFillItems">⬇️ ' + _lgEsc(_lgT('lgFillItems')) + '</button>' +
-        '</div>' +
+        '<div class="mb-blocks-head"><label class="mb-blocks-label">🪞 ' + _lgEsc(_lgT('lgReflCard')) + '</label>' +
+          '<span class="mb-blocks-note">' + _lgEsc(_lgT('lgReflNote')) + '</span></div>' +
         '<div class="mb-block lg-part">' +
           '<div class="lg-part-head">' + _lgEsc(_lgT('lgReflTitle')) + '</div>' +
           field('refl.title', 'input', _lgT('lgReflTitlePh', { v0: loIndex + 1 }), g(refl.title)) +
@@ -700,6 +738,12 @@ function _lgRepaintAll() {
 }
 window.addEventListener('mb:settingschange', function () { try { mbLgPaintObjective(); } catch (e) { /* not ready */ } });
 window.addEventListener('mb:templatechange', _lgRepaintAll);
+/* 3.69.0: the Reflection tab belongs to this template; a switch away
+   from it while the tab is open goes back to the Module tab. */
+window.addEventListener('mb:templatechange', function () {
+    var t = document.getElementById('reflection-tab');
+    if (!_lgOn() && t && t.classList.contains('active') && typeof switchTab === 'function') switchTab('basic-info');
+});
 window.addEventListener('mb:langchange', _lgRepaintAll);
 window.addEventListener('mb:contentlangchange', _lgRepaintAll);
 document.addEventListener('change', function (e) {

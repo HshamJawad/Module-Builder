@@ -275,7 +275,10 @@ function mbBuildModuleModel(lang, state) {
                 /* A section whose only content is a table survives: for
                    «training conditions» the table often IS the section. */
                 .filter(function (b) { return b.title.trim() || b.body.trim() || b.tables.length; }),
-            additional: _mmStr(st.introAdditionalDetails)
+            additional: _mmStr(st.introAdditionalDetails),
+            /* 3.69.0: the module overview table — [{ key, label, value }],
+               all ten rows when any box has text, [] otherwise. */
+            table: (typeof mbIntroTableRows === 'function') ? mbIntroTableRows(st.introTable, lang) : []
         },
 
         outcomes: [],
