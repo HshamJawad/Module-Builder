@@ -2131,10 +2131,14 @@ async function exportToDocx() {
                 const ch = [];
                 const n = mbSeqLgNumber(lo, loIndex, 'lgReflection');
                 ch.push(_lgHead(((n ? n + ' ' : '') + mbLgReflectionTitle(lo, loIndex, _mbLang())).trim()));
-                const lines = mbLgReflectionLines(lo);
-                String(lo.lgReflection.questions || '').split('\n').map(q => q.trim()).filter(Boolean).forEach(q => {
-                    ch.push(_lgPara(q, { bold: true, before: 200, after: 120 }));
-                    for (let k = 0; k < lines; k++) ch.push(_lgPara('.'.repeat(110), { color: '808080', after: 160 }));
+                /* 3.75.0: every group of questions on this one page — an
+                   added group under its own subheading, when it has one. */
+                mbLgReflectionGroups(lo, _mbLang()).forEach(gr => {
+                    if (gr.title) ch.push(_lgPara(gr.title, { bold: true, color: _wsHeadColor(), before: 300, after: 120 }));
+                    gr.questions.forEach(q => {
+                        ch.push(_lgPara(q, { bold: true, before: 200, after: 120 }));
+                        for (let k = 0; k < gr.lines; k++) ch.push(_lgPara('.'.repeat(110), { color: '808080', after: 160 }));
+                    });
                 });
                 sections.push({ properties: { bidi: _mbRtl() }, children: ch });
             };

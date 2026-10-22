@@ -653,10 +653,15 @@ function _pdfBuild(pdf, model, lang) {
             } else if (it.kind === 'lgReflection') {
                 w.newPage();
                 w.heading(it.reflection.heading, 3);
-                it.reflection.questions.forEach(function (q) {
-                    w.text(q, { bold: true });
-                    for (var k = 0; k < it.reflection.lines; k++) w.text(new Array(90).join('.'));
-                    w.gap(2);
+                var rgs = (it.reflection.groups && it.reflection.groups.length) ? it.reflection.groups
+                    : [{ title: '', questions: it.reflection.questions, lines: it.reflection.lines }];   // 3.75.0
+                rgs.forEach(function (gr) {
+                    if (gr.title) w.label(gr.title);
+                    gr.questions.forEach(function (q) {
+                        w.text(q, { bold: true });
+                        for (var k = 0; k < gr.lines; k++) w.text(new Array(90).join('.'));
+                        w.gap(2);
+                    });
                 });
             }
             else renderBlock(it.block);
