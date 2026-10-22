@@ -1721,9 +1721,9 @@ async function exportToDocx() {
 
         /* 3.42.0: sheet headings follow the type and the names set in
            Settings → Misc; untouched, they are today's templates. */
-        const _sheetHeadText = (kind, num, title, tplKey) => {
-            if (_lgDoc && typeof mbLgSheetHeading === 'function') return mbLgSheetHeading(kind, num, title, _mbLang());
-            const own = (typeof mbSheetLabelExplicit === 'function') ? mbSheetLabelExplicit(kind, _mbLang()) : '';
+        const _sheetHeadText = (kind, num, title, tplKey, sheet) => {
+            if (_lgDoc && typeof mbLgSheetHeading === 'function') return mbLgSheetHeading(kind, num, title, _mbLang(), sheet);
+            const own = (typeof mbSheetLabelExplicit === 'function') ? mbSheetLabelExplicit(kind, _mbLang(), sheet) : '';
             return own ? mbSheetHeading(own, num, title) : _mbTf(tplKey, { v0: num, v1: title });
         };
         const buildInfoCh = (info, loIndex, sheetIndex) => {
@@ -1856,7 +1856,7 @@ async function exportToDocx() {
             const num = (typeof mbSeqNumber === 'function') ? mbSeqNumber(mbState.learningOutcomesData[loIndex], loIndex, 'activity', sheetIndex)
                 : (activity.sheetNumber || getAutoSheetNumber(loIndex, sheetIndex));   // 3.43.0
             if (activity.title && activity.title.trim()) {
-                ch.push(new Paragraph({ children: [new TextRun({ text: _sheetHeadText((typeof mbSheetKind === 'function') ? mbSheetKind(activity.sheetType) : 'activity', num, activity.title, 'expActivitySheetTitled'), size: _wsBody(), bold: true, color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 400 } }));
+                ch.push(new Paragraph({ children: [new TextRun({ text: _sheetHeadText((typeof mbSheetKind === 'function') ? mbSheetKind(activity.sheetType) : 'activity', num, activity.title, 'expActivitySheetTitled', activity), size: _wsBody(), bold: true, color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 400 } }));
             }
             /* 3.68.0: the Learner guide prints an activity sheet's
                objectives only when they are shown, under its own name. */

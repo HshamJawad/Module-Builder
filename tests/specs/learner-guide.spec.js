@@ -125,8 +125,8 @@ test('the editor: the unit card writes the outcome; the activity row is saved wi
   await page.evaluate(() => saveCurrentSheetToLO());
   expect(await page.evaluate(() => { const a = mbCurrentLOObject().activitySheets[0]; return [a.lgContributes, a.lgProduct.en]; }))
     .toEqual(['no', 'A photo of the work']);
-  // only the two kinds of this template in the type list
-  expect(await page.locator('#activity-sheet-type option').evaluateAll(o => o.map(x => x.value))).toEqual(['activity', 'job']);
+  // the kinds of this template in the type list (3.73.0: + Job Sheet, + custom name)
+  expect(await page.locator('#activity-sheet-type option').evaluateAll(o => o.map(x => x.value))).toEqual(['activity', 'job', 'jobsheet', 'custom']);
   await tab(page, 'assessment');
   await expect(page.locator('#lg-portfolio-preview')).toContainText('A photo of the work');
   expect(errors).toEqual([]);

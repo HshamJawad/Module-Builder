@@ -354,8 +354,8 @@ function mbLgUiOverlay(key, lang) {
 }
 
 /** «1-2 Knowledge: title» — the heading of a sheet in this template. */
-function mbLgSheetHeading(kind, num, title, lang) {
-    var label = (typeof mbSheetLabel === 'function') ? mbSheetLabel(kind, lang) : '';
+function mbLgSheetHeading(kind, num, title, lang, sheet) {
+    var label = (typeof mbSheetLabel === 'function') ? mbSheetLabel(kind, lang, sheet) : '';   // 3.73.0: sheet → a custom name
     var s = (num ? num + ' ' : '') + label;
     if (title) s += ': ' + title;
     return s;
@@ -400,7 +400,7 @@ function mbLgPortfolioRows(los, lang) {
                 if (!title) return;
                 var kind = (typeof mbSheetKind === 'function') ? mbSheetKind(a.sheetType) : 'activity';
                 var num = (typeof mbSeqNumber === 'function') ? mbSeqNumber(lo, loIndex, 'activity', it.index) : '';
-                rows.push({ number: num, label: mbLgSheetHeading(kind, num, title, lang),
+                rows.push({ number: num, label: mbLgSheetHeading(kind, num, title, lang, a),
                             product: mbLgActProduct(a, lang), contributes: mbLgActContributes(a) });
             } else if (it.kind === 'lgReflection' && mbLgReflectionFilled(lo)) {
                 var n = (typeof mbSeqLgNumber === 'function') ? mbSeqLgNumber(lo, loIndex, 'lgReflection') : '';

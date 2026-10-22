@@ -90,7 +90,7 @@ test('sheet type: chosen on the sheet, named in the export, renamed in Settings 
   await page.waitForTimeout(200);
   const sel = page.locator('#activity-sheet-type');
   await expect(sel).toHaveValue('activity');
-  await expect(sel.locator('option')).toHaveText(['Activity/Job Sheet', 'Task Sheet', 'Job Sheet', 'Operation Sheet']);
+  await expect(sel.locator('option')).toHaveText(['Activity/Job Sheet', 'Task Sheet', 'Job Sheet', 'Operation Sheet', '✏️ Custom name…']);   // 3.73.0: + custom
   await sel.selectOption('job');
   await page.locator('#duration').fill('30');
   await page.evaluate(() => saveCurrentSheetToLO());

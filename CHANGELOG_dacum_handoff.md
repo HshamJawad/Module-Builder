@@ -1,3 +1,13 @@
+# الإصدار 3.73.0 (٢٢ تشرين الأول ٢٠٢٦) — نوع «Job Sheet» واسم مخصص لنوع ورقة النشاط
+
+**ملفات معدّلة:** `src/sheet_kinds.js`، `src/sheets.js`، `src/learner_guide.js`، `src/learning_guide.js`، `src/module_model.js`، `src/exports_docx.js`، `index.html` (‎?v=3.73.0)، `sw.js` (‏mb-3.73.0)، `version.json`، `tests/specs/glossary-sheet-types.spec.js`، `tests/specs/learner-guide.spec.js`، `tests/README.md`.
+**اختبار جديد:** `tests/specs/sheet-type-custom.spec.js`.
+
+- **دليل المتعلم:** قائمة «نوع الورقة» صارت: النشاط التعلمي، ورقة العمل، **Job Sheet**، و**«✏️ اسم مخصص…»**. اسم Job Sheet هو اسم النموذج القياسي (ويتبع ما كُتب له في الإعدادات ← متنوع).
+- **اسم مخصص (النموذجان):** اختيار «✏️ اسم مخصص…» يُظهر بجانب القائمة حقلاً يُكتب فيه اسم هذه الورقة وحدها (مثل «Practical Exercise»)، على غرار «أخرى (حدّد)» في DACUM. يُحفظ مع الورقة (`sheetTypeName`، لكل لغة اسمها)، ويظهر في عنوان حقل الورقة، ويُطبع عنواناً لها في Word وHTML وPDF وفي جدول دليل التعلم والمحفظة. الحقل الفارغ يعود لاسم النشاط.
+
+---
+
 # الإصدار 3.72.0 (٢٢ تشرين الأول ٢٠٢٦) — عنوان الفقرة يُكتب في البطاقة، وعنوان ثانوي اختياري
 
 **ملفات معدّلة:** `src/content.js`، `src/sheets.js`، `src/bilang.js`، `src/module_model.js`، `src/exports_docx.js`، `src/exports_html.js`، `src/exports_pdf.js`، `mb-styles.css`، `index.html` (‎?v=3.72.0)، `sw.js` (‏mb-3.72.0)، `version.json`، `tests/README.md`.

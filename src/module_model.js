@@ -422,7 +422,7 @@ function mbBuildModuleModel(lang, state) {
                 srcIndex: si,
                 number: number,
                 type: kind,
-                label: (typeof mbSheetLabelExplicit === 'function') ? mbSheetLabelExplicit(kind, lang) : '',
+                label: (typeof mbSheetLabelExplicit === 'function') ? mbSheetLabelExplicit(kind, lang, sh) : '',
                 title: _mmStr(sh.title),
                 /* 3.68.0: the Learner guide's optional objectives, as on
                    the knowledge sheet. */
@@ -430,7 +430,7 @@ function mbBuildModuleModel(lang, state) {
                 objective: (lg && sh.lgObjective === false) ? '' : _mmStr(sh.objective),
                 objectiveLabel: (lg && typeof mbLgLabel === 'function') ? mbLgLabel('objectives', lang) : '',
                 duration: _mmStr(sh.duration),
-                heading: lg ? mbLgSheetHeading(kind, number, _mmStr(sh.title), lang) : '',   // 3.59.0
+                heading: lg ? mbLgSheetHeading(kind, number, _mmStr(sh.title), lang, sh) : '',   // 3.59.0
                 resources: _mmArr(lg ? [] : sh.resources)
                     .map(function (r) { return { name: _mmStr(r && r.name), quantity: _mmStr(r && r.quantity) }; })
                     .filter(function (r) { return r.name.trim(); }),
