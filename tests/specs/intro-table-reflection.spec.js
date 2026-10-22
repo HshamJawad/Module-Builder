@@ -119,10 +119,15 @@ test('Learner guide: the unit card in Introduction Pages, the reflection in its 
   await tab(page, 'basic-info');
   expect(await page.evaluate(() => document.getElementById('lg-unit-section').closest('.tab-content').id)).toBe('intro-tab');
 
-  // Introduction Pages: Work Team, then the overview table, then the learning unit card
+  // Introduction Pages: Work Team first … the overview table, then the learning unit card last
   await tab(page, 'intro');
-  const order = await page.evaluate(() => ['work-team-container', 'intro-table-section', 'lg-unit-wrap', 'intro-additional-details']
+  const order = await page.evaluate(() => ['work-team-container', 'intro-additional-details', 'intro-blocks-section', 'intro-table-section', 'lg-unit-wrap']
     .map(id => document.getElementById(id).getBoundingClientRect().top));
+  expect(await page.evaluate(() => {   // nothing but the Proceed button after the card
+    let n = document.getElementById('lg-unit-wrap').nextElementSibling;
+    while (n && (n.offsetParent === null)) n = n.nextElementSibling;
+    return n ? !!n.querySelector('[data-act="proceedToTab"]') : true;
+  })).toBe(true);
   expect([...order].sort((a, b) => a - b)).toEqual(order);
   await expect(page.locator('#lg-unit-section')).toBeVisible();
   await expect(page.locator('#lg-unit-wrap .mb-ctx-bar')).toContainText('Learning unit');

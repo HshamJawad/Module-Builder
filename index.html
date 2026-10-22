@@ -472,25 +472,6 @@
 <!-- Team members will be added here dynamically -->
 </div>
 </div>
-<!-- 3.69.0: the module overview table — fixed headings in EN / FR / AR, the author writes the
-     content; boxes grow with their text. Exported 16 cm wide on its own page. src/intro_table.js -->
-<div class="mb-blocks it-card" id="intro-table-section"></div>
-<!-- 3.69.0: Learner guide — the learning unit card (its introduction) of the outcome chosen in
-     the bar above it, after the overview table (was under the outcome card in the Module tab). src/learner_guide.js -->
-<div class="lg-unit-wrap" data-tpl-only="learnerGuide" id="lg-unit-wrap">
-<div class="mb-ctx-bar">
-<span data-i18n="mbModule" class="mb-ctx-label">📦 Module:</span>
-<select data-act="switchModuleFromTab" data-args='["intro"]' data-on="change" id="intro-module-selector" class="mb-ctx-sel mb-ctx-mod">
-<option data-i18n="mbSelectModule" value="">-- Select Module --</option>
-</select>
-<span class="mb-ctx-sep" aria-hidden="true">›</span>
-<span data-i18n="mbLearningOutcome" class="mb-ctx-label">📚 Learning Outcome:</span>
-<select data-act="switchLearningOutcomeFromTab" data-args='["intro"]' data-on="change" id="intro-lo-selector" class="mb-ctx-sel mb-ctx-lo">
-<option data-i18n="mbSelectLearningOutcome" value="">-- Select Learning Outcome --</option>
-</select>
-</div>
-<div class="mb-blocks mb-blocks--lo lg-unit" id="lg-unit-section" style="display:none;"></div>
-</div>
 <!-- Additional Introduction Details Section -->
 <div style="margin-top: 30px; padding: 15px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
@@ -536,6 +517,25 @@
 <button class="lg-preview-btn" data-act="previewLearningGuide" id="lg-preview-btn" type="button"></button>
 </div>
 <p class="lg-hint" id="lg-hint"></p>
+</div>
+<!-- 3.69.0: the module overview table — fixed headings in EN / FR / AR, the author writes the
+     content; boxes grow with their text. Exported 16 cm wide on its own page. src/intro_table.js -->
+<div class="mb-blocks it-card" id="intro-table-section"></div>
+<!-- 3.69.0: Learner guide — the learning unit card (its introduction) of the outcome chosen in
+     the bar above it, after the overview table (was under the outcome card in the Module tab). src/learner_guide.js -->
+<div class="lg-unit-wrap" data-tpl-only="learnerGuide" id="lg-unit-wrap">
+<div class="mb-ctx-bar">
+<span data-i18n="mbModule" class="mb-ctx-label">📦 Module:</span>
+<select data-act="switchModuleFromTab" data-args='["intro"]' data-on="change" id="intro-module-selector" class="mb-ctx-sel mb-ctx-mod">
+<option data-i18n="mbSelectModule" value="">-- Select Module --</option>
+</select>
+<span class="mb-ctx-sep" aria-hidden="true">›</span>
+<span data-i18n="mbLearningOutcome" class="mb-ctx-label">📚 Learning Outcome:</span>
+<select data-act="switchLearningOutcomeFromTab" data-args='["intro"]' data-on="change" id="intro-lo-selector" class="mb-ctx-sel mb-ctx-lo">
+<option data-i18n="mbSelectLearningOutcome" value="">-- Select Learning Outcome --</option>
+</select>
+</div>
+<div class="mb-blocks mb-blocks--lo lg-unit" id="lg-unit-section" style="display:none;"></div>
 </div>
 <!-- Proceed Button -->
 <div style="text-align: center; margin-top: 30px; padding: 20px 0;">
