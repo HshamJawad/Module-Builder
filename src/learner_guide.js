@@ -543,15 +543,19 @@ function _lgRenderPart(part, force) {
         '<div class="mb-blocks-head"><label class="mb-blocks-label">🪞 ' + _lgEsc(_lgT('lgReflCard')) + '</label>' +
           '<span class="mb-blocks-note">' + _lgEsc(_lgT('lgReflNote')) + '</span></div>' +
         '<div class="mb-block lg-part">' +
-          '<div class="lg-part-head">' + _lgEsc(_lgT('lgReflTitle')) + '</div>' +
+          /* 3.76.0: «contributes to the assessment» on the heading's line,
+             at its far end — it is about the whole reflection. */
+          '<div class="lg-part-head"><span>' + _lgEsc(_lgT('lgReflTitle')) + '</span>' +
+            '<label class="lg-check lg-refl-contrib"><input type="checkbox"' + (refl.contributes === 'yes' ? ' checked' : '') +
+              ' data-act="mbLgEdit" data-on="change" data-args=\'["refl.contributes"]\'/> ' + _lgEsc(_lgT('lgReflContributes')) + '</label>' +
+          '</div>' +
           field('refl.title', 'input', _lgT('lgReflTitlePh', { v0: loIndex + 1 }), g(refl.title)) +
           '<label class="lg-sub">' + _lgEsc(_lgT('lgReflQuestionsLabel')) + '</label>' +
           field('refl.questions', 'textarea', _lgT('lgReflQuestionsPh'), g(refl.questions), 5) +
+          _lgPasteBtn('refl.questions') +
           '<div class="lg-row">' +
             '<label>' + _lgEsc(_lgT('lgReflLines')) + ' <input type="number" min="1" max="12" class="lg-lines" value="' + lines + '"' +
               ' data-act="mbLgEdit" data-on="change" data-args=\'["refl.lines"]\'/></label>' +
-            '<label class="lg-check"><input type="checkbox"' + (refl.contributes === 'yes' ? ' checked' : '') +
-              ' data-act="mbLgEdit" data-on="change" data-args=\'["refl.contributes"]\'/> ' + _lgEsc(_lgT('lgReflContributes')) + '</label>' +
           '</div>' +
         '</div>' +
         /* 3.75.0: more groups of questions, the same card repeated. */
@@ -571,11 +575,18 @@ function _lgRenderPart(part, force) {
                 f('title', 'input', _lgT('lgReflMoreTitlePh'), g(gr.title)) +
                 '<label class="lg-sub">' + _lgEsc(_lgT('lgReflQuestionsLabel')) + '</label>' +
                 f('questions', 'textarea', _lgT('lgReflQuestionsPh'), g(gr.questions), 4) +
+                _lgPasteBtn('more.' + gr.uid + '.questions') +
                 '<div class="lg-row"><label>' + _lgEsc(_lgT('lgReflLines')) + ' <input type="number" min="1" max="12" class="lg-lines" value="' + _lgLinesOf(gr.lines) + '"' +
                   ' data-act="mbLgEdit" data-on="change" data-args=\'["more.' + _lgEsc(gr.uid) + '.lines"]\'/></label></div>' +
               '</div>';
         }).join('') +
         '<button type="button" class="mb-block-add lg-refl-add" data-act="mbLgReflMoreAdd">' + _lgEsc(_lgT('lgReflMore')) + '</button>';
+}
+
+/* 3.76.0: 📝 Paste text under a box of reflection questions (paste_text.js). */
+function _lgPasteBtn(field) {
+    if (typeof mbPasteTextBtnHtml !== 'function') return '';
+    return '<div class="lg-paste-row">' + mbPasteTextBtnHtml('lg', field) + '</div>';
 }
 
 /* 3.75.0: add / remove a group of reflection questions. */
