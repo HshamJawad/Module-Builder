@@ -113,6 +113,7 @@ function _mbBuildStep() {
         <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;">
             <button class="btn-add-image" data-act="addImage" data-args='[${sc}]'>🖼️ ${window.i18n.t('dgAddImages')}</button>
             <button class="btn-add-image btn-paste-image" data-act="pasteStepImage" data-args='[${sc}]' title="${_mbStepLabelT('rxPasteImageTip')}">📋 <span>${_mbStepLabelT('rxPasteImage')}</span></button>
+            ${typeof mbPasteTextBtnHtml === 'function' ? mbPasteTextBtnHtml('step', sc) : ''}
             <!-- Was data-act="addStep", which always appended at the END of
                  the list — a button on step 2 that put the new step after
                  step 9. It now inserts directly below its own card; the

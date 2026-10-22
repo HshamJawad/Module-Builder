@@ -205,6 +205,8 @@ function _mbBlockRowHtml(host, block, lang) {
            way: addContentTable renders into #content-tables-<id>, so the
            id given here is all that connects them. No second table
            implementation, and no copy of ctAddRow to keep in step. */
+        /* 3.74.0: 📝 paste copied text into this section, cleaned (paste_text.js). */
+        (typeof mbPasteTextBtnHtml === 'function' ? mbPasteTextBtnHtml('block', undefined, 'mb-block-paste btn-paste-text') : '') +
         '<button type="button" class="mb-block-table mb-icon-btn"' +
                ' data-act="addContentTable" data-args=\'' + _mbBlockEscape(JSON.stringify(['block-' + block.uid])) + '\'' +
                ' data-i18n="dgAddTable" data-i18n-attr="title"' +
