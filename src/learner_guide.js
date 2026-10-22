@@ -44,6 +44,10 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgReflCard: 'Reflection — closes the learning unit',
         lgReflNote: 'For the learning unit chosen in the bar above. Empty parts are not exported.',
         lgReflNoUnit: 'Choose a learning unit in the bar above to write its reflection.',
+        lgReflMore: '➕ Add more questions',
+        lgReflMoreHead: 'More questions {v0}',
+        lgReflMoreTitlePh: 'Subheading of these questions (optional)…',
+        lgReflMoreRemove: 'Remove these questions',
         lgIntroTitle: 'Introduction',
         lgIntroBodyPh: 'Introduce the subject of this learning unit…',
         lgIntroItemsLabel: 'You will learn how to: (one item per line)',
@@ -113,6 +117,10 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgReflCard: 'Réflexion — termine l’unité d’apprentissage',
         lgReflNote: 'Pour l’unité d’apprentissage choisie dans la barre ci-dessus. Les parties vides ne sont pas exportées.',
         lgReflNoUnit: 'Choisissez une unité d’apprentissage dans la barre ci-dessus pour rédiger sa réflexion.',
+        lgReflMore: '➕ Ajouter d’autres questions',
+        lgReflMoreHead: 'Autres questions {v0}',
+        lgReflMoreTitlePh: 'Sous-titre de ces questions (facultatif)…',
+        lgReflMoreRemove: 'Supprimer ces questions',
         lgIntroTitle: 'Introduction',
         lgIntroBodyPh: 'Présentez le sujet de cette unité d’apprentissage…',
         lgIntroItemsLabel: 'Vous apprendrez à : (un élément par ligne)',
@@ -182,6 +190,10 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgReflCard: 'التأمل — خاتمة الوحدة التعلمية',
         lgReflNote: 'للوحدة التعلمية المختارة في الشريط أعلاه. الأجزاء الفارغة لا تُصدَّر.',
         lgReflNoUnit: 'اختر وحدة تعلمية من الشريط أعلاه لكتابة تأملها.',
+        lgReflMore: '➕ إضافة أسئلة أخرى',
+        lgReflMoreHead: 'أسئلة إضافية {v0}',
+        lgReflMoreTitlePh: 'عنوان فرعي لهذه الأسئلة (اختياري)…',
+        lgReflMoreRemove: 'حذف هذه الأسئلة',
         lgIntroTitle: 'المقدمة',
         lgIntroBodyPh: 'عرّف بموضوع هذه الوحدة التعلمية…',
         lgIntroItemsLabel: 'ستتعلم في هذه الوحدة التعلمية كيفية: (بند في كل سطر)',
@@ -290,7 +302,31 @@ function mbLgIntroFilled(lo) {
 }
 function mbLgReflectionFilled(lo) {
     var x = lo && lo.lgReflection;
-    return !!(x && _lgStr(x.questions).trim());
+    if (x && _lgStr(x.questions).trim()) return true;
+    /* 3.75.0: or any of its added groups of questions. */
+    return (Array.isArray(lo && lo.lgReflectionMore) ? lo.lgReflectionMore : [])
+        .some(function (g) { return g && _lgStr(g.questions).trim(); });
+}
+
+/* 3.75.0: the reflection's groups of questions, in order — the first
+   (lo.lgReflection, whose title heads the page) and those added with
+   «➕ Add more questions» (lo.lgReflectionMore: [{ uid, title, questions,
+   lines }], each title an optional subheading). Empty groups left out.
+   [{ title, questions: [..], lines }] in one language. */
+function _lgLinesOf(v) {
+    var n = parseInt(v, 10);
+    return (isFinite(n) && n >= 1 && n <= 12) ? n : 2;
+}
+function mbLgReflectionGroups(lo, lang) {
+    var split = function (v) { return _lgStr(v, lang).split('\n').map(function (q) { return q.trim(); }).filter(Boolean); };
+    var out = [];
+    var first = lo && lo.lgReflection;
+    if (first && split(first.questions).length) out.push({ title: '', questions: split(first.questions), lines: mbLgReflectionLines(lo) });
+    (Array.isArray(lo && lo.lgReflectionMore) ? lo.lgReflectionMore : []).forEach(function (g) {
+        var qs = split(g && g.questions);
+        if (qs.length) out.push({ title: _lgStr(g.title, lang).trim(), questions: qs, lines: _lgLinesOf(g.lines) });
+    });
+    return out;
 }
 
 /* ── Names of the sheets in this template ─────────────────────── */
@@ -470,9 +506,13 @@ function _lgRenderPart(part, force) {
     var loIndex = mbState.learningOutcomesData.indexOf(lo);
     /* Not while the author is typing here (history.js snapshots on every
        focus, which repaints the outcome card): the fields bind live. */
-    var key = part + '|' + lo.id + '|' + loIndex + '|' + lang + '|' + ((window.i18n && window.i18n.getLang) ? window.i18n.getLang() : '');
-    var act = document.activeElement;
-    if (force !== true && host.getAttribute('data-render-key') === key && act && act !== document.body && host.contains(act)) return;
+    var key = part + '|' + lo.id + '|' + loIndex + '|' + lang + '|' + ((window.i18n && window.i18n.getLang) ? window.i18n.getLang() : '') +
+        (part === 'refl' ? '|' + (lo.lgReflectionMore || []).map(function (x) { return x && x.uid; }).join(',') : '');
+    /* 3.75.0: the fields bind live, so a repaint for the same outcome,
+       languages and groups changes nothing on screen — and rebuilding it
+       between a press and its release (a «change» fired by leaving a
+       field) swallowed the click on the button being pressed. */
+    if (force !== true && host.getAttribute('data-render-key') === key && host.innerHTML) return;
     host.setAttribute('data-render-key', key);
     var intro = lo.lgIntro || {}, refl = lo.lgReflection || {};
     var g = function (v) { return _lgEsc((typeof biGetStrict === 'function') ? biGetStrict(v, lang) : _lgStr(v, lang)); };
@@ -513,7 +553,53 @@ function _lgRenderPart(part, force) {
             '<label class="lg-check"><input type="checkbox"' + (refl.contributes === 'yes' ? ' checked' : '') +
               ' data-act="mbLgEdit" data-on="change" data-args=\'["refl.contributes"]\'/> ' + _lgEsc(_lgT('lgReflContributes')) + '</label>' +
           '</div>' +
-        '</div>';
+        '</div>' +
+        /* 3.75.0: more groups of questions, the same card repeated. */
+        (Array.isArray(lo.lgReflectionMore) ? lo.lgReflectionMore : []).map(function (gr, gi) {
+            var f = function (k, kind, ph, val, rows) {
+                var id = 'more.' + gr.uid + '.' + k;
+                if (kind === 'textarea') return '<textarea class="mb-block-body lg-field" rows="' + rows + '" dir="' + dir + '" data-lg-field="' + id + '"' +
+                    ' data-act="mbLgEdit" data-on="input" data-args=\'["' + id + '"]\' placeholder="' + _lgEsc(ph) + '">' + val + '</textarea>';
+                return '<input class="mb-block-title lg-field" type="text" dir="' + dir + '" data-lg-field="' + id + '"' +
+                    ' data-act="mbLgEdit" data-on="input" data-args=\'["' + id + '"]\' placeholder="' + _lgEsc(ph) + '" value="' + val + '"/>';
+            };
+            return '<div class="mb-block lg-part lg-refl-more" data-uid="' + _lgEsc(gr.uid) + '">' +
+                '<div class="lg-part-head"><span>' + _lgEsc(_lgT('lgReflMoreHead', { v0: gi + 2 })) + '</span>' +
+                  '<button type="button" class="btn-remove mb-icon-btn danger" data-act="mbLgReflMoreRemove" data-args=\'["' + _lgEsc(gr.uid) + '"]\'' +
+                  ' title="' + _lgEsc(_lgT('lgReflMoreRemove')) + '" aria-label="' + _lgEsc(_lgT('lgReflMoreRemove')) + '">' +
+                  '<svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg></button></div>' +
+                f('title', 'input', _lgT('lgReflMoreTitlePh'), g(gr.title)) +
+                '<label class="lg-sub">' + _lgEsc(_lgT('lgReflQuestionsLabel')) + '</label>' +
+                f('questions', 'textarea', _lgT('lgReflQuestionsPh'), g(gr.questions), 4) +
+                '<div class="lg-row"><label>' + _lgEsc(_lgT('lgReflLines')) + ' <input type="number" min="1" max="12" class="lg-lines" value="' + _lgLinesOf(gr.lines) + '"' +
+                  ' data-act="mbLgEdit" data-on="change" data-args=\'["more.' + _lgEsc(gr.uid) + '.lines"]\'/></label></div>' +
+              '</div>';
+        }).join('') +
+        '<button type="button" class="mb-block-add lg-refl-add" data-act="mbLgReflMoreAdd">' + _lgEsc(_lgT('lgReflMore')) + '</button>';
+}
+
+/* 3.75.0: add / remove a group of reflection questions. */
+function mbLgReflMoreAdd() {
+    var lo = (typeof mbCurrentLOObject === 'function') ? mbCurrentLOObject() : null;
+    if (!lo) return;
+    if (!Array.isArray(lo.lgReflectionMore)) lo.lgReflectionMore = [];
+    var uid = 'rq' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    lo.lgReflectionMore.push({ uid: uid, title: biNew(), questions: biNew(), lines: 2 });
+    _lgSave();
+    _lgRenderPart('refl', true);
+    var box = document.querySelector('#lg-reflection-section [data-lg-field="more.' + uid + '.questions"]');
+    if (box) { try { box.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) { /* old browser */ } box.focus(); }
+}
+async function mbLgReflMoreRemove(uid) {
+    var lo = (typeof mbCurrentLOObject === 'function') ? mbCurrentLOObject() : null;
+    if (!lo || !Array.isArray(lo.lgReflectionMore)) return;
+    var gr = lo.lgReflectionMore.find(function (x) { return x && x.uid === uid; });
+    if (!gr) return;
+    var has = gr && (_lgStr(gr.questions).trim() || _lgStr(gr.title).trim());
+    if (has && typeof mbConfirm === 'function' && !(await mbConfirm(_lgT('lgReflMoreRemove') + '?', { danger: true }))) return;
+    lo.lgReflectionMore = lo.lgReflectionMore.filter(function (x) { return x && x.uid !== uid; });
+    _lgSave();
+    _lgRenderPart('refl', true);
 }
 
 /** Every field of the card writes its pair at once (blocks.js rule). */
@@ -521,6 +607,14 @@ function mbLgEdit(field, el) {
     var lo = (typeof mbCurrentLOObject === 'function') ? mbCurrentLOObject() : null;
     if (!lo || !el) return;
     var parts = String(field).split('.');
+    if (parts[0] === 'more') {   // 3.75.0: an added group of questions
+        var gr = (lo.lgReflectionMore || []).find(function (x) { return x && x.uid === parts[1]; });
+        if (!gr) return;
+        if (parts[2] === 'lines') gr.lines = _lgLinesOf(el.value);
+        else { if (!gr[parts[2]] || typeof gr[parts[2]] !== 'object') gr[parts[2]] = biNew(); biPut(gr, parts[2], el.value); }
+        _lgSave();
+        return;
+    }
     var objKey = parts[0] === 'intro' ? 'lgIntro' : 'lgReflection';
     if (!lo[objKey] || typeof lo[objKey] !== 'object') lo[objKey] = {};
     var obj = lo[objKey], k = parts[1];

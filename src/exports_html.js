@@ -466,10 +466,17 @@ function mbBuildModuleHtml(model, opts) {
             } else if (it.kind === 'lgReflection') {
                 if (!inc('outcomes')) return;
                 var r = it.reflection, rid = oid + '-refl';
-                var rh = r.questions.map(function (q, qi) {
-                    return '<div class="mx-block"><p><strong>' + _hxText(q) + '</strong></p>' +
-                        (forPrint ? new Array(r.lines + 1).join('<p class="mx-lines">' + new Array(80).join('.') + '</p>')
-                                  : '<textarea class="mx-refl" rows="' + (r.lines + 1) + '" data-note="' + rid + '-' + qi + '" style="width:100%;"></textarea>') + '</div>';
+                /* 3.75.0: every group of questions, under its subheading. */
+                var groups = (r.groups && r.groups.length) ? r.groups : [{ title: '', questions: r.questions, lines: r.lines }];
+                var qn = 0;
+                var rh = groups.map(function (gr) {
+                    return (gr.title ? '<div class="mx-sub">' + _hxEsc(gr.title) + '</div>' : '') +
+                        gr.questions.map(function (q) {
+                            var qi = qn++;
+                            return '<div class="mx-block"><p><strong>' + _hxText(q) + '</strong></p>' +
+                                (forPrint ? new Array(gr.lines + 1).join('<p class="mx-lines">' + new Array(80).join('.') + '</p>')
+                                          : '<textarea class="mx-refl" rows="' + (gr.lines + 1) + '" data-note="' + rid + '-' + qi + '" style="width:100%;"></textarea>') + '</div>';
+                        }).join('');
                 }).join('');
                 add(rid, r.heading, _hxSection(rid, '', r.heading, rh));
             } else if (inc('outcomes')) {

@@ -519,8 +519,10 @@ function mbBuildModuleModel(lang, state) {
                     const n = mbSeqLgNumber(lo, loIndex, 'lgReflection');
                     out.sequence.push({ kind: 'lgReflection', reflection: {
                         heading: ((n ? n + ' ' : '') + mbLgReflectionTitle(lo, loIndex, lang)).trim(),
-                        questions: _mmStr(lo.lgReflection.questions).split('\n').map(function (q) { return q.trim(); }).filter(Boolean),
-                        lines: mbLgReflectionLines(lo)
+                        questions: _mmStr(lo.lgReflection && lo.lgReflection.questions).split('\n').map(function (q) { return q.trim(); }).filter(Boolean),
+                        lines: mbLgReflectionLines(lo),
+                        /* 3.75.0: every group of questions, the first included. */
+                        groups: mbLgReflectionGroups(lo, lang)
                     } });
                 }
             } else {
