@@ -4152,3 +4152,15 @@ button.mb-cmk-opt.is-on { outline: 3px solid #0f766e; outline-offset: 1px; }
     .cs-head { flex-wrap: wrap; }
     .cs-head .cs-heading { flex: 1 1 calc(100% - 40px); }
 }
+
+/* ── 3.74.0: 📝 Paste text (src/paste_text.js) ── */
+.btn-paste-text {
+    display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;
+    padding: 6px 12px; border: 1px solid #c7d2fe; border-radius: 6px;
+    background: #eef2ff; color: #3730a3; font: inherit; font-size: .85em; font-weight: 600; cursor: pointer;
+}
+.btn-paste-text:hover { background: #e0e7ff; border-color: #a5b4fc; }
+.btn-add-image.btn-paste-text { background: #4f46e5; color: #fff; border-color: transparent; }
+.btn-add-image.btn-paste-text:hover { background: #4338ca; }
+.objective-format-btn.btn-paste-text { background: #eef2ff; color: #3730a3; box-shadow: none; }
+.mb-block-paste.btn-paste-text { padding: 5px 10px; }

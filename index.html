@@ -23,7 +23,7 @@
 <!-- Error handler must load before any app script -->
 <script src="error-handler2.js"></script>
 <script defer src="version.js"></script>
-<link href="mb-styles.css?v=3.73.0" rel="stylesheet"/>
+<link href="mb-styles.css?v=3.74.0" rel="stylesheet"/>
 <!-- Inline favicon. Without one the browser requests /favicon.ico on
      every load and logs a 404 — harmless, but it sits in the console
      next to real errors and makes them harder to see. -->
@@ -477,6 +477,7 @@
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
 <label data-i18n="mbAdditionalIntroductionDetailsOptional" style="font-weight: 600; color: #374151;">Additional Introduction Details (Optional)</label>
 <span data-i18n="mbStartsOnNewPageIfFilled" style="color: #6b7280; font-size: 0.9em;">Starts on new page if filled</span>
+<button class="btn-paste-text" data-act="mbPasteText" data-args='["id", "intro-additional-details"]' data-i18n-title="ptTip" title="Paste copied text here, cleaned" type="button">📝 <span data-i18n="ptBtn">Paste text</span></button>
 </div>
 <textarea class="mb-content-field" data-i18n="mbEnterAnyAdditionalIntroductionContentA" data-i18n-attr="placeholder" id="intro-additional-details" placeholder="Enter any additional introduction content (acknowledgments, foreword, etc.). This will start on a new page if filled..." rows="6" style="width: 100%; padding: 10px; border: 2px solid #d1d5db; border-radius: 6px; font-size: 1em;"></textarea>
 </div>
@@ -679,6 +680,7 @@
 <button class="objective-format-btn" data-act="formatObjective" data-args='["self-check-content", "number"]' data-i18n-title="tiNumberedList" title="Numbered list" type="button"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10 6h10M10 12h10M10 18h10"/><path d="M3.9 5.6 5.3 4.9V9"/><path d="M3.5 14.3a1.45 1.45 0 0 1 2.5 1c0 1-2.5 1.8-2.5 2.9h2.9"/></svg></button>
 <button class="objective-format-btn" data-act="formatObjective" data-args='["self-check-content", "bullet"]' data-i18n-title="tiBulletList" title="Bullet list" type="button"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9.5 6h10.5M9.5 12h10.5M9.5 18h10.5"/><circle cx="4.6" cy="6" r="1.35" fill="currentColor" stroke="none"/><circle cx="4.6" cy="12" r="1.35" fill="currentColor" stroke="none"/><circle cx="4.6" cy="18" r="1.35" fill="currentColor" stroke="none"/></svg></button>
 <button class="objective-format-btn clear" data-act="formatObjective" data-args='["self-check-content", "clear"]' data-i18n-title="tiRemoveNumberingBullets" title="Remove numbering/bullets" type="button"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9.5 5h5M9.5 19h5M12 5v14"/></svg></button>
+<button class="btn-paste-text" data-act="mbPasteText" data-args='["id", "self-check-content"]' data-i18n-title="ptTip" title="Paste copied text here, cleaned" type="button">📝 <span data-i18n="ptBtn">Paste text</span></button>
 <button class="btn-remove mb-icon-btn danger" data-act="clearSelfCheckSection" data-i18n-attr="title" title="Clear all (number + content)" type="button"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg></button>
 </div>
 </div>
@@ -695,6 +697,7 @@
 <button class="objective-format-btn" data-act="formatObjective" data-args='["answers-key-content", "number"]' data-i18n-title="tiNumberedList" title="Numbered list" type="button"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10 6h10M10 12h10M10 18h10"/><path d="M3.9 5.6 5.3 4.9V9"/><path d="M3.5 14.3a1.45 1.45 0 0 1 2.5 1c0 1-2.5 1.8-2.5 2.9h2.9"/></svg></button>
 <button class="objective-format-btn" data-act="formatObjective" data-args='["answers-key-content", "bullet"]' data-i18n-title="tiBulletList" title="Bullet list" type="button"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9.5 6h10.5M9.5 12h10.5M9.5 18h10.5"/><circle cx="4.6" cy="6" r="1.35" fill="currentColor" stroke="none"/><circle cx="4.6" cy="12" r="1.35" fill="currentColor" stroke="none"/><circle cx="4.6" cy="18" r="1.35" fill="currentColor" stroke="none"/></svg></button>
 <button class="objective-format-btn clear" data-act="formatObjective" data-args='["answers-key-content", "clear"]' data-i18n-title="tiRemoveNumberingBullets" title="Remove numbering/bullets" type="button"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9.5 5h5M9.5 19h5M12 5v14"/></svg></button>
+<button class="btn-paste-text" data-act="mbPasteText" data-args='["id", "answers-key-content"]' data-i18n-title="ptTip" title="Paste copied text here, cleaned" type="button">📝 <span data-i18n="ptBtn">Paste text</span></button>
 <button class="btn-remove mb-icon-btn danger" data-act="clearAnswersKeySection" data-i18n-attr="title" title="Clear all (number + content)" type="button"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg></button>
 </div>
 </div>
@@ -967,6 +970,7 @@
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
 <label data-i18n="mbAssessmentContent" style="font-weight: 600; color: #374151;">Assessment Content</label>
 <span data-i18n="mbInstructionsCriteriaGuidelines" style="color: #6b7280; font-size: 0.9em;">Instructions, criteria, guidelines</span>
+<button class="btn-paste-text" data-act="mbPasteText" data-args='["id", "assessment-simple-content"]' data-i18n-title="ptTip" title="Paste copied text here, cleaned" type="button">📝 <span data-i18n="ptBtn">Paste text</span></button>
 </div>
 <textarea class="mb-content-field" data-i18n="mbEnterAssessmentContentInstructionsAndC" data-i18n-attr="placeholder" id="assessment-simple-content" placeholder="Enter assessment content, instructions, and criteria here..." rows="8" style="width: 100%; padding: 10px; border: 2px solid #d1d5db; border-radius: 6px; font-size: 1em; min-height: 150px; background: white;"></textarea>
 <!-- 3.57.0: more content under the first, if the author wants it (src/blocks.js) -->
@@ -1201,83 +1205,84 @@
            app.js           boot.
            autosave.js      last; observes a fully built page.
          ═══════════════════════════════════════════════════════════════ -->
-<script src="src/persistence.js?v=3.73.0"></script>
-<script src="src/project_store.js?v=3.73.0"></script>
-<script src="src/image_store.js?v=3.73.0"></script>
-<script src="src/mb-translations.js?v=3.73.0"></script>
-<script src="src/mb_state.js?v=3.73.0"></script>
-<script src="src/module_template.js?v=3.73.0"></script>
-<script src="src/bilang.js?v=3.73.0"></script>
-<script src="src/dacum_i18n.js?v=3.73.0"></script>
-<script src="src/uid.js?v=3.73.0"></script>
-<script src="src/image_prep.js?v=3.73.0"></script>
-<script src="src/image_paste.js?v=3.73.0"></script>
-<script src="src/dialog.js?v=3.73.0"></script>
-<script src="src/docx_bidi.js?v=3.73.0"></script>
-<script src="src/ui.js?v=3.73.0"></script>
-<script src="src/tabs.js?v=3.73.0"></script>
-<script src="src/covers.js?v=3.73.0"></script>
-<script src="src/cover_images.js?v=3.73.0"></script>
-<script src="src/workteam.js?v=3.73.0"></script>
-<script src="src/modules.js?v=3.73.0"></script>
-<script src="src/outcomes.js?v=3.73.0"></script>
-<script src="src/blocks.js?v=3.73.0"></script>
-<script src="src/intro_table.js?v=3.73.0"></script>
-<script src="src/learning_guide.js?v=3.73.0"></script>
-<script src="src/sheets.js?v=3.73.0"></script>
-<script src="src/content.js?v=3.73.0"></script>
-<script src="src/criteria.js?v=3.73.0"></script>
-<script src="src/assessment.js?v=3.73.0"></script>
-<script src="src/assessment_results.js?v=3.73.0"></script>
-<script src="src/rating_scale.js?v=3.73.0"></script>
-<script src="src/module-ai.js?v=3.73.0"></script>
-<script src="src/content_map.js?v=3.73.0"></script>
-<script src="src/ai_error.js?v=3.73.0"></script>
-<script src="src/suggest_panel.js?v=3.73.0"></script>
-<script src="src/coverage_view.js?v=3.73.0"></script>
-<script src="src/ta_finder.js?v=3.73.0"></script>
-<script src="src/references.js?v=3.73.0"></script>
-<script src="src/glossary.js?v=3.73.0"></script>
-<script src="src/sheet_kinds.js?v=3.73.0"></script>
-<script src="src/lo_sequence.js?v=3.73.0"></script>
-<script src="src/learner_guide.js?v=3.73.0"></script>
-<script src="src/help_modal.js?v=3.73.0"></script>
-<script src="src/resources.js?v=3.73.0"></script>
-<script src="src/custom_marks.js?v=3.73.0"></script>
-<script src="src/marks.js?v=3.73.0"></script>
-<script src="src/steps.js?v=3.73.0"></script>
-<script src="src/attachments.js?v=3.73.0"></script>
-<script src="src/module_identity.js?v=3.73.0"></script>
-<script src="src/storage.js?v=3.73.0"></script>
-<script src="src/module_card.js?v=3.73.0"></script>
-<script src="src/module_library.js?v=3.73.0"></script>
-<script src="src/tab_guard.js?v=3.73.0"></script>
-<script src="src/package_mbz.js?v=3.73.0"></script>
-<script src="src/package_ui.js?v=3.73.0"></script>
-<script src="src/package_preview.js?v=3.73.0"></script>
-<script src="src/folder_sync.js?v=3.73.0"></script>
-<script src="src/module_library_ui.js?v=3.73.0"></script>
-<script src="src/module_model.js?v=3.73.0"></script>
-<script src="src/exports_html.js?v=3.73.0"></script>
-<script src="src/font_cairo.js?v=3.73.0"></script>
-<script src="src/arabic-font.js?v=3.73.0"></script>
-<script src="src/pdf_arabic.js?v=3.73.0"></script>
-<script src="src/exports_pdf.js?v=3.73.0"></script>
-<script src="src/link_modal.js?v=3.73.0"></script>
-<script src="src/source_ai.js?v=3.73.0"></script>
-<script src="src/export_menu.js?v=3.73.0"></script>
-<script src="src/shortcuts.js?v=3.73.0"></script>
-<script src="src/exports_pptx.js?v=3.73.0"></script>
-<script src="src/word_settings.js?v=3.73.0"></script>
-<script src="src/export_ui.js?v=3.73.0"></script>
-<script src="src/exports_docx.js?v=3.73.0"></script>
-<script src="src/contentlang_ui.js?v=3.73.0"></script>
-<script src="src/history.js?v=3.73.0"></script>
-<script src="src/events.js?v=3.73.0"></script>
+<script src="src/persistence.js?v=3.74.0"></script>
+<script src="src/project_store.js?v=3.74.0"></script>
+<script src="src/image_store.js?v=3.74.0"></script>
+<script src="src/mb-translations.js?v=3.74.0"></script>
+<script src="src/mb_state.js?v=3.74.0"></script>
+<script src="src/module_template.js?v=3.74.0"></script>
+<script src="src/bilang.js?v=3.74.0"></script>
+<script src="src/dacum_i18n.js?v=3.74.0"></script>
+<script src="src/uid.js?v=3.74.0"></script>
+<script src="src/image_prep.js?v=3.74.0"></script>
+<script src="src/image_paste.js?v=3.74.0"></script>
+<script src="src/dialog.js?v=3.74.0"></script>
+<script src="src/docx_bidi.js?v=3.74.0"></script>
+<script src="src/ui.js?v=3.74.0"></script>
+<script src="src/tabs.js?v=3.74.0"></script>
+<script src="src/covers.js?v=3.74.0"></script>
+<script src="src/cover_images.js?v=3.74.0"></script>
+<script src="src/workteam.js?v=3.74.0"></script>
+<script src="src/modules.js?v=3.74.0"></script>
+<script src="src/outcomes.js?v=3.74.0"></script>
+<script src="src/paste_text.js?v=3.74.0"></script>
+<script src="src/blocks.js?v=3.74.0"></script>
+<script src="src/intro_table.js?v=3.74.0"></script>
+<script src="src/learning_guide.js?v=3.74.0"></script>
+<script src="src/sheets.js?v=3.74.0"></script>
+<script src="src/content.js?v=3.74.0"></script>
+<script src="src/criteria.js?v=3.74.0"></script>
+<script src="src/assessment.js?v=3.74.0"></script>
+<script src="src/assessment_results.js?v=3.74.0"></script>
+<script src="src/rating_scale.js?v=3.74.0"></script>
+<script src="src/module-ai.js?v=3.74.0"></script>
+<script src="src/content_map.js?v=3.74.0"></script>
+<script src="src/ai_error.js?v=3.74.0"></script>
+<script src="src/suggest_panel.js?v=3.74.0"></script>
+<script src="src/coverage_view.js?v=3.74.0"></script>
+<script src="src/ta_finder.js?v=3.74.0"></script>
+<script src="src/references.js?v=3.74.0"></script>
+<script src="src/glossary.js?v=3.74.0"></script>
+<script src="src/sheet_kinds.js?v=3.74.0"></script>
+<script src="src/lo_sequence.js?v=3.74.0"></script>
+<script src="src/learner_guide.js?v=3.74.0"></script>
+<script src="src/help_modal.js?v=3.74.0"></script>
+<script src="src/resources.js?v=3.74.0"></script>
+<script src="src/custom_marks.js?v=3.74.0"></script>
+<script src="src/marks.js?v=3.74.0"></script>
+<script src="src/steps.js?v=3.74.0"></script>
+<script src="src/attachments.js?v=3.74.0"></script>
+<script src="src/module_identity.js?v=3.74.0"></script>
+<script src="src/storage.js?v=3.74.0"></script>
+<script src="src/module_card.js?v=3.74.0"></script>
+<script src="src/module_library.js?v=3.74.0"></script>
+<script src="src/tab_guard.js?v=3.74.0"></script>
+<script src="src/package_mbz.js?v=3.74.0"></script>
+<script src="src/package_ui.js?v=3.74.0"></script>
+<script src="src/package_preview.js?v=3.74.0"></script>
+<script src="src/folder_sync.js?v=3.74.0"></script>
+<script src="src/module_library_ui.js?v=3.74.0"></script>
+<script src="src/module_model.js?v=3.74.0"></script>
+<script src="src/exports_html.js?v=3.74.0"></script>
+<script src="src/font_cairo.js?v=3.74.0"></script>
+<script src="src/arabic-font.js?v=3.74.0"></script>
+<script src="src/pdf_arabic.js?v=3.74.0"></script>
+<script src="src/exports_pdf.js?v=3.74.0"></script>
+<script src="src/link_modal.js?v=3.74.0"></script>
+<script src="src/source_ai.js?v=3.74.0"></script>
+<script src="src/export_menu.js?v=3.74.0"></script>
+<script src="src/shortcuts.js?v=3.74.0"></script>
+<script src="src/exports_pptx.js?v=3.74.0"></script>
+<script src="src/word_settings.js?v=3.74.0"></script>
+<script src="src/export_ui.js?v=3.74.0"></script>
+<script src="src/exports_docx.js?v=3.74.0"></script>
+<script src="src/contentlang_ui.js?v=3.74.0"></script>
+<script src="src/history.js?v=3.74.0"></script>
+<script src="src/events.js?v=3.74.0"></script>
 <!-- Toolbar fit. Loaded after events.js so the bar's data-act handlers
      are bound before anything measures it, and it binds nothing of its
      own on those buttons — it reads widths and sets one class. -->
-<script src="src/toolbar_fit.js?v=3.73.0"></script>
+<script src="src/toolbar_fit.js?v=3.74.0"></script>
 <!-- Side-rail toggle. Inlined rather than shipped as src/sidenav.js so
      the feature has no second file to deploy: it is 30 lines, it binds
      one listener to one button, and it touches nothing the dispatch
@@ -1483,8 +1488,8 @@
     }
 })();
 </script>
-<script src="src/sw_register.js?v=3.73.0"></script>
-<script src="src/app.js?v=3.73.0"></script>
-<script src="src/autosave.js?v=3.73.0"></script>
+<script src="src/sw_register.js?v=3.74.0"></script>
+<script src="src/app.js?v=3.74.0"></script>
+<script src="src/autosave.js?v=3.74.0"></script>
 </body>
 </html>
