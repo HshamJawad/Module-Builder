@@ -468,13 +468,20 @@ function _pdfBuild(pdf, model, lang) {
     if (model.cover.notesBelow) w.text(model.cover.notesBelow);
 
     /* Introduction */
-    if (model.intro.team.length || model.intro.blocks.length || model.intro.additional) {
+    var _itRows = (model.intro.table || []);
+    if (model.intro.team.length || model.intro.blocks.length || model.intro.additional || _itRows.length) {
         w.heading(t('intro'), 2);
         if (model.intro.team.length) {
             w.label(t('team'));
             w.table([t('name'), t('task'), t('location')],
                 model.intro.team.map(function (m) { return [m.name, m.task, m.location]; }),
                 [w.CW * 0.34, w.CW * 0.4, w.CW * 0.26], { size: S.body });
+        }
+        /* 3.69.0: the module overview table, 160 mm wide (4.5 + 11.5 cm). */
+        if (_itRows.length) {
+            var itW = Math.min(160, w.CW);
+            w.table(null, _itRows.map(function (r) { return [r.label, r.value]; }),
+                [itW * 0.28125, itW * 0.71875], { size: S.body });
         }
         model.intro.blocks.forEach(function (b) {
             if (b.title) w.label(b.title);

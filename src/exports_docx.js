@@ -217,7 +217,8 @@ async function exportToDocx() {
     /* The qualifications-framework card used to count as intro content
        of its own. Its fields are rows of the module information table
        now, so they are already covered by hasCoversContent. */
-    const hasIntroContent = hasWorkTeam || introAdditionalDetails.trim() || hasIntroBlocks;
+    const hasIntroTable   = typeof mbIntroTableFilled === 'function' && mbIntroTableFilled(mbState.introTable);   // 3.69.0
+    const hasIntroContent = hasWorkTeam || introAdditionalDetails.trim() || hasIntroBlocks || hasIntroTable;
     const infoTitle = _info.title || '';
     const contentSections = (_info.contentSections || []);
     let hasInfoContent = false;
@@ -923,8 +924,11 @@ async function exportToDocx() {
         /* Only the filled sections exist as far as the document is
            concerned; an empty one must not create a blank page. */
         const introBlocks = mbBlocksFilled(mbState.introBlocks);
+        /* 3.69.0: the module overview table (intro_table.js) — all ten rows
+           when any box has text, none otherwise. */
+        const introTableRows = (typeof mbIntroTableRows === 'function') ? mbIntroTableRows(mbState.introTable, _mbLang()) : [];
 
-        if (hasWorkTeam || introAdditionalDetails.trim() || introBlocks.length) {
+        if (hasWorkTeam || introAdditionalDetails.trim() || introBlocks.length || introTableRows.length) {
             const { Table, TableRow, TableCell, WidthType, BorderStyle } = mbDocxLib();
             const introChildren = [];
             
@@ -1068,10 +1072,50 @@ async function exportToDocx() {
                 introChildren.push(workTeamTable);
             }
             
+            /* 3.69.0: the module overview table — its own page, 16 cm wide:
+               the fixed heading on the start side (4.5 cm, bold, shaded),
+               the author's text beside it (11.5 cm), one paragraph per line. */
+            if (introTableRows.length) {
+                if (hasWorkTeam) introChildren.push(new Paragraph({ children: [new PageBreak()] }));
+                const W = (typeof MB_INTRO_TABLE_DXA !== 'undefined') ? MB_INTRO_TABLE_DXA : { total: 9072, label: 2551, value: 6521 };
+                const line = { style: BorderStyle.SINGLE, size: 4, color: '000000' };
+                const para = (text, head) => new Paragraph({
+                    children: [new TextRun(Object.assign({ text: text, bold: !!head, size: _wsBody(), rightToLeft: _mbRtl() },
+                        head ? { color: _wsTblText() } : {}))],
+                    alignment: _mbStart(AlignmentType),
+                    bidirectional: _mbRtl(),
+                    spacing: { after: 60 },
+                });
+                const cellOpts = { margins: { top: 100, bottom: 100, left: 120, right: 120 } };
+                const rows = introTableRows.map(r => {
+                    const lines = String(r.value || '').split('\n');
+                    const valueParas = lines.map(l => para(l));
+                    const labelCell = new TableCell(Object.assign({
+                        children: [para(r.label, true)],
+                        width: { size: W.label, type: WidthType.DXA },
+                        shading: { fill: _wsTblFill(), type: 'clear' },   // the header fill of Export settings
+                    }, cellOpts));
+                    const valueCell = new TableCell(Object.assign({
+                        children: valueParas.length ? valueParas : [para('')],
+                        width: { size: W.value, type: WidthType.DXA },
+                    }, cellOpts));
+                    /* The start side comes first in reading order: on an
+                       RTL page the heading stays on the right. */
+                    return new TableRow({ children: [labelCell, valueCell], cantSplit: true });
+                });
+                introChildren.push(new Table({
+                    rows: rows,
+                    width: { size: W.total, type: WidthType.DXA },   // 16 cm
+                    columnWidths: [W.label, W.value],
+                    layout: 'fixed',
+                    borders: { top: line, bottom: line, left: line, right: line, insideHorizontal: line, insideVertical: line },
+                }));
+            }
+
             // Additional Introduction Details (on new page if filled)
             if (introAdditionalDetails.trim()) {
                 // Add page break if there was work team content
-                if (hasWorkTeam) {
+                if (hasWorkTeam || introTableRows.length) {
                     introChildren.push(new Paragraph({
                         children: [new PageBreak()],
                     }));
@@ -1100,7 +1144,7 @@ async function exportToDocx() {
                page break goes BEFORE every section that has something in
                front of it — the first one breaks only if the work team or
                the additional details already wrote onto the page. */
-            let introPageUsed = !!(hasWorkTeam || introAdditionalDetails.trim());
+            let introPageUsed = !!(hasWorkTeam || introAdditionalDetails.trim() || introTableRows.length);
 
             introBlocks.forEach(block => {
                 if (introPageUsed) {

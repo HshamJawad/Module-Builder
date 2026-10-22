@@ -4,6 +4,13 @@
 // Extracted verbatim from Module_Builder.html lines 2932-3271 (v2.0-legacy).
 // ============================================================
 
+/* Every module select: the Module tab's and the bar at the top of each tab
+   (3.69.0: Module Information and Reflection too). A `var`, not a const
+   further down: renderModuleSelector reads it, and it must exist first. */
+var MB_MODULE_SELECTORS = ['current-module-selector', 'info-module-selector', 'activity-module-selector',
+                           'assessment-module-selector', 'mapping-module-selector',
+                           'moduleinfo-module-selector', 'reflection-module-selector'];
+
 /**
  * Boot: hands over to the module library (module_library.js), which
  * opens the last project — or, when DACUM Live Pro has just handed
@@ -302,11 +309,7 @@ function renderModuleSelector() {
         mbState.modulesData.map(m => `<option value="${m.id}">${mbModuleLabel(m)}${typeof mbModuleTaSuffix === 'function' ? mbModuleTaSuffix(m) : ''}</option>`).join('');
 
     // Sync ALL module selectors (basic-info + tab bars)
-    ['current-module-selector',
-     'info-module-selector',
-     'activity-module-selector',
-     'assessment-module-selector',
-     'mapping-module-selector'].forEach(id => {
+    MB_MODULE_SELECTORS.forEach(id => {
         const sel = document.getElementById(id);
         if (!sel) return;
         sel.innerHTML = optionsHtml;
@@ -321,8 +324,6 @@ function renderModuleSelector() {
     updateModuleSummary();
 }
 
-const MB_MODULE_SELECTORS = ['current-module-selector', 'info-module-selector', 'activity-module-selector',
-                             'assessment-module-selector', 'mapping-module-selector'];
 
 /**
  * Every module selector ends here. The module is opened through the

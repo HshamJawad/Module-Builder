@@ -143,6 +143,8 @@ async function clearAll() {
         if (introDetails) introDetails.value = '';
         mbState.introBlocks = [];
         mbRenderBlocks('intro');
+        mbState.introTable = (typeof mbNormalizeIntroTable === 'function') ? mbNormalizeIntroTable(null) : null;   // 3.69.0
+        if (typeof mbRenderIntroTable === 'function') mbRenderIntroTable(true);
         mbState.includeLearningGuide = false;
         if (typeof mbRenderLearningGuideToggle === 'function') mbRenderLearningGuideToggle();
 

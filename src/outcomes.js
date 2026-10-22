@@ -4,6 +4,11 @@
 // Extracted verbatim from Module_Builder.html lines 3272-3598 (v2.0-legacy).
 // ============================================================
 
+/* 3.69.0: every select that chooses the learning outcome — the Module tab's
+   and the bar at the top of each tab. One list, so a new bar is one line. */
+var MB_LO_SELECTORS = ['current-lo-selector', 'info-lo-selector', 'activity-lo-selector', 'mapping-lo-selector',
+                       'assessment-lo-selector', 'moduleinfo-lo-selector', 'reflection-lo-selector'];
+
 /**
  * A caller-supplied title, or nothing.
  *
@@ -69,7 +74,7 @@ async function addNewLearningOutcome(defaultTitle) {
     
     // Select the newly created LO
     mbState.currentLOId = newLO.id;
-    ['current-lo-selector','info-lo-selector','activity-lo-selector'].forEach(id => { const s=document.getElementById(id); if(s) s.value=mbState.currentLOId; });
+    MB_LO_SELECTORS.forEach(id => { const s=document.getElementById(id); if(s) s.value=mbState.currentLOId; });
     switchLearningOutcome();
     
     updateModuleSummary(); // Update module stats
@@ -109,7 +114,7 @@ function renderLOSelector() {
     }
 
     // Populate and sync all three selectors
-    ['current-lo-selector', 'info-lo-selector', 'activity-lo-selector', 'mapping-lo-selector', 'assessment-lo-selector'].forEach(id => {
+    MB_LO_SELECTORS.forEach(id => {
         const sel = document.getElementById(id);
         if (!sel) return;
         sel.innerHTML = optionsHtml;
@@ -126,10 +131,10 @@ function switchLearningOutcome() {
 
 // Called from inline selectors in Info / Activity tabs
 function switchLearningOutcomeFromTab(source) {
-    const selectorId = source === 'info' ? 'info-lo-selector'
-        : source === 'mapping' ? 'mapping-lo-selector'
-        : source === 'assessment' ? 'assessment-lo-selector' : 'activity-lo-selector';
-    const selector = document.getElementById(selectorId);
+    /* 3.69.0: every bar's select is «<source>-lo-selector» (Module
+       Information and Reflection joined the four). */
+    const selector = document.getElementById((source || 'activity') + '-lo-selector');
+    if (!selector) return;
     _applyLOSwitch(selector.value);
 }
 
@@ -140,7 +145,7 @@ function _applyLOSwitch(selectedLOId) {
         const summary = document.getElementById('lo-sheets-summary');
         if (summary) summary.style.display = 'none';
         // Sync all to empty
-        ['current-lo-selector', 'info-lo-selector', 'activity-lo-selector', 'mapping-lo-selector', 'assessment-lo-selector'].forEach(id => {
+        MB_LO_SELECTORS.forEach(id => {
             const s = document.getElementById(id);
             if (s) s.value = '';
         });
@@ -156,7 +161,7 @@ function _applyLOSwitch(selectedLOId) {
     mbState.currentLOId = selectedLOId;
 
     // Sync all selectors to this value
-    ['current-lo-selector', 'info-lo-selector', 'activity-lo-selector', 'mapping-lo-selector', 'assessment-lo-selector'].forEach(id => {
+    MB_LO_SELECTORS.forEach(id => {
         const s = document.getElementById(id);
         if (s) s.value = selectedLOId;
     });
@@ -211,6 +216,10 @@ function updateLOSummary() {
 function updatePerformanceCriteriaPanel() {
     const panel = document.getElementById('performance-criteria-panel');
     const content = document.getElementById('performance-criteria-content');
+    /* 3.69.0: the card was removed from the Module tab. The criteria are
+       still kept with the outcome (and reach the sheets and the export);
+       there is simply nothing to paint here any more. */
+    if (!panel || !content) return;
     
     if (!mbState.currentLOId) {
         panel.style.display = 'none';

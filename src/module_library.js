@@ -87,6 +87,7 @@ function mbCollectShared() {
         teamMemberIdCounter:    mbState.teamMemberIdCounter || 0,
         introAdditionalDetails: mbState.introAdditionalDetails,
         introBlocks:            mbState.introBlocks      || [],
+        introTable:             mbState.introTable       || null,   // 3.69.0 — intro_table.js
         includeLearningGuide:   !!mbState.includeLearningGuide,
         assessmentContent:      mbState.assessmentContent,
         assessmentBlocks:       mbState.assessmentBlocks || [],   // 3.57.0
@@ -119,7 +120,7 @@ function _mbDefaultShared() {
         coverRowIdCounter: order.length,
         coverFrameworkSeeded: true,
         teamMembers: [], teamMemberIdCounter: 0,
-        introAdditionalDetails: biNew(), introBlocks: [], includeLearningGuide: false,
+        introAdditionalDetails: biNew(), introBlocks: [], introTable: null, includeLearningGuide: false,
         assessmentContent: biNew(), assessmentBlocks: [],
         referencesTitle: null, referencesData: [{ id: 1, value: '' }], refIdCounter: 1,
         glossary: { title: null, tables: [] },
@@ -171,6 +172,9 @@ function mbApplyProjectShared(data) {
 
         mbState.introAdditionalDetails = biUpgrade(data.introAdditionalDetails);
         mbState.introBlocks = (typeof mbNormalizeBlocks === 'function') ? mbNormalizeBlocks(data.introBlocks) : (data.introBlocks || []);
+        /* 3.69.0: the module overview table — an older project has none. */
+        mbState.introTable = (typeof mbNormalizeIntroTable === 'function') ? mbNormalizeIntroTable(data.introTable) : (data.introTable || null);
+        if (typeof mbRenderIntroTable === 'function') mbRenderIntroTable(true);
         mbState.includeLearningGuide = !!data.includeLearningGuide;
         if (typeof mbRenderLearningGuideToggle === 'function') mbRenderLearningGuideToggle();
 
@@ -453,7 +457,7 @@ function _mbRenderOpenModule() {
     }
     if (typeof renderModuleSelector === 'function') renderModuleSelector();
     if (typeof renderLOSelector === 'function') renderLOSelector();
-    ['current-lo-selector', 'info-lo-selector', 'activity-lo-selector'].forEach(function (id) {
+    MB_LO_SELECTORS.forEach(function (id) {
         var s = document.getElementById(id);
         if (s && mbState.currentLOId) s.value = mbState.currentLOId;
     });

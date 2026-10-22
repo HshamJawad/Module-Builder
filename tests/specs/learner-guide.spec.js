@@ -107,10 +107,13 @@ test('the standard template is unchanged: self-check, resources and checklist st
 test('the editor: the unit card writes the outcome; the activity row is saved with the sheet', async ({ page }) => {
   const errors = await openApp(page, { contentLang: 'en' });
   await buildGuide(page);
-  await tab(page, 'basic-info');
+  // 3.69.0: the introduction in Module Information, the reflection in its own tab
+  await tab(page, 'module-info');
   await expect(page.locator('#lg-unit-section')).toBeVisible();
-  await page.locator('[data-lg-field="intro.body"]').fill('Typed introduction');
-  await page.locator('[data-lg-field="refl.questions"]').click();
+  await page.locator('#lg-unit-section [data-lg-field="intro.body"]').fill('Typed introduction');
+  await tab(page, 'reflection');
+  await expect(page.locator('#lg-reflection-section')).toBeVisible();
+  await page.locator('#lg-reflection-section [data-lg-field="refl.questions"]').click();
   await page.keyboard.type('Typed question');
   expect(await page.evaluate(() => [mbCurrentLOObject().lgIntro.body.en, mbCurrentLOObject().lgReflection.questions.en.endsWith('Typed question')]))
     .toEqual(['Typed introduction', true]);

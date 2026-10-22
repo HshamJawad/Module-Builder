@@ -57,6 +57,12 @@ async function switchTab(tabName) {
         if (tabName === 'activity') ensureFirstActivitySheet();
     }
     
+    /* 3.69.0: the learning unit card (Module Information) and the
+       reflection (Reflection tab) paint for the outcome open now. */
+    if ((tabName === 'module-info' || tabName === 'reflection') && typeof mbRenderLgUnit === 'function') {
+        try { mbRenderLgUnit(true); } catch (e) { /* not ready */ }
+    }
+
     if (tabName === 'mapping') {
         /* Sheets can be removed, and mapped items returned to Available,
            from the Information / Activity / Assessment tabs — repaint the

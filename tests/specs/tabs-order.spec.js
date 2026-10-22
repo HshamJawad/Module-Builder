@@ -1,6 +1,7 @@
 // 3.63.0: the tabs in the order of the exported document — Module, Module
 // Information, Front Cover, Introduction, sheets, Assessment, References,
 // Back Cover. Only places on screen moved: saving and the export are unchanged.
+// 3.69.0: Reflection (Learner guide only) after the activity sheets.
 const { test, expect } = require('@playwright/test');
 const { openApp, tab } = require('../helpers');
 
@@ -8,7 +9,9 @@ test('the side navigation order, and each part in its own tab', async ({ page })
   const errors = await openApp(page, { lang: 'en' });
   const names = await page.locator('#mb-sidenav .tabs .tab').evaluateAll(b => b.map(x => x.getAttribute('data-args') || x.id));
   expect(names).toEqual(['["basic-info"]', '["module-info"]', '["covers"]', '["intro"]', '["info"]', '["activity"]',
-    '["assessment"]', '["references"]', '["back-cover"]', 'mb-settings-nav', '["help"]']);
+    '["reflection"]', '["assessment"]', '["references"]', '["back-cover"]', 'mb-settings-nav', '["help"]']);
+  // 3.69.0: the Reflection tab belongs to the Learner guide — hidden in the standard template
+  await expect(page.locator('#mb-sidenav .tab[data-args=\'["reflection"]\']')).toBeHidden();
   const inTab = (id) => page.evaluate(i => document.getElementById(i).closest('.tab-content').id, id);
   expect(await inTab('covers-table-container')).toBe('module-info-tab');
   expect(await inTab('covers-additional-info')).toBe('module-info-tab');
