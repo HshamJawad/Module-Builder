@@ -1784,6 +1784,20 @@ async function exportToDocx() {
                     }
                     _pushCsHeading(cs);
                     const pt = processTextForWordExport(cs.text || '');
+                    /* 3.71.0: a section with no picture is printed as plain
+                       paragraphs, justified — no table, no empty picture
+                       cell beside it. */
+                    if (!imgs.length) {
+                        String(pt).split('\n').forEach(l => {
+                            if (!l.trim()) return;
+                            ch.push(new Paragraph({ children: [new TextRun({ text: l, size: _wsBody(), rightToLeft: _mbRtl() })],
+                                alignment: AlignmentType.JUSTIFIED, bidirectional: _mbRtl(), spacing: { after: 120, line: 300 } }));
+                        });
+                        ch.push(new Paragraph({ children: [new TextRun({ text: '' })], spacing: { after: 120 } }));
+                        if (cs.marks) { cs.marks.forEach(m => { if (m.text && m.text.trim()) { const mt = _mbDocxMarkType(m.key); if (mt) { ch.push(buildMarkDocxTable(mt, m.text)); } } }); }
+                        if (cs.tables && cs.tables.length) cs.tables.forEach(t => _pushUserTable(t, ch));
+                        return;
+                    }
                     const row1 = [new TableCell({ children: String(pt).split('\n').filter((l, i, a) => l.trim() || a.length === 1).map(l => new Paragraph({ children: [new TextRun({ text: l, size: _wsBody(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 80 } })), width: { size: 4536, type: WidthType.DXA }, margins: { top: 150, bottom: 150, left: 150, right: 150 }, verticalAlign: 'center' })];
                     if (imgs.length > 0) { try { row1.push(new TableCell({ children: _imgCellCh(imgs[0], (cs.__imgCaps || [])[0]), width: { size: 4536, type: WidthType.DXA }, margins: { top: 150, bottom: 150, left: 150, right: 150 }, verticalAlign: 'center' })); } catch(e) { row1.push(new TableCell({ children: [new Paragraph({ text: '' })], width: { size: 4536, type: WidthType.DXA } })); } }
                     else { row1.push(new TableCell({ children: [new Paragraph({ text: '' })], width: { size: 4536, type: WidthType.DXA } })); }
@@ -1899,15 +1913,22 @@ async function exportToDocx() {
                     const pt = processTextForWordExport(step.text || '');
                     let sImgs = (activity.images && activity.images[step.stepId]) || [];
                     if (!Array.isArray(sImgs)) sImgs = [sImgs];
-                    const sr1 = [new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: pt, size: _wsBody(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl() })], width: { size: 4536, type: WidthType.DXA }, margins: { top: 150, bottom: 150, left: 150, right: 150 }, verticalAlign: 'center' })];
+                    /* 3.71.0: a step with no picture is ONE cell across the
+                       table's width — no empty picture cell — with one empty
+                       line under its text. */
+                    const sr1 = sImgs.length ? [new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: pt, size: _wsBody(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl() })], width: { size: 4536, type: WidthType.DXA }, margins: { top: 150, bottom: 150, left: 150, right: 150 }, verticalAlign: 'center' })]
+                        : [new TableCell({ children: String(pt).split('\n').filter((l, i, a) => l.trim() || a.length === 1)
+                                .map(l => new Paragraph({ children: [new TextRun({ text: l, size: _wsBody(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 60 } }))
+                                .concat([new Paragraph({ children: [new TextRun({ text: '', size: _wsBody() })] })]),
+                            width: { size: 9072, type: WidthType.DXA }, margins: { top: 150, bottom: 150, left: 150, right: 150 } })];
                     if (sImgs.length > 0) { try { sr1.push(new TableCell({ children: _imgCellCh(sImgs[0], (step.__imgCaps || [])[0]), width: { size: 4536, type: WidthType.DXA }, margins: { top: 150, bottom: 150, left: 150, right: 150 }, verticalAlign: 'center' })); } catch(e) { sr1.push(new TableCell({ children: [new Paragraph({ text: '' })], width: { size: 4536, type: WidthType.DXA } })); } }
-                    else { sr1.push(new TableCell({ children: [new Paragraph({ text: '' })], width: { size: 4536, type: WidthType.DXA } })); }
                     const sRows = [new TableRow({ children: sr1 })];
                     for (let ii=1;ii<sImgs.length;ii++){try{sRows.push(new TableRow({children:[new TableCell({children:[new Paragraph({text:''})],width:{size:4536,type:WidthType.DXA}}),new TableCell({children:_imgCellCh(sImgs[ii], (step.__imgCaps || [])[ii]),width:{size:4536,type:WidthType.DXA},margins:{top:100,bottom:100,left:150,right:150}})]}))}catch(e){}}
                     const bdr2 = { top:{style:BorderStyle.SINGLE,size:1,color:'000000'}, bottom:{style:BorderStyle.SINGLE,size:1,color:'000000'}, left:{style:BorderStyle.SINGLE,size:1,color:'000000'}, right:{style:BorderStyle.SINGLE,size:1,color:'000000'}, insideHorizontal:{style:BorderStyle.SINGLE,size:1,color:'000000'}, insideVertical:{style:BorderStyle.SINGLE,size:1,color:'000000'} };
                     /* A step of a table or a note only has no text box to print. */
                     if ((step.text && step.text.trim()) || sImgs.length) {
-                        ch.push(new Table({ rows: sRows, width: { size: 9072, type: WidthType.DXA }, borders: bdr2 }));
+                        ch.push(new Table(Object.assign({ rows: sRows, width: { size: 9072, type: WidthType.DXA }, borders: bdr2 },
+                            sImgs.length ? {} : { columnWidths: [9072], layout: 'fixed' })));
                         ch.push(new Paragraph({ children: [new TextRun({ text: '' })], spacing: { after: 200 } }));
                     }
                     if (step.marks) { step.marks.forEach(m => { if (m.text && m.text.trim()) { const mt = _mbDocxMarkType(m.key); if (mt) { ch.push(buildMarkDocxTable(mt, m.text)); } } }); }
