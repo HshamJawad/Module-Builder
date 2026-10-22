@@ -124,3 +124,45 @@ test('reflection: the contributes box beside the heading; Paste text under the q
   expect(await page.evaluate(() => mbCurrentLOObject().lgReflectionMore[0].questions.en)).toContain('hardest part');
   expect(errors).toEqual([]);
 });
+
+// 3.77.0: ✕ Clear beside 📝 Paste text, the answer lines a small box on the
+// same line; Undo / Redo bring back cleared, pasted or typed questions.
+test('reflection: Clear beside Paste text, a small lines box on their line; Undo / Redo', async ({ page }) => {
+  const errors = await openApp(page, { handoff: fixture('dacum-handoff.json'), lang: 'en', contentLang: 'en' });
+  await guide(page);
+  await tab(page, 'reflection');
+  const host = page.locator('#lg-reflection-section');
+  const first = host.locator('.lg-part').first();
+  const row = first.locator('.lg-tools-row');
+  await expect(row.locator('.btn-paste-text').first()).toContainText('Paste text');
+  await expect(row.locator('.lg-clear-btn')).toContainText('Clear');
+  const lines = row.locator('input.lg-lines');
+  const lb = await lines.boundingBox(), pb = await row.locator('.lg-clear-btn').boundingBox();
+  expect(lb.width).toBeLessThan(80);                                        // two digits and its arrows
+  expect(Math.abs((lb.y + lb.height / 2) - (pb.y + pb.height / 2))).toBeLessThan(12);   // the same line
+
+  const q = host.locator('[data-lg-field="refl.questions"]');
+  await q.fill('Question one?\nQuestion two?');
+  await page.locator('#mb-tab-title').click();                              // leave the field: one step
+  await row.locator('.lg-clear-btn').click();
+  await expect(q).toHaveValue('');
+  await page.locator('#mb-tab-title').click();
+  await page.evaluate(() => mbUndo());
+  await expect(q).toHaveValue('Question one?\nQuestion two?');
+  expect(await page.evaluate(() => mbCurrentLOObject().lgReflection.questions.en)).toBe('Question one?\nQuestion two?');
+  await page.evaluate(() => mbRedo());
+  await expect(q).toHaveValue('');
+  await page.evaluate(() => mbUndo());
+  await expect(q).toHaveValue('Question one?\nQuestion two?');
+
+  // an added group too
+  await host.locator('.lg-refl-add').click();
+  const g = host.locator('.lg-refl-more').first();
+  await g.locator('textarea').fill('Added question?');
+  await page.locator('#mb-tab-title').click();
+  await g.locator('.lg-clear-btn').click();
+  await expect(g.locator('textarea')).toHaveValue('');
+  await page.evaluate(() => mbUndo());
+  await expect(host.locator('.lg-refl-more textarea').first()).toHaveValue('Added question?');
+  expect(errors).toEqual([]);
+});

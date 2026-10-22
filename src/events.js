@@ -105,7 +105,9 @@ function mbDispatch(ev) {
        invisible, so it is caught. */
     /* 3.29.0: Undo / Redo — the module as it was before the action
        (history.js keeps it only if the action changed something). */
-    var hist = (typeof mbHistBegin === 'function') ? mbHistBegin(name) : null;
+    /* 3.77.0: not on every keystroke — typing is recorded once per field
+       visit (history.js); a step per key also copied the module per key. */
+    var hist = (ev.type !== 'input' && typeof mbHistBegin === 'function') ? mbHistBegin(name) : null;
     var out;
     try {
         out = fn.apply(el, args.concat([el, ev]));

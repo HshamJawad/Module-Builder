@@ -45,6 +45,7 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgReflNote: 'For the learning unit chosen in the bar above. Empty parts are not exported.',
         lgReflNoUnit: 'Choose a learning unit in the bar above to write its reflection.',
         lgReflMore: '➕ Add more questions',
+        lgClear: 'Clear', lgClearTip: 'Empty this box (Undo brings it back)',
         lgReflMoreHead: 'More questions {v0}',
         lgReflMoreTitlePh: 'Subheading of these questions (optional)…',
         lgReflMoreRemove: 'Remove these questions',
@@ -118,6 +119,7 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgReflNote: 'Pour l’unité d’apprentissage choisie dans la barre ci-dessus. Les parties vides ne sont pas exportées.',
         lgReflNoUnit: 'Choisissez une unité d’apprentissage dans la barre ci-dessus pour rédiger sa réflexion.',
         lgReflMore: '➕ Ajouter d’autres questions',
+        lgClear: 'Vider', lgClearTip: 'Vider ce cadre (Annuler le rétablit)',
         lgReflMoreHead: 'Autres questions {v0}',
         lgReflMoreTitlePh: 'Sous-titre de ces questions (facultatif)…',
         lgReflMoreRemove: 'Supprimer ces questions',
@@ -191,6 +193,7 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgReflNote: 'للوحدة التعلمية المختارة في الشريط أعلاه. الأجزاء الفارغة لا تُصدَّر.',
         lgReflNoUnit: 'اختر وحدة تعلمية من الشريط أعلاه لكتابة تأملها.',
         lgReflMore: '➕ إضافة أسئلة أخرى',
+        lgClear: 'تفريغ المحتوى', lgClearTip: 'تفريغ هذا المربع (التراجع يعيده)',
         lgReflMoreHead: 'أسئلة إضافية {v0}',
         lgReflMoreTitlePh: 'عنوان فرعي لهذه الأسئلة (اختياري)…',
         lgReflMoreRemove: 'حذف هذه الأسئلة',
@@ -552,11 +555,7 @@ function _lgRenderPart(part, force) {
           field('refl.title', 'input', _lgT('lgReflTitlePh', { v0: loIndex + 1 }), g(refl.title)) +
           '<label class="lg-sub">' + _lgEsc(_lgT('lgReflQuestionsLabel')) + '</label>' +
           field('refl.questions', 'textarea', _lgT('lgReflQuestionsPh'), g(refl.questions), 5) +
-          _lgPasteBtn('refl.questions') +
-          '<div class="lg-row">' +
-            '<label>' + _lgEsc(_lgT('lgReflLines')) + ' <input type="number" min="1" max="12" class="lg-lines" value="' + lines + '"' +
-              ' data-act="mbLgEdit" data-on="change" data-args=\'["refl.lines"]\'/></label>' +
-          '</div>' +
+          _lgToolsRow('refl.questions', 'refl.lines', lines) +
         '</div>' +
         /* 3.75.0: more groups of questions, the same card repeated. */
         (Array.isArray(lo.lgReflectionMore) ? lo.lgReflectionMore : []).map(function (gr, gi) {
@@ -575,18 +574,34 @@ function _lgRenderPart(part, force) {
                 f('title', 'input', _lgT('lgReflMoreTitlePh'), g(gr.title)) +
                 '<label class="lg-sub">' + _lgEsc(_lgT('lgReflQuestionsLabel')) + '</label>' +
                 f('questions', 'textarea', _lgT('lgReflQuestionsPh'), g(gr.questions), 4) +
-                _lgPasteBtn('more.' + gr.uid + '.questions') +
-                '<div class="lg-row"><label>' + _lgEsc(_lgT('lgReflLines')) + ' <input type="number" min="1" max="12" class="lg-lines" value="' + _lgLinesOf(gr.lines) + '"' +
-                  ' data-act="mbLgEdit" data-on="change" data-args=\'["more.' + _lgEsc(gr.uid) + '.lines"]\'/></label></div>' +
+                _lgToolsRow('more.' + gr.uid + '.questions', 'more.' + gr.uid + '.lines', _lgLinesOf(gr.lines)) +
               '</div>';
         }).join('') +
         '<button type="button" class="mb-block-add lg-refl-add" data-act="mbLgReflMoreAdd">' + _lgEsc(_lgT('lgReflMore')) + '</button>';
 }
 
-/* 3.76.0: 📝 Paste text under a box of reflection questions (paste_text.js). */
-function _lgPasteBtn(field) {
-    if (typeof mbPasteTextBtnHtml !== 'function') return '';
-    return '<div class="lg-paste-row">' + mbPasteTextBtnHtml('lg', field) + '</div>';
+/* 3.76.0 / 3.77.0: one line under a box of reflection questions —
+   📝 Paste text (paste_text.js), ✕ Clear, and the answer lines (a small
+   two-digit box with its arrows). */
+function _lgToolsRow(field, linesField, lines) {
+    return '<div class="lg-tools-row">' +
+        ((typeof mbPasteTextBtnHtml === 'function') ? mbPasteTextBtnHtml('lg', field) : '') +
+        '<button type="button" class="lg-clear-btn" data-act="mbLgClearField" data-args=\'["' + _lgEsc(field) + '"]\'' +
+          ' title="' + _lgEsc(_lgT('lgClearTip')) + '">✕ <span>' + _lgEsc(_lgT('lgClear')) + '</span></button>' +
+        '<label class="lg-lines-label">' + _lgEsc(_lgT('lgReflLines')) +
+          ' <input type="number" min="1" max="12" step="1" inputmode="numeric" class="lg-lines" value="' + lines + '"' +
+          ' data-act="mbLgEdit" data-on="change" data-args=\'["' + _lgEsc(linesField) + '"]\'/></label>' +
+      '</div>';
+}
+
+/** ✕ Clear: empties a box of the card. A button press, so Undo brings
+ *  the text back (history.js records every data-act). */
+function mbLgClearField(field) {
+    var box = document.querySelector('[data-lg-field="' + String(field).replace(/"/g, '') + '"]');
+    if (!box || !box.value) return;
+    box.value = '';
+    box.dispatchEvent(new Event('input', { bubbles: true }));
+    try { box.focus(); } catch (e) { /* hidden */ }
 }
 
 /* 3.75.0: add / remove a group of reflection questions. */
