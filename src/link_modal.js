@@ -46,7 +46,12 @@ var _LM_STRINGS = {
         edit: 'Edit',
         remove: 'Remove',
         close: 'Close', save: 'Save', saved: 'Saved',
-        unsaved: 'You have unsaved changes. Press Close again to discard them.'
+        unsaved: 'You have unsaved changes. Press Close again to discard them.',
+        linkN: 'Link {n}',
+        addLink: '➕ Add another link',
+        removeLink: '🗑 Remove this link',
+        linksNote: 'Each link has its own QR code and is printed as its own row on the sheet, in this order. A link left empty is not kept.',
+        linksCount: '{n} links'
     },
     fr: {
         btn: 'Lien / QR',
@@ -75,7 +80,12 @@ var _LM_STRINGS = {
         edit: 'Modifier',
         remove: 'Supprimer',
         close: 'Fermer', save: 'Enregistrer', saved: 'Enregistré',
-        unsaved: 'Modifications non enregistrées. Appuyez de nouveau sur Fermer pour les abandonner.'
+        unsaved: 'Modifications non enregistrées. Appuyez de nouveau sur Fermer pour les abandonner.',
+        linkN: 'Lien {n}',
+        addLink: '➕ Ajouter un autre lien',
+        removeLink: '🗑 Supprimer ce lien',
+        linksNote: 'Chaque lien a son propre code QR et s’imprime sur sa propre ligne de la fiche, dans cet ordre. Un lien laissé vide n’est pas conservé.',
+        linksCount: '{n} liens'
     },
     ar: {
         btn: 'رابط / QR',
@@ -104,7 +114,12 @@ var _LM_STRINGS = {
         edit: 'تعديل',
         remove: 'حذف',
         close: 'إغلاق', save: 'حفظ', saved: 'تم الحفظ',
-        unsaved: 'لديك تغييرات غير محفوظة. اضغط «إغلاق» مرة أخرى لتجاهلها.'
+        unsaved: 'لديك تغييرات غير محفوظة. اضغط «إغلاق» مرة أخرى لتجاهلها.',
+        linkN: 'الرابط {n}',
+        addLink: '➕ إضافة رابط آخر',
+        removeLink: '🗑 حذف هذا الرابط',
+        linksNote: 'لكل رابط رمز استجابة خاص به، ويُطبع كل رابط في صف مستقل على الورقة بهذا الترتيب. الرابط الفارغ لا يُحفظ.',
+        linksCount: '{n} روابط'
     }
 };
 
@@ -166,6 +181,41 @@ function mbLinkIsVideo(url, type) {
     return !!mbVideoEmbed(url);
 }
 
+/* ── 3.70.0: several links on one sheet ───────────────────────
+   The FIRST link still lives where it always did — the hidden fields
+   (linkSubject / linkUrl / linkType) and mbState.infoQRImage /
+   activityQRImage — so a project written before this release, and every
+   path that reads those, is unchanged. The others are the sheet's
+   `extraLinks`: [{ subject, url, linkType, qrImage }], kept for the open
+   sheet in mbState.infoExtraLinks / activityExtraLinks. */
+function _lmLinkFilled(x) {
+    return !!(x && ((x.subject || '').trim() || (x.url || '').trim() || x.qrImage || x.qr));
+}
+/** A clean copy of a stored list: plain strings, empty entries dropped. */
+function mbLinkListCopy(list) {
+    if (!Array.isArray(list)) return [];
+    return list.filter(_lmLinkFilled).map(function (x) {
+        return { subject: String(x.subject || ''), url: String(x.url || ''),
+                 linkType: (x.linkType === 'video' || x.linkType === 'page') ? x.linkType : '',
+                 qrImage: x.qrImage || null };
+    });
+}
+/** Every link of a sheet, in printed order: [{ subject, url, linkType, image }].
+ *  `firstImage` is the first link's QR (the sheet's qrImage). */
+function mbSheetLinks(sh, firstImage) {
+    if (!sh) return [];
+    var str = function (v) { return (typeof v === 'string') ? v : (typeof _mmStr === 'function' ? _mmStr(v) : ''); };
+    var out = [];
+    var first = { subject: str(sh.linkSubject), url: str(sh.linkUrl), linkType: str(sh.linkType),
+                  image: (firstImage !== undefined ? firstImage : sh.qrImage) || null };
+    if (first.subject.trim() || first.url.trim() || first.image) out.push(first);
+    (Array.isArray(sh.extraLinks) ? sh.extraLinks : []).forEach(function (x) {
+        if (!_lmLinkFilled(x)) return;
+        out.push({ subject: str(x.subject), url: str(x.url), linkType: str(x.linkType), image: x.qrImage || null });
+    });
+    return out;
+}
+
 /* ── The dialog's own stylesheet ─────────────────────────────
    WHY IT LIVES HERE AND NOT IN index.html
    The page's .ws-check rule was written for the column of checkboxes
@@ -216,6 +266,18 @@ function _lmEnsureStyle() {
         '#lm-overlay .lm-qr-side .ws-btn{width:100%;min-height:38px;',
         'padding:8px 12px;border-radius:8px;}',
         '#lm-overlay .lm-qr-remove{color:#b91c1c;}',
+        /* 3.70.0: one tab per link, and «add another». */
+        '#lm-overlay .lm-links{display:flex;flex-wrap:wrap;align-items:center;gap:8px;',
+        'margin:0 0 6px;padding:0 0 12px;border-bottom:1px solid #e2e8f0;}',
+        '#lm-overlay .lm-link-tab{display:inline-flex;align-items:center;gap:6px;',
+        'padding:7px 12px;min-height:36px;border:1px solid #e2e8f0;border-radius:999px;',
+        'background:#fff;font:inherit;font-size:.9em;cursor:pointer;color:#334155;}',
+        '#lm-overlay .lm-link-tab img{width:20px;height:20px;object-fit:contain;image-rendering:pixelated;}',
+        '#lm-overlay .lm-links .lm-link-tab.is-on{border-color:#6366f1 !important;background:#eef2ff !important;color:#3730a3 !important;',
+        'font-weight:700;box-shadow:inset 0 0 0 1px #6366f1;}',
+        '#lm-overlay .lm-link-add{border-style:dashed;color:#4f46e5;}',
+        '#lm-overlay .lm-links-note{margin:0 0 14px;font-size:.84em;color:#64748b;}',
+        '#lm-overlay .lm-link-remove{margin-inline-start:auto;color:#b91c1c;border-color:#fecaca;}',
 
         '#lm-overlay .ws-row.lm-row-type{display:flex;align-items:center;',
         'flex-wrap:wrap;gap:10px 16px;}',
@@ -275,7 +337,8 @@ function _lmEnsureStyle() {
    opening it to look costs nothing — the same contract as the export
    settings dialog. */
 var _lmScope = 'info';
-var _lmDraft = null;
+var _lmDraft = null;     // { items: [{ subject, url, type, qr }, …] } — 3.70.0
+var _lmIdx = 0;          // the link being edited
 var _lmSaved = null;
 var _lmArmed = false;
 var _lmPaste = null;
@@ -283,14 +346,64 @@ var _lmEsc = null;
 
 function _lmEl(id) { return document.getElementById(_lmScope + '-' + id); }
 
+function _lmExtrasKey() { return _lmScope === 'info' ? 'infoExtraLinks' : 'activityExtraLinks'; }
+
 function _lmRead() {
     var subj = _lmEl('link-subject'), url = _lmEl('link-url'), type = _lmEl('link-type');
-    return {
+    var items = [{
         subject: subj ? subj.value : '',
         url: url ? url.value : '',
         type: type ? (type.value || '') : '',
         qr: (_lmScope === 'info') ? mbState.infoQRImage : mbState.activityQRImage
-    };
+    }];
+    mbLinkListCopy(mbState[_lmExtrasKey()]).forEach(function (x) {
+        items.push({ subject: x.subject, url: x.url, type: x.linkType, qr: x.qrImage });
+    });
+    return { items: items };
+}
+
+/** The link being edited. */
+function _lmCur() {
+    if (!_lmDraft.items.length) _lmDraft.items.push({ subject: '', url: '', type: '', qr: null });
+    if (_lmIdx >= _lmDraft.items.length) _lmIdx = _lmDraft.items.length - 1;
+    if (_lmIdx < 0) _lmIdx = 0;
+    return _lmDraft.items[_lmIdx];
+}
+function _lmClone(d) { return JSON.parse(JSON.stringify(d)); }
+
+/** The tabs above the form: one per link, then «add another». */
+function _lmPaintLinks() {
+    var host = document.getElementById('lm-links');
+    if (!host) return;
+    var esc = function (t) { return String(t || '').replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); };
+    host.innerHTML = _lmDraft.items.map(function (it, i) {
+        var tip = (it.subject || it.url || '').trim();
+        return '<button type="button" class="lm-link-tab' + (i === _lmIdx ? ' is-on' : '') + '" data-lm-link="' + i + '"' +
+               ' aria-pressed="' + (i === _lmIdx) + '"' + (tip ? ' title="' + esc(tip) + '"' : '') + '>' +
+               (it.qr ? '<img src="' + esc(it.qr) + '" alt="">' : '🔗') +
+               '<span>' + esc(_lmT('linkN').replace('{n}', i + 1)) + '</span></button>';
+    }).join('') +
+    '<button type="button" class="lm-link-tab lm-link-add" id="lm-link-add">' + _lmT('addLink') + '</button>' +
+    (_lmDraft.items.length > 1
+        ? '<button type="button" class="lm-link-tab lm-link-remove" id="lm-link-remove">' + _lmT('removeLink') + '</button>'
+        : '');
+}
+
+/** The form shows the link chosen in the tabs. */
+function _lmPaintForm() {
+    var c = _lmCur();
+    var subj = document.getElementById('lm-subject'), url = document.getElementById('lm-url');
+    if (subj) subj.value = c.subject || '';
+    if (url) url.value = c.url || '';
+    _lmPaintLinks();
+    _lmPaintQr();
+    _lmPaintNotes();
+}
+
+function _lmTabTip() {
+    var tab = document.querySelector('#lm-links [data-lm-link="' + _lmIdx + '"]');
+    var c = _lmCur();
+    if (tab) tab.title = (c.subject || c.url || '').trim();
 }
 
 function _lmDirty() { return JSON.stringify(_lmDraft) !== JSON.stringify(_lmSaved); }
@@ -313,15 +426,16 @@ function _lmTouch() {
 function _lmPaintNotes() {
     var note = document.getElementById('lm-note');
     if (!note) return;
-    var isVid = mbLinkIsVideo(_lmDraft.url, _lmDraft.type);
-    var auto = !_lmDraft.type;
+    var cur = _lmCur();
+    var isVid = mbLinkIsVideo(cur.url, cur.type);
+    var auto = !cur.type;
     note.innerHTML =
         '<div class="lm-note ' + (isVid ? 'lm-note-video' : 'lm-note-page') + '">' +
           (isVid ? '▶ ' : '🔗 ') + (isVid ? _lmT('videoNote') : _lmT('pageNote')) +
           (isVid ? '<br><span class="lm-dim">' + _lmT('fileNote') + '</span>'
                  : '<br><span class="lm-dim">' + _lmT('blockedNote') + '</span>') +
         '</div>' +
-        (auto && _lmDraft.url ? '<div class="lm-dim lm-auto">' + _lmT('typeAuto') + '</div>' : '') +
+        (auto && cur.url ? '<div class="lm-dim lm-auto">' + _lmT('typeAuto') + '</div>' : '') +
         '<div class="lm-dim lm-auto">' + _lmT('exportNote') + '</div>';
 
     var eff = isVid ? 'video' : 'page';
@@ -341,20 +455,24 @@ function _lmPaintNotes() {
 function _lmPaintQr() {
     var box = document.getElementById('lm-qr-preview');
     if (!box) return;
-    box.classList.toggle('is-empty', !_lmDraft.qr);
-    if (_lmDraft.qr) box.classList.remove('is-waiting');
-    box.innerHTML = _lmDraft.qr
-        ? '<img src="' + _lmDraft.qr + '" alt="QR">'
+    var qr = _lmCur().qr;
+    box.classList.toggle('is-empty', !qr);
+    if (qr) box.classList.remove('is-waiting');
+    box.innerHTML = qr
+        ? '<img src="' + qr + '" alt="QR">'
         : '<span class="lm-qr-empty"><span class="lm-qr-icon" aria-hidden="true">▦</span>' + _lmT('noQr') + '</span>';
     var rm = document.getElementById('lm-qr-remove');
-    if (rm) rm.style.display = _lmDraft.qr ? '' : 'none';
+    if (rm) rm.style.display = qr ? '' : 'none';
+    /* The open link's tab shows its code too. */
+    var tab = document.querySelector('#lm-links [data-lm-link="' + _lmIdx + '"]');
+    if (tab) tab.innerHTML = (qr ? '<img src="' + qr + '" alt="">' : '🔗') + '<span>' + _lmT('linkN').replace('{n}', _lmIdx + 1) + '</span>';
 }
 
 /* 3.54.0: a pasted QR code lands in the dialog's draft, exactly like an
    uploaded one — shown at once, stored on Save (image_paste.js, 'qr'). */
 function mbLinkModalSetQr(dataUrl) {
     if (!_lmDraft || !document.getElementById('lm-overlay')) return;
-    _lmDraft.qr = dataUrl;
+    _lmCur().qr = dataUrl;
     _lmPaintQr();
     _lmTouch();
     _lmMsg('\u2713 ' + _lmT('pasted'), 'ok');
@@ -377,11 +495,13 @@ function mbLinkModalPasteFailed(reason) {
     }
 }
 
-function mbOpenLinkModal(scope) {
+function mbOpenLinkModal(scope, index) {
     if (document.getElementById('lm-overlay')) return;
     _lmScope = (scope === 'activity') ? 'activity' : 'info';
     _lmDraft = _lmRead();
-    _lmSaved = Object.assign({}, _lmDraft);
+    _lmSaved = _lmClone(_lmDraft);
+    /* 3.70.0: ✏️ on a link's card opens the dialog at that link. */
+    _lmIdx = (typeof index === 'number' && index >= 0 && index < _lmDraft.items.length) ? index : 0;
     _lmArmed = false;
     _lmEnsureStyle();
 
@@ -395,6 +515,9 @@ function mbOpenLinkModal(scope) {
         '<div class="ws-head"><span>🔗 ' + _lmT('title') + '</span>' +
           '<button type="button" class="ws-x" id="lm-x">\u00D7</button></div>' +
         '<div class="ws-body">' +
+          /* 3.70.0: one tab per link on this sheet, and «add another». */
+          '<div class="lm-links" id="lm-links" role="toolbar"></div>' +
+          '<p class="lm-links-note">' + _lmT('linksNote') + '</p>' +
           '<div class="ws-row lm-stack"><label>' + _lmT('subject') + '</label>' +
             '<input type="text" class="lm-input" id="lm-subject" placeholder="' + _lmT('subjectPh') + '"></div>' +
           '<div class="ws-row lm-stack"><label>' + _lmT('url') + '</label>' +
@@ -434,24 +557,42 @@ function mbOpenLinkModal(scope) {
       '</div>';
     document.body.appendChild(ov);
 
-    document.getElementById('lm-subject').value = _lmDraft.subject;
-    document.getElementById('lm-url').value = _lmDraft.url;
-    _lmPaintQr();
-    _lmPaintNotes();
+    _lmPaintForm();
+
+    ov.addEventListener('click', function (e) {
+        var t = e.target.closest ? e.target.closest('[data-lm-link], #lm-link-add, #lm-link-remove') : null;
+        if (!t) return;
+        if (t.id === 'lm-link-add') {
+            _lmDraft.items.push({ subject: '', url: '', type: '', qr: null });
+            _lmIdx = _lmDraft.items.length - 1;
+            _lmPaintForm(); _lmTouch();
+            var f = document.getElementById('lm-subject'); if (f) f.focus();
+            return;
+        }
+        if (t.id === 'lm-link-remove') {
+            _lmDraft.items.splice(_lmIdx, 1);
+            if (_lmIdx >= _lmDraft.items.length) _lmIdx = _lmDraft.items.length - 1;
+            _lmPaintForm(); _lmTouch();
+            return;
+        }
+        _lmIdx = parseInt(t.getAttribute('data-lm-link'), 10) || 0;
+        _lmPaintForm();
+    });
 
     ov.addEventListener('input', function (e) {
-        if (e.target.id === 'lm-subject') { _lmDraft.subject = e.target.value; _lmTouch(); }
+        if (e.target.id === 'lm-subject') { _lmCur().subject = e.target.value; _lmTouch(); _lmTabTip(); }
         if (e.target.id === 'lm-url') {
-            _lmDraft.url = e.target.value;
+            _lmCur().url = e.target.value;
+            _lmTabTip();
             /* Typing a new URL clears an explicit override, so detection
                gets a fresh say — otherwise a link marked "page" once
                stays "page" after being replaced by a YouTube URL. */
-            _lmDraft.type = '';
+            _lmCur().type = '';
             _lmTouch();
         }
     });
     ov.addEventListener('change', function (e) {
-        if (e.target.name === 'lm-type') { _lmDraft.type = e.target.value; _lmTouch(); }
+        if (e.target.name === 'lm-type') { _lmCur().type = e.target.value; _lmTouch(); }
     });
 
     document.getElementById('lm-qr-btn').addEventListener('click', function () {
@@ -461,12 +602,14 @@ function mbOpenLinkModal(scope) {
         var f = e.target.files && e.target.files[0];
         if (!f) return;
         var r = new FileReader();
-        r.onload = function (ev) { _lmDraft.qr = ev.target.result; _lmPaintQr(); _lmTouch(); };
+        var target = _lmCur();
+        r.onload = function (ev) { target.qr = ev.target.result; _lmPaintQr(); _lmTouch(); };
         r.readAsDataURL(f);
+        e.target.value = '';   // the same file can be chosen again for the next link
     });
 
     document.getElementById('lm-qr-remove').addEventListener('click', function () {
-        _lmDraft.qr = null; _lmPaintQr(); _lmTouch();
+        _lmCur().qr = null; _lmPaintQr(); _lmTouch();
     });
     /* An image file dropped on the preview is taken like an upload. */
     var qrBox = document.getElementById('lm-qr-preview');
@@ -512,23 +655,33 @@ function mbOpenLinkModal(scope) {
 }
 
 function _lmSave() {
+    /* 3.70.0: empty links are dropped; the first one left goes into the
+       sheet's own fields, the rest into its extra links. */
+    var kept = _lmDraft.items.filter(function (it) { return _lmLinkFilled(it); });
+    var first = kept[0] || { subject: '', url: '', type: '', qr: null };
     var subj = _lmEl('link-subject'), url = _lmEl('link-url'), type = _lmEl('link-type');
-    if (subj) subj.value = _lmDraft.subject;
-    if (url) url.value = _lmDraft.url;
-    if (type) type.value = _lmDraft.type;
-    if (_lmScope === 'info') mbState.infoQRImage = _lmDraft.qr;
-    else mbState.activityQRImage = _lmDraft.qr;
+    if (subj) subj.value = first.subject || '';
+    if (url) url.value = first.url || '';
+    if (type) type.value = first.type || '';
+    mbState[_lmExtrasKey()] = kept.slice(1).map(function (it) {
+        return { subject: it.subject || '', url: it.url || '', linkType: it.type || '', qrImage: it.qr || null };
+    });
+    if (_lmScope === 'info') mbState.infoQRImage = first.qr || null;
+    else mbState.activityQRImage = first.qr || null;
 
     /* Repaint the hidden card's own preview so the legacy upload path
        and this one cannot disagree about what is stored. */
     var prev = document.getElementById(_lmScope + '-qr-preview');
-    if (prev) prev.innerHTML = _lmDraft.qr ? '<img src="' + _lmDraft.qr + '" style="max-width:100px;">' : '';
+    if (prev) prev.innerHTML = first.qr ? '<img src="' + first.qr + '" style="max-width:100px;">' : '';
 
     /* Persist through the tool's own save path. */
     if (typeof saveCurrentSheetToLO === 'function') { try { saveCurrentSheetToLO(); } catch (e) { /* not fatal */ } }
     if (typeof mbTouch === 'function') { try { mbTouch(); } catch (e) { /* autosave absent */ } }
 
-    _lmSaved = Object.assign({}, _lmDraft);
+    _lmDraft = { items: kept.length ? _lmClone(kept) : [{ subject: '', url: '', type: '', qr: null }] };
+    if (_lmIdx >= _lmDraft.items.length) _lmIdx = _lmDraft.items.length - 1;
+    _lmSaved = _lmClone(_lmDraft);
+    _lmPaintForm();
     _lmArmed = false;
     var save = document.getElementById('lm-save');
     if (save) save.disabled = true;
@@ -555,7 +708,8 @@ function mbCloseLinkModal() {
 function _lmPaintButtons() {
     ['info', 'activity'].forEach(function (scope) {
         var url = document.getElementById(scope + '-link-url');
-        var has = !!(url && url.value.trim()) ||
+        var extras = mbState[scope === 'info' ? 'infoExtraLinks' : 'activityExtraLinks'] || [];
+        var has = !!(url && url.value.trim()) || extras.length > 0 ||
                   !!(scope === 'info' ? mbState.infoQRImage : mbState.activityQRImage);
         document.querySelectorAll('[data-act="mbOpenLinkModal"][data-args*="' + scope + '"]')
             .forEach(function (b) {
@@ -576,25 +730,29 @@ function mbPaintLinkSummary() {
         if (!host) return;
         var subjEl = document.getElementById(scope + '-link-subject');
         var urlEl = document.getElementById(scope + '-link-url');
-        var subj = subjEl ? subjEl.value.trim() : '';
-        var url = urlEl ? urlEl.value.trim() : '';
-        var qr = scope === 'info' ? mbState.infoQRImage : mbState.activityQRImage;
-        if (!qr && !subj && !url) { host.innerHTML = ''; return; }
+        /* 3.70.0: every link of the sheet, one card each, in printed order. */
+        var links = mbSheetLinks({
+            linkSubject: subjEl ? subjEl.value : '', linkUrl: urlEl ? urlEl.value : '',
+            extraLinks: mbState[scope === 'info' ? 'infoExtraLinks' : 'activityExtraLinks'] || []
+        }, scope === 'info' ? mbState.infoQRImage : mbState.activityQRImage);
+        if (!links.length) { host.innerHTML = ''; return; }
         var esc = (typeof escapeHtml === 'function') ? escapeHtml : function (t) {
             return String(t).replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; });
         };
-        var safeUrl = /^https?:\/\//i.test(url) ? url : '';
-        host.innerHTML =
-            '<div class="mb-link-summary-card">' +
-              (qr ? '<img class="mb-ls-qr" src="' + esc(qr) + '" alt="QR">' : '') +
+        host.innerHTML = links.map(function (l, i) {
+            var subj = (l.subject || '').trim(), url = (l.url || '').trim();
+            var safeUrl = /^https?:\/\//i.test(url) ? url : '';
+            return '<div class="mb-link-summary-card" data-link-index="' + i + '">' +
+              (l.image ? '<img class="mb-ls-qr" src="' + esc(l.image) + '" alt="QR">' : '') +
               '<div class="mb-ls-text">' +
                 '<div class="mb-ls-title">🔗 ' + esc(subj || _lmT('title').replace('&amp;', '&')) + '</div>' +
                 (url ? (safeUrl
                     ? '<a class="mb-ls-url" dir="ltr" href="' + esc(safeUrl) + '" target="_blank" rel="noopener">' + esc(url) + '</a>'
                     : '<div class="mb-ls-url" dir="ltr">' + esc(url) + '</div>') : '') +
               '</div>' +
-              '<button type="button" class="mb-ls-edit" data-act="mbOpenLinkModal" data-args=\'["' + scope + '"]\'>✏️ ' + _lmT('edit') + '</button>' +
+              '<button type="button" class="mb-ls-edit" data-act="mbOpenLinkModal" data-args=\'["' + scope + '",' + i + ']\'>✏️ ' + _lmT('edit') + '</button>' +
             '</div>';
+        }).join('');
     });
 }
 

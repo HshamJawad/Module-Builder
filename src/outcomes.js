@@ -7,7 +7,7 @@
 /* 3.69.0: every select that chooses the learning outcome — the Module tab's
    and the bar at the top of each tab. One list, so a new bar is one line. */
 var MB_LO_SELECTORS = ['current-lo-selector', 'info-lo-selector', 'activity-lo-selector', 'mapping-lo-selector',
-                       'assessment-lo-selector', 'moduleinfo-lo-selector', 'reflection-lo-selector'];
+                       'assessment-lo-selector', 'intro-lo-selector', 'reflection-lo-selector'];
 
 /**
  * A caller-supplied title, or nothing.
@@ -131,8 +131,8 @@ function switchLearningOutcome() {
 
 // Called from inline selectors in Info / Activity tabs
 function switchLearningOutcomeFromTab(source) {
-    /* 3.69.0: every bar's select is «<source>-lo-selector» (Module
-       Information and Reflection joined the four). */
+    /* 3.69.0: every bar's select is «<source>-lo-selector» (Introduction
+       Pages and Reflection joined the four). */
     const selector = document.getElementById((source || 'activity') + '-lo-selector');
     if (!selector) return;
     _applyLOSwitch(selector.value);

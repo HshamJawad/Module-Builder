@@ -57,9 +57,9 @@ async function switchTab(tabName) {
         if (tabName === 'activity') ensureFirstActivitySheet();
     }
     
-    /* 3.69.0: the learning unit card (Module Information) and the
+    /* 3.69.0: the learning unit card (Introduction Pages) and the
        reflection (Reflection tab) paint for the outcome open now. */
-    if ((tabName === 'module-info' || tabName === 'reflection') && typeof mbRenderLgUnit === 'function') {
+    if ((tabName === 'intro' || tabName === 'reflection') && typeof mbRenderLgUnit === 'function') {
         try { mbRenderLgUnit(true); } catch (e) { /* not ready */ }
     }
 

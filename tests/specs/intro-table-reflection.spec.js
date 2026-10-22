@@ -1,6 +1,6 @@
 // 3.69.0: the module overview table of the Introduction Pages tab
 // (src/intro_table.js); the Module tab without the performance criteria
-// card; the Learner guide's learning unit card in Module Information and
+// card; the Learner guide's learning unit card in Introduction Pages and
 // its reflection in a Reflection tab of its own (src/learner_guide.js).
 const { test, expect } = require('@playwright/test');
 const { openApp, tab } = require('../helpers');
@@ -108,7 +108,7 @@ test('the Module tab no longer shows the performance criteria card; the criteria
   expect(errors).toEqual([]);
 });
 
-test('Learner guide: the unit card in Module Information, the reflection in its own tab with the learning unit bar', async ({ page }) => {
+test('Learner guide: the unit card in Introduction Pages, the reflection in its own tab with the learning unit bar', async ({ page }) => {
   const errors = await openApp(page, { lang: 'en', contentLang: 'en' });
   await buildGuide(page);
   const reflBtn = page.locator('#mb-sidenav .tab[data-args=\'["reflection"]\']');
@@ -117,10 +117,18 @@ test('Learner guide: the unit card in Module Information, the reflection in its 
 
   // nothing of the card is left in the Module tab
   await tab(page, 'basic-info');
-  expect(await page.evaluate(() => document.getElementById('lg-unit-section').closest('.tab-content').id)).toBe('module-info-tab');
+  expect(await page.evaluate(() => document.getElementById('lg-unit-section').closest('.tab-content').id)).toBe('intro-tab');
 
-  // Module Information: the introduction, for the outcome chosen in its bar
-  await tab(page, 'module-info');
+  // Introduction Pages: Work Team first … the overview table, then the learning unit card last
+  await tab(page, 'intro');
+  const order = await page.evaluate(() => ['work-team-container', 'intro-additional-details', 'intro-blocks-section', 'intro-table-section', 'lg-unit-wrap']
+    .map(id => document.getElementById(id).getBoundingClientRect().top));
+  expect(await page.evaluate(() => {   // nothing but the Proceed button after the card
+    let n = document.getElementById('lg-unit-wrap').nextElementSibling;
+    while (n && (n.offsetParent === null)) n = n.nextElementSibling;
+    return n ? !!n.querySelector('[data-act="proceedToTab"]') : true;
+  })).toBe(true);
+  expect([...order].sort((a, b) => a - b)).toEqual(order);
   await expect(page.locator('#lg-unit-section')).toBeVisible();
   await expect(page.locator('#lg-unit-wrap .mb-ctx-bar')).toContainText('Learning unit');
   await expect(page.locator('#lg-unit-section [data-lg-field="refl.questions"]')).toHaveCount(0);
@@ -138,7 +146,7 @@ test('Learner guide: the unit card in Module Information, the reflection in its 
   await expect(q).toHaveValue('');
   await q.fill('What was hard in unit 2?');
   // every bar follows
-  expect(await page.evaluate(() => ['current-lo-selector', 'moduleinfo-lo-selector', 'info-lo-selector'].map(i => document.getElementById(i).value)))
+  expect(await page.evaluate(() => ['current-lo-selector', 'intro-lo-selector', 'info-lo-selector'].map(i => document.getElementById(i).value)))
     .toEqual([ids[1], ids[1], ids[1]]);
   const saved = await page.evaluate(() => mbState.learningOutcomesData.map(l => l.lgReflection && l.lgReflection.questions && l.lgReflection.questions.en));
   expect(saved).toEqual(['What was hard in unit 1?', 'What was hard in unit 2?']);

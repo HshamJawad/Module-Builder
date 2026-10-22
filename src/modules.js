@@ -5,11 +5,11 @@
 // ============================================================
 
 /* Every module select: the Module tab's and the bar at the top of each tab
-   (3.69.0: Module Information and Reflection too). A `var`, not a const
+   (3.69.0: Introduction Pages and Reflection too). A `var`, not a const
    further down: renderModuleSelector reads it, and it must exist first. */
 var MB_MODULE_SELECTORS = ['current-module-selector', 'info-module-selector', 'activity-module-selector',
                            'assessment-module-selector', 'mapping-module-selector',
-                           'moduleinfo-module-selector', 'reflection-module-selector'];
+                           'intro-module-selector', 'reflection-module-selector'];
 
 /**
  * Boot: hands over to the module library (module_library.js), which

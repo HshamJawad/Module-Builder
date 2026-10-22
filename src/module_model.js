@@ -392,12 +392,18 @@ function mbBuildModuleModel(lang, state) {
                    while the link text belongs to the individual sheet.
                    That asymmetry is the tool's, and it is reproduced
                    rather than tidied. */
-                qr: (st.infoQRImage || _mmStr(sh.linkSubject).trim() || _mmStr(sh.linkUrl).trim())
-                    ? { image: st.infoQRImage || null,
+                qr: (((sh.qrImage !== undefined) ? sh.qrImage : st.infoQRImage) || _mmStr(sh.linkSubject).trim() || _mmStr(sh.linkUrl).trim())
+                    ? { image: (sh.qrImage !== undefined ? sh.qrImage : st.infoQRImage) || null,
                         url: _mmStr(sh.linkUrl),
                         subject: _mmStr(sh.linkSubject),
                         linkType: _mmStr(sh.linkType) }
-                    : null
+                    : null,
+                /* 3.70.0: every link of the sheet in printed order (the
+                   first is `qr` above); each with the sheet's own QR. */
+                links: (typeof mbSheetLinks === 'function')
+                    ? mbSheetLinks(sh, sh.qrImage !== undefined ? sh.qrImage : st.infoQRImage)
+                        .map(function (l) { return { image: l.image, url: l.url, subject: l.subject, linkType: l.linkType }; })
+                    : []
             });
         });
 
@@ -470,12 +476,18 @@ function mbBuildModuleModel(lang, state) {
                         return rows;
                     })()
                 },
-                qr: (st.activityQRImage || _mmStr(sh.linkSubject).trim() || _mmStr(sh.linkUrl).trim())
-                    ? { image: st.activityQRImage || null,
+                qr: (((sh.qrImage !== undefined) ? sh.qrImage : st.activityQRImage) || _mmStr(sh.linkSubject).trim() || _mmStr(sh.linkUrl).trim())
+                    ? { image: (sh.qrImage !== undefined ? sh.qrImage : st.activityQRImage) || null,
                         url: _mmStr(sh.linkUrl),
                         subject: _mmStr(sh.linkSubject),
                         linkType: _mmStr(sh.linkType) }
-                    : null
+                    : null,
+                /* 3.70.0: every link of the sheet in printed order (the
+                   first is `qr` above); each with the sheet's own QR. */
+                links: (typeof mbSheetLinks === 'function')
+                    ? mbSheetLinks(sh, sh.qrImage !== undefined ? sh.qrImage : st.activityQRImage)
+                        .map(function (l) { return { image: l.image, url: l.url, subject: l.subject, linkType: l.linkType }; })
+                    : []
             });
         });
 

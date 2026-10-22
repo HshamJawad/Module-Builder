@@ -434,7 +434,7 @@ function mbLgNormalizeAsm(v) {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   EDITOR — the learning unit card (Module Information, Reflection) and the activity row
+   EDITOR — the learning unit card (Introduction Pages, Reflection) and the activity row
    ══════════════════════════════════════════════════════════════ */
 
 function _lgSave() {
@@ -443,7 +443,7 @@ function _lgSave() {
 }
 
 /** 3.69.0: the learning unit card is in two places — its introduction in
- *  the Module Information tab (#lg-unit-section), its reflection in the
+ *  the Introduction Pages tab (#lg-unit-section), its reflection in the
  *  Reflection tab (#lg-reflection-section), each for the outcome chosen in
  *  the bar above it. Both write the same outcome (lo.lgIntro /
  *  lo.lgReflection); nothing moved in the data or the export. */
