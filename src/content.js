@@ -417,71 +417,89 @@ function restoreContentTables(contentId, tablesData) {
    long as the older content fields do: sheets.js collects it at save time
    alongside the textarea and merges it into the stored pair. */
 
+/* 3.72.0: the heading is typed straight into the card — no Rename
+   dialog — and a card may also carry a subheading (➕ Subheading). Both
+   live on the card as data-heading / data-subheading, which is what
+   sheets.js collects and what attachments.js reads, exactly as before. */
+if (window.i18n && window.i18n.extend) window.i18n.extend({
+    en: { csHeadingPh: 'Main heading of this paragraph (optional)…', csSubPh: 'Subheading…',
+          csAddSub: '➕ Subheading', csAddSubTip: 'Add a subheading under the main heading', csRemoveSubTip: 'Remove the subheading' },
+    fr: { csHeadingPh: 'Titre principal de ce paragraphe (facultatif)…', csSubPh: 'Sous-titre…',
+          csAddSub: '➕ Sous-titre', csAddSubTip: 'Ajouter un sous-titre sous le titre principal', csRemoveSubTip: 'Supprimer le sous-titre' },
+    ar: { csHeadingPh: 'العنوان الرئيسي لهذه الفقرة (اختياري)…', csSubPh: 'العنوان الثانوي…',
+          csAddSub: '➕ عنوان ثانوي', csAddSubTip: 'إضافة عنوان ثانوي تحت العنوان الرئيسي', csRemoveSubTip: 'حذف العنوان الثانوي' }
+});
+
 function mbContentHeading(id) {
     const sec = document.getElementById(`content-section-${id}`);
     return (sec && sec.dataset.heading) ? sec.dataset.heading : '';
 }
+function mbContentSubheading(id) {
+    const sec = document.getElementById(`content-section-${id}`);
+    return (sec && sec.dataset.subheading) ? sec.dataset.subheading : '';
+}
 
-/** Repaint one card's label from its stored name, or back to the number. */
+/** Put a stored heading on a card (its box and data-heading). */
 function mbApplyContentHeading(id, heading) {
-    const sec   = document.getElementById(`content-section-${id}`);
-    const label = document.getElementById(`content-label-${id}`);
-    if (!sec || !label) return;
+    const sec = document.getElementById(`content-section-${id}`);
+    if (!sec) return;
+    const text = String(heading || '');
+    if (text.trim()) sec.dataset.heading = text.trim(); else delete sec.dataset.heading;
+    const box = sec.querySelector('[data-cs-heading]');
+    if (box && box.value !== text) box.value = text;
+}
 
-    const text = (heading || '').trim();
-    if (text) {
-        sec.dataset.heading = text;
-        /* Off, not just overwritten: applyTranslations() sweeps every
-           [data-i18n-num] on a language switch and would put «Content 1:»
-           straight back over the author's own words. */
-        label.removeAttribute('data-i18n-num');
-        label.removeAttribute('data-i18n-num-v0');
-        label.textContent = text;
-        label.setAttribute('dir', 'auto');
-        label.style.textAlign = 'start';
-        label.classList.add('is-renamed');
+/** Put a stored subheading on a card, showing its box when it has text. */
+function mbApplyContentSubheading(id, sub) {
+    const sec = document.getElementById(`content-section-${id}`);
+    if (!sec) return;
+    const text = String(sub || '');
+    if (text.trim()) sec.dataset.subheading = text.trim(); else delete sec.dataset.subheading;
+    const box = sec.querySelector('[data-cs-sub]');
+    if (box && box.value !== text) box.value = text;
+    if (text.trim()) _mbShowSubBox(sec, true);
+}
+
+function _mbShowSubBox(sec, on) {
+    const row = sec.querySelector('.cs-sub-row');
+    const btn = sec.querySelector('.btn-cs-sub');
+    if (row) row.hidden = !on;
+    if (btn) btn.classList.toggle('is-on', !!on);
+}
+
+/** Typed in a heading box → the card's data (bound on every keystroke). */
+function mbContentHeadingInput(id, el) {
+    const sec = document.getElementById(`content-section-${id}`);
+    if (!sec || !el) return;
+    const key = el.hasAttribute('data-cs-sub') ? 'subheading' : 'heading';
+    if (el.value.trim()) sec.dataset[key] = el.value.trim(); else delete sec.dataset[key];
+}
+
+/** ➕ Subheading: shows the box (focused); pressed again with the box
+ *  shown, removes the subheading. */
+function mbToggleContentSubheading(id) {
+    const sec = document.getElementById(`content-section-${id}`);
+    if (!sec) return;
+    const row = sec.querySelector('.cs-sub-row');
+    if (row && row.hidden) {
+        _mbShowSubBox(sec, true);
+        const box = sec.querySelector('[data-cs-sub]');
+        if (box) box.focus();
     } else {
-        delete sec.dataset.heading;
-        label.setAttribute('data-i18n-num', 'dgContentN');
-        label.setAttribute('data-i18n-num-v0', String(id));
-        label.textContent = window.i18n.tf('dgContentN', { v0: id });
-        label.removeAttribute('dir');
-        label.classList.remove('is-renamed');
+        mbApplyContentSubheading(id, '');
+        _mbShowSubBox(sec, false);
     }
 }
 
-/**
- * Rename one content card.
- *
- * An empty answer RESTORES the default number rather than leaving a
- * blank heading — a card with no label at all is unreadable in the
- * editor, and clearing the box is the only way back that a user would
- * think to try. Cancel (null) changes nothing.
- */
-async function renameContentSection(id) {
-    const cur = mbContentHeading(id);
-    const newName = await mbPrompt(
-        window.i18n.t('dgEnterContentHeading'),
-        cur || window.i18n.tf('dgContentN', { v0: id }).replace(/:$/, '').trim()
-    );
-    if (newName === null || newName === undefined) return;   // cancelled
-
-    const text = newName.trim();
-    /* Typing the default number back in is a request for the default, not
-       for a hard-coded copy of it that would then stop following the
-       interface language. */
-    const isDefault = text === '' ||
-        BILANG_CODES.some(function (code) {
-            return text === window.i18n.tIn('dgContentN', code).replace('{v0}', String(id)).replace(/:$/, '').trim();
-        });
-
-    mbApplyContentHeading(id, isDefault ? '' : text);
-    if (typeof showStatus === 'function') {
-        showStatus(window.i18n.t(isDefault ? 'dgContentHeadingReset' : 'dgContentRenamed'), 'success');
-    }
+/* Kept for anything still calling it (an older page, a shortcut): the
+   heading is typed in the card now, so «rename» just puts the cursor
+   there. */
+function renameContentSection(id) {
+    const box = document.querySelector(`#content-section-${id} [data-cs-heading]`);
+    if (box) { box.focus(); if (box.select) box.select(); }
 }
 
-function addContentSection(heading) {
+function addContentSection(heading, subheading) {
     mbState.contentSectionCount++;
     const csc = mbState.contentSectionCount;
     const container = document.getElementById('content-sections-container');
@@ -490,13 +508,19 @@ function addContentSection(heading) {
     mbNewRowUid(sectionDiv);
     sectionDiv.id = `content-section-${csc}`;
     sectionDiv.innerHTML = `
-        <div class="step-header">
-            <div class="step-label" id="content-label-${csc}" data-i18n-num="dgContentN" data-i18n-num-v0="${csc}">${window.i18n.tf('dgContentN', { v0: csc })}</div>
-            <div style="display:flex;gap:5px;align-items:center;">
-                <button class="btn-rename-section mb-has-ico" data-act="renameContentSection" data-args='[${csc}]' title="${window.i18n.t('dgRenameContent')}" data-i18n-title="dgRenameContent"><svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4.5 19.5h4l10-10a2.1 2.1 0 0 0-3-3l-10 10z"/><path d="M14.5 6.5l3 3"/><path d="M4.5 19.5l.6-3.4"/></svg><span data-i18n="rxRename">${window.i18n.t('rxRename')}</span></button>
+        <div class="step-header cs-head">
+            <span class="cs-num" id="content-label-${csc}" title="${window.i18n.tf('dgContentN', { v0: csc })}" aria-hidden="true">${csc}</span>
+            <input type="text" class="cs-heading" dir="auto" data-cs-heading="${csc}" data-act="mbContentHeadingInput" data-on="input" data-args='[${csc}]'
+                   placeholder="${window.i18n.t('csHeadingPh')}" data-i18n-placeholder="csHeadingPh" aria-label="${window.i18n.t('csHeadingPh')}">
+            <div style="display:flex;gap:5px;align-items:center;flex:0 0 auto;">
+                <button type="button" class="btn-rename-section btn-cs-sub" data-act="mbToggleContentSubheading" data-args='[${csc}]' title="${window.i18n.t('csAddSubTip')}" data-i18n-title="csAddSubTip"><span data-i18n="csAddSub">${window.i18n.t('csAddSub')}</span></button>
                 <button class="btn-clear-section" data-act="clearContentSection" data-args='[${csc}]' title="${window.i18n.t('dgClearContent')}" data-i18n-title="dgClearContent">✕</button>
                 <button class="btn-remove mb-icon-btn danger" data-act="removeContentSection" data-args='[${csc}]' title="${window.i18n.t('dgRemoveContent')}" data-i18n-title="dgRemoveContent"><svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg></button>
             </div>
+        </div>
+        <div class="cs-sub-row" hidden>
+            <input type="text" class="cs-subheading" dir="auto" data-cs-sub="${csc}" data-act="mbContentHeadingInput" data-on="input" data-args='[${csc}]'
+                   placeholder="${window.i18n.t('csSubPh')}" data-i18n-placeholder="csSubPh" aria-label="${window.i18n.t('csSubPh')}">
         </div>
         <textarea class="mb-content-field" placeholder="${window.i18n.t('dgEnterContent')}" data-i18n-placeholder="dgEnterContent" data-content-id="${csc}"  style="text-align: left;"></textarea>
         <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;">
@@ -526,6 +550,7 @@ function addContentSection(heading) {
        calls addContentSection(buttonElement, event). Anything looser here
        would name every hand-added card "[object HTMLButtonElement]". */
     if (typeof heading === 'string' && heading.trim()) mbApplyContentHeading(csc, heading);
+    if (typeof subheading === 'string' && subheading.trim()) mbApplyContentSubheading(csc, subheading);   // 3.72.0
     /* 3.48.0: pressed by the user (events.js passes the button), the new
        card is brought into view and its text box focused — it is added
        at the END of the sheet, often far below the button, and used to

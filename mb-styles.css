@@ -4126,3 +4126,29 @@ button.mb-cmk-opt.is-on { outline: 3px solid #0f766e; outline-offset: 1px; }
 .lg-unit-wrap { margin-top: 30px; }
 .lg-unit-wrap .lg-unit { margin-top: 0; }
 .lg-refl-empty { margin: 0; color: #6b7280; font-style: italic; }
+
+/* ── 3.72.0: a content card's heading typed in the card, and its subheading ── */
+.cs-head { gap: 8px; align-items: center; }
+.cs-num {
+    flex: 0 0 auto; min-width: 26px; height: 26px; padding: 0 6px; box-sizing: border-box;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 999px; background: #eef2ff; color: #4f46e5; font-weight: 700; font-size: .85em;
+}
+.cs-heading, .cs-subheading {
+    flex: 1 1 auto; min-width: 0; width: 100%; box-sizing: border-box;
+    padding: 9px 12px; border: 2px solid #e5e7eb; border-radius: 8px; background: #fff;
+    font: inherit; text-align: start; outline: none;
+}
+.cs-heading { font-weight: 700; font-size: 1em; color: #0070C0; }
+.cs-subheading { font-weight: 700; font-size: .95em; color: #1f2937; }
+.cs-heading::placeholder, .cs-subheading::placeholder { color: #9bbfd8; font-weight: 500; }
+.cs-subheading::placeholder { color: #9ca3af; }
+.cs-heading:focus, .cs-subheading:focus { border-color: #3b82f6; }
+.cs-sub-row { margin: 0 0 8px; }
+.cs-sub-row[hidden] { display: none; }
+.btn-cs-sub { white-space: nowrap; }
+.btn-cs-sub.is-on { background: #eef2ff; border-color: #c7d2fe; color: #3730a3; }
+@media (max-width: 560px) {
+    .cs-head { flex-wrap: wrap; }
+    .cs-head .cs-heading { flex: 1 1 calc(100% - 40px); }
+}

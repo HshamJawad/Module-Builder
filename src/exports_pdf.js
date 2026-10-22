@@ -536,6 +536,7 @@ function _pdfBuild(pdf, model, lang) {
             sh.sections.forEach(function (cs, k) {
                 _pdfAttachments(w, sh.attachments, k, S);   // 3.56.0
                 if (cs.heading) w.label(cs.heading);
+                if (cs.subheading) w.text(cs.subheading, { bold: true, after: 1 });   // 3.72.0
                 if (cs.text) w.text(cs.text);
                 _pdfImages(w, cs.images, cs.imageCaps, S);
                 cs.tables.forEach(function (tb) {
