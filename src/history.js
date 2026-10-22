@@ -118,7 +118,8 @@ function mbHistEnd(begin, out) {
 /* ── Typing: one step per field visit ───────────────────────── */
 function _mbHistIsField(el) {
     if (!el || !el.closest || el.closest('.mb-dialog, #mb-sidenav, .figma-toolbar')) return false;
-    if (!el.closest('#info-tab, #activity-tab, #assessment-tab, #basic-info-tab')) return false;
+    /* 3.77.0: + the Learner guide's reflection and learning unit card. */
+    if (!el.closest('#info-tab, #activity-tab, #assessment-tab, #basic-info-tab, #reflection-tab, #lg-unit-wrap')) return false;
     return el.matches('input[type=text], input:not([type]), input[type=number], textarea, select, [contenteditable="true"]');
 }
 document.addEventListener('focusin', function (e) {
@@ -166,6 +167,9 @@ function _mbHistApply(step) {
     if (typeof renderSourceBrowser === 'function') renderSourceBrowser();
     if (typeof updateModuleSummary === 'function') updateModuleSummary();
     if (typeof mbSpRefresh === 'function') mbSpRefresh();
+    /* 3.77.0: the Learner guide's cards bind live and skip a repaint that
+       looks unchanged — after a restore they must be painted again. */
+    if (typeof mbRenderLgUnit === 'function') { try { mbRenderLgUnit(true); } catch (e) { /* not ready */ } }
 }
 
 function mbUndo() {

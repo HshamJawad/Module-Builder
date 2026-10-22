@@ -4168,3 +4168,14 @@ button.mb-cmk-opt.is-on { outline: 3px solid #0f766e; outline-offset: 1px; }
 /* ── 3.76.0: the reflection — «contributes» on the heading line, 📝 under the questions ── */
 .lg-refl-contrib { font-weight: 600; font-size: .9em; color: #374151; margin: 0; cursor: pointer; }
 .lg-paste-row { display: flex; margin: -2px 0 4px; }
+
+/* ── 3.77.0: the reflection's tools on one line — Paste text, Clear, answer lines ── */
+.lg-tools-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; margin: -2px 0 4px; }
+.lg-clear-btn {
+    display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;
+    padding: 6px 12px; border: 1px solid #fecaca; border-radius: 6px;
+    background: #fff; color: #b91c1c; font: inherit; font-size: .85em; font-weight: 600; cursor: pointer;
+}
+.lg-clear-btn:hover { background: #fef2f2; border-color: #fca5a5; }
+.lg-lines-label { display: inline-flex; align-items: center; gap: 6px; margin-inline-start: auto; font-size: .9em; font-weight: 600; color: #374151; }
+.lg-tools-row .lg-lines { width: 4.2em; min-width: 0; padding: 4px 6px; margin: 0; text-align: center; box-sizing: border-box; }
