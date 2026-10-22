@@ -27,10 +27,31 @@
 // unless the user has typed a name (mbSheetLabelExplicit returns '').
 // ============================================================
 
-var MB_SHEET_KINDS = ['activity', 'task', 'job', 'operation'];
+var MB_SHEET_KINDS = ['activity', 'task', 'job', 'operation', 'jobsheet', 'custom'];
 var MB_SHEET_KIND_KEYS = {
-    info: 'skInfo', activity: 'skActivity', task: 'skTask', job: 'skJob', operation: 'skOperation'
+    info: 'skInfo', activity: 'skActivity', task: 'skTask', job: 'skJob', operation: 'skOperation',
+    jobsheet: 'skJob', custom: 'skActivity'
 };
+/* 3.73.0: two more types.
+   'jobsheet' — the Job Sheet in the Learner guide, where 'job' is named
+                the Worksheet. Named like the standard template's Job Sheet
+                (skJob, and the name typed for it in Settings → Misc).
+   'custom'   — a name the author types for THIS sheet (sheet.sheetTypeName,
+                a language pair), as DACUM's «Other (specify)». Empty, it
+                falls back to the learning / activity sheet's name. */
+if (window.i18n && window.i18n.extend) window.i18n.extend({
+    en: { skCustom: '✏️ Custom name…', skCustomPh: 'Type the name of this sheet…' },
+    fr: { skCustom: '✏️ Nom personnalisé…', skCustomPh: 'Saisissez le nom de cette fiche…' },
+    ar: { skCustom: '✏️ اسم مخصص…', skCustomPh: 'اكتب اسم هذه الورقة…' }
+});
+
+/** The name typed for a custom-type sheet, in one language, or ''. */
+function mbSheetCustomName(sheet, lang) {
+    var v = sheet && sheet.sheetTypeName;
+    if (!v) return '';
+    if (typeof v === 'string') return v.trim();
+    return String((typeof biGetStrict === 'function') ? biGetStrict(v, lang) : (v[lang] || '')).trim();
+}
 
 function _mbSkSettings() {
     try { if (typeof _wsGet === 'function') return _wsGet() || {}; } catch (e) { /* fall through */ }
@@ -49,12 +70,15 @@ function mbDefaultSheetKind() {
 
 /** The name the user typed for this type in this language, or ''. */
 function mbSheetLabelCustom(kind, lang) {
+    if (kind === 'jobsheet') kind = 'job_std';   // 3.73.0: the standard Job Sheet's own name
+    if (kind === 'custom') return '';
     /* 3.67.0: in the Learner guide, its own names typed in Settings first. */
     var lgOwn = (typeof mbLgSheetNameCustom === 'function') ? mbLgSheetNameCustom(kind, lang) : '';
     if (lgOwn) return lgOwn;
     var all = _mbSkSettings().sheetLabels || {};
     var side = all[lang] || {};
-    var own = String(side[kind] || '').trim();
+    var own = String(side[kind === 'job_std' ? 'job' : kind] || '').trim();
+    if (kind === 'job_std') return own;
     /* 3.59.0: the Learner guide names its sheets «Knowledge», «Learning
        activity» and «Worksheet» unless the user typed a name. */
     if (!own && typeof mbLgSheetName === 'function') own = mbLgSheetName(kind, lang);
@@ -62,7 +86,13 @@ function mbSheetLabelCustom(kind, lang) {
 }
 
 /** The name to print: the user's, else the dictionary's. */
-function mbSheetLabel(kind, lang) {
+function mbSheetLabel(kind, lang, sheet) {
+    /* 3.73.0: a custom-type sheet prints the name typed for it. */
+    if (kind === 'custom') {
+        var typed = mbSheetCustomName(sheet, lang);
+        if (typed) return typed;
+        kind = 'activity';
+    }
     var own = mbSheetLabelCustom(kind, lang);
     if (own) return own;
     var key = MB_SHEET_KIND_KEYS[kind] || MB_SHEET_KIND_KEYS.activity;
@@ -72,7 +102,12 @@ function mbSheetLabel(kind, lang) {
 /** '' when the exporter should keep its own wording: the information
     sheet and the 'activity' type, while the user has not renamed them.
     The other types always have a name of their own. */
-function mbSheetLabelExplicit(kind, lang) {
+function mbSheetLabelExplicit(kind, lang, sheet) {
+    if (kind === 'custom') {   // 3.73.0
+        var typed = mbSheetCustomName(sheet, lang);
+        if (typed) return typed;
+        kind = 'activity';
+    }
     var own = mbSheetLabelCustom(kind, lang);
     if (own) return own;
     if (kind === 'info' || kind === 'activity') return '';
@@ -111,17 +146,49 @@ function mbRenderSheetKindSelect(value) {
     /* 3.59.0: the Learner guide has two kinds of activity sheet — the
        learning activity and the worksheet (a Job sheet). A sheet of
        another type keeps it. */
+    /* 3.73.0: + the Job Sheet in the Learner guide, + a custom name in both.
+       The standard template's own 'job' is already its Job Sheet. */
     var kinds = (typeof mbIsLearnerGuide === 'function' && mbIsLearnerGuide())
-        ? MB_SHEET_KINDS.filter(function (k) { return k === 'activity' || k === 'job' || k === cur; }) : MB_SHEET_KINDS;
+        ? MB_SHEET_KINDS.filter(function (k) { return k === 'activity' || k === 'job' || k === 'jobsheet' || k === 'custom' || k === cur; })
+        : MB_SHEET_KINDS.filter(function (k) { return k !== 'jobsheet' || k === cur; });
     sel.innerHTML = kinds.map(function (k) {
-        var name = mbSheetLabel(k, lang).replace(/[&<>"]/g, function (c) {
+        var name = (k === 'custom' ? window.i18n.tIn('skCustom', (window.i18n.getLang && window.i18n.getLang()) || lang) : mbSheetLabel(k, lang)).replace(/[&<>"]/g, function (c) {
             return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
         });
         return '<option value="' + k + '"' + (k === cur ? ' selected' : '') + '>' + name + '</option>';
     }).join('');
     sel.value = cur;
+    mbPaintSheetTypeName();
     /* 3.44.0: the open sheet's title field follows its type. */
     if (typeof mbRepaintSheetNames === 'function') mbRepaintSheetNames();
+}
+
+/* 3.73.0: the name box beside the selector, shown for 'custom' only. */
+function mbPaintSheetTypeName() {
+    var sel = document.getElementById('activity-sheet-type');
+    var box = document.getElementById('activity-sheet-type-name');
+    if (!sel || !box) return;
+    var on = sel.value === 'custom';
+    box.hidden = !on;
+    box.placeholder = window.i18n ? window.i18n.t('skCustomPh') : '';
+    box.setAttribute('dir', 'auto');
+}
+/** Load: the open sheet's typed name (content language) into the box. */
+function mbLoadSheetTypeName(sheet) {
+    var box = document.getElementById('activity-sheet-type-name');
+    if (!box) return;
+    var lang = (typeof contentLang === 'function') ? contentLang() : 'en';
+    box.value = mbSheetCustomName(sheet, lang);
+    mbPaintSheetTypeName();
+}
+/** Save: the box onto the sheet being collected (its active side). */
+function mbCollectSheetTypeName(activityData) {
+    var box = document.getElementById('activity-sheet-type-name');
+    if (!box) return;
+    if (activityData.sheetType === 'custom' || box.value.trim() || (activityData.sheetTypeName && typeof biIs === 'function' && biIs(activityData.sheetTypeName))) {
+        if (!activityData.sheetTypeName || typeof activityData.sheetTypeName !== 'object') activityData.sheetTypeName = (typeof biNew === 'function') ? biNew() : {};
+        biPut(activityData, 'sheetTypeName', box.value);
+    }
 }
 
 if (typeof window !== 'undefined') {
@@ -190,7 +257,13 @@ function mbSheetUiName(which, lang) {
     if (which === 'open') {
         var sel = (typeof document !== 'undefined') ? document.getElementById('activity-sheet-type') : null;
         if (sel && sel.value) kind = mbSheetKind(sel.value);
+        if (kind === 'custom') {   // 3.73.0: the name typed for the open sheet
+            var box = document.getElementById('activity-sheet-type-name');
+            if (box && box.value.trim()) return box.value.trim();
+            kind = 'activity';
+        }
     }
+    if (kind === 'custom') kind = 'activity';
     var own = mbSheetLabelCustom(kind, lang);
     if (own) return own;
     return kind === 'activity' ? '' : mbSheetLabel(kind, lang);
@@ -232,6 +305,9 @@ function mbRepaintSheetNames() {
 if (typeof window !== 'undefined') {
     window.addEventListener('mb:settingschange', function () { mbRepaintSheetNames(); });
     document.addEventListener('change', function (e) {
-        if (e.target && e.target.id === 'activity-sheet-type') mbRepaintSheetNames();
+        if (e.target && e.target.id === 'activity-sheet-type') { mbPaintSheetTypeName(); mbRepaintSheetNames(); }
+    });
+    document.addEventListener('input', function (e) {
+        if (e.target && e.target.id === 'activity-sheet-type-name') mbRepaintSheetNames();
     });
 }

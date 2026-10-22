@@ -302,7 +302,7 @@ function mbBuildLearningGuideModel(lo, loIndex, lang) {
                     : (_lgText(s.sheetNumber, lang) || auto);   // 3.43.0
                 /* 3.42.0: the sheet's type and the names in Settings → Misc. */
                 var kind = (typeof mbSheetKind === 'function') ? mbSheetKind(s.sheetType) : 'activity';
-                var own = (typeof mbSheetLabelExplicit === 'function') ? mbSheetLabelExplicit(kind, lang) : '';
+                var own = (typeof mbSheetLabelExplicit === 'function') ? mbSheetLabelExplicit(kind, lang, s) : '';
                 if (own) return mbSheetHeading(own, num, _lgText(s.title, lang));
                 return _lgT('expActivitySheetTitled', lang, { v0: num, v1: _lgText(s.title, lang) });
             })
