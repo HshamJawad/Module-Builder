@@ -365,6 +365,7 @@ function mbBuildModuleModel(lang, state) {
                 sections: (_waInfo = _mmWithAttachments('info', sh, function (cs) {
                     return {
                         heading: _mmStr(cs && cs.heading),
+                        subheading: _mmStr(cs && cs.subheading),   // 3.72.0
                         text: _mmStr(cs && cs.text),
                         images: _mmImages(sh.contentSectionImages, cs && cs.contentId),
                         imageCaps: _mmArr(cs && cs.__imgCaps).map(_mmStr),
@@ -372,7 +373,7 @@ function mbBuildModuleModel(lang, state) {
                         tables: _mmTables(cs && cs.tables)
                     };
                 }, function (cs) {
-                    return cs.heading.trim() || cs.text.trim() ||
+                    return cs.heading.trim() || cs.subheading.trim() || cs.text.trim() ||
                            cs.images.length || cs.marks.length || cs.tables.length;
                 })).rows,
                 attachments: _waInfo.attachments,

@@ -179,23 +179,25 @@ function saveCurrentSheetToLO() {
            biMergeArrayById writes it onto the stored pair instead of
            replacing the pair with a bare value. */
         const heading = (typeof mbContentHeading === 'function') ? mbContentHeading(cid) : '';
+        const subheading = (typeof mbContentSubheading === 'function') ? mbContentSubheading(cid) : '';   // 3.72.0
         /* A renamed but still-empty card is kept. Dropping it would throw
            away the name the moment the author typed it and moved on to
            fill the box in later. */
         /* 3.54.3: a section holding only pictures is kept too — it was
            dropped here, and its pictures with it. */
         const hasImages = (mbState.contentSectionImages[cid] || []).length > 0;
-        if (content.value.trim() || tables.length || marks.length || heading.trim() || hasImages ||
+        if (content.value.trim() || tables.length || marks.length || heading.trim() || subheading.trim() || hasImages ||
             mbRowHasOtherSide(storedInfo.contentSections, mbRowUid(content), 'text') ||
-            mbRowHasOtherSide(storedInfo.contentSections, mbRowUid(content), 'heading')) {
-            incomingSections.push({ text: content.value, heading, contentId: cid, marks, tables,
+            mbRowHasOtherSide(storedInfo.contentSections, mbRowUid(content), 'heading') ||
+            mbRowHasOtherSide(storedInfo.contentSections, mbRowUid(content), 'subheading')) {
+            incomingSections.push({ text: content.value, heading, subheading, contentId: cid, marks, tables,
                                     /* 3.56.0: captions of its pictures (attachments.js) */
                                     imageCaptions: (typeof mbImgCapsGet === 'function')
                                         ? mbImgCapsGet('info', cid, (mbState.contentSectionImages[cid] || []).length) : [],
                                     uid: mbRowUid(content) });
         }
     });
-    infoData.contentSections = biMergeArrayById(storedInfo.contentSections, incomingSections, ['text', 'heading']);
+    infoData.contentSections = biMergeArrayById(storedInfo.contentSections, incomingSections, ['text', 'heading', 'subheading']);
     /* 3.56.0: attached figures and tables (attachments.js). */
     if (typeof mbAttCollect === 'function') infoData.attachments = mbAttCollect('info', storedInfo.attachments);
 
@@ -436,7 +438,7 @@ function loadInfoSheetAtIndex(lo, index) {
                 /* biGetStrict, not biGet: a name written only in English
                    must not fall back into the Arabic editing side, where
                    the author would see it as already translated. */
-                addContentSection(biGetStrict(contentData.heading, contentLang()));
+                addContentSection(biGetStrict(contentData.heading, contentLang()), biGetStrict(contentData.subheading, contentLang()));
                 if (keyedSections && _csKeyed(contentData) && savedCsImages[contentData.contentId]) {
                     restoredCsImages[mbState.contentSectionCount] = savedCsImages[contentData.contentId];
                 }

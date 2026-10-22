@@ -170,7 +170,7 @@ var BILANG_FIELDS = {
     module:     ['title', 'code', 'description'],
     outcome:    ['title', 'performanceCriteria'],   // PC is an array of pairs
     infoSheet:  ['title', 'objectiveLead', 'objective'],
-    contentSec: ['heading', 'text'],
+    contentSec: ['heading', 'subheading', 'text'],
     activity:   ['title', 'objectiveLead', 'objective', 'criteriaTitle',
                  'criteriaInstruction', 'criteriaFooter'],
     step:       ['text'],

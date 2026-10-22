@@ -364,6 +364,7 @@ function mbBuildModuleHtml(model, opts) {
                 h += _hxAttachments(sh.attachments, k);
                 h += '<div class="mx-block">';
                 if (cs.heading) h += '<div class="mx-sub">' + _hxEsc(cs.heading) + '</div>';
+                if (cs.subheading) h += '<div class="mx-sub mx-sub2">' + _hxEsc(cs.subheading) + '</div>';   // 3.72.0
                 if (cs.text) h += '<p>' + _hxText(cs.text) + '</p>';
                 h += _hxImages(cs.images, cs.imageCaps) + _hxTables(cs.tables) + _hxMarks(cs.marks);
                 h += '</div>';
@@ -783,6 +784,7 @@ function _hxCss() {
 '.mx-sec h2{margin:0 0 16px;font-size:1.4em;font-weight:800;color:#2b3350;line-height:1.4}',
 '.mx-kicker{font-size:.76em;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8b93a8;margin-bottom:6px}',
 '.mx-sub{font-weight:800;color:#39415c;margin:18px 0 8px;font-size:1.02em}',
+'.mx-sub.mx-sub2{font-weight:700;color:#1f2430;margin:-2px 0 8px;font-size:.98em}',
 '.mx-sec p{margin:0 0 12px}',
 '.mx-lead{color:#5c6478;font-size:.94em}',
 '.mx-meta{display:inline-block;background:#eef1fe;color:#4c5fd7;border-radius:999px;padding:4px 13px;font-size:.83em;font-weight:700;margin-bottom:12px}',

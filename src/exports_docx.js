@@ -1758,9 +1758,13 @@ async function exportToDocx() {
                    editor scaffolding and must never reach the page. */
                 const _pushCsHeading = (cs) => {
                     const h = (cs.heading || '').trim();
-                    if (!h) return;
-                    ch.push(new Paragraph({
+                    const sub = (cs.subheading || '').trim();   // 3.72.0
+                    if (h) ch.push(new Paragraph({
                         children: [new TextRun({ text: h, bold: true, size: _wsBody(), color: _wsHeadColor(), rightToLeft: _mbRtl() })],
+                        alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { before: 120, after: sub ? 80 : 150 }
+                    }));
+                    if (sub) ch.push(new Paragraph({
+                        children: [new TextRun({ text: sub, bold: true, size: _wsBody(), rightToLeft: _mbRtl() })],
                         alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 150 }
                     }));
                 };
