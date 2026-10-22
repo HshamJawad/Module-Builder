@@ -409,22 +409,6 @@
 </div>
 <textarea class="mb-content-field" data-i18n="mbEnterAnyAdditionalNotesToAppear" data-i18n-attr="placeholder" id="covers-additional-notes" placeholder="Enter any additional notes to appear after the module information table..." rows="4" style="width: 100%; padding: 10px; border: 2px solid #d1d5db; border-radius: 6px; font-size: 1em;"></textarea>
 </div>
-<!-- 3.69.0: Learner guide — the learning unit card (its introduction) of the outcome chosen in
-     the bar above it; was under the outcome card in the Module tab. src/learner_guide.js -->
-<div class="lg-unit-wrap" data-tpl-only="learnerGuide" id="lg-unit-wrap">
-<div class="mb-ctx-bar">
-<span data-i18n="mbModule" class="mb-ctx-label">📦 Module:</span>
-<select data-act="switchModuleFromTab" data-args='["moduleinfo"]' data-on="change" id="moduleinfo-module-selector" class="mb-ctx-sel mb-ctx-mod">
-<option data-i18n="mbSelectModule" value="">-- Select Module --</option>
-</select>
-<span class="mb-ctx-sep" aria-hidden="true">›</span>
-<span data-i18n="mbLearningOutcome" class="mb-ctx-label">📚 Learning Outcome:</span>
-<select data-act="switchLearningOutcomeFromTab" data-args='["moduleinfo"]' data-on="change" id="moduleinfo-lo-selector" class="mb-ctx-sel mb-ctx-lo">
-<option data-i18n="mbSelectLearningOutcome" value="">-- Select Learning Outcome --</option>
-</select>
-</div>
-<div class="mb-blocks mb-blocks--lo lg-unit" id="lg-unit-section" style="display:none;"></div>
-</div>
 <!-- Proceed Button -->
 <div style="text-align: center; margin-top: 30px; padding: 20px 0;">
 <button data-act="proceedToTab" data-args='["covers"]' data-i18n="mbProceedToFrontCover" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 32px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3); transition: all 0.3s ease;">
@@ -473,9 +457,6 @@
 <div class="tab-content" id="intro-tab">
 <div class="form-group">
 <label data-i18n="mbIntroductionPages2" style="font-size: 1.2em; font-weight: 600; color: #667eea;">📄 Introduction Pages</label>
-<!-- 3.69.0: the module overview table — fixed headings in EN / FR / AR, the author writes the
-     content; boxes grow with their text. Exported 16 cm wide on its own page. src/intro_table.js -->
-<div class="mb-blocks it-card" id="intro-table-section"></div>
 <!-- Work Team Section -->
 <div style="margin-top: 20px;">
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -490,6 +471,25 @@
 <div data-i18n="mbTeamMembersWillBeAddedHere" id="work-team-container" style="background: white; border: 2px solid #667eea; border-radius: 8px; padding: 20px;">
 <!-- Team members will be added here dynamically -->
 </div>
+</div>
+<!-- 3.69.0: the module overview table — fixed headings in EN / FR / AR, the author writes the
+     content; boxes grow with their text. Exported 16 cm wide on its own page. src/intro_table.js -->
+<div class="mb-blocks it-card" id="intro-table-section"></div>
+<!-- 3.69.0: Learner guide — the learning unit card (its introduction) of the outcome chosen in
+     the bar above it, after the overview table (was under the outcome card in the Module tab). src/learner_guide.js -->
+<div class="lg-unit-wrap" data-tpl-only="learnerGuide" id="lg-unit-wrap">
+<div class="mb-ctx-bar">
+<span data-i18n="mbModule" class="mb-ctx-label">📦 Module:</span>
+<select data-act="switchModuleFromTab" data-args='["intro"]' data-on="change" id="intro-module-selector" class="mb-ctx-sel mb-ctx-mod">
+<option data-i18n="mbSelectModule" value="">-- Select Module --</option>
+</select>
+<span class="mb-ctx-sep" aria-hidden="true">›</span>
+<span data-i18n="mbLearningOutcome" class="mb-ctx-label">📚 Learning Outcome:</span>
+<select data-act="switchLearningOutcomeFromTab" data-args='["intro"]' data-on="change" id="intro-lo-selector" class="mb-ctx-sel mb-ctx-lo">
+<option data-i18n="mbSelectLearningOutcome" value="">-- Select Learning Outcome --</option>
+</select>
+</div>
+<div class="mb-blocks mb-blocks--lo lg-unit" id="lg-unit-section" style="display:none;"></div>
 </div>
 <!-- Additional Introduction Details Section -->
 <div style="margin-top: 30px; padding: 15px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
