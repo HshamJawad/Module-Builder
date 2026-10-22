@@ -49,6 +49,7 @@ async function clearForm() {
         document.getElementById('activity-link-url').value = '';
         document.getElementById('activity-qr-preview').innerHTML = '';
         mbState.activityQRImage = null;
+        mbState.activityExtraLinks = [];   // 3.70.0
         document.getElementById('criteria-tbody').innerHTML = '';
         /* include-criteria removed */
         /* edit-instruction removed */
@@ -157,6 +158,7 @@ async function clearAll() {
         document.getElementById('info-link-url').value = '';
         document.getElementById('info-qr-preview').innerHTML = '';
         mbState.infoQRImage = null;
+        mbState.infoExtraLinks = [];   // 3.70.0
         document.getElementById('self-check-number').value = '';
         document.getElementById('self-check-content').value = '';
         document.getElementById('answers-key-number').value = '';
@@ -177,6 +179,7 @@ async function clearAll() {
         document.getElementById('activity-link-url').value = '';
         document.getElementById('activity-qr-preview').innerHTML = '';
         mbState.activityQRImage = null;
+        mbState.activityExtraLinks = [];   // 3.70.0
         document.getElementById('resources-container').innerHTML = '';
         document.getElementById('steps-container').innerHTML = '';
         if (typeof mbAttReset === 'function') { mbAttReset('activity'); mbImgCapsReset('activity'); }   // 3.56.0

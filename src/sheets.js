@@ -109,7 +109,8 @@ function _mbInfoSheetHasContent(d) {
            !!(d.attachments && d.attachments.length) ||          // 3.56.0
            _mbFilled(d.linkSubject) ||
            _mbFilled(d.linkUrl) ||
-           !!d.qrImage;
+           !!d.qrImage ||
+           !!(d.extraLinks && d.extraLinks.length);   // 3.70.0
 }
 
 function _mbActivitySheetHasContent(d) {
@@ -123,6 +124,7 @@ function _mbActivitySheetHasContent(d) {
            _mbFilled(d.linkSubject) ||
            _mbFilled(d.linkUrl) ||
            !!d.qrImage ||
+           !!(d.extraLinks && d.extraLinks.length) ||   // 3.70.0
            /* '0' is the default the duration box loads with. */
            (_mbFilled(String(d.duration || '')) && String(d.duration).trim() !== '0');
 }
@@ -146,6 +148,7 @@ function saveCurrentSheetToLO() {
            explicit override by the author. */
         linkType: (document.getElementById('info-link-type') || {}).value || '',
         qrImage: mbState.infoQRImage,
+        extraLinks: (typeof mbLinkListCopy === 'function') ? mbLinkListCopy(mbState.infoExtraLinks) : [],   // 3.70.0
         selfCheckNumber: document.getElementById('self-check-number').value,
         answersKeyNumber: document.getElementById('answers-key-number').value,
         contentSectionImages: { ...mbState.contentSectionImages }
@@ -244,6 +247,7 @@ function saveCurrentSheetToLO() {
            explicit override by the author. */
         linkType: (document.getElementById('activity-link-type') || {}).value || '',
         qrImage: mbState.activityQRImage,
+        extraLinks: (typeof mbLinkListCopy === 'function') ? mbLinkListCopy(mbState.activityExtraLinks) : [],   // 3.70.0
         images: { ...mbState.stepImages },
         includeCriteria: true
     });
@@ -403,7 +407,9 @@ function loadInfoSheetAtIndex(lo, index) {
         } else {
             document.getElementById('info-qr-preview').innerHTML = '';
             mbState.infoQRImage = null;
+            mbState.infoExtraLinks = [];   // 3.70.0
         }
+        mbState.infoExtraLinks = (typeof mbLinkListCopy === 'function') ? mbLinkListCopy(info.extraLinks) : [];   // 3.70.0
         
         document.getElementById('content-sections-container').innerHTML = '';
         mbState.contentSectionCount = 0;
@@ -484,6 +490,7 @@ function loadInfoSheetAtIndex(lo, index) {
         document.getElementById('info-link-url').value = '';
         document.getElementById('info-qr-preview').innerHTML = '';
         mbState.infoQRImage = null;
+        mbState.infoExtraLinks = [];   // 3.70.0
         document.getElementById('self-check-number').value = '';
         document.getElementById('self-check-content').value = '';
         document.getElementById('answers-key-number').value = '';
@@ -537,7 +544,9 @@ function loadActivitySheetAtIndex(lo, index) {
         } else {
             document.getElementById('activity-qr-preview').innerHTML = '';
             mbState.activityQRImage = null;
+            mbState.activityExtraLinks = [];   // 3.70.0
         }
+        mbState.activityExtraLinks = (typeof mbLinkListCopy === 'function') ? mbLinkListCopy(activity.extraLinks) : [];   // 3.70.0
         
         document.getElementById('resources-container').innerHTML = '';
         mbState.resourceCount = 0;
@@ -661,6 +670,7 @@ function loadActivitySheetAtIndex(lo, index) {
         document.getElementById('activity-link-url').value = '';
         document.getElementById('activity-qr-preview').innerHTML = '';
         mbState.activityQRImage = null;
+        mbState.activityExtraLinks = [];   // 3.70.0
         document.getElementById('resources-container').innerHTML = '';
         document.getElementById('steps-container').innerHTML = '';
         document.getElementById('criteria-tbody').innerHTML = '';
@@ -835,6 +845,7 @@ async function removeCurrentInfoSheet() {
         document.getElementById('info-link-url').value = '';
         document.getElementById('info-qr-preview').innerHTML = '';
         mbState.infoQRImage = null;
+        mbState.infoExtraLinks = [];   // 3.70.0
         document.getElementById('self-check-number').value = '';
         document.getElementById('self-check-content').value = '';
         document.getElementById('answers-key-number').value = '';
@@ -930,6 +941,7 @@ async function removeCurrentActivitySheet() {
         document.getElementById('activity-link-url').value = '';
         document.getElementById('activity-qr-preview').innerHTML = '';
         mbState.activityQRImage = null;
+        mbState.activityExtraLinks = [];   // 3.70.0
         document.getElementById('resources-container').innerHTML = '';
         document.getElementById('steps-container').innerHTML = '';
         if (typeof mbAttReset === 'function') { mbAttReset('activity'); mbImgCapsReset('activity'); }   // 3.56.0

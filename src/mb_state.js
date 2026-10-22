@@ -39,6 +39,12 @@ var mbState = {
     imageCaptions: {},          // { 's:<stepId>' | 'c:<contentId>': [caption] }
     infoQRImage: null,
     activityQRImage: null,
+    /* 3.70.0: more links / QR codes on the open sheet, after the first one
+       (which stays in the hidden fields + the two images above) —
+       [{ subject, url, linkType, qrImage }]. link_modal.js; stored on the
+       sheet as `extraLinks`. */
+    infoExtraLinks: [],
+    activityExtraLinks: [],
     frontCoverImage: null,
     backCoverImage: null,
 
