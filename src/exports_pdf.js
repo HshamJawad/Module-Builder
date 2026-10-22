@@ -555,7 +555,7 @@ function _pdfBuild(pdf, model, lang) {
             });
             _pdfAttachments(w, sh.attachments, sh.sections.length, S);
 
-            if (sh.qr) _pdfQR(w, sh.qr);
+            ((sh.links && sh.links.length) ? sh.links : (sh.qr ? [sh.qr] : [])).forEach(function (q) { _pdfQR(w, q); });   // 3.70.0: every link
 
             /* Self-check and the key each start a page, as in Word: a
                key that begins halfway down the question page is a key
@@ -606,7 +606,7 @@ function _pdfBuild(pdf, model, lang) {
                 _pdfAttachments(w, sh.attachments, sh.steps.length, S);
             }
 
-            if (sh.qr) _pdfQR(w, sh.qr);
+            ((sh.links && sh.links.length) ? sh.links : (sh.qr ? [sh.qr] : [])).forEach(function (q) { _pdfQR(w, q); });   // 3.70.0: every link
 
             if (sh.criteria.rows.length) {
                 w.newPage();

@@ -1801,12 +1801,18 @@ async function exportToDocx() {
                 (_plan.slots[_plan.items.length] || []).forEach(a => _pushAttachment(a, ch));
             }
             {
-                const qrT = buildQrTable(info.linkSubject, info.linkUrl, mbState.infoQRImage);
-                if (qrT) {
-                    ch.push(new Paragraph({ children: [new TextRun({ text: '', size: _wsBody() })], spacing: { before: 300, after: 200 } }));
+                /* 3.70.0: every link of the sheet, one row each, in order —
+                   and each sheet's OWN QR code (info.qrImage; it used to
+                   print the open sheet's code on every sheet). */
+                const links = (typeof mbSheetLinks === 'function')
+                    ? mbSheetLinks(info, info.qrImage !== undefined ? info.qrImage : mbState.infoQRImage)
+                    : [{ subject: info.linkSubject, url: info.linkUrl, image: mbState.infoQRImage }];
+                const tables = links.map(l => buildQrTable(l.subject, l.url, l.image)).filter(Boolean);
+                tables.forEach((qrT, i) => {
+                    ch.push(new Paragraph({ children: [new TextRun({ text: '', size: _wsBody() })], spacing: i ? { after: 120 } : { before: 300, after: 200 } }));
                     ch.push(qrT);
-                    ch.push(new Paragraph({ children: [new TextRun({ text: '', size: _wsBody() })], spacing: { after: 200 } }));
-                }
+                });
+                if (tables.length) ch.push(new Paragraph({ children: [new TextRun({ text: '', size: _wsBody() })], spacing: { after: 200 } }));
             }
             if (!_lgDoc && info.selfCheckContent && info.selfCheckContent.trim()) {
                 const scNum = (typeof mbSeqSubNumber === 'function') ? mbSeqSubNumber(_loSeq, loIndex, sheetIndex, info.selfCheckNumber) : (info.selfCheckNumber || num);
@@ -1965,12 +1971,18 @@ async function exportToDocx() {
             }
 
             {
-                const qrT = buildQrTable(activity.linkSubject, activity.linkUrl, mbState.activityQRImage);
-                if (qrT) {
-                    ch.push(new Paragraph({ children: [new TextRun({ text: '', size: _wsBody() })], spacing: { before: 300, after: 200 } }));
+                /* 3.70.0: every link of the sheet, one row each, in order —
+                   and each sheet's OWN QR code (activity.qrImage; it used to
+                   print the open sheet's code on every sheet). */
+                const links = (typeof mbSheetLinks === 'function')
+                    ? mbSheetLinks(activity, activity.qrImage !== undefined ? activity.qrImage : mbState.activityQRImage)
+                    : [{ subject: activity.linkSubject, url: activity.linkUrl, image: mbState.activityQRImage }];
+                const tables = links.map(l => buildQrTable(l.subject, l.url, l.image)).filter(Boolean);
+                tables.forEach((qrT, i) => {
+                    ch.push(new Paragraph({ children: [new TextRun({ text: '', size: _wsBody() })], spacing: i ? { after: 120 } : { before: 300, after: 200 } }));
                     ch.push(qrT);
-                    ch.push(new Paragraph({ children: [new TextRun({ text: '', size: _wsBody() })], spacing: { after: 200 } }));
-                }
+                });
+                if (tables.length) ch.push(new Paragraph({ children: [new TextRun({ text: '', size: _wsBody() })], spacing: { after: 200 } }));
             }
 
             return ch;

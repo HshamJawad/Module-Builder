@@ -369,7 +369,7 @@ function mbBuildModuleHtml(model, opts) {
                 h += '</div>';
             });
             h += _hxAttachments(sh.attachments, sh.sections.length);
-            h += _hxQR(sh.qr, L);
+            h += ((sh.links && sh.links.length) ? sh.links : (sh.qr ? [sh.qr] : [])).map(function (q) { return _hxQR(q, L); }).join('');   // 3.70.0: every link
 
             /* The one thing paper cannot do: the answers stay hidden
                until the trainee has tried. On paper the key is simply
@@ -424,7 +424,7 @@ function mbBuildModuleHtml(model, opts) {
                 h += _hxAttachments(sh.attachments, 0);   // 3.56.0: attached items only
             }
 
-            h += _hxQR(sh.qr, L);
+            h += ((sh.links && sh.links.length) ? sh.links : (sh.qr ? [sh.qr] : [])).map(function (q) { return _hxQR(q, L); }).join('');   // 3.70.0: every link
 
             /* Tickable, and the ticks persist in the reader's own
                browser. A checklist you cannot tick is just a list. */
