@@ -96,3 +96,31 @@ test('added questions alone still make the Reflection page; Arabic, each languag
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
   expect(errors).toEqual([]);
 });
+
+// 3.76.0: «contributes to the assessment» on the Reflection heading's line;
+// 📝 Paste text under each box of questions.
+test('reflection: the contributes box beside the heading; Paste text under the questions, the first and an added group', async ({ page }) => {
+  const errors = await openApp(page, { handoff: fixture('dacum-handoff.json'), lang: 'en', contentLang: 'en' });
+  await guide(page);
+  await tab(page, 'reflection');
+  const host = page.locator('#lg-reflection-section');
+  const head = host.locator('.lg-part').first().locator('.lg-part-head');
+  await expect(head).toContainText('Reflection');
+  await expect(head.locator('input[type="checkbox"]')).toHaveCount(1);
+  const hb = await head.boundingBox(), cb = await head.locator('.lg-refl-contrib').boundingBox();
+  expect(cb.x + cb.width).toBeGreaterThan(hb.x + hb.width - 4);               // at the far end of the line
+  await head.locator('input[type="checkbox"]').check();
+  expect(await page.evaluate(() => mbCurrentLOObject().lgReflection.contributes)).toBe('yes');
+
+  await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', { configurable: true,
+    value: { readText: () => Promise.resolve('What was the hardest\npart, and why?\n- tools\n- safety') } }));
+  await host.locator('.lg-part').first().locator('.btn-paste-text').click();
+  await expect(host.locator('[data-lg-field="refl.questions"]')).toHaveValue('What was the hardest part, and why?\n- tools\n- safety');
+  expect(await page.evaluate(() => mbCurrentLOObject().lgReflection.questions.en)).toBe('What was the hardest part, and why?\n- tools\n- safety');
+
+  await host.locator('.lg-refl-add').click();
+  await host.locator('.lg-refl-more').first().locator('.btn-paste-text').click();
+  await expect(host.locator('.lg-refl-more textarea')).toHaveValue('What was the hardest part, and why?\n- tools\n- safety');
+  expect(await page.evaluate(() => mbCurrentLOObject().lgReflectionMore[0].questions.en)).toContain('hardest part');
+  expect(errors).toEqual([]);
+});

@@ -87,6 +87,7 @@ function _ptTarget(kind, ref, btn) {
     if (kind === 'content') return document.querySelector('textarea[data-content-id="' + ref + '"]');
     if (kind === 'step') return document.querySelector('textarea[data-step-id="' + ref + '"]');
     if (kind === 'id') return document.getElementById(String(ref));
+    if (kind === 'lg') return document.querySelector('[data-lg-field="' + String(ref).replace(/"/g, '') + '"]');   // 3.76.0: the Learner guide's boxes
     if (kind === 'block') {
         var row = btn && btn.closest ? btn.closest('.mb-block') : null;
         return row ? row.querySelector('textarea.mb-block-body') : null;

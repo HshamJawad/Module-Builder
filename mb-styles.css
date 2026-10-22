@@ -4164,3 +4164,7 @@ button.mb-cmk-opt.is-on { outline: 3px solid #0f766e; outline-offset: 1px; }
 .btn-add-image.btn-paste-text:hover { background: #4338ca; }
 .objective-format-btn.btn-paste-text { background: #eef2ff; color: #3730a3; box-shadow: none; }
 .mb-block-paste.btn-paste-text { padding: 5px 10px; }
+
+/* ── 3.76.0: the reflection — «contributes» on the heading line, 📝 under the questions ── */
+.lg-refl-contrib { font-weight: 600; font-size: .9em; color: #374151; margin: 0; cursor: pointer; }
+.lg-paste-row { display: flex; margin: -2px 0 4px; }
