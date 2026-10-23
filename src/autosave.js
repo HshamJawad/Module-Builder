@@ -239,7 +239,7 @@
                 (d.referencesData || []).some(r => _txt(r && r.value)) ||
                 (d.facilitiesData || []).some(r => _txt(r && r.value)) ||
                 (typeof mbGlossaryHasContent === 'function' && mbGlossaryHasContent(d.glossary)) ||
-                Object.keys(d.assessmentFormsData || {}).length > 0 ||
+                Object.keys(d.assessmentFormsData || {}).some(k => typeof mbAssessmentFormFilled === 'function' ? mbAssessmentFormFilled(d.assessmentFormsData[k]) : true) ||
                 !!_txt(d.coversAdditionalInfo) || !!_txt(d.introAdditionalDetails);
         }
         window.mbSnapshotHasWork = _snapHasWork;

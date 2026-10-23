@@ -352,3 +352,21 @@ test('assessment form: «The learner is» sits in the options row, before the bo
   expect(await page.evaluate(() => i18n.tIn('expResultPlain', 'en'))).toBe('Result');
   expect(errors).toEqual([]);
 });
+
+test('assessment tab: no «Add Assessment Form» button — the chosen learning unit always has its form', async ({ page }) => {
+  const errors = await openApp(page, { contentLang: 'en' });
+  await buildGuide(page);
+  await tab(page, 'assessment');
+  await expect(page.locator('[data-act="addNewAssessmentForm"]')).toHaveCount(0);
+  await expect(page.locator('#assessment-forms-list thead th').first()).toBeVisible();
+  await expect(page.locator('#assessment-forms-list [data-act="deleteAssessmentForm"]')).toHaveCount(0);
+  await expect(page.locator('#assessment-forms-list [data-act="clearAssessmentForm"]')).toHaveCount(1);
+  // an untouched form is not exported
+  expect(await docxText(page)).not.toContain('Learning outcome 1: Use hand tools');
+  // typing in it makes it print
+  const cell = page.locator('#assessment-forms-list textarea.mb-asm-cell').first();
+  await cell.fill('Uses a screwdriver correctly');
+  await cell.dispatchEvent('change');
+  expect(await docxText(page)).toContain('Uses a screwdriver correctly');
+  expect(errors).toEqual([]);
+});
