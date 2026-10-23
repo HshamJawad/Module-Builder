@@ -113,7 +113,6 @@ function deleteFrontCoverImage() {
     document.getElementById('front-cover-image-input').value = '';
     document.getElementById('front-cover-preview-wrap').style.display = 'none';
     document.getElementById('front-cover-placeholder').style.display = 'block';
-    document.getElementById('front-cover-delete-row').style.display = 'none';
     var rt = document.getElementById('front-cover-remove-top'); if (rt) rt.style.display = 'none';
 }
 
@@ -132,7 +131,6 @@ function deleteBackCoverImage() {
     document.getElementById('back-cover-image-input').value = '';
     document.getElementById('back-cover-preview-wrap').style.display = 'none';
     document.getElementById('back-cover-placeholder').style.display = 'block';
-    document.getElementById('back-cover-delete-row').style.display = 'none';
     var rt = document.getElementById('back-cover-remove-top'); if (rt) rt.style.display = 'none';
 }
 
@@ -141,7 +139,6 @@ function _showCoverPreview(side, src) {
     document.getElementById(`${side}-cover-preview`).src = src;
     document.getElementById(`${side}-cover-preview-wrap`).style.display = 'block';
     document.getElementById(`${side}-cover-placeholder`).style.display = 'none';
-    document.getElementById(`${side}-cover-delete-row`).style.display = 'block';
     const rt = document.getElementById(`${side}-cover-remove-top`); if (rt) rt.style.display = 'inline-flex';
     const img = new Image();
     img.onload = function() {
