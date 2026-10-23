@@ -382,7 +382,9 @@ var WS_PALETTE = [
     { hex: '5B2C6F', en: 'Purple',      fr: 'Violet',          ar: 'بنفسجي' },
     { hex: '3F464D', en: 'Dark grey',   fr: 'Gris foncé',      ar: 'رمادي داكن' },
     { hex: '0F6674', en: 'Dark teal',   fr: 'Sarcelle foncé',  ar: 'فيروزي داكن' },
-    { hex: '000000', en: 'Black',       fr: 'Noir',            ar: 'أسود' }
+    { hex: '000000', en: 'Black',       fr: 'Noir',            ar: 'أسود' },
+    /* 3.82.0: a pale fill for table headers; the text on it turns dark by itself. */
+    { hex: 'DEEBF6', en: 'Light blue',  fr: 'Bleu clair',      ar: 'أزرق فاتح' }
 ];
 
 function _wsSwatchName(sw) {

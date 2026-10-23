@@ -79,14 +79,27 @@ function renderFacilities() {
     const dir = (typeof biIsRtl === 'function' && biIsRtl(lang)) ? 'rtl' : 'ltr';
     const rows = mbState.facilitiesData.map((f) =>
         '<div class="fac-entry" data-fac-id="' + f.id + '">' +
-          '<input type="text" inputmode="numeric" class="mb-content-field fac-qty" dir="ltr" aria-label="' + escapeHtml(window.i18n.t('lgFacNumber')) + '" placeholder="' + escapeHtml(window.i18n.t('lgFacNumber')) + '" value="' + escapeHtml(f.qty) + '" data-act="updateFacilityValue" data-on="input" data-args=\'[' + f.id + ',"qty","$value"]\' />' +
+          '<input type="number" min="0" step="1" inputmode="numeric" class="mb-content-field fac-qty" dir="ltr" aria-label="' + escapeHtml(window.i18n.t('lgFacNumber')) + '" placeholder="' + escapeHtml(window.i18n.t('lgFacNumber')) + '" value="' + escapeHtml(f.qty) + '" data-act="updateFacilityValue" data-on="input" data-args=\'[' + f.id + ',"qty","$value"]\' />' +
           '<input type="text" class="mb-content-field fac-input" dir="' + dir + '" placeholder="' + escapeHtml(window.i18n.t('lgFacItemPh')) + '" value="' + escapeHtml(f.value) + '" data-act="updateFacilityValue" data-on="input" data-args=\'[' + f.id + ',"value","$value"]\' />' +
           (mbState.facilitiesData.length > 1 ? '<button type="button" class="mb-icon-btn danger" data-act="deleteFacility" data-args=\'[' + f.id + ']\' title="' + escapeHtml(window.i18n.t('mbDelete')) + '" aria-label="' + escapeHtml(window.i18n.t('mbDelete')) + '">' + ico + '</button>' : '') +
         '</div>').join('');
     card.innerHTML =
-        '<div class="fac-head">' + escapeHtml('🧰 ' + ((typeof mbLgLabel === 'function') ? mbLgLabel('facilities', lang) : '')) + '</div>' +
+        '<div class="fac-head-row"><span class="fac-head" id="facilities-title-display">' + escapeHtml('🧰 ' + _facTitleNow()) + '</span>' +
+          '<button type="button" class="mb-has-ico" data-act="renameFacilitiesTitle" title="' + escapeHtml(window.i18n.t('tiRenameSectionHeading')) + '" style="background:#f3f4f6;color:#374151;border:1.5px solid #d1d5db;padding:4px 12px;border-radius:6px;cursor:pointer;font-size:0.85em;">' + window.i18n.t('mbRename') + '</button></div>' +
         '<div id="facilities-list">' + rows + '</div>' +
         '<div style="margin-top:8px;"><button type="button" class="fac-add" data-act="addFacility">➕ ' + escapeHtml(window.i18n.t('lgFacAdd')) + '</button></div>';
+}
+function _facTitleNow() {
+    const stored = biGetStrict(mbState.facilitiesTitle, contentLang());
+    return (typeof mbLgFacTitle === 'function') ? mbLgFacTitle(stored, contentLang()) : stored;
+}
+async function renameFacilitiesTitle() {
+    const newTitle = await mbPrompt(window.i18n.t('dgEnterNewSectionTitle'), _facTitleNow());
+    if (newTitle && newTitle.trim()) {
+        biSet(mbState, 'facilitiesTitle', contentLang(), newTitle.trim());
+        const d = document.getElementById('facilities-title-display');
+        if (d) d.textContent = '🧰 ' + _facTitleNow();
+    }
 }
 function updateFacilityValue(id, field, value) {
     const f = (mbState.facilitiesData || []).find(r => r.id === id);

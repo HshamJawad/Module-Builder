@@ -96,6 +96,7 @@ function mbCollectShared() {
         refIdCounter:           mbState.refIdCounter     || 1,
         facilitiesData:         mbState.facilitiesData   || [],
         facIdCounter:           mbState.facIdCounter     || 1,
+        facilitiesTitle:        mbState.facilitiesTitle  || null,
         glossary:               mbState.glossary         || null,
         assessmentResults:      mbState.assessmentResults || null,   // 3.50.0
         ratingScale:            mbState.ratingScale       || null,   // 3.51.0
@@ -125,7 +126,7 @@ function _mbDefaultShared() {
         introAdditionalDetails: biNew(), introBlocks: [], introTable: null, includeLearningGuide: false,
         assessmentContent: biNew(), assessmentBlocks: [],
         referencesTitle: null, referencesData: [{ id: 1, value: '' }], refIdCounter: 1,
-        facilitiesData: [{ id: 1, qty: '', value: '' }], facIdCounter: 1,
+        facilitiesData: [{ id: 1, qty: '', value: '' }], facIdCounter: 1, facilitiesTitle: null,
         glossary: { title: null, tables: [] },
         assessmentResults: null,
         ratingScale: null,
@@ -195,6 +196,7 @@ function mbApplyProjectShared(data) {
         mbState.refIdCounter    = data.refIdCounter || 1;
         mbState.facilitiesData  = (data.facilitiesData && data.facilitiesData.length) ? data.facilitiesData : [{ id: 1, qty: '', value: '' }];
         mbState.facIdCounter    = data.facIdCounter || 1;
+        mbState.facilitiesTitle = data.facilitiesTitle ? biUpgrade(data.facilitiesTitle) : null;
         if (typeof mbSeedReferencesTitle === 'function') mbSeedReferencesTitle();
         if (typeof renderReferences === 'function') renderReferences();
 
