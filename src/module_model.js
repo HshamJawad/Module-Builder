@@ -365,6 +365,9 @@ function mbBuildModuleModel(lang, state) {
                 objectiveLead: (lg && (sh.lgObjective === false || !_mmStr(sh.objective).trim())) ? '' : _mmStr(sh.objectiveLead),
                 objective: (lg && sh.lgObjective === false) ? '' : _mmStr(sh.objective),
                 objectiveLabel: (lg && typeof mbLgLabel === 'function') ? mbLgLabel('objectives', lang) : '',
+                /* 3.80.0: the Learner guide's list box, after the title. */
+                lgListTitle: (lg && typeof mbLgListTitle === 'function') ? mbLgListTitle(sh, lang) : '',
+                lgListItems: (lg && typeof mbLgListLines === 'function') ? mbLgListLines(sh, lang) : [],
                 /* 3.56.0: rows and attached items in printed order. */
                 sections: (_waInfo = _mmWithAttachments('info', sh, function (cs) {
                     return {

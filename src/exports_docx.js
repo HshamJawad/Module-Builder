@@ -1735,6 +1735,14 @@ async function exportToDocx() {
             if (info.title && info.title.trim()) {
                 ch.push(new Paragraph({ children: [new TextRun({ text: _sheetHeadText('info', num, info.title, 'expInfoSheetTitled'), size: _wsBody(), bold: true, color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 400 } }));
             }
+            /* 3.80.0: the Learner guide's list box — title, then its lines as typed. */
+            if (_lgDoc && typeof mbLgListLines === 'function') {
+                const _lt = typeof mbLgListTitle === 'function' ? mbLgListTitle(info, _mbLang()) : '';
+                const _ll = mbLgListLines(info, _mbLang());
+                if (_lt) ch.push(_lgPara(_lt, { bold: true, color: _wsHeadColor(), after: 200 }));
+                _ll.forEach(l => ch.push(_lgPara(l, { after: 100 })));
+                if (_ll.length) ch.push(_lgPara('', { after: 200 }));
+            }
             /* 3.67.0: the Learner guide prints a knowledge sheet's
                objectives only when they are shown, under its own name. */
             const _objOn = !_lgDoc || typeof mbLgObjectivePrinted !== 'function' || mbLgObjectivePrinted(info);
