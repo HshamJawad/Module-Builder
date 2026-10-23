@@ -599,7 +599,7 @@ function mbBuildModuleModel(lang, state) {
             heading: _lgT('lgAsmUnitHead', { v0: N }),
             introHead: _lgT('lgAsmIntroHead', { v0: N }),
             intro: mbLgAsmText('intro', lang, st),
-            portfolioHead: _lgT('lgAsmPortfolioHead', { v0: N }),
+            portfolioHead: N + '-2 ' + mbLgAsmPortfolioTitle(lang, st),
             portfolio: mbLgAsmText('portfolio', lang, st),
             content: _mmStr(st.assessmentContent),
             blocks: asmBlocks.map(function (b) { return { title: _mmStr(b.title), body: _mmStr(b.body), tables: _mmTables(b.tables) }; }),
@@ -607,8 +607,8 @@ function mbBuildModuleModel(lang, state) {
             contents: mbLgPortfolioRows(_mmArr(st.learningOutcomesData), lang).map(function (r) {
                 return { label: r.label, product: r.product, contributes: _lgT(r.contributes ? 'lgpYes' : 'lgpNo') };
             }),
-            tablesHead: _lgT('lgAsmTablesHead', { v0: N, v1: code }).trim(),
-            tablesLead: _lgT('lgAsmTablesLead'),
+            tablesHead: N + '-4 ' + mbLgAsmTablesTitle(lang, st),
+            tablesLead: '',
             outcomeHead: function (f) { return _lgT('lgAsmOutcomeHead', { v0: f.outcomeIndex, v1: f.outcomeTitle }); },
             cols: [_lgT('lgColCriteria'), _lgT('lgColActNum'), _lgT('lgColOutput'), _lgT('lgColDate')],
             contentsCols: [_lgT('lgColActivity'), _lgT('lgColProduct'), _lgT('lgColContributes')]

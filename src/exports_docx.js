@@ -2232,14 +2232,7 @@ async function exportToDocx() {
             const ch = [];
             ch.push(_lgHead(_mbTf('lgAsmUnitHead', { v0: N }), true));
             if (intro.trim()) { ch.push(_lgHead(_mbTf('lgAsmIntroHead', { v0: N }))); _lgTextCh(intro, ch); }
-            if (portfolio.trim()) { ch.push(_lgHead(_mbTf('lgAsmPortfolioHead', { v0: N }))); _lgTextCh(portfolio, ch); }
-            if (asmText.trim()) _lgTextCh(asmText, ch);
-            asmBlk.forEach(block => {
-                const bt = (block.title || '').trim();
-                if (bt) ch.push(_lgPara(bt, { bold: true, color: _wsHeadColor(), before: 240 }));
-                _lgTextCh(block.body, ch);
-                (block.tables || []).forEach(t => _pushUserTable(t, ch));
-            });
+            if (portfolio.trim()) { ch.push(_lgHead(N + '-2 ' + mbLgAsmPortfolioTitle(L, mbState))); _lgTextCh(portfolio, ch); }
             if (rows.length) {
                 ch.push(_lgHead(_mbTf('lgAsmContentsHead', { v0: N })));
                 const tr = [new TableRow({ tableHeader: true, children: [
@@ -2252,12 +2245,18 @@ async function exportToDocx() {
             }
             sections.push({ properties: { bidi: _mbRtl() }, children: ch });
 
-            if (!formLos.length) return;
-            const m = (mbState.modulesData || []).find(x => x.id === mbState.currentModuleId) || {};
-            const code = String(m.moduleCode || m.moduleNumber || '').trim();
+            if (!formLos.length && !asmText.trim() && !asmBlk.length) return;
+            /* 3.83.0: «N-4 Assessment Tables of (code)» — the Assessment
+               Content card's text and sections, then the tables. */
             const fc = [];
-            fc.push(_lgHead(_mbTf('lgAsmTablesHead', { v0: N, v1: code }).trim()));
-            fc.push(_lgPara(_mbT('lgAsmTablesLead'), { after: 300 }));
+            fc.push(_lgHead(N + '-4 ' + mbLgAsmTablesTitle(L, mbState)));
+            if (asmText.trim()) _lgTextCh(asmText, fc);
+            asmBlk.forEach(block => {
+                const bt = (block.title || '').trim();
+                if (bt) fc.push(_lgPara(bt, { bold: true, color: _wsHeadColor(), before: 240 }));
+                _lgTextCh(block.body, fc);
+                (block.tables || []).forEach(t => _pushUserTable(t, fc));
+            });
             formLos.forEach((lo, k) => {
                 const idx = mbState.learningOutcomesData.indexOf(lo);
                 const f = mbState.assessmentFormsData[lo.id];

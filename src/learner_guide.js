@@ -83,7 +83,9 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgAsmCard: 'Assessment unit (Learner guide)',
         lgAsmNote: 'The tool writes these texts; edit them freely. The table of the portfolio’s contents is built from the sheets, and each outcome’s assessment table from its assessment form below.',
         lgAsmIntro: 'Introduction',
-        lgAsmPortfolio: 'Portfolio of evidence',
+        lgAsmPortfolio: 'Work Record (Evidence Portfolio)',
+        lgAsmTablesCard: 'Assessment Tables of ({v0})',
+        lgAsmRename: 'Rename', lgAsmDelete: 'Delete this card', lgAsmDeleted: 'This card is removed and is not exported.', lgAsmUndelete: 'Restore the card',
         lgAsmRestore: 'Restore the default text',
         lgAsmContents: 'Contents of the portfolio',
         lgAsmContentsEmpty: 'No learning activity, worksheet or reflection has a title yet.',
@@ -110,10 +112,10 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgGlossaryDesc: 'Description',
         lgAsmUnitHead: '{v0}- Assessment unit',
         lgAsmIntroHead: '{v0}-1 Introduction',
-        lgAsmPortfolioHead: '{v0}-2 Portfolio of evidence',
+        lgAsmPortfolioHead: '{v0}-2 Work Record (Evidence Portfolio)',
         lgAsmContentsHead: '{v0}-3 Contents of the portfolio',
-        lgAsmTablesHead: '{v0}-4 Assessment tables for the unit {v1}',
-        lgAsmTablesLead: 'Your teacher will keep records of your achievements and will also fill in and sign the tables below, and you will sign them too. The tables are then your record of your results while studying this unit. You must meet all the assessment criteria and achieve all the learning outcomes to be «competent» in this unit.',
+        lgAsmTablesHead: '{v0}-4 Assessment Tables of ({v1})',
+        lgAsmTablesLead: 'The teacher will keep records of your achievements and will also fill out and sign the tables below, and you will also sign the tables. The tables will then be a record for you to keep on top of your scores as you study this module. You must meet all evaluation criteria and achieve all learning outcomes to be \'competent\' for this module.',
         lgColActivity: 'Learning activities',
         lgColCriteria: 'Assessment criteria',
         lgColActNum: 'Name and number of the learning activity',
@@ -167,7 +169,9 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgAsmCard: 'Unité d’évaluation (Guide de l’apprenant)',
         lgAsmNote: 'L’outil rédige ces textes ; modifiez-les librement. Le tableau du contenu du portfolio est construit à partir des fiches, et le tableau d’évaluation de chaque résultat à partir de son formulaire ci-dessous.',
         lgAsmIntro: 'Introduction',
-        lgAsmPortfolio: 'Portfolio de preuves',
+        lgAsmPortfolio: 'Registre de travail (portfolio de preuves)',
+        lgAsmTablesCard: 'Tableaux d’évaluation de ({v0})',
+        lgAsmRename: 'Renommer', lgAsmDelete: 'Supprimer cette carte', lgAsmDeleted: 'Cette carte est supprimée et n’est pas exportée.', lgAsmUndelete: 'Rétablir la carte',
         lgAsmRestore: 'Rétablir le texte par défaut',
         lgAsmContents: 'Contenu du portfolio',
         lgAsmContentsEmpty: 'Aucune activité, fiche de travail ou réflexion n’a encore de titre.',
@@ -194,9 +198,9 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgGlossaryDesc: 'Description',
         lgAsmUnitHead: '{v0}- Unité d’évaluation',
         lgAsmIntroHead: '{v0}-1 Introduction',
-        lgAsmPortfolioHead: '{v0}-2 Portfolio de preuves',
+        lgAsmPortfolioHead: '{v0}-2 Registre de travail (portfolio de preuves)',
         lgAsmContentsHead: '{v0}-3 Contenu du portfolio',
-        lgAsmTablesHead: '{v0}-4 Tableaux d’évaluation de l’unité {v1}',
+        lgAsmTablesHead: '{v0}-4 Tableaux d’évaluation de ({v1})',
         lgAsmTablesLead: 'Votre enseignant conservera ses propres relevés de vos acquis et remplira et signera également les tableaux ci-dessous, que vous signerez aussi. Ces tableaux seront ensuite votre relevé de résultats pendant l’étude de cette unité. Vous devez satisfaire à tous les critères d’évaluation et atteindre tous les résultats d’apprentissage pour être « compétent » dans cette unité.',
         lgColActivity: 'Activités d’apprentissage',
         lgColCriteria: 'Critères d’évaluation',
@@ -253,6 +257,8 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgAsmIntro: 'المقدمة',
         lgAsmPortfolio: 'سجل الأعمال (محفظة الأدلة)',
         lgAsmRestore: 'استعادة النص الافتراضي',
+        lgAsmTablesCard: 'جداول التقييم الخاصة بـ ({v0})',
+        lgAsmRename: 'إعادة تسمية', lgAsmDelete: 'حذف هذه البطاقة', lgAsmDeleted: 'هذه البطاقة محذوفة ولا تُصدَّر.', lgAsmUndelete: 'استعادة البطاقة',
         lgAsmContents: 'محتويات سجل الأعمال (المحفظة)',
         lgAsmContentsEmpty: 'لا يوجد نشاط تعلمي أو ورقة عمل أو تأمل له عنوان بعد.',
         lgUnitHead: '{v0}- الوحدة التعلمية: {v1}',
@@ -280,7 +286,7 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgAsmIntroHead: '{v0}-1 المقدمة',
         lgAsmPortfolioHead: '{v0}-2 سجل الأعمال (محفظة الأدلة)',
         lgAsmContentsHead: '{v0}-3 محتويات سجل الأعمال (المحفظة)',
-        lgAsmTablesHead: '{v0}-4 جداول التقييم للوحدة {v1}',
+        lgAsmTablesHead: '{v0}-4 جداول التقييم الخاصة بـ ({v1})',
         lgAsmTablesLead: 'سوف يحتفظ المعلم بسجلاته الخاصة بإنجازاتك وسوف يقوم أيضاً بملء وتوقيع الجداول أدناه، وسوف تعمل أنت أيضاً على التوقيع على هذا الجدول. ستكون هذه الجداول بعد ذلك سجلاً لك للحفاظ على نتائجك أثناء دراسة هذه الوحدة. يجب أن تستوفي جميع معايير التقييم وتحقق جميع محصلات التعلم لكي تكون «كفوءاً» لهذه الوحدة.',
         lgColActivity: 'نشاطات التعلم',
         lgColCriteria: 'معايير التقييم',
@@ -560,16 +566,46 @@ function mbLgPortfolioRows(los, lang) {
  *  tool's when never edited (null). '' when the author emptied it. */
 function mbLgAsmText(which, lang, state) {
     var st = state || mbState;
+    if (which === 'portfolio' && st && st.lgAsm && st.lgAsm.portfolioDeleted) return '';   // 3.83.0: the card was removed
     var v = st && st.lgAsm ? st.lgAsm[which] : null;
     var key = which === 'intro' ? 'lgDefaultAsmIntro' : 'lgDefaultAsmPortfolio';
     if (v === null || v === undefined) return _lgTIn(key, lang);
     return (typeof v === 'string') ? v : ((typeof biGetStrict === 'function') ? biGetStrict(v, lang) : _lgStr(v, lang));
 }
 
+/** 3.83.0: the code of the open module (Module management → Module code). */
+function mbLgModuleCode(state) {
+    var st = state || mbState;
+    var m = ((st && st.modulesData) || []).find(function (x) { return x.id === st.currentModuleId; }) || {};
+    var c = m.moduleCode || m.moduleNumber || '';
+    if (c && typeof c === 'object') c = (typeof biGetStrict === 'function' ? biGetStrict(c, _lgLang()) : '') || '';
+    return String(c).trim();
+}
+function _lgAsmTitleOf(st, key, lang) {
+    var v = st && st.lgAsm ? st.lgAsm[key] : null;
+    if (!v) return '';
+    return String(typeof v === 'string' ? v : ((typeof biGetStrict === 'function') ? biGetStrict(v, lang) : _lgStr(v, lang))).trim();
+}
+/** «Assessment Tables of (CMCN 1-1)» — the card's title, unless renamed. */
+function mbLgAsmTablesTitle(lang, state) {
+    var st = state || mbState;
+    var own = _lgAsmTitleOf(st, 'tablesTitle', lang);
+    if (own) return own;
+    return _lgTIn('lgAsmTablesCard', lang).replace('{v0}', mbLgModuleCode(st)).replace(/\s+(of|de|الخاصة بـ|لـ)?\s*\(\s*\)\s*$/, '').trim();
+}
+/** «Work Record (Evidence Portfolio)» — the card's title, unless renamed. */
+function mbLgAsmPortfolioTitle(lang, state) {
+    var st = state || mbState;
+    return _lgAsmTitleOf(st, 'portfolioTitle', lang) || _lgTIn('lgAsmPortfolio', lang);
+}
+
 /** Shared data → state (module_library.js). */
 function mbLgNormalizeAsm(v) {
     var out = { intro: null, portfolio: null };
     if (v && typeof v === 'object') {
+        ['portfolioTitle', 'tablesTitle'].forEach(function (k) { if (v[k]) out[k] = biUpgrade(v[k]); });
+        if (v.portfolioDeleted) out.portfolioDeleted = true;
+        if (v.tablesSeeded) out.tablesSeeded = true;
         if (v.intro !== null && v.intro !== undefined) out.intro = biUpgrade(v.intro);
         if (v.portfolio !== null && v.portfolio !== undefined) out.portfolio = biUpgrade(v.portfolio);
     }
@@ -1031,7 +1067,7 @@ function mbLgToggleObjective(kind) {
 function mbRenderLgAsm(force) {
     var host = document.getElementById('lg-asm-section');
     if (!host) return;
-    if (!_lgOn()) { host.innerHTML = ''; host.removeAttribute('data-render-key'); return; }
+    if (!_lgOn()) { host.innerHTML = ''; host.removeAttribute('data-render-key'); try { mbLgPaintTablesCard(); } catch (e) { /* not ready */ } return; }
     if (!mbState.lgAsm) mbState.lgAsm = { intro: null, portfolio: null };
     var lang = _lgLang();
     var key = lang + '|' + ((window.i18n && window.i18n.getLang) ? window.i18n.getLang() : '');
@@ -1039,10 +1075,27 @@ function mbRenderLgAsm(force) {
     if (force !== true && host.getAttribute('data-render-key') === key && act && act !== document.body && host.contains(act)) return;
     host.setAttribute('data-render-key', key);
     var dir = (typeof biIsRtl === 'function' && biIsRtl(lang)) ? 'rtl' : 'ltr';
+    var hist = function () {
+        return _lgIconBtn('lg-hist-btn lg-undo-btn is-off', 'mbUndo', '', _lgHistTip('undo'), 'undo') +
+               _lgIconBtn('lg-hist-btn lg-redo-btn is-off', 'mbRedo', '', _lgHistTip('redo'), 'redo');
+    };
+    var renameBtn = function (which) {
+        return '<button type="button" class="mb-has-ico lg-rename-btn" data-act="mbLgAsmRename" data-args=\'["' + which + '"]\'>' + _LG_PENCIL + '<span>' + _lgEsc(_lgT('lgAsmRename')) + '</span></button>';
+    };
     var box = function (which, labelKey) {
+        if (which === 'portfolio' && mbState.lgAsm.portfolioDeleted) {
+            return '<div class="mb-block lg-part"><div class="lg-part-head"><span class="lg-asm-title lg-gone">' + _lgEsc(mbLgAsmPortfolioTitle(lang)) + '</span>' +
+                '<span class="lg-card-tools">' + hist() + '</span></div><p class="lg-empty">' + _lgEsc(_lgT('lgAsmDeleted')) +
+                ' <button type="button" class="lg-restore" data-act="mbLgAsmUndelete">↺ ' + _lgEsc(_lgT('lgAsmUndelete')) + '</button></p></div>';
+        }
+        var title = which === 'portfolio' ? mbLgAsmPortfolioTitle(lang) : _lgT(labelKey);
+        var tools = hist() + (which === 'portfolio'
+            ? _lgIconBtn('lg-clear-icon danger', 'mbLgAsmDelete', '', _lgT('lgAsmDelete'), 'clear') : '');
         return '<div class="mb-block lg-part">' +
-            '<div class="lg-part-head">' + _lgEsc(_lgT(labelKey)) +
-              ' <button type="button" class="lg-restore" data-act="mbLgAsmRestore" data-args=\'["' + which + '"]\'>↺ ' + _lgEsc(_lgT('lgAsmRestore')) + '</button></div>' +
+            '<div class="lg-part-head"><span class="lg-asm-title">' + _lgEsc(title) + '</span>' +
+              (which === 'portfolio' ? renameBtn('portfolio') : '') +
+              ' <button type="button" class="lg-restore" data-act="mbLgAsmRestore" data-args=\'["' + which + '"]\'>↺ ' + _lgEsc(_lgT('lgAsmRestore')) + '</button>' +
+              '<span class="lg-card-tools">' + tools + '</span></div>' +
             '<textarea class="mb-block-body lg-field" rows="8" dir="' + dir + '" data-lg-asm="' + which + '"' +
               ' data-act="mbLgAsmEdit" data-on="input" data-args=\'["' + which + '"]\'>' + _lgEsc(mbLgAsmText(which, lang)) + '</textarea></div>';
     };
@@ -1052,6 +1105,57 @@ function mbRenderLgAsm(force) {
         box('intro', 'lgAsmIntro') + box('portfolio', 'lgAsmPortfolio') +
         '<div class="mb-block lg-part"><div class="lg-part-head">' + _lgEsc(_lgT('lgAsmContents')) + '</div>' +
           '<div id="lg-portfolio-preview">' + mbLgPortfolioPreviewHtml() + '</div></div>';
+    try { mbLgPaintTablesCard(); } catch (e) { /* not ready */ }
+}
+
+/* 3.83.0: the Assessment Content card, in this template, is the card of the
+   assessment tables: «Assessment Tables of (module code)», renamable, its
+   text starting as the tool's own sentence about the tables. */
+var _LG_PENCIL = '<svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4.5 19.5h4l10-10a2.1 2.1 0 0 0-3-3l-10 10z"/><path d="M14.5 6.5l3 3"/><path d="M4.5 19.5l.6-3.4"/></svg>';
+function mbLgSeedTablesText() {
+    if (!_lgOn() || typeof biSet !== 'function') return false;
+    if (!mbState.lgAsm) mbState.lgAsm = { intro: null, portfolio: null };
+    if (mbState.lgAsm.tablesSeeded) return false;
+    var codes = (typeof BILANG_CODES !== 'undefined') ? BILANG_CODES : ['en', 'ar', 'fr'];
+    var any = codes.some(function (c) { return String(biGetStrict(mbState.assessmentContent, c) || '').trim(); });
+    mbState.lgAsm.tablesSeeded = true;
+    if (any) return false;
+    codes.forEach(function (c) { biSet(mbState, 'assessmentContent', c, _lgTIn('lgAsmTablesLead', c)); });
+    return true;
+}
+function mbLgPaintTablesCard() {
+    var std = document.getElementById('asm-content-label-std'), lgh = document.getElementById('asm-content-label-lg');
+    if (!std || !lgh) return;
+    var on = _lgOn();
+    std.style.display = on ? 'none' : '';
+    lgh.style.display = on ? 'inline-flex' : 'none';
+    if (!on) return;
+    if (mbLgSeedTablesText() && typeof applyProjectTextToDOM === 'function') applyProjectTextToDOM();
+    var t = document.getElementById('asm-tables-title');
+    if (t) t.textContent = mbLgAsmTablesTitle(_lgLang());
+    if (typeof mbHistUI === 'function') { try { mbHistUI(); } catch (e) { /* not ready */ } }
+}
+function mbLgAsmRename(which) {
+    if (!mbState.lgAsm) mbState.lgAsm = { intro: null, portfolio: null };
+    var key = which === 'tables' ? 'tablesTitle' : 'portfolioTitle';
+    var cur = which === 'tables' ? mbLgAsmTablesTitle(_lgLang()) : mbLgAsmPortfolioTitle(_lgLang());
+    return mbPrompt(_lgT('lgAsmRename'), cur).then(function (v) {
+        if (!v || !v.trim()) return;
+        biSet(mbState.lgAsm, key, _lgLang(), v.trim());
+        mbRenderLgAsm(true); mbLgPaintTablesCard();
+        if (typeof mbLibrarySave === 'function') mbLibrarySave();
+    });
+}
+function mbLgAsmDelete() {
+    if (!mbState.lgAsm) mbState.lgAsm = { intro: null, portfolio: null };
+    mbState.lgAsm.portfolioDeleted = true;
+    mbRenderLgAsm(true);
+    if (typeof mbLibrarySave === 'function') mbLibrarySave();
+}
+function mbLgAsmUndelete() {
+    if (mbState.lgAsm) delete mbState.lgAsm.portfolioDeleted;
+    mbRenderLgAsm(true);
+    if (typeof mbLibrarySave === 'function') mbLibrarySave();
 }
 
 function mbLgPortfolioPreviewHtml() {
@@ -1094,6 +1198,7 @@ function mbLgAsmRestore(which) {
 function _lgRepaintAll() {
     try { mbRenderLgUnit(); } catch (e) { /* not ready */ }
     try { mbRenderLgAsm(); } catch (e) { /* not ready */ }
+    try { mbLgPaintTablesCard(); } catch (e) { /* not ready */ }   // 3.83.0
     try { if (typeof mbRenderSheetKindSelect === 'function') mbRenderSheetKindSelect(); } catch (e) { /* not ready */ }
     try { if (typeof mbRepaintSheetNames === 'function') mbRepaintSheetNames(); } catch (e) { /* not ready */ }
     try { if (typeof mbSeqPaintNumberFields === 'function') mbSeqPaintNumberFields(); } catch (e) { /* not ready */ }

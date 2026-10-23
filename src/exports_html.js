@@ -507,20 +507,21 @@ function mbBuildModuleHtml(model, opts) {
             var ah = '';
             if (lgA.intro.trim()) ah += '<div class="mx-sub">' + _hxEsc(lgA.introHead) + '</div><p>' + _hxText(lgA.intro) + '</p>';
             if (lgA.portfolio.trim()) ah += '<div class="mx-sub">' + _hxEsc(lgA.portfolioHead) + '</div><p>' + _hxText(lgA.portfolio) + '</p>';
-            if (lgA.content.trim()) ah += '<p>' + _hxText(lgA.content) + '</p>';
-            lgA.blocks.forEach(function (b) {
-                if (b.title) ah += '<div class="mx-sub">' + _hxEsc(b.title) + '</div>';
-                if (b.body) ah += '<p>' + _hxText(b.body) + '</p>';
-                ah += _hxTables(b.tables);
-            });
             if (lgA.contents.length) {
                 ah += '<div class="mx-sub">' + _hxEsc(lgA.contentsHead) + '</div><table class="mx-tbl"><thead><tr>' +
                     lgA.contentsCols.map(function (c) { return '<th>' + _hxEsc(c) + '</th>'; }).join('') + '</tr></thead><tbody>' +
                     lgA.contents.map(function (r) { return '<tr><td>' + _hxText(r.label) + '</td><td>' + _hxText(r.product) + '</td><td>' + _hxEsc(r.contributes) + '</td></tr>'; }).join('') +
                     '</tbody></table>';
             }
-            if (model.assessment.length) {
-                ah += '<div class="mx-sub">' + _hxEsc(lgA.tablesHead) + '</div><p class="mx-lead">' + _hxText(lgA.tablesLead) + '</p>';
+            if (model.assessment.length || lgA.content.trim() || lgA.blocks.length) {
+                /* 3.83.0: the Assessment Content card, headed «Assessment Tables of (code)» */
+                ah += '<div class="mx-sub">' + _hxEsc(lgA.tablesHead) + '</div>';
+                if (lgA.content.trim()) ah += '<p class="mx-lead">' + _hxText(lgA.content) + '</p>';
+                lgA.blocks.forEach(function (b) {
+                    if (b.title) ah += '<div class="mx-sub">' + _hxEsc(b.title) + '</div>';
+                    if (b.body) ah += '<p>' + _hxText(b.body) + '</p>';
+                    ah += _hxTables(b.tables);
+                });
                 model.assessment.forEach(function (f, fi) {
                     ah += '<div class="mx-block"><div class="mx-sub">' + _hxEsc(lgA.outcomeHeads[fi]) + '</div>';
                     if (f.rows.length) ah += '<table class="mx-tbl"><thead><tr>' + lgA.cols.map(function (c) { return '<th>' + _hxEsc(c) + '</th>'; }).join('') +

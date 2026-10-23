@@ -279,3 +279,44 @@ test('References tab (Learner guide): «Suggested resources…» heading, facili
   await expect(card.locator('.fac-input')).toHaveCount(1);
   expect(errors).toEqual([]);
 });
+
+test('Assessment tab (Learner guide): «Assessment Tables of (code)», Rename, default text, Work Record card with Rename/Delete, undo/redo', async ({ page }) => {
+  const errors = await openApp(page, { contentLang: 'en' });
+  await buildGuide(page);
+  await page.evaluate(() => { const m = mbState.modulesData.find(x => x.id === mbState.currentModuleId); m.moduleCode = 'CMCN 1-1'; });
+  await tab(page, 'assessment');
+  await expect(page.locator('#asm-tables-title')).toHaveText('Assessment Tables of (CMCN 1-1)');
+  await expect(page.locator('#assessment-tab')).not.toContainText('Instructions, criteria, guidelines');
+  await expect(page.locator('#assessment-simple-content')).toHaveValue(/^The teacher will keep records of your achievements/);
+  // rename
+  await page.evaluate(() => { biSet(mbState.lgAsm, 'tablesTitle', 'en', 'My tables'); mbLgPaintTablesCard(); });
+  await expect(page.locator('#asm-tables-title')).toHaveText('My tables');
+  await expect(page.locator('#asm-content-label-lg [data-act="mbLgAsmRename"]')).toBeVisible();
+  await expect(page.locator('#asm-content-label-lg .lg-undo-btn svg')).toHaveCount(1);
+  await page.evaluate(() => { delete mbState.lgAsm.tablesTitle; mbLgPaintTablesCard(); });
+  // Work Record card
+  const card = page.locator('#lg-asm-section');
+  await expect(card).toContainText('Work Record (Evidence Portfolio)');
+  await expect(card).not.toContainText('Portfolio of evidence');
+  await expect(card.locator('[data-act="mbLgAsmRename"]')).toHaveCount(1);
+  await expect(card.locator('[data-act="mbLgAsmDelete"] svg')).toHaveCount(1);
+  expect(await card.locator('.lg-undo-btn').count()).toBeGreaterThanOrEqual(2);
+  // export: heading with the code, the text under it
+  let t = await docxText(page);
+  expect(t).toContain('Assessment Tables of (CMCN 1-1)');
+  expect(t).toContain('The teacher will keep records of your achievements');
+  expect(t).toContain('Work Record (Evidence Portfolio)');
+  // delete the Work Record card: not exported; undo brings it back
+  await card.locator('[data-act="mbLgAsmDelete"]').click();
+  await expect(card.locator('[data-act="mbLgAsmUndelete"]')).toHaveCount(1);
+  expect(await docxText(page)).not.toContain('Work Record (Evidence Portfolio)');
+  await page.evaluate(() => mbUndo());
+  await expect(card.locator('[data-act="mbLgAsmDelete"]')).toHaveCount(1);
+  expect(await page.evaluate(() => !!mbState.lgAsm.portfolioDeleted)).toBe(false);
+  // typing in the tables card is one undo step
+  const ta = page.locator('#assessment-simple-content');
+  await ta.click(); await ta.fill('Changed text'); await page.locator('#asm-tables-title').click();
+  await page.evaluate(() => mbUndo());
+  await expect(ta).toHaveValue(/^The teacher will keep records/);
+  expect(errors).toEqual([]);
+});
