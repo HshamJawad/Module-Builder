@@ -339,3 +339,16 @@ test('assessment form: «The learner is» before the result options; «Date» fo
   expect(await page.evaluate(() => [i18n.tIn('expResult', 'fr'), i18n.tIn('expResult', 'ar')])).toEqual(['L’apprenant est :', 'المتعلم:']);
   expect(errors).toEqual([]);
 });
+
+test('assessment form: «The learner is» sits in the options row, before the boxes', async ({ page }) => {
+  const errors = await openApp(page, { contentLang: 'en' });
+  await buildGuide(page);
+  await page.evaluate(() => { const lo = mbCurrentLOObject(); mbState.assessmentFormsData[lo.id] = { rows: [] }; renderAssessmentForms(); });
+  await tab(page, 'assessment');
+  const row = page.locator('.mb-asm-opts').first();
+  await expect(row.locator('.mb-asm-lead')).toHaveText('The learner is');
+  const sizes = await row.evaluate(r => [getComputedStyle(r.querySelector('.mb-asm-lead')).fontSize, getComputedStyle(r.querySelector('.mb-asm-opt')).fontSize]);
+  expect(sizes[0]).toBe(sizes[1]);
+  expect(await page.evaluate(() => i18n.tIn('expResultPlain', 'en'))).toBe('Result');
+  expect(errors).toEqual([]);
+});
