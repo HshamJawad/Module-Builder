@@ -510,7 +510,7 @@ function _pdfBuild(pdf, model, lang) {
     /* Outcomes and their sheets */
     model.outcomes.forEach(function (o) {
         w.newPage();
-        w.heading(o.heading || (t('outcome') + ' ' + o.index + ': ' + o.title), 2);   // 3.59.0: the Learner guide's unit
+        w.heading(o.pageHeading || o.heading || (t('outcome') + ' ' + o.index + ': ' + o.title), 2);   // 3.59.0: the Learner guide's unit; 3.79.0: the module's title on the introduction page
         if (o.description) w.text(o.description);
         if (o.criteria.length) {
             w.label(t('criteria'));

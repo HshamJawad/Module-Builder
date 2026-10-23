@@ -54,7 +54,7 @@ test('Learner guide: one numbered sequence, no self-check/resources/checklist, r
   const at = (s) => { const i = t.indexOf(s); expect(i, s).toBeGreaterThan(-1); return i; };
   const order = [
     '1- Learning unit: Use hand tools',
-    '1-1 Introduction', 'In this learning unit you will learn how to:', '1. Use screwdrivers',
+    '1-1 Introduction', 'The learning outcomes for this guide are:', '1. Use screwdrivers',
     '1-2 Knowledge: Screwdrivers',
     '1-3 Knowledge: Soldering iron',
     '1-4 Learning activity: Using hand tools',
@@ -79,7 +79,7 @@ test('Learner guide in Arabic: headings and the tool\'s texts in the export lang
   const errors = await openApp(page, { contentLang: 'ar' });
   await buildGuide(page, 'ar');
   const t = await docxText(page);
-  for (const s of ['1- الوحدة التعلمية: Use hand tools'.replace('Use hand tools', ''), '1-1 المقدمة', 'ستتعلم في هذه الوحدة التعلمية كيفية:',
+  for (const s of ['1- الوحدة التعلمية: Use hand tools'.replace('Use hand tools', ''), '1-1 المقدمة', 'محصلات التعلم لهذا الدليل هي:',
                    '1-2 المعرفة: Screwdrivers'.replace('Screwdrivers', ''), '1-4 النشاط التعلمي:', '1-5 ورقة العمل:',
                    '1-6 التأمل في الوحدة التعلمية 1', '2- وحدة التقييم', '2-2 سجل الأعمال (محفظة الأدلة)', 'يعتمد تقييم هذه الوحدة']) {
     expect(t, s).toContain(s);

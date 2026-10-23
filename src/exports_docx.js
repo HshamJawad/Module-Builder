@@ -2017,6 +2017,7 @@ async function exportToDocx() {
         let _lgUnits = 0;   // 3.59.0: the number of the last learning unit printed
         let _seeRefs = null;
         if (typeof mbContentMapRefs === 'function') { try { _seeRefs = mbContentMapRefs(_mbCurrentModule()); } catch (e) { _seeRefs = null; } }
+        let _lgModTitleUsed = false;
         mbState.learningOutcomesData.forEach((lo, loIndex) => {
             /* An outcome with no sheets gets no heading page.
                The loops below skip an untitled info or activity sheet,
@@ -2039,7 +2040,15 @@ async function exportToDocx() {
             if (!loHasSheets && !seeAlso.length) return;
 
             const loHdTitle = mbLoPlainTitle(lo.title || '');
-            const loHdText = _lgDoc ? mbLgUnitHeading(loIndex + 1, loHdTitle, _mbLang())   // 3.59.0; 3.67.0 named in Settings
+            /* 3.79.0: the introduction page carries the module's title, not the learning unit's. */
+            let _lgModTitle = '';
+            if (_lgDoc && !_lgModTitleUsed && mbLgIntroFilled(lo)) {
+                const _cm = (mbState.modulesData || []).find(m => m.id === mbState.currentModuleId);
+                _lgModTitle = _cm ? (String(_cm.fullTitle || '').trim() || String(_cm.title || '').trim()) : '';
+                if (_lgModTitle) _lgModTitleUsed = true;
+            }
+            const loHdText = _lgModTitle ? _lgModTitle
+                : _lgDoc ? mbLgUnitHeading(loIndex + 1, loHdTitle, _mbLang())   // 3.59.0; 3.67.0 named in Settings
                 : _mbTitledAlready(loHdTitle, 'expLearningOutcomeN')
                 ? loHdTitle
                 : _mbTf('expLearningOutcomeN', { v0: loIndex + 1, v1: loHdTitle });

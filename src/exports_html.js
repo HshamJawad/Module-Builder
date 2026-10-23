@@ -357,7 +357,7 @@ function mbBuildModuleHtml(model, opts) {
             }
         });
         if (inc('outcomes')) {
-            if (o.heading) add(oid, o.heading, _hxSection(oid, '', o.heading, inner));
+            if (o.heading) add(oid, o.heading, _hxSection(oid, '', o.pageHeading || o.heading, inner));
             else add(oid, t('outcome') + ' ' + o.index, _hxSection(oid, t('outcome') + ' ' + o.index, o.title, inner));
         }
 
