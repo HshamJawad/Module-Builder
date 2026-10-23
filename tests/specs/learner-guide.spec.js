@@ -61,14 +61,14 @@ test('Learner guide: one numbered sequence, no self-check/resources/checklist, r
     '1-5 Worksheet: Dismantle a PC',
     '1-6 Reflection on learning unit 1', 'Did you use different screwdrivers?',
     'Glossary of Terms', 'Central Processing Unit',
-    '2- Assessment unit', '2-1 Introduction', '2-2 Portfolio of evidence', '2-3 Contents of the portfolio',
-    '2-4 Assessment tables for the unit', 'Learning outcome 1: Use hand tools', 'Use screwdrivers correctly'
+    '2- Assessment unit', '2-1 Introduction', '2-2 Work Record (Evidence Portfolio)', '2-3 Contents of the portfolio',
+    '2-4 Assessment Tables', 'Learning outcome 1: Use hand tools', 'Use screwdrivers correctly'
   ];
   let last = -1;
   for (const s of order) { const i = at(s); expect(i, 'order: ' + s).toBeGreaterThan(last); last = i; }
   for (const gone of ['SELF CHECK TEXT', 'ANSWER KEY TEXT', 'RESOURCE ROW', 'CRITERION ROW', 'VERIFY COL']) expect(t, gone).not.toContain(gone);
   // the portfolio: activity and worksheet count, the reflection does not
-  const pf = t.slice(t.indexOf('2-3 Contents of the portfolio'), t.indexOf('2-4 Assessment tables')).replace(/\n/g, '');
+  const pf = t.slice(t.indexOf('2-3 Contents of the portfolio'), t.indexOf('2-4 Assessment Tables')).replace(/\n/g, '');
   expect(pf).toContain('1-4 Learning activity: Using hand toolsDirect observationYes');
   expect(pf).toContain('1-5 Worksheet: Dismantle a PCWorksheetYes');
   expect(pf).toContain('1-6 Reflection on learning unit 1WorksheetNo');

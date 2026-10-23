@@ -4259,3 +4259,11 @@ button.mb-cmk-opt.is-on { outline: 3px solid #0f766e; outline-offset: 1px; }
 }
 .fac-head-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
 .fac-head-row .fac-head { margin-bottom: 0; }
+
+/* 3.83.0: Learner guide — assessment cards: Rename button like the others, tools at the end */
+.lg-rename-btn { background: #f3f4f6; color: #374151; border: 1.5px solid #d1d5db; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: .82em; font-weight: 600; transition: background .2s; }
+.lg-rename-btn:hover { background: #e5e7eb; }
+.lg-part-head .lg-card-tools { margin-inline-start: auto; }
+.lg-asm-title.lg-gone { opacity: .55; text-decoration: line-through; }
+#asm-content-label-lg { flex: 1; }
+#asm-content-label-lg .lg-card-tools { margin-inline-start: auto; }

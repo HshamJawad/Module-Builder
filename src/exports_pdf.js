@@ -685,17 +685,16 @@ function _pdfBuild(pdf, model, lang) {
         w.heading(lgA.heading, 2);
         if (lgA.intro.trim()) { w.heading(lgA.introHead, 3); w.text(lgA.intro); }
         if (lgA.portfolio.trim()) { w.heading(lgA.portfolioHead, 3); w.text(lgA.portfolio); }
-        if (lgA.content.trim()) w.text(lgA.content);
-        lgA.blocks.forEach(function (b) { if (b.title) w.label(b.title); if (b.body) w.text(b.body); _pdfBlockTables(w, b, S); });
         if (lgA.contents.length) {
             w.heading(lgA.contentsHead, 3);
             w.table(lgA.contentsCols, lgA.contents.map(function (r) { return [r.label, r.product, r.contributes]; }),
                 [w.CW * 0.5, w.CW * 0.3, w.CW * 0.2], { size: S.body });
         }
-        if (model.assessment.length) {
+        if (model.assessment.length || lgA.content.trim() || lgA.blocks.length) {
             w.newPage();
             w.heading(lgA.tablesHead, 3);
-            w.text(lgA.tablesLead);
+            if (lgA.content.trim()) w.text(lgA.content);
+            lgA.blocks.forEach(function (b) { if (b.title) w.label(b.title); if (b.body) w.text(b.body); _pdfBlockTables(w, b, S); });
             model.assessment.forEach(function (f, idx) {
                 w.label(lgA.outcomeHeads[idx]);
                 if (f.rows.length) w.table(lgA.cols, f.rows.map(function (r) { return [r.criteria, r.activities, r.outcomes, r.date]; }),

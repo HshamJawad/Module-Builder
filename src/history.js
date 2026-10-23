@@ -98,9 +98,13 @@ function _mbHistSameModule() {
 function _mbHistData() {
     try { if (typeof saveCurrentSheetToLO === 'function') saveCurrentSheetToLO(); } catch (e) { /* ignore */ }
     try { if (typeof saveCurrentModuleLOData === 'function') saveCurrentModuleLOData(); } catch (e) { /* ignore */ }
+    /* 3.83.0: the assessment cards' texts are read off the screen first. */
+    try { if (typeof syncProjectTextFromDOM === 'function') syncProjectTextFromDOM(); } catch (e) { /* ignore */ }
     var m = (mbState.modulesData || []).find(function (x) { return x.id === mbState.currentModuleId; });
     return JSON.stringify({ los: mbState.learningOutcomesData || [], forms: mbState.assessmentFormsData || {},
                             map: (m && m.contentMap) || null,
+                            asm: { c: mbState.assessmentContent === undefined ? null : mbState.assessmentContent,
+                                   b: mbState.assessmentBlocks || [], l: mbState.lgAsm || null },
                             covers: [_mbHistImgRef(mbState.frontCoverImage), _mbHistImgRef(mbState.backCoverImage)] });
 }
 function _mbHistView() {
@@ -172,6 +176,14 @@ function _mbHistApply(step) {
         mbState.backCoverImage  = _mbHistImgGet(d.covers[1]);
         if (typeof mbRefreshCoverPreviews === 'function') mbRefreshCoverPreviews();
         if (typeof _mbCoverNotifyChanged === 'function') { _mbCoverNotifyChanged('front'); _mbCoverNotifyChanged('back'); }
+    }
+    /* 3.83.0: a step from before the assessment cards were recorded has none. */
+    if (d.asm) {
+        mbState.assessmentContent = d.asm.c;
+        mbState.assessmentBlocks = d.asm.b || [];
+        mbState.lgAsm = d.asm.l;
+        if (typeof applyProjectTextToDOM === 'function') { try { applyProjectTextToDOM(); } catch (e) { /* not ready */ } }
+        if (typeof mbRenderLgAsm === 'function') { try { mbRenderLgAsm(true); } catch (e) { /* not ready */ } }
     }
     var los = mbState.learningOutcomesData;
     mbState.currentLOId = los.some(function (l) { return l.id === v.lo; }) ? v.lo : (los[0] ? los[0].id : null);
