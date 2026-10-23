@@ -32,7 +32,6 @@ var MB_INTRO_TABLE_DXA = { total: 9072, label: 2551, value: 6521 };
 if (window.i18n && window.i18n.extend) window.i18n.extend({
     en: {
         itCard: '📋 Module Overview Table',
-        itNote: 'The headings are fixed; write the content. Printed on its own page, 16 cm wide, when at least one box has text.',
         itPh: 'Write here…',
         it_title: 'Title', it_subject: 'Subject', it_level: 'Level', it_prerequisites: 'Prerequisites',
         it_duration: 'Duration', it_purpose: 'Purpose', it_outcomes: 'Learning Outcomes', it_sources: 'Sources',
@@ -40,7 +39,6 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
     },
     fr: {
         itCard: '📋 Tableau de présentation du module',
-        itNote: 'Les intitulés sont fixes ; rédigez le contenu. Imprimé sur sa propre page, large de 16 cm, dès qu’une case contient du texte.',
         itPh: 'Écrivez ici…',
         it_title: 'Titre', it_subject: 'Matière', it_level: 'Niveau', it_prerequisites: 'Prérequis',
         it_duration: 'Durée', it_purpose: 'Objectif', it_outcomes: 'Résultats d’apprentissage', it_sources: 'Sources',
@@ -48,7 +46,6 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
     },
     ar: {
         itCard: '📋 جدول التعريف بالوحدة',
-        itNote: 'العناوين ثابتة، واكتب المحتوى. يُطبع في صفحة مستقلة بعرض 16 سم متى كُتب نص في خانة واحدة على الأقل.',
         itPh: 'اكتب هنا…',
         it_title: 'العنوان', it_subject: 'الموضوع', it_level: 'المستوى', it_prerequisites: 'المتطلبات السابقة',
         it_duration: 'المدة', it_purpose: 'الغرض', it_outcomes: 'محصلات التعلم', it_sources: 'المصادر',
@@ -132,7 +129,6 @@ function mbRenderIntroTable(force) {
     host.innerHTML =
         '<div class="mb-blocks-head">' +
           '<label class="mb-blocks-label">' + _itEsc(_itT('itCard')) + '</label>' +
-          '<span class="mb-blocks-note">' + _itEsc(_itT('itNote')) + '</span>' +
         '</div>' +
         '<table class="it-table"><tbody>' + rows + '</tbody></table>';
     if (typeof mbAutoGrowAll === 'function') mbAutoGrowAll(host);
