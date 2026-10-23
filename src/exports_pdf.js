@@ -59,7 +59,7 @@ var _PDF_STRINGS = {
         assessment: 'Assessment Unit', portfolio: 'Portfolio of Evidence',
         colCriteria: 'Assessment Criteria', colActivities: 'Activities',
         colOutcomes: 'Outcomes', colVerification: 'Verification', colDate: 'Date',
-        result: 'Result', competent: 'Competent', notYet: 'Not Yet Competent',
+        result: 'The learner is', competent: 'Competent', notYet: 'Not Yet Competent',
         trainer: 'Trainer', learner: 'Learner', signature: 'Signature',
         references: 'References', glossary: 'Glossary of Terms', team: 'Work Team', intro: 'Introduction',
         name: 'Name', task: 'Task / Role', location: 'Work Location'
@@ -81,7 +81,7 @@ var _PDF_STRINGS = {
         assessment: 'Unité d\u2019évaluation', portfolio: 'Portfolio de preuves',
         colCriteria: 'Critères d\u2019évaluation', colActivities: 'Activités',
         colOutcomes: 'Résultats', colVerification: 'Vérification', colDate: 'Date',
-        result: 'Résultat', competent: 'Compétent', notYet: 'Pas encore compétent',
+        result: 'L’apprenant est', competent: 'Compétent', notYet: 'Pas encore compétent',
         trainer: 'Formateur', learner: 'Apprenant', signature: 'Signature',
         references: 'Références', glossary: 'Glossaire', team: 'Équipe de travail', intro: 'Introduction',
         name: 'Nom', task: 'Tâche / Rôle', location: 'Lieu de travail'
@@ -103,7 +103,7 @@ var _PDF_STRINGS = {
         assessment: 'وحدة التقييم', portfolio: 'حقيبة الأدلة',
         colCriteria: 'معايير التقييم', colActivities: 'الأنشطة',
         colOutcomes: 'النواتج', colVerification: 'التحقّق', colDate: 'التاريخ',
-        result: 'النتيجة', competent: 'جدير', notYet: 'غير جدير بعد',
+        result: 'المتعلم', competent: 'جدير', notYet: 'غير جدير بعد',
         trainer: 'المدرّب', learner: 'المتدرّب', signature: 'التوقيع',
         references: 'المراجع', glossary: 'مسرد المصطلحات', team: 'فريق العمل', intro: 'التقديم',
         name: 'الاسم', task: 'المهمة / الدور', location: 'موقع العمل'

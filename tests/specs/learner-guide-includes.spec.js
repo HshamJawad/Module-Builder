@@ -320,3 +320,22 @@ test('Assessment tab (Learner guide): «Assessment Tables of (code)», Rename, d
   await expect(ta).toHaveValue(/^The teacher will keep records/);
   expect(errors).toEqual([]);
 });
+
+test('assessment form: «The learner is» before the result options; «Date» for both signatures', async ({ page }) => {
+  const errors = await openApp(page, { contentLang: 'en' });
+  await buildGuide(page);
+  await page.evaluate(() => {
+    const lo = mbCurrentLOObject();
+    mbState.assessmentFormsData[lo.id] = { rows: [{ criteria: 'C1', activities: '1-1', outcomes: 'O', date: '' }], teacherName: '', learnerName: '' };
+  });
+  const t = await docxText(page);
+  expect(t).toContain('The learner is:');
+  expect(t).not.toContain('Result:');
+  expect(t).toContain('☐ Competent');
+  expect(t).toContain('☐ Not Yet Competent');
+  for (const [lang, w] of [['en', 'Date'], ['fr', 'Date'], ['ar', 'التاريخ']]) {
+    expect(await page.evaluate((l) => [i18n.tIn('dgTrainerDate', l), i18n.tIn('dgLearnerDate', l)], lang)).toEqual([w, w]);
+  }
+  expect(await page.evaluate(() => [i18n.tIn('expResult', 'fr'), i18n.tIn('expResult', 'ar')])).toEqual(['L’apprenant est :', 'المتعلم:']);
+  expect(errors).toEqual([]);
+});
