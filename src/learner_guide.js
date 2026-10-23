@@ -24,11 +24,11 @@
 //
 // WHERE THINGS ARE STORED
 //   lo.lgIntro       { body: pair, items: pair }      items: one per line
-//   lo.lgIncludes    { on: bool, intro, knowledge, activities, reflection: pair,
-//                      items: pair }   «Each learning unit includes the following:» —
-//                      absent until the author touches the card; the four paragraphs
-//                      are the tool's texts (seeded in all languages on the first edit);
-//                      printed on the unit's page only when `on` is true (3.79.0)
+//   lo.lgIncludes    { intro, knowledge, activities, reflection: pair, items: pair }
+//                      «Each learning unit includes the following:» — absent until the
+//                      author edits the card, then the four paragraphs are the tool's
+//                      texts seeded in every language. Printed with the introduction, on
+//                      the same page, always (the tool's texts when never edited) (3.79.0)
 //   lo.lgReflection  { title: pair, questions: pair, lines: n, contributes: 'yes'|'no'|'' }
 //   activity.lgContributes   '' (default: yes) | 'yes' | 'no'
 //   activity.lgProduct       pair — '' = the default for its type
@@ -43,7 +43,6 @@
 if (window.i18n && window.i18n.extend) window.i18n.extend({
     en: {
         lgUnitCard: 'Learning unit (Learner guide)',
-        lgUnitNote: 'The introduction opens the learning unit; its reflection, which closes it, is in the Reflection tab. Empty parts are not exported.',
         lgReflTab: '🪞 Reflection',
         lgProceedToReflection: 'Proceed to Reflection →',
         lgReflCard: 'Reflection — closes the learning unit',
@@ -60,7 +59,6 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgIntroItemsPh: 'One item per line…',
         lgNumber: 'Numbering', lgNumberTip: 'Number the lines (1-, 2-, 3-) — click again to remove the numbers',
         lgIncCard: 'Each learning unit includes the following:',
-        lgIncPrint: 'Print this part in the export',
         lgIncRestore: 'Restore the default text',
         lgIncItemsLabel: 'Add your own lines (one per line):',
         lgIncItemsPh: 'Anything else the learning unit includes…',
@@ -68,7 +66,6 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgIncKnowLbl: 'Knowledge:', lgIncKnowTxt: 'Things you need to know',
         lgIncActLbl: 'Learning Activities:', lgIncActTxt: 'Things to do',
         lgIncReflLbl: 'Reflection:', lgIncReflTxt: 'To reflect on what you have learned',
-        lgFillItems: 'Fill from the knowledge sheet titles',
         lgReflTitle: 'Reflection',
         lgReflTitlePh: 'Reflection on learning unit {v0}',
         lgReflQuestionsLabel: 'Reflection questions (one per line)',
@@ -127,7 +124,6 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
     },
     fr: {
         lgUnitCard: 'Unité d’apprentissage (Guide de l’apprenant)',
-        lgUnitNote: 'L’introduction ouvre l’unité d’apprentissage ; sa réflexion, qui la termine, est dans l’onglet Réflexion. Les parties vides ne sont pas exportées.',
         lgReflTab: '🪞 Réflexion',
         lgProceedToReflection: 'Passer à la réflexion →',
         lgReflCard: 'Réflexion — termine l’unité d’apprentissage',
@@ -144,7 +140,6 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgIntroItemsPh: 'Un élément par ligne…',
         lgNumber: 'Numérotation', lgNumberTip: 'Numéroter les lignes (1-, 2-, 3-) — cliquer de nouveau pour retirer les numéros',
         lgIncCard: 'Chaque unité d’apprentissage comprend les éléments suivants :',
-        lgIncPrint: 'Imprimer cette partie dans l’export',
         lgIncRestore: 'Rétablir le texte par défaut',
         lgIncItemsLabel: 'Ajoutez vos propres lignes (une par ligne) :',
         lgIncItemsPh: 'Tout autre élément de l’unité d’apprentissage…',
@@ -152,7 +147,6 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgIncKnowLbl: 'Connaissances :', lgIncKnowTxt: 'Ce que vous devez savoir',
         lgIncActLbl: 'Activités d’apprentissage :', lgIncActTxt: 'Ce que vous devez faire',
         lgIncReflLbl: 'Réflexion :', lgIncReflTxt: 'Pour réfléchir à ce que vous avez appris',
-        lgFillItems: 'Remplir avec les titres des fiches de connaissances',
         lgReflTitle: 'Réflexion',
         lgReflTitlePh: 'Réflexion sur l’unité d’apprentissage {v0}',
         lgReflQuestionsLabel: 'Questions de réflexion (une par ligne)',
@@ -211,7 +205,6 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
     },
     ar: {
         lgUnitCard: 'الوحدة التعلمية (دليل المتعلم)',
-        lgUnitNote: 'المقدمة تفتتح الوحدة التعلمية، أما التأمل الذي يختمها ففي تبويب «التأمل». الأجزاء الفارغة لا تُصدَّر.',
         lgReflTab: '🪞 التأمل',
         lgProceedToReflection: 'المتابعة إلى التأمل ←',
         lgReflCard: 'التأمل — خاتمة الوحدة التعلمية',
@@ -228,7 +221,6 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgIntroItemsPh: 'بند في كل سطر…',
         lgNumber: 'ترقيم', lgNumberTip: 'ترقيم الأسطر (1-، 2-، 3-) — اضغط مرة أخرى لإزالة الأرقام',
         lgIncCard: 'تتضمن كل وحدة تعلمية ما يلي:',
-        lgIncPrint: 'طباعة هذا الجزء في التصدير',
         lgIncRestore: 'استعادة النص الافتراضي',
         lgIncItemsLabel: 'أضف أسطرك الخاصة (سطر لكل بند):',
         lgIncItemsPh: 'أي شيء آخر تتضمنه الوحدة التعلمية…',
@@ -236,7 +228,6 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgIncKnowLbl: 'المعرفة:', lgIncKnowTxt: 'أشياء تحتاج إلى معرفتها',
         lgIncActLbl: 'الأنشطة التعلمية:', lgIncActTxt: 'أشياء عليك القيام بها',
         lgIncReflLbl: 'التأمل:', lgIncReflTxt: 'للتأمل فيما تعلمته',
-        lgFillItems: 'التعبئة من عناوين أوراق المعرفة',
         lgReflTitle: 'التأمل',
         lgReflTitlePh: 'التأمل في الوحدة التعلمية {v0}',
         lgReflQuestionsLabel: 'أسئلة التأمل (سؤال في كل سطر)',
@@ -336,7 +327,7 @@ function _lgOn() { return typeof mbIsLearnerGuide === 'function' && mbIsLearnerG
 
 function mbLgIntroFilled(lo) {
     var x = lo && lo.lgIntro;
-    return !!(x && (_lgStr(x.body).trim() || _lgStr(x.items).trim())) || mbLgIncludesOn(lo);
+    return !!(x && (_lgStr(x.body).trim() || _lgStr(x.items).trim())) || mbLgIncludesTouched(lo);
 }
 
 /* 3.79.0: «Each learning unit includes the following:» — four fixed
@@ -349,8 +340,12 @@ var _LG_INC_I18N = {
     activities: ['lgIncActLbl',   'lgIncActTxt'],
     reflection: ['lgIncReflLbl',  'lgIncReflTxt']
 };
-function mbLgIncludesOn(lo) {
-    return !!(lo && lo.lgIncludes && lo.lgIncludes.on === true);
+/** The author has edited the card (a paragraph kept, or lines of their own):
+ *  then the unit's introduction page is printed even with no introduction text. */
+function mbLgIncludesTouched(lo) {
+    var x = lo && lo.lgIncludes;
+    if (!x || typeof x !== 'object') return false;
+    return MB_LG_INC_KEYS.some(function (k) { return x[k] !== undefined && x[k] !== null; }) || !!_lgStr(x.items).trim();
 }
 /** One paragraph's text for a language: the author's, or the tool's. */
 function _lgIncValue(lo, key, lang) {
@@ -358,16 +353,15 @@ function _lgIncValue(lo, key, lang) {
     if (v === undefined || v === null) return _lgTIn(_LG_INC_I18N[key][1], lang);
     return _lgStr(v, lang);
 }
-/** What the exporters print, in one language (`lo` may be flattened):
- *  { title, rows: [{ label, text }], extra: [lines] } — or null when off. */
+/** What the exporters print under the introduction, in one language (`lo` may
+ *  be flattened): { title, rows: [{ label, text }], extra: [lines] }. */
 function mbLgIncludesParts(lo, lang) {
-    if (!mbLgIncludesOn(lo)) return null;
     var rows = [];
     MB_LG_INC_KEYS.forEach(function (k) {
         var text = String(_lgIncValue(lo, k, lang) || '').trim();
         if (text) rows.push({ label: _lgTIn(_LG_INC_I18N[k][0], lang), text: text });
     });
-    var extra = _lgStr(lo.lgIncludes.items, lang).split('\n').map(function (l) { return l.trim(); }).filter(Boolean);
+    var extra = _lgStr(lo && lo.lgIncludes && lo.lgIncludes.items, lang).split('\n').map(function (l) { return l.trim(); }).filter(Boolean);
     return { title: _lgTIn('lgIncCard', lang), rows: rows, extra: extra };
 }
 /** The editor's first touch seeds the four texts in every language, so a
@@ -611,9 +605,13 @@ function _lgRenderPart(part, force) {
     };
     if (part === 'intro') {
         var inc = lo.lgIncludes || {};
+        /* an icon-only square button, like the app's other icon buttons */
         var numBtn = function (f) {
-            return '<button type="button" class="lg-num-btn" data-act="mbLgNumberLines" data-args=\'["' + f + '"]\'' +
-                ' title="' + _lgEsc(_lgT('lgNumberTip')) + '">🔢 <span>' + _lgEsc(_lgT('lgNumber')) + '</span></button>';
+            return '<button type="button" class="mb-icon-btn lg-num-btn" data-act="mbLgNumberLines" data-args=\'["' + f + '"]\'' +
+                ' title="' + _lgEsc(_lgT('lgNumberTip')) + '" aria-label="' + _lgEsc(_lgT('lgNumber')) + '">' +
+                '<svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' +
+                '<path d="M10 6h11M10 12h11M10 18h11"/>' +
+                '<g stroke="#2563eb"><path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/></g></svg></button>';
         };
         var incRows = MB_LG_INC_KEYS.map(function (k) {
             var v = (inc[k] !== undefined && inc[k] !== null)
@@ -624,8 +622,7 @@ function _lgRenderPart(part, force) {
                 ' data-act="mbLgEdit" data-on="input" data-args=\'["includes.' + k + '"]\' value="' + _lgEsc(v) + '"/></div>';
         }).join('');
         host.innerHTML =
-            '<div class="mb-blocks-head"><label class="mb-blocks-label">🧭 ' + _lgEsc(_lgT('lgUnitCard')) + '</label>' +
-              '<span class="mb-blocks-note">' + _lgEsc(_lgT('lgUnitNote')) + '</span></div>' +
+            '<div class="mb-blocks-head"><label class="mb-blocks-label">🧭 ' + _lgEsc(_lgT('lgUnitCard')) + '</label></div>' +
             /* 1 — the introduction */
             '<div class="mb-block lg-part">' +
               '<div class="lg-part-head"><span>' + _lgEsc(_lgT('lgIntroTitle')) + '</span></div>' +
@@ -635,14 +632,10 @@ function _lgRenderPart(part, force) {
             '<div class="mb-block lg-part lg-outcomes-card">' +
               '<div class="lg-part-head"><span>' + _lgEsc(_lgT('lgIntroItemsLabel')) + '</span>' + numBtn('intro.items') + '</div>' +
               field('intro.items', 'textarea', _lgT('lgIntroItemsPh'), g(intro.items), 4) +
-              '<button type="button" class="mb-block-add lg-fill" data-act="mbLgFillItems">⬇️ ' + _lgEsc(_lgT('lgFillItems')) + '</button>' +
             '</div>' +
             /* 3 — what each learning unit includes (3.79.0) */
             '<div class="mb-block lg-part lg-inc-card">' +
-              '<div class="lg-part-head"><span>' + _lgEsc(_lgT('lgIncCard')) + '</span>' +
-                '<label class="lg-check lg-inc-print"><input type="checkbox"' + (inc.on === true ? ' checked' : '') +
-                  ' data-act="mbLgEdit" data-on="change" data-args=\'["includes.on"]\'/> ' + _lgEsc(_lgT('lgIncPrint')) + '</label>' +
-              '</div>' +
+              '<div class="lg-part-head"><span>' + _lgEsc(_lgT('lgIncCard')) + '</span></div>' +
               incRows +
               '<div class="lg-sub-row"><label class="lg-sub">' + _lgEsc(_lgT('lgIncItemsLabel')) + '</label>' + numBtn('includes.items') + '</div>' +
               field('includes.items', 'textarea', _lgT('lgIncItemsPh'), g(inc.items), 3) +
@@ -751,10 +744,9 @@ function mbLgEdit(field, el) {
         return;
     }
     if (parts[0] === 'includes') {   // 3.79.0: «Each learning unit includes the following:»
-        if (parts[1] !== 'on' && parts[1] !== 'items' && MB_LG_INC_KEYS.indexOf(parts[1]) < 0) return;
+        if (parts[1] !== 'items' && MB_LG_INC_KEYS.indexOf(parts[1]) < 0) return;
         var inc = _lgIncEnsure(lo);
-        if (parts[1] === 'on') inc.on = !!el.checked;
-        else biPut(inc, parts[1], el.value);
+        biPut(inc, parts[1], el.value);
         _lgSave();
         return;
     }
@@ -804,20 +796,6 @@ function mbLgIncRestore() {
     MB_LG_INC_KEYS.forEach(function (k) { delete lo.lgIncludes[k]; });
     _lgSave();
     _lgRenderPart('intro', true);
-}
-
-/** The learning outcomes line list from the titles of the outcome's knowledge sheets. */
-function mbLgFillItems() {
-    var lo = (typeof mbCurrentLOObject === 'function') ? mbCurrentLOObject() : null;
-    if (!lo) return;
-    if (typeof saveCurrentSheetToLO === 'function') { try { saveCurrentSheetToLO(); } catch (e) { /* no sheet on screen */ } }
-    var lang = _lgLang();
-    var titles = (lo.infoSheets || []).map(function (s) { return _lgStr(s && s.title, lang).trim(); }).filter(Boolean);
-    if (!titles.length) return;
-    if (!lo.lgIntro || typeof lo.lgIntro !== 'object') lo.lgIntro = {};
-    biPut(lo.lgIntro, 'items', titles.join('\n'));
-    _lgSave();
-    mbRenderLgUnit(true);
 }
 
 /* The row on the activity sheet: does it count, and what does the learner hand in. */
