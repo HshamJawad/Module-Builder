@@ -4267,3 +4267,4 @@ button.mb-cmk-opt.is-on { outline: 3px solid #0f766e; outline-offset: 1px; }
 .lg-asm-title.lg-gone { opacity: .55; text-decoration: line-through; }
 #asm-content-label-lg { flex: 1; }
 #asm-content-label-lg .lg-card-tools { margin-inline-start: auto; }
+.mb-asm-lead { font-weight: 600; color: #374151; }

@@ -56,6 +56,7 @@ var MB_ASM_PRESETS = {
 
 var _ASM_STRINGS = {
     en: {
+        lead: 'The learner is',
         edit: '✏️ Result options…',
         note: 'Ticked by the trainer after assessing the trainee: printed with empty boxes in Word and PDF, clickable in the HTML package.',
         title: 'Result options',
@@ -68,6 +69,7 @@ var _ASM_STRINGS = {
         defaults: '↺ Defaults', cancel: 'Cancel', save: 'Save', saved: 'Result options saved.'
     },
     fr: {
+        lead: 'L’apprenant est',
         edit: '✏️ Options du résultat…',
         note: 'Cochées par le formateur après l’évaluation : imprimées avec des cases vides dans Word et PDF, cliquables dans le paquet HTML.',
         title: 'Options du résultat',
@@ -80,6 +82,7 @@ var _ASM_STRINGS = {
         defaults: '↺ Par défaut', cancel: 'Annuler', save: 'Enregistrer', saved: 'Options du résultat enregistrées.'
     },
     ar: {
+        lead: 'المتعلم',
         edit: '✏️ خيارات النتيجة…',
         note: 'يؤشّرها المدرّب بعد تقييم المتدرب: تُطبع بمربعات فارغة في Word وPDF، وقابلة للتأشير في حزمة HTML.',
         title: 'خيارات النتيجة',
@@ -140,7 +143,7 @@ function mbAsmResultHtml() {
     var lang = (typeof contentLang === 'function') ? contentLang() : 'en';
     var labels = mbAsmResultLabels(lang);
     return '<div class="mb-asm-result">' +
-        '<div class="mb-asm-opts" dir="auto">' + labels.map(function (l) {
+        '<div class="mb-asm-opts" dir="auto"><span class="mb-asm-lead">' + _asmEsc(_asmT('lead')) + '</span>' + labels.map(function (l) {
             return '<span class="mb-asm-opt"><span class="mb-asm-box" aria-hidden="true">☐</span> ' + _asmEsc(l) + '</span>';
         }).join('') + '</div>' +
         '<button type="button" class="mb-asm-edit" data-act="mbAsmResultEdit">' + _asmEsc(_asmT('edit')) + '</button>' +
