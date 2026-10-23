@@ -119,9 +119,11 @@ test('Learner guide: the unit card in Introduction Pages, the reflection in its 
   await tab(page, 'basic-info');
   expect(await page.evaluate(() => document.getElementById('lg-unit-section').closest('.tab-content').id)).toBe('intro-tab');
 
-  // Introduction Pages: Work Team first … the overview table, then the learning unit card last
+  // Introduction Pages: Work Team first … the overview table, then the learning unit card last;
+  // the extra introduction sections are not part of this template
   await tab(page, 'intro');
-  const order = await page.evaluate(() => ['work-team-container', 'intro-additional-details', 'intro-blocks-section', 'intro-table-section', 'lg-unit-wrap']
+  await expect(page.locator('#intro-blocks-section')).toBeHidden();
+  const order = await page.evaluate(() => ['work-team-container', 'intro-additional-details', 'intro-table-section', 'lg-unit-wrap']
     .map(id => document.getElementById(id).getBoundingClientRect().top));
   expect(await page.evaluate(() => {   // nothing but the Proceed button after the card
     let n = document.getElementById('lg-unit-wrap').nextElementSibling;
