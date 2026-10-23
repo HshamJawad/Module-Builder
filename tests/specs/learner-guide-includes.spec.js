@@ -240,7 +240,7 @@ test('References tab (Learner guide): «Suggested resources…» heading, facili
   await expect(page.locator('#references-title-display')).toContainText('Suggested resources for this unit:');
   await expect(page.locator('#references-list .ref-input').first()).toHaveAttribute('placeholder', /web address/);
   const card = page.locator('#facilities-card');
-  await expect(card).toContainText('Material facilities (for 15 learners) for this module:');
+  await expect(card).toContainText('Material facilities (for 15 learners) for this unit:');
   await page.locator('#references-list .ref-input').first().fill('https://www.wikihow.com/Cut-Wire');
   await card.locator('.fac-qty').first().fill('1');
   await card.locator('.fac-input').first().fill('Classroom');
@@ -249,7 +249,7 @@ test('References tab (Learner guide): «Suggested resources…» heading, facili
   await card.locator('.fac-input').nth(1).fill('Computer laboratory');
   const t = await docxText(page);
   const at = (x) => { const i = t.indexOf(x); expect(i, x).toBeGreaterThan(-1); return i; };
-  const order = ['Suggested resources for this unit:', 'https://www.wikihow.com/Cut-Wire', 'Number', 'Material facilities (for 15 learners) for this module:', 'Classroom', 'Computer laboratory'].map(at);
+  const order = ['Suggested resources for this unit:', 'https://www.wikihow.com/Cut-Wire', 'Number', 'Material facilities (for 15 learners) for this unit:', 'Classroom', 'Computer laboratory'].map(at);
   expect([...order].sort((a, b) => a - b)).toEqual(order);
   // a link, not plain text
   const rels = await page.evaluate(async () => {
@@ -260,6 +260,15 @@ test('References tab (Learner guide): «Suggested resources…» heading, facili
     return new TextDecoder().decode(z['word/_rels/document.xml.rels']);
   });
   expect(rels).toContain('https://www.wikihow.com/Cut-Wire');
+  // the facilities heading can be renamed; the quantity field has spinner arrows
+  await expect(card.locator('.fac-qty').first()).toHaveAttribute('type', 'number');
+  await page.evaluate(() => { biSet(mbState, 'facilitiesTitle', 'en', 'Equipment for 15 learners'); renderFacilities(); });
+  await expect(card.locator('#facilities-title-display')).toContainText('Equipment for 15 learners');
+  await expect(card.locator('[data-act="renameFacilitiesTitle"]')).toHaveCount(1);
+  expect(await docxText(page)).toContain('Equipment for 15 learners');
+  // the pale blue is offered for tables
+  await page.evaluate(() => { const s = wsReadSettings(); s.tableHeaderColor = 'DEEBF6'; wsWriteSettings(s); });
+  expect(await page.evaluate(() => wsReadSettings().tableHeaderColor)).toBe('DEEBF6');
   // the names are in Settings, with the old name beside the first
   await page.evaluate(() => { const s = wsReadSettings(); s.lgLabels = { en: { references: 'My resources' }, fr: {}, ar: {} }; wsWriteSettings(s); });
   await page.evaluate(() => renderReferences());

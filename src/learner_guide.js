@@ -100,7 +100,7 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgYouWillLearn: 'The learning outcomes for this guide are:',
         lgKnowledge: 'Knowledge',
         lgReferences: 'Suggested resources for this unit:',
-        lgFacilities: 'Material facilities (for 15 learners) for this module:',
+        lgFacilities: 'Material facilities (for 15 learners) for this unit:',
         lgFacNumber: 'Number', lgFacItemPh: 'e.g. Classroom', lgFacAdd: 'Add item', lgRefPh: 'A web address (https://…) or a reference, e.g. Smith, J. (2020). Vocational Training Handbook. Publisher.',
         lgActivity: 'Learning activity',
         lgWorksheet: 'Worksheet',
@@ -184,7 +184,7 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgYouWillLearn: 'Les résultats d’apprentissage de ce guide sont :',
         lgKnowledge: 'Connaissances',
         lgReferences: 'Ressources suggérées pour cette unité :',
-        lgFacilities: 'Installations et matériel (pour 15 apprenants) pour ce module :',
+        lgFacilities: 'Installations et matériel (pour 15 apprenants) pour cette unité :',
         lgFacNumber: 'Nombre', lgFacItemPh: 'p. ex. Salle de classe', lgFacAdd: 'Ajouter un élément', lgRefPh: 'Une adresse web (https://…) ou une référence, p. ex. Smith, J. (2020). Vocational Training Handbook. Éditeur.',
         lgActivity: 'Activité d’apprentissage',
         lgWorksheet: 'Fiche de travail',
@@ -453,6 +453,13 @@ function mbLgRefsTitle(stored, lang) {
     var seed = (window.i18n && window.i18n.tIn) ? String(window.i18n.tIn('expReferences', lang) || '').trim() : '';
     if (!s || s === seed || s === 'References') return mbLgLabel('references', lang);
     return s;
+}
+
+/** 3.82.0: the heading of the material-facilities table — the author's own
+ *  (Rename) when there is one, else the name from Settings. */
+function mbLgFacTitle(stored, lang) {
+    var s = String(stored || '').trim();
+    return s || mbLgLabel('facilities', lang);
 }
 
 /** «1- Learning unit: title» — an outcome's heading in this template. */

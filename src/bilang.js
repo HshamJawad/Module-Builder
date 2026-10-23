@@ -148,7 +148,7 @@ function biLangLabel(code) {
 var BILANG_FIELDS = {
     project:    ['coversAdditionalInfo', 'coversAdditionalNotes',
                  'introAdditionalDetails', 'assessmentContent',
-                 'referencesTitle'],
+                 'referencesTitle', 'facilitiesTitle'],
     /* The framework card. Only the PROSE fields are pairs — an author
        writing an Arabic module still submits it to a body whose name
        has an Arabic and an English form. The rest are single-valued for

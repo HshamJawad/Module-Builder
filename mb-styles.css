@@ -4251,3 +4251,11 @@ button.mb-cmk-opt.is-on { outline: 3px solid #0f766e; outline-offset: 1px; }
 .fac-qty, .fac-input { padding: 9px 12px; border: 2px solid #d1d5db; border-radius: 6px; font-size: 0.97em; background: #fff; }
 .fac-input { flex: 1; min-width: 0; }
 .fac-add { background: #10b981; color: #fff; border: none; padding: 7px 16px; border-radius: 6px; cursor: pointer; font-size: .88em; font-weight: 600; }
+
+/* 3.82.0: the ninth swatch of WS_PALETTE */
+.ws-modal .ws-swatches button.ws-swatch.ws-c-DEEBF6,
+.ws-modal .ws-swatches button.ws-swatch.ws-c-DEEBF6:hover {
+    background: #DEEBF6 !important; background-color: #DEEBF6 !important;
+}
+.fac-head-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+.fac-head-row .fac-head { margin-bottom: 0; }

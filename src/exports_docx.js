@@ -2637,7 +2637,7 @@ async function exportToDocx() {
             const _lib = mbDocxLib();
             const _storedTitle = (typeof mbState.referencesTitle === 'string') ? mbState.referencesTitle : '';
             const _refsHead = (typeof mbLgRefsTitle === 'function') ? mbLgRefsTitle(_storedTitle, _mbLang()) : _storedTitle;
-            const _facHead = (typeof mbLgLabel === 'function') ? mbLgLabel('facilities', _mbLang()) : '';
+            const _facHead = (typeof mbLgFacTitle === 'function') ? mbLgFacTitle(typeof mbState.facilitiesTitle === 'string' ? mbState.facilitiesTitle : '', _mbLang()) : '';
             const _numHead = (typeof _lgTIn === 'function') ? _lgTIn('lgFacNumber', _mbLang()) : 'Number';
             const _headCell = (text, span, w, center) => new TableCell({
                 children: [new Paragraph({ children: [new TextRun({ text: text, bold: true, size: _wsTable(), color: _wsTblText(), rightToLeft: _mbRtl() })],

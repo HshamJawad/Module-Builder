@@ -217,6 +217,7 @@ async function clearAll() {
         mbState.refIdCounter = 1;
         mbState.facilitiesData = [{ id: 1, qty: '', value: '' }];
         mbState.facIdCounter = 1;
+        mbState.facilitiesTitle = null;
         renderReferences();
         mbState.glossary = { title: null, tables: [] };   // 3.42.0
         if (typeof renderGlossary === 'function') renderGlossary();
