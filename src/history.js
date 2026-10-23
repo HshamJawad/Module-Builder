@@ -34,7 +34,7 @@ var MB_HIST_SKIP = /^(switch|prev|next|mbSwitch|mbToggle|mbOpen|mbJump|mbUndo|mb
 function _mbHistLabels() {
     var lang = (window.i18n && window.i18n.getLang) ? window.i18n.getLang() : 'en';
     var L = {
-        en: { typing: 'typing', removeContentSection: 'delete a content section', addContentSection: 'add a content section',
+        en: { typing: 'typing', removeContentSection: 'delete a content section', addContentSection: 'add a content section', insertContentAfter: 'add a content section', moveContentUp: 'move a content section', moveContentDown: 'move a content section', moveContent: 'move a content section',
               removeStep: 'delete a step', addStep: 'add a step', insertStepAfter: 'add a step', moveStepUp: 'move a step', moveStepDown: 'move a step', moveStep: 'move a step', addResource: 'add a resource', removeResource: 'delete a resource',
               addCriteria: 'add a criterion', removeCurrentInfoSheet: 'delete an information sheet', removeCurrentActivitySheet: 'delete an activity sheet',
               addNewInfoSheet: 'add an information sheet', addNewActivitySheet: 'add an activity sheet',
@@ -43,7 +43,7 @@ function _mbHistLabels() {
               mbSpApprove: 'approve an item', mbSpUnapprove: 'withdraw an approval', mbSpEdit: 'edit an item', mbSpRemove: 'remove an item', mbSpMove: 'move an item', mbSpAlso: 'send an item to another sheet', mbSpSetLo: 'change an item’s outcome', mbSpBuild: 'build sheets', mbSpAddToOpen: 'add to the open sheet', mbSpApproveAll: 'approve the items', mbApproveAndBuild: 'Approve & Build', mbApplyTaPicker: 'add from Task Analysis', other: 'the last change',
               undone: 'Undone: {v0}', redone: 'Redone: {v0}', nothingUndo: 'Nothing to undo', nothingRedo: 'Nothing to redo',
               undoTip: 'Undo (Ctrl+Z)', redoTip: 'Redo (Ctrl+Y)', undo: 'Undo', redo: 'Redo' },
-        fr: { typing: 'saisie', removeContentSection: 'supprimer une section', addContentSection: 'ajouter une section',
+        fr: { typing: 'saisie', removeContentSection: 'supprimer une section', addContentSection: 'ajouter une section', insertContentAfter: 'ajouter une section', moveContentUp: 'déplacer une section', moveContentDown: 'déplacer une section', moveContent: 'déplacer une section',
               removeStep: 'supprimer une étape', addStep: 'ajouter une étape', insertStepAfter: 'ajouter une étape', moveStepUp: 'déplacer une étape', moveStepDown: 'déplacer une étape', moveStep: 'déplacer une étape', addResource: 'ajouter une ressource', removeResource: 'supprimer une ressource',
               addCriteria: 'ajouter un critère', removeCurrentInfoSheet: 'supprimer une fiche d’information', removeCurrentActivitySheet: 'supprimer une fiche d’activité',
               addNewInfoSheet: 'ajouter une fiche d’information', addNewActivitySheet: 'ajouter une fiche d’activité',
@@ -52,7 +52,7 @@ function _mbHistLabels() {
               mbSpApprove: 'approuver un élément', mbSpUnapprove: 'retirer une approbation', mbSpEdit: 'modifier un élément', mbSpRemove: 'retirer un élément', mbSpMove: 'déplacer un élément', mbSpAlso: 'envoyer un élément vers une autre fiche', mbSpSetLo: 'changer le résultat d’un élément', mbSpBuild: 'construire des fiches', mbSpAddToOpen: 'ajouter à la fiche ouverte', mbSpApproveAll: 'approuver les éléments', mbApproveAndBuild: 'Approuver et construire', mbApplyTaPicker: 'ajout depuis l’analyse des tâches', other: 'la dernière modification',
               undone: 'Annulé : {v0}', redone: 'Rétabli : {v0}', nothingUndo: 'Rien à annuler', nothingRedo: 'Rien à rétablir',
               undoTip: 'Annuler (Ctrl+Z)', redoTip: 'Rétablir (Ctrl+Y)', undo: 'Annuler', redo: 'Rétablir' },
-        ar: { typing: 'الكتابة', removeContentSection: 'حذف قسم محتوى', addContentSection: 'إضافة قسم محتوى',
+        ar: { typing: 'الكتابة', removeContentSection: 'حذف قسم محتوى', addContentSection: 'إضافة قسم محتوى', insertContentAfter: 'إضافة قسم محتوى', moveContentUp: 'نقل قسم محتوى', moveContentDown: 'نقل قسم محتوى', moveContent: 'نقل قسم محتوى',
               removeStep: 'حذف خطوة', addStep: 'إضافة خطوة', insertStepAfter: 'إضافة خطوة', moveStepUp: 'نقل خطوة', moveStepDown: 'نقل خطوة', moveStep: 'نقل خطوة', addResource: 'إضافة مورد', removeResource: 'حذف مورد',
               addCriteria: 'إضافة معيار', removeCurrentInfoSheet: 'حذف ورقة معلومات', removeCurrentActivitySheet: 'حذف ورقة نشاط',
               addNewInfoSheet: 'إضافة ورقة معلومات', addNewActivitySheet: 'إضافة ورقة نشاط',
