@@ -448,7 +448,7 @@ var WS_DEFAULTS = {
 };
 
 var WS_FIG_KINDS = ['fig', 'tab', 'src'];
-var WS_LG_KINDS = ['unit', 'info', 'activity', 'job', 'objectives'];   // 3.67.0
+var WS_LG_KINDS = ['unit', 'info', 'activity', 'job', 'objectives', 'references', 'facilities'];   // 3.67.0
 function _wsValidLgLabels(o) {
     if (!o || typeof o !== 'object') return null;
     var out = {}, any = false;
@@ -1110,6 +1110,9 @@ function _wsPaneLg(ui, names) {
     var head = '<tr><th></th>' + WS_LABEL_LANGS.map(function (l) { return '<th>' + names[l] + '</th>'; }).join('') + '</tr>';
     var body = WS_LG_KINDS.map(function (k) {
         var rowName = _wsLgDefault(k, ui);
+        /* 3.81.0: say what the page was called before, so the author knows
+           which heading this row replaces. */
+        if (k === 'references' && window.i18n && window.i18n.tIn) rowName += ' (' + window.i18n.tIn('expReferences', ui) + ')';
         return '<tr><th scope="row">' + _wsMiscEsc(rowName) + '</th>' + WS_LABEL_LANGS.map(function (l) {
             var v = (labels[l] && labels[l][k]) || '';
             return '<td><input type="text" class="ws-misc-input" maxlength="80"' +

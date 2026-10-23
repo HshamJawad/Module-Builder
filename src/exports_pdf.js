@@ -749,12 +749,18 @@ function _pdfBuild(pdf, model, lang) {
     if (!lgDoc && model.glossary && model.glossary.tables.length) _pdfGlossary(w, model, t, S);
 
     /* References */
-    if (model.references.items.length) {
+    var _facs = model.references.facilities || [];
+    if (model.references.items.length || _facs.length) {
         w.newPage();
-        w.heading(model.references.title || t('references'), 2);
+        if (model.references.items.length) w.heading(model.references.title || t('references'), 2);
         model.references.items.forEach(function (r, i) {
             w.text((i + 1) + '. ' + r, { indent: 3 });
         });
+        /* 3.81.0: Learner guide — material facilities */
+        if (_facs.length) {
+            w.label(model.references.facilitiesTitle);
+            _facs.forEach(function (f) { w.text((f.qty ? f.qty + '  ' : '') + f.name, { indent: 3 }); });
+        }
     }
 
     if (model.cover.backImage) {

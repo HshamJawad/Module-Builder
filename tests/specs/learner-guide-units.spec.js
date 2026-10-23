@@ -33,7 +33,7 @@ async function saveLgNames(page, names) {
   await page.locator('#mb-settings-nav').click();
   const ov = page.locator('#ws-overlay');
   await ov.locator('.ws-nav-btn[data-ws-pane="misc"]').click();
-  await expect(ov.locator('#ws-lg-names tbody tr')).toHaveCount(5);
+  await expect(ov.locator('#ws-lg-names tbody tr')).toHaveCount(7);
   for (const [k, v] of Object.entries(names)) await ov.locator(`input[data-ws-lglabel="${k}"]`).fill(v);
   await ov.locator('#ws-save').click();
   await ov.locator('#ws-close').click();

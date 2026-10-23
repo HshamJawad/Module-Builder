@@ -79,6 +79,9 @@ var mbState = {
     referencesTitle: null,
     referencesData: [{ id: 1, value: '' }],
     refIdCounter: 1,
+    /* 3.81.0: Learner guide — material facilities, printed in the table of the references page */
+    facilitiesData: [{ id: 1, qty: '', value: '' }],
+    facIdCounter: 1,
     /* 3.42.0: Glossary of Terms — glossary.js. Title seeded like the
        references heading; tables shared across languages. */
     glossary: { title: null, tables: [] },

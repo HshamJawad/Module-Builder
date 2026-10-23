@@ -4243,3 +4243,11 @@ button.mb-cmk-opt.is-on { outline: 3px solid #0f766e; outline-offset: 1px; }
     flex: 0 0 auto;
     margin-inline-end: .5em;
 }
+
+/* 3.81.0: Learner guide — material facilities on the References tab */
+.fac-head { font-size: 1.1em; font-weight: 700; color: #667eea; margin-bottom: 12px; }
+.fac-entry { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.fac-qty { width: 84px; flex: 0 0 84px; text-align: center; }
+.fac-qty, .fac-input { padding: 9px 12px; border: 2px solid #d1d5db; border-radius: 6px; font-size: 0.97em; background: #fff; }
+.fac-input { flex: 1; min-width: 0; }
+.fac-add { background: #10b981; color: #fff; border: none; padding: 7px 16px; border-radius: 6px; cursor: pointer; font-size: .88em; font-weight: 600; }
