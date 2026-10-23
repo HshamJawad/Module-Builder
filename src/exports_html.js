@@ -349,6 +349,12 @@ function mbBuildModuleHtml(model, opts) {
             if (x.body) inner += '<p>' + _hxText(x.body) + '</p>';
             if (x.items.length) inner += '<p><strong>' + _hxEsc(x.lead) + '</strong></p><ol>' +
                 x.items.map(function (i) { return '<li>' + _hxText(i) + '</li>'; }).join('') + '</ol>';
+            /* 3.79.0: «Each learning unit includes the following:» */
+            if (x.includes) {
+                inner += '<p><strong>' + _hxEsc(x.includes.title) + '</strong></p>' +
+                    x.includes.rows.map(function (r) { return '<p><strong>' + _hxEsc(r.label) + '</strong> ' + _hxText(r.text) + '</p>'; }).join('') +
+                    x.includes.extra.map(function (l) { return '<p>' + _hxText(l) + '</p>'; }).join('');
+            }
         });
         if (inc('outcomes')) {
             if (o.heading) add(oid, o.heading, _hxSection(oid, '', o.heading, inner));

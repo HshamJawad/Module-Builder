@@ -650,6 +650,12 @@ function _pdfBuild(pdf, model, lang) {
                     w.text(it.intro.lead, { bold: true });
                     it.intro.items.forEach(function (x, i) { w.text((i + 1) + '. ' + x, { indent: 5 }); });
                 }
+                /* 3.79.0: «Each learning unit includes the following:» */
+                if (it.intro.includes) {
+                    w.text(it.intro.includes.title, { bold: true });
+                    it.intro.includes.rows.forEach(function (r) { w.text(r.label + ' ' + r.text); });
+                    it.intro.includes.extra.forEach(function (l) { w.text(l); });
+                }
             } else if (it.kind === 'lgReflection') {
                 w.newPage();
                 w.heading(it.reflection.heading, 3);

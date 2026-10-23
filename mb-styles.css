@@ -4037,6 +4037,26 @@ html[dir="rtl"] .mb-tpl-btn.is-active { box-shadow: inset -3px 0 0 #0f766e !impo
 .lg-lines { width: 64px; padding: 5px 8px; border: 1.5px solid #d1d5db; border-radius: 6px; margin-inline-start: 6px; }
 .lg-check { display: flex; align-items: center; gap: 6px; cursor: pointer; }
 .lg-fill { align-self: flex-start; }
+/* 3.79.0: the learning outcomes card has its own heading, with the numbering button at its far end;
+   «Each learning unit includes the following:» is a card of its own below it. */
+.lg-outcomes-card, .lg-inc-card { margin-top: 14px; }
+.lg-num-btn {
+    display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; cursor: pointer;
+    border: 1.5px solid #99f6e4; border-radius: 8px; background: #f0fdfa; color: #0f766e;
+    font: inherit; font-size: .85em; font-weight: 700;
+}
+.lg-num-btn:hover { background: #ccfbf1; border-color: #0f766e; }
+.lg-num-btn:focus-visible { outline: 2px solid #0f766e; outline-offset: 2px; }
+.lg-sub-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.lg-inc-row { display: flex; align-items: center; gap: 10px; }
+.lg-inc-lbl { flex: 0 0 auto; min-width: 10.5em; font-weight: 800; color: #374151; white-space: nowrap; }
+.lg-inc-row .lg-inc-input { flex: 1 1 auto; font-weight: 400; }
+.lg-inc-print { font-weight: 600; font-size: .85em; color: #374151; }
+.lg-inc-restore { align-self: flex-start; }
+@media (max-width: 640px) {
+    .lg-inc-row { flex-direction: column; align-items: stretch; gap: 4px; }
+    .lg-inc-lbl { white-space: normal; min-width: 0; }
+}
 .lg-restore { font: inherit; font-size: .8em; font-weight: 600; padding: 4px 10px; border-radius: 6px; border: 1px solid #cbd5e1; background: #fff; color: #475569; cursor: pointer; }
 /* 3.67.0: the optional objectives of a knowledge sheet (Learner guide). */
 .lg-obj-toggle-row { margin: 4px 0 14px; }
