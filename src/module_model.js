@@ -510,9 +510,11 @@ function mbBuildModuleModel(lang, state) {
                 /* 3.59.0: the learning unit's introduction and reflection. */
                 if (lg && mbLgIntroFilled(lo)) out.sequence.push({ kind: 'lgIntro', intro: {
                     heading: _lgT('lgIntroHead', { v0: mbSeqLgNumber(lo, loIndex, 'lgIntro') }).trim(),
-                    body: _mmStr(lo.lgIntro.body),
+                    body: _mmStr(lo.lgIntro && lo.lgIntro.body),
                     lead: _lgT('lgYouWillLearn'),
-                    items: _mmStr(lo.lgIntro.items).split('\n').map(function (l) { return l.replace(/^\s*(?:[-•*]|\d+[.)-])\s*/, '').trim(); }).filter(Boolean)
+                    items: _mmStr(lo.lgIntro && lo.lgIntro.items).split('\n').map(function (l) { return l.replace(/^\s*(?:[-•*]|\d+[.)-])\s*/, '').trim(); }).filter(Boolean),
+                    /* 3.79.0: «Each learning unit includes the following:» (null when not printed) */
+                    includes: (typeof mbLgIncludesParts === 'function') ? mbLgIncludesParts(lo, lang) : null
                 } });
             } else if (it.kind === 'lgReflection') {
                 if (lg && mbLgReflectionFilled(lo)) {

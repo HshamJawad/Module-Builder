@@ -2055,11 +2055,22 @@ async function exportToDocx() {
             if (_lgDoc && mbLgIntroFilled(lo)) {
                 const n = mbSeqLgNumber(lo, loIndex, 'lgIntro');
                 loHdCh.push(_lgHead(_mbTf('lgIntroHead', { v0: n }).trim()));
-                _lgTextCh(lo.lgIntro.body, loHdCh);
-                const items = String(lo.lgIntro.items || '').split('\n').map(l => l.replace(/^\s*(?:[-•*]|\d+[.)-])\s*/, '').trim()).filter(Boolean);
+                _lgTextCh(lo.lgIntro && lo.lgIntro.body, loHdCh);
+                const items = String((lo.lgIntro && lo.lgIntro.items) || '').split('\n').map(l => l.replace(/^\s*(?:[-•*]|\d+[.)-])\s*/, '').trim()).filter(Boolean);
                 if (items.length) {
                     loHdCh.push(_lgPara(_mbT('lgYouWillLearn'), { bold: true, before: 120 }));
                     items.forEach((it, i) => loHdCh.push(_lgPara((i + 1) + '. ' + it, { after: 100 })));
+                }
+                /* 3.79.0: «Each learning unit includes the following:» — its paragraphs and the author's lines. */
+                const inc = (typeof mbLgIncludesParts === 'function') ? mbLgIncludesParts(lo, _mbLang()) : null;
+                if (inc) {
+                    loHdCh.push(_lgPara(inc.title, { bold: true, before: 200 }));
+                    inc.rows.forEach(r => loHdCh.push(new Paragraph({
+                        children: [new TextRun({ text: r.label + ' ', size: _wsBody(), bold: true, rightToLeft: _mbRtl() }),
+                                   new TextRun({ text: r.text, size: _wsBody(), rightToLeft: _mbRtl() })],
+                        alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 100 }
+                    })));
+                    inc.extra.forEach(line => loHdCh.push(_lgPara(line, { after: 100 })));
                 }
             }
             /* 3.43.0: sections placed at the start of the outcome, on its page. */
