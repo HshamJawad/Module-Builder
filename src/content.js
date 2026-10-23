@@ -60,6 +60,40 @@ window.addEventListener('mb:langchange', function () {
     });
 });
 
+/* 3.79.0: a content card can be inserted BELOW any card and the cards
+   reordered — ▲ / ▼ on each card, or drag by the ⠿ handle — exactly as
+   the activity steps (steps.js, 3.52.0). Same rule as the paste button
+   above: this file owns the labels, matched to the interface language, so
+   a stale dictionary cannot leave a raw key on the card. */
+var _MB_CONTENT_ORDER_LABELS = {
+    ar: { insertBelow: 'إضافة محتوى أسفله', insertBelowTip: 'إدراج بطاقة محتوى جديدة أسفل هذه البطاقة مباشرة',
+          moveUp: 'نقل المحتوى إلى الأعلى', moveDown: 'نقل المحتوى إلى الأسفل',
+          dragTip: 'اسحب لإعادة ترتيب المحتوى' },
+    en: { insertBelow: 'Add content below', insertBelowTip: 'Insert a new content card directly below this one',
+          moveUp: 'Move content up', moveDown: 'Move content down',
+          dragTip: 'Drag to reorder the content' },
+    fr: { insertBelow: 'Ajouter du contenu en dessous', insertBelowTip: 'Insérer une nouvelle carte de contenu juste en dessous de celle-ci',
+          moveUp: 'Monter le contenu', moveDown: 'Descendre le contenu',
+          dragTip: 'Glisser pour réordonner le contenu' }
+};
+function _mbContentOrderT(key) {
+    var lang = (window.i18n && window.i18n.getLang) ? window.i18n.getLang() : 'en';
+    var table = _MB_CONTENT_ORDER_LABELS[lang] || _MB_CONTENT_ORDER_LABELS.en;
+    return table[key] || _MB_CONTENT_ORDER_LABELS.en[key] || key;
+}
+
+window.addEventListener('mb:langchange', function () {
+    document.querySelectorAll('#content-sections-container [data-cs-tip]').forEach(function (el) {
+        var key = el.getAttribute('data-cs-tip');
+        el.title = _mbContentOrderT(key);
+        el.setAttribute('aria-label', _mbContentOrderT(key));
+    });
+    document.querySelectorAll('#content-sections-container [data-cs-text]').forEach(function (el) {
+        el.textContent = _mbContentOrderT(el.getAttribute('data-cs-text'));
+    });
+    if (typeof mbRenumberContent === 'function') mbRenumberContent();
+});
+
 function clearAllForms() {
     mbState.currentInfoSheetIndex = 0;
     mbState.currentActivitySheetIndex = 0;
@@ -507,12 +541,16 @@ function addContentSection(heading, subheading) {
     sectionDiv.className = 'content-section-item';
     mbNewRowUid(sectionDiv);
     sectionDiv.id = `content-section-${csc}`;
+    const ot = _mbContentOrderT;
     sectionDiv.innerHTML = `
         <div class="step-header cs-head">
+            <span class="mb-step-handle" data-cs-tip="dragTip" title="${ot('dragTip')}" aria-label="${ot('dragTip')}" role="img">⠿</span>
             <span class="cs-num" id="content-label-${csc}" title="${window.i18n.tf('dgContentN', { v0: csc })}" aria-hidden="true">${csc}</span>
             <input type="text" class="cs-heading" dir="auto" data-cs-heading="${csc}" data-act="mbContentHeadingInput" data-on="input" data-args='[${csc}]'
                    placeholder="${window.i18n.t('csHeadingPh')}" data-i18n-placeholder="csHeadingPh" aria-label="${window.i18n.t('csHeadingPh')}">
             <div style="display:flex;gap:5px;align-items:center;flex:0 0 auto;">
+                <button type="button" class="mb-step-move" data-act="moveContentUp" data-args='[${csc}]' data-cs-tip="moveUp" title="${ot('moveUp')}" aria-label="${ot('moveUp')}">▲</button>
+                <button type="button" class="mb-step-move" data-act="moveContentDown" data-args='[${csc}]' data-cs-tip="moveDown" title="${ot('moveDown')}" aria-label="${ot('moveDown')}">▼</button>
                 <button type="button" class="btn-rename-section btn-cs-sub" data-act="mbToggleContentSubheading" data-args='[${csc}]' title="${window.i18n.t('csAddSubTip')}" data-i18n-title="csAddSubTip"><span data-i18n="csAddSub">${window.i18n.t('csAddSub')}</span></button>
                 <button class="btn-clear-section" data-act="clearContentSection" data-args='[${csc}]' title="${window.i18n.t('dgClearContent')}" data-i18n-title="dgClearContent">✕</button>
                 <button class="btn-remove mb-icon-btn danger" data-act="removeContentSection" data-args='[${csc}]' title="${window.i18n.t('dgRemoveContent')}" data-i18n-title="dgRemoveContent"><svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg></button>
@@ -527,7 +565,10 @@ function addContentSection(heading, subheading) {
             <button class="btn-add-image" data-act="addContentImage" data-args='[${csc}]'>🖼️ <span data-i18n="rxAddImageS">${window.i18n.t('rxAddImageS')}</span></button>
             <button class="btn-add-image btn-paste-image" data-act="pasteContentImage" data-args='[${csc}]' title="${_mbContentLabelT('rxPasteImageTip')}">📋 <span>${_mbContentLabelT('rxPasteImage')}</span></button>
             ${typeof mbPasteTextBtnHtml === 'function' ? mbPasteTextBtnHtml('content', csc) : ''}
-            <button data-act="addContentSection" style="background:#667eea;color:white;border:none;padding:6px 14px;border-radius:5px;font-size:0.85em;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;">➕ <span data-i18n="dgAddContent">${window.i18n.t('dgAddContent')}</span></button>
+            <!-- Was data-act="addContentSection", which always appended at
+                 the END of the sheet. It now inserts directly below its own
+                 card; the buttons outside the list still append. -->
+            <button class="mb-step-insert" data-act="insertContentAfter" data-args='[${csc}]' data-cs-tip="insertBelowTip" title="${ot('insertBelowTip')}" aria-label="${ot('insertBelowTip')}" style="background:#667eea;color:white;border:none;padding:6px 14px;border-radius:5px;font-size:0.85em;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;">➕ <span data-cs-text="insertBelow">${ot('insertBelow')}</span></button>
             ${addMarkBtnHtml(`content-marks-${csc}`)}
             <button class="btn-add-mark" data-act="addContentTable" data-args='[${csc}]' style="background:#0ea5e9;" title="${window.i18n.t('dgAddTable')}" data-i18n-title="dgAddTable">📋 <span data-i18n="dgAddTableBtn">${window.i18n.t('dgAddTableBtn')}</span></button>
             <!-- The QR/link fields used to be a card of their own on every
@@ -573,6 +614,164 @@ function _mbShowNewContent(card) {
 function mbAddContentSectionTop(btn) {
     addContentSection(btn && btn.nodeType === 1 ? btn : document.body);
 }
+
+/* ── 3.79.0: insert below, ▲ / ▼, drag by the ⠿ handle ──────────
+   Mirrors steps.js. A card's id never changes once given; the number the
+   author SEES is its position, repainted by mbRenumberContent() whenever
+   the list changes. The card carries its images (keyed by id), marks,
+   tables and uid with it, and the save reads the cards in DOM order, so
+   the new order is what is stored and exported. */
+
+/** Inserts a new, empty card directly below card `id` and puts the cursor
+ *  in it. Falls back to the end of the list when that card is gone. */
+function insertContentAfter(id) {
+    const container = document.getElementById('content-sections-container');
+    if (!container) return;
+    const ref = document.getElementById(`content-section-${id}`);
+    addContentSection();                       // built and appended at the end, silently
+    const card = container.lastElementChild;
+    if (!card || card === ref) return;
+    if (ref && ref.parentNode === container) container.insertBefore(card, ref.nextSibling);
+    mbRenumberContent();
+    /* Same direction as its neighbour: contentLang sets `dir` on the
+       fields it knows about, and a card born between two of them should
+       not read the other way round. */
+    const ta = card.querySelector('textarea');
+    const near = ref && ref.querySelector('textarea');
+    if (ta && near && near.getAttribute('dir')) ta.setAttribute('dir', near.getAttribute('dir'));
+    _mbShowNewContent(card);
+}
+
+function _mbMoveContent(id, dir) {
+    const el = document.getElementById(`content-section-${id}`);
+    if (!el || !el.parentNode) return;
+    const box = el.parentNode;
+    /* Store the sheet as it stands BEFORE the move, so every card is on
+       record under its own uid; the save after the move then matches by
+       uid, never by position (uid.js, biMergeArrayById). */
+    if (typeof saveCurrentSheetToLO === 'function') {
+        try { saveCurrentSheetToLO(); } catch (e) { /* ignore */ }
+    }
+    if (dir < 0) {
+        const prev = el.previousElementSibling;
+        if (!prev) return;
+        box.insertBefore(el, prev);
+    } else {
+        const next = el.nextElementSibling;
+        if (!next) return;
+        box.insertBefore(el, next.nextSibling);
+    }
+    mbRenumberContent();
+    const btn = el.querySelector(dir < 0 ? '[data-act="moveContentUp"]' : '[data-act="moveContentDown"]');
+    if (btn && !btn.disabled) btn.focus();
+    if (el.scrollIntoView) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+function moveContentUp(id)   { _mbMoveContent(id, -1); }
+function moveContentDown(id) { _mbMoveContent(id, +1); }
+
+/* The badge shows the card's POSITION, not its id: after a move, an
+   insert or a delete the cards read 1, 2, 3 … again. The first card
+   cannot go up and the last cannot go down. */
+function mbRenumberContent() {
+    const box = document.getElementById('content-sections-container');
+    if (!box) return;
+    const items = Array.prototype.filter.call(box.children, function (c) { return c.classList.contains('content-section-item'); });
+    items.forEach(function (item, i) {
+        const num = item.querySelector('.cs-head .cs-num');
+        if (num) {
+            num.textContent = String(i + 1);
+            num.title = window.i18n.tf('dgContentN', { v0: i + 1 });
+        }
+        const up = item.querySelector('[data-act="moveContentUp"]');
+        const down = item.querySelector('[data-act="moveContentDown"]');
+        if (up) up.disabled = (i === 0);
+        if (down) down.disabled = (i === items.length - 1);
+    });
+}
+
+/* Deletes, loads and resets empty and refill the container from several
+   files; an observer keeps the numbers right without each of them having
+   to know this function exists (same reasoning as watchEmptyContainers
+   below and steps.js's watchStepOrder). */
+(function watchContentOrder() {
+    function start() {
+        const box = document.getElementById('content-sections-container');
+        if (!box || !window.MutationObserver) return;
+        new MutationObserver(mbRenumberContent).observe(box, { childList: true });
+        mbRenumberContent();
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+    else start();
+})();
+
+/* Drag to reorder, by the ⠿ handle only — see steps.js mbStepDrag for the
+   reasoning. The card moves live under the pointer; the drop is one undo
+   step and one autosave. Touch screens, where HTML drag-and-drop is
+   unreliable, have the ▲ / ▼ buttons. */
+(function mbContentDrag() {
+    var SEL = '#content-sections-container > .content-section-item';
+    var dragEl = null, hist = null;
+
+    function release() {
+        document.querySelectorAll(SEL + '[draggable="true"]').forEach(function (el) {
+            if (el !== dragEl) el.removeAttribute('draggable');
+        });
+    }
+    document.addEventListener('pointerdown', function (e) {
+        var h = e.target && e.target.closest && e.target.closest('#content-sections-container .mb-step-handle');
+        if (!h) return;
+        var item = h.closest('.content-section-item');
+        if (item) item.setAttribute('draggable', 'true');
+    });
+    document.addEventListener('pointerup', release);
+
+    document.addEventListener('dragstart', function (e) {
+        var item = e.target && e.target.closest && e.target.closest(SEL);
+        if (!item || item.getAttribute('draggable') !== 'true') return;
+        if (typeof saveCurrentSheetToLO === 'function') {
+            try { saveCurrentSheetToLO(); } catch (err) { /* ignore */ }
+        }
+        dragEl = item;
+        item.classList.add('is-dragging');
+        try {
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', '');
+        } catch (err) { /* ignore */ }
+        hist = (typeof mbHistBegin === 'function') ? mbHistBegin('moveContent') : null;
+    });
+
+    document.addEventListener('dragover', function (e) {
+        if (!dragEl) return;
+        var box = document.getElementById('content-sections-container');
+        var target = e.target && e.target.closest && e.target.closest(SEL);
+        if (!box || !box.contains(e.target)) return;
+        e.preventDefault();
+        if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+        if (!target || target === dragEl) return;
+        var r = target.getBoundingClientRect();
+        var before = e.clientY < r.top + r.height / 2;
+        var ref = before ? target : target.nextSibling;
+        if (ref !== dragEl && ref !== dragEl.nextSibling) box.insertBefore(dragEl, ref);
+    });
+
+    document.addEventListener('drop', function (e) {
+        if (dragEl) e.preventDefault();
+    });
+
+    document.addEventListener('dragend', function () {
+        if (!dragEl) return;
+        var el = dragEl;
+        dragEl = null;
+        el.classList.remove('is-dragging');
+        el.removeAttribute('draggable');
+        mbRenumberContent();
+        if (hist && typeof mbHistEnd === 'function') mbHistEnd(hist);
+        hist = null;
+        /* Autosave listens for input/change on the main container; a drag
+           produces neither. */
+        (el.parentNode || document).dispatchEvent(new Event('change', { bubbles: true }));
+    });
+})();
 
 async function removeContentSection(id) {
     if (await mbConfirm(window.i18n.t('dgConfirmDeletionthisWillPermanently'), { danger: true })) {

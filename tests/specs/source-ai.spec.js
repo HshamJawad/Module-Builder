@@ -63,10 +63,11 @@ test('➕ Add Content at the top and on a card: the new card is brought into vie
   await expect(cards.last().locator('textarea')).toBeFocused();
   await expect(cards.last()).toBeInViewport();
   await page.mouse.wheel(0, -5000);
-  await cards.first().locator('[data-act="addContentSection"]').click();
+  // 3.79.0: the button on a card inserts directly below that card
+  await cards.first().locator('[data-act="insertContentAfter"]').click();
   await expect(cards).toHaveCount(n + 2);
-  await expect(cards.last().locator('textarea')).toBeFocused();
-  await expect(cards.last()).toBeInViewport();
+  await expect(cards.nth(1).locator('textarea')).toBeFocused();
+  await expect(cards.nth(1)).toBeInViewport();
   expect(errors).toEqual([]);
 });
 
