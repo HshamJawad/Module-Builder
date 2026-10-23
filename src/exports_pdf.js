@@ -530,6 +530,8 @@ function _pdfBuild(pdf, model, lang) {
         var renderInfo = function (sh) {   // 3.43.0: called in document order
             w.newPage();
             w.heading(sh.heading || ((sh.label || t('infoSheet')) + ' ' + sh.number + ': ' + sh.title), 3);
+            if (sh.lgListTitle) w.label(sh.lgListTitle);   // 3.80.0
+            if (sh.lgListItems && sh.lgListItems.length) w.text(sh.lgListItems.join('\n'), { indent: 4 });
             if (sh.objectiveLead) w.text(sh.objectiveLead);
             if (sh.objective) { w.label(sh.objectiveLabel || t('objective')); w.text(sh.objective, { indent: 4 }); }
 

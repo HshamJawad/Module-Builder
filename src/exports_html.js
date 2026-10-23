@@ -364,6 +364,8 @@ function mbBuildModuleHtml(model, opts) {
         var renderInfo = function (sh, i) {   // 3.43.0: called in document order
             var sid = oid + '-info-' + (i + 1);
             var h = '';
+            if (sh.lgListTitle) h += '<div class="mx-sub">' + _hxEsc(sh.lgListTitle) + '</div>';   // 3.80.0
+            if (sh.lgListItems && sh.lgListItems.length) h += '<p>' + sh.lgListItems.map(_hxEsc).join('<br>') + '</p>';
             if (sh.objectiveLead) h += '<p class="mx-lead">' + _hxText(sh.objectiveLead) + '</p>';
             if (sh.objective) h += '<div class="mx-sub">' + (sh.objectiveLabel ? _hxEsc(sh.objectiveLabel) : t('objective')) + '</div><p>' + _hxText(sh.objective) + '</p>';
             sh.sections.forEach(function (cs, k) {

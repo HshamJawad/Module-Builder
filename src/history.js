@@ -206,6 +206,9 @@ function mbHistUI() {
     var lu = mbHist.undo[mbHist.undo.length - 1], lr = mbHist.redo[mbHist.redo.length - 1];
     if (u) { u.classList.toggle('is-off', !lu); u.title = _mbHistT('undoTip') + (lu ? ' — ' + _mbHistT(lu.label) : ''); }
     if (r) { r.classList.toggle('is-off', !lr); r.title = _mbHistT('redoTip') + (lr ? ' — ' + _mbHistT(lr.label) : ''); }
+    /* 3.80.0: the Undo / Redo buttons of the Learner guide's cards. */
+    document.querySelectorAll('.lg-undo-btn').forEach(function (b) { b.classList.toggle('is-off', !lu); b.title = _mbHistT('undoTip') + (lu ? ' — ' + _mbHistT(lu.label) : ''); b.setAttribute('aria-label', b.title); });
+    document.querySelectorAll('.lg-redo-btn').forEach(function (b) { b.classList.toggle('is-off', !lr); b.title = _mbHistT('redoTip') + (lr ? ' — ' + _mbHistT(lr.label) : ''); b.setAttribute('aria-label', b.title); });
     var lu2 = document.querySelector('#mb-undo-btn .mb-hist-label'), lr2 = document.querySelector('#mb-redo-btn .mb-hist-label');
     if (lu2) lu2.textContent = _mbHistT('undo');
     if (lr2) lr2.textContent = _mbHistT('redo');

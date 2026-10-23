@@ -37,7 +37,7 @@ test('the learning outcomes card: its own heading, the numbering button opposite
   await buildGuide(page);
   await tab(page, 'intro');
   const card = page.locator('#lg-unit-section .lg-outcomes-card');
-  await expect(card.locator('.lg-part-head > span')).toHaveText('The learning outcomes for this guide are:');
+  await expect(card.locator('.lg-part-head > span:first-child')).toHaveText('The learning outcomes for this guide are:');
   await expect(page.locator('#lg-unit-section')).not.toContainText('You will learn how to');
   // the heading belongs to the card below it, not to the introduction card above
   const [intro, head] = await page.evaluate(() => {
@@ -97,7 +97,7 @@ test('«Each learning unit includes the following:» — fixed paragraphs edited
   await buildGuide(page);
   await tab(page, 'intro');
   const card = page.locator('#lg-unit-section .lg-inc-card');
-  await expect(card.locator('.lg-part-head > span')).toHaveText('Each learning unit includes the following:');
+  await expect(card.locator('.lg-part-head > span:first-child')).toHaveText('Each learning unit includes the following:');
   const labels = await card.locator('.lg-inc-lbl').allTextContents();
   expect(labels).toEqual(['Introduction:', 'Knowledge:', 'Learning Activities:', 'Reflection:']);
   const vals = await card.locator('.lg-inc-input').evaluateAll(l => l.map(i => i.value));
@@ -179,5 +179,56 @@ test('the introduction page: the module title heads it (not the learning unit), 
   expect(t).not.toContain('In this learning unit you will learn how to');
   const m = await page.evaluate(() => { const model = mbBuildModuleModel('en'); return model.outcomes[0].pageHeading; });
   expect(m).toBe('Computer hardware maintenance');
+  expect(errors).toEqual([]);
+});
+
+test('knowledge sheet list box: editable title, numbering, clear, undo/redo, 3 languages, export', async ({ page }) => {
+  const errors = await openApp(page, { contentLang: 'en' });
+  await buildGuide(page);
+  await tab(page, 'info');
+  const card = page.locator('#lg-know-card');
+  await expect(card).toBeVisible();
+  // placed after the title and before the objectives
+  const order = await page.evaluate(() => {
+    const y = (s) => document.querySelector(s).getBoundingClientRect().top;
+    return [y('#info-title'), y('#lg-know-card'), y('#lg-obj-toggle')];
+  });
+  expect(order[0] < order[1] && order[1] < order[2]).toBe(true);
+  await card.locator('#lg-know-title').fill('Safety rules');
+  await card.locator('#lg-know-items').fill('Wear gloves\nKeep tools clean');
+  await card.locator('.lg-num-btn').click();
+  await expect(card.locator('#lg-know-items')).toHaveValue('1- Wear gloves\n2- Keep tools clean');
+  await card.locator('#lg-know-items').dispatchEvent('input');
+  await page.evaluate(() => saveCurrentSheetToLO());
+  const st = await page.evaluate(() => { const s = mbCurrentLOObject().infoSheets[0]; return [s.lgListTitle.en, s.lgListItems.en]; });
+  expect(st).toEqual(['Safety rules', '1- Wear gloves\n2- Keep tools clean']);
+  // export
+  const t = await docxText(page);
+  expect(t.indexOf('Safety rules')).toBeGreaterThan(t.indexOf('Screwdrivers'));
+  expect(t).toContain('1- Wear gloves');
+  const html = await page.evaluate(() => mbBuildModuleHtml(mbBuildModuleModel('en'), {}));
+  expect(html).toContain('Safety rules');
+  // other languages keep their own side
+  await page.evaluate(() => setContentLang('ar'));
+  await expect(card.locator('#lg-know-title')).toHaveValue('');
+  await card.locator('#lg-know-title').fill('قواعد السلامة');
+  await card.locator('#lg-know-title').dispatchEvent('input');
+  await page.evaluate(() => saveCurrentSheetToLO());
+  expect(await page.evaluate(() => mbCurrentLOObject().infoSheets[0].lgListTitle.ar)).toBe('قواعد السلامة');
+  expect(await card.locator('#lg-know-title').getAttribute('dir')).toBe('rtl');
+  await page.evaluate(() => setContentLang('en'));
+  await expect(card.locator('#lg-know-title')).toHaveValue('Safety rules');
+  // clear
+  await card.locator('.lg-clear-icon').click();
+  await expect(card.locator('#lg-know-items')).toHaveValue('');
+  // buttons exist on both cards
+  await expect(card.locator('.lg-undo-btn svg')).toHaveCount(1);
+  await expect(card.locator('.lg-redo-btn svg')).toHaveCount(1);
+  await tab(page, 'intro');
+  const u = page.locator('#lg-unit-section .lg-outcomes-card');
+  for (const c of ['.lg-undo-btn', '.lg-redo-btn', '.lg-clear-icon', '.lg-num-btn']) await expect(u.locator(c)).toHaveCount(1);
+  await u.locator('[data-lg-field="intro.items"]').fill('abc');
+  await u.locator('.lg-clear-icon').click();
+  await expect(u.locator('[data-lg-field="intro.items"]')).toHaveValue('');
   expect(errors).toEqual([]);
 });

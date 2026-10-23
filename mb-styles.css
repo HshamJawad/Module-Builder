@@ -4213,3 +4213,12 @@ button.mb-cmk-opt.is-on { outline: 3px solid #0f766e; outline-offset: 1px; }
     #work-team-container .team-member-row { grid-template-columns: 1fr 1fr 1fr 36px; gap: 6px; padding: 8px 6px; }
     #work-team-container .team-head { font-size: .85em; }
 }
+
+/* 3.80.0: Learner guide — list box of a knowledge sheet; icon tools of the cards */
+.lg-know-card { margin-top: 14px; }
+.lg-card-tools { display: inline-flex; gap: 4px; align-items: center; }
+.lg-know-title { flex: 1 1 200px; min-width: 0; font: inherit; font-weight: 800; color: #0f766e; border: 1px dashed transparent; background: transparent; padding: 6px 8px; border-radius: 8px; }
+.lg-know-title:hover, .lg-know-title:focus { border-color: #94a3b8; background: #fff; outline: none; }
+.lg-hist-btn.is-off { opacity: .45; }
+.lg-clear-icon:hover { background: #fef2f2; border-color: #fca5a5; color: #b91c1c; }
+.lg-know-card .lg-field { margin-top: 8px; width: 100%; }

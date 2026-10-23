@@ -29,6 +29,8 @@
 //                      author edits the card, then the four paragraphs are the tool's
 //                      texts seeded in every language. Printed with the introduction, on
 //                      the same page, always (the tool's texts when never edited) (3.79.0)
+//   sheet.lgListTitle / sheet.lgListItems   pairs — the list box of a knowledge sheet,
+//                      after its title and before its objectives (3.80.0)
 //   lo.lgReflection  { title: pair, questions: pair, lines: n, contributes: 'yes'|'no'|'' }
 //   activity.lgContributes   '' (default: yes) | 'yes' | 'no'
 //   activity.lgProduct       pair — '' = the default for its type
@@ -57,6 +59,7 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgIntroBodyPh: 'Introduce the subject of this learning unit…',
         lgIntroItemsLabel: 'The learning outcomes for this guide are:',
         lgIntroItemsPh: 'One item per line…',
+        lgKnowTitlePh: 'Title of this list…',
         lgNumber: 'Numbering', lgNumberTip: 'Number the lines (1-, 2-, 3-) — click again to remove the numbers',
         lgIncCard: 'Each learning unit includes the following:',
         lgIncRestore: 'Restore the default text',
@@ -137,6 +140,7 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgIntroBodyPh: 'Présentez le sujet de cette unité d’apprentissage…',
         lgIntroItemsLabel: 'Les résultats d’apprentissage de ce guide sont :',
         lgIntroItemsPh: 'Un élément par ligne…',
+        lgKnowTitlePh: 'Titre de cette liste…',
         lgNumber: 'Numérotation', lgNumberTip: 'Numéroter les lignes (1-, 2-, 3-) — cliquer de nouveau pour retirer les numéros',
         lgIncCard: 'Chaque unité d’apprentissage comprend les éléments suivants :',
         lgIncRestore: 'Rétablir le texte par défaut',
@@ -217,6 +221,7 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgIntroBodyPh: 'عرّف بموضوع هذه الوحدة التعلمية…',
         lgIntroItemsLabel: 'محصلات التعلم لهذا الدليل هي:',
         lgIntroItemsPh: 'بند في كل سطر…',
+        lgKnowTitlePh: 'عنوان هذه القائمة…',
         lgNumber: 'ترقيم', lgNumberTip: 'ترقيم الأسطر (1-، 2-، 3-) — اضغط مرة أخرى لإزالة الأرقام',
         lgIncCard: 'تتضمن كل وحدة تعلمية ما يلي:',
         lgIncRestore: 'استعادة النص الافتراضي',
@@ -548,6 +553,35 @@ function mbLgNormalizeAsm(v) {
    EDITOR — the learning unit card (Introduction Pages, Reflection) and the activity row
    ══════════════════════════════════════════════════════════════ */
 
+/* 3.80.0: the little icon buttons at the end of a card's heading — Undo,
+   Redo, empty the box, and number its lines. Undo / Redo are the module's
+   own history (history.js); Clear and Numbering work on the box named by
+   data-lg-field. Icon only, the app's icon-button square. */
+var _LG_ICONS = {
+    undo:  '<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11"/>',
+    redo:  '<path d="m15 14 5-5-5-5"/><path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5A5.5 5.5 0 0 0 9.5 20H13"/>',
+    clear: '<path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/>',
+    number: '<path d="M10 6h11M10 12h11M10 18h11"/><g stroke="#2563eb"><path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/></g>'
+};
+function _lgIconBtn(cls, act, args, title, kind, aria) {
+    return '<button type="button" class="mb-icon-btn ' + cls + '" data-act="' + act + '"' + (args ? ' data-args=\'' + args + '\'' : '') +
+        ' title="' + _lgEsc(title) + '" aria-label="' + _lgEsc(aria || title) + '">' +
+        '<svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' +
+        _LG_ICONS[kind] + '</svg></button>';
+}
+function _lgHistTip(which) {
+    return (typeof _mbHistT === 'function') ? _mbHistT(which === 'undo' ? 'undoTip' : 'redoTip') : (which === 'undo' ? 'Undo' : 'Redo');
+}
+function _lgToolBtns(field) {
+    var f = _lgEsc(field);
+    return '<span class="lg-card-tools">' +
+        _lgIconBtn('lg-hist-btn lg-undo-btn is-off', 'mbUndo', '', _lgHistTip('undo'), 'undo') +
+        _lgIconBtn('lg-hist-btn lg-redo-btn is-off', 'mbRedo', '', _lgHistTip('redo'), 'redo') +
+        _lgIconBtn('lg-clear-icon danger', 'mbLgClearField', '["' + f + '"]', _lgT('lgClearTip'), 'clear') +
+        _lgIconBtn('lg-num-btn', 'mbLgNumberLines', '["' + f + '"]', _lgT('lgNumberTip'), 'number', _lgT('lgNumber')) +
+      '</span>';
+}
+
 function _lgSave() {
     if (typeof saveCurrentModuleLOData === 'function') saveCurrentModuleLOData();
     if (typeof mbSeqPaintNumberFields === 'function') { try { mbSeqPaintNumberFields(); } catch (e) { /* no sheet */ } }
@@ -602,14 +636,6 @@ function _lgRenderPart(part, force) {
     };
     if (part === 'intro') {
         var inc = lo.lgIncludes || {};
-        /* an icon-only square button, like the app's other icon buttons */
-        var numBtn = function (f) {
-            return '<button type="button" class="mb-icon-btn lg-num-btn" data-act="mbLgNumberLines" data-args=\'["' + f + '"]\'' +
-                ' title="' + _lgEsc(_lgT('lgNumberTip')) + '" aria-label="' + _lgEsc(_lgT('lgNumber')) + '">' +
-                '<svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' +
-                '<path d="M10 6h11M10 12h11M10 18h11"/>' +
-                '<g stroke="#2563eb"><path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/></g></svg></button>';
-        };
         var incRows = MB_LG_INC_KEYS.map(function (k) {
             var v = (inc[k] !== undefined && inc[k] !== null)
                 ? ((typeof biGetStrict === 'function') ? biGetStrict(inc[k], lang) : _lgStr(inc[k], lang))
@@ -627,7 +653,7 @@ function _lgRenderPart(part, force) {
             '</div>' +
             /* 2 — its own card: the learning outcomes, the numbering button at the far end of the title */
             '<div class="mb-block lg-part lg-outcomes-card">' +
-              '<div class="lg-part-head"><span>' + _lgEsc(_lgT('lgIntroItemsLabel')) + '</span>' + numBtn('intro.items') + '</div>' +
+              '<div class="lg-part-head"><span>' + _lgEsc(_lgT('lgIntroItemsLabel')) + '</span>' + _lgToolBtns('intro.items') + '</div>' +
               field('intro.items', 'textarea', _lgT('lgIntroItemsPh'), g(intro.items), 4) +
             '</div>' +
             /* 3 — what each learning unit includes (3.79.0) */
@@ -827,6 +853,69 @@ function mbLgCollectActivityRow(activityData) {
     }
 }
 
+/* ── 3.80.0: the list box of a knowledge sheet ───────────────
+   An editable title and a box of lines (one per line), between the sheet's
+   title and its objectives, with Undo / Redo, Clear and Numbering at the
+   end of its heading. Stored on the sheet as two pairs, sheet.lgListTitle
+   and sheet.lgListItems, written live like every box of this template, so
+   each language keeps its own side. Printed as typed (numbers included)
+   after the sheet's heading. */
+function _lgKnowHost() { return document.getElementById('lg-know-card'); }
+function _lgEnsureKnowBox() {
+    var host = _lgKnowHost();
+    if (!host) return null;
+    if (!host.firstChild) {
+        host.innerHTML =
+            '<div class="lg-part-head">' +
+              '<input type="text" class="lg-know-title" id="lg-know-title" data-lg-field="know.title" dir="auto" autocomplete="off"/>' +
+              _lgToolBtns('know.items') +
+            '</div>' +
+            '<textarea class="mb-block-body lg-field" id="lg-know-items" data-lg-field="know.items" rows="4"></textarea>';
+    }
+    return host;
+}
+/** Placeholders and tooltips in the interface language. */
+function _lgPaintKnowBox() {
+    var host = _lgEnsureKnowBox();
+    if (!host) return;
+    var t = document.getElementById('lg-know-title'), it = document.getElementById('lg-know-items');
+    if (t) t.placeholder = _lgT('lgKnowTitlePh');
+    if (it) it.placeholder = _lgT('lgIntroItemsPh');
+    var set = function (sel, title) { var b = host.querySelector(sel); if (b) { b.title = title; b.setAttribute('aria-label', title); } };
+    set('.lg-clear-icon', _lgT('lgClearTip'));
+    set('.lg-num-btn', _lgT('lgNumberTip')); host.querySelector('.lg-num-btn').setAttribute('aria-label', _lgT('lgNumber'));
+    if (typeof mbHistUI === 'function') { try { mbHistUI(); } catch (e) { /* not ready */ } }
+}
+function _lgLoadKnowBox(sh) {
+    var host = _lgEnsureKnowBox();
+    if (!host) return;
+    var t = document.getElementById('lg-know-title'), it = document.getElementById('lg-know-items');
+    if (!t || !it) return;
+    var lang = _lgLang();
+    var dir = (typeof biIsRtl === 'function' && biIsRtl(lang)) ? 'rtl' : 'ltr';
+    var g = function (v) { return (typeof biGetStrict === 'function') ? biGetStrict(v, lang) : _lgStr(v, lang); };
+    t.value = sh ? g(sh.lgListTitle) : '';
+    it.value = sh ? g(sh.lgListItems) : '';
+    t.dir = dir; it.dir = dir;
+    host.setAttribute('data-lang', lang);   // the side the boxes hold, whatever the language is by the next save
+    _lgPaintKnowBox();
+}
+function _lgCollectKnowBox(data) {
+    var t = document.getElementById('lg-know-title'), it = document.getElementById('lg-know-items');
+    if (!t || !it || !data || typeof biSet !== 'function') return;
+    /* No pair is made for a sheet that never used the box. */
+    var lang = (_lgKnowHost() && _lgKnowHost().getAttribute('data-lang')) || _lgLang();
+    if (t.value || biIs(data.lgListTitle)) biSet(data, 'lgListTitle', lang, t.value);
+    if (it.value || biIs(data.lgListItems)) biSet(data, 'lgListItems', lang, it.value);
+}
+/** The lines of the box, as the exporters print them (`sh` may be flattened). */
+function mbLgListLines(sh, lang) {
+    return _lgStr(sh && sh.lgListItems, lang).split('\n').map(function (l) { return l.trim(); }).filter(Boolean);
+}
+function mbLgListTitle(sh, lang) {
+    return _lgStr(sh && sh.lgListTitle, lang).trim();
+}
+
 /* ── 3.67.0: the optional objectives of a sheet ───────────────
    In this template a sheet has no objectives unless the author asks
    for them: the objectives part is hidden behind «🎯 Objectives
@@ -853,6 +942,7 @@ function mbLgObjectivePrinted(sh) {
 function _lgObjGroup(kind) { return document.getElementById(_LG_OBJ[_lgObjKind(kind)].group); }
 /** sheets.js, when a sheet is put on screen (null = none). */
 function mbLgLoadObjective(sh, kind) {
+    if (_lgObjKind(kind) === 'info') _lgLoadKnowBox(sh);   // 3.80.0
     var g = _lgObjGroup(kind);
     if (!g) return;
     g.setAttribute('data-lg-obj', mbLgObjectiveShown(sh || null) ? '1' : '0');
@@ -860,6 +950,7 @@ function mbLgLoadObjective(sh, kind) {
 }
 /** sheets.js, when the sheet on screen is saved. */
 function mbLgCollectObjective(data, kind) {
+    if (_lgObjKind(kind) === 'info' && _lgOn() && data) _lgCollectKnowBox(data);   // 3.80.0
     var g = _lgObjGroup(kind);
     if (!g || !_lgOn() || !data) return;
     var v = g.getAttribute('data-lg-obj');
@@ -980,6 +1071,7 @@ function _lgRepaintAll() {
     try { if (typeof mbRepaintSheetNames === 'function') mbRepaintSheetNames(); } catch (e) { /* not ready */ }
     try { if (typeof mbSeqPaintNumberFields === 'function') mbSeqPaintNumberFields(); } catch (e) { /* not ready */ }
     try { mbLgPaintObjective(); } catch (e) { /* not ready */ }   // 3.67.0
+    try { _lgPaintKnowBox(); } catch (e) { /* not ready */ }      // 3.80.0
 }
 window.addEventListener('mb:settingschange', function () { try { mbLgPaintObjective(); } catch (e) { /* not ready */ } });
 window.addEventListener('mb:templatechange', _lgRepaintAll);
@@ -991,6 +1083,18 @@ window.addEventListener('mb:templatechange', function () {
 });
 window.addEventListener('mb:langchange', _lgRepaintAll);
 window.addEventListener('mb:contentlangchange', _lgRepaintAll);
+/* 3.80.0: the list box shows the new content language's side of the open sheet. */
+window.addEventListener('mb:contentlangchange', function () {
+    try {
+        var lo = (typeof mbCurrentLOObject === 'function') ? mbCurrentLOObject() : null;
+        var sh = lo && lo.infoSheets && lo.infoSheets[mbState.currentInfoSheetIndex];
+        if (_lgOn() && _lgKnowHost()) _lgLoadKnowBox(sh || null);
+    } catch (e) { /* not ready */ }
+});
 document.addEventListener('change', function (e) {
     if (e.target && e.target.id === 'activity-sheet-type') mbLgPaintProductPlaceholder();
 });
+
+/* 3.80.0: the knowledge sheet's list box is built once the page is there. */
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { try { _lgPaintKnowBox(); } catch (e) { /* not ready */ } });
+else { try { _lgPaintKnowBox(); } catch (e) { /* not ready */ } }
