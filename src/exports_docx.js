@@ -213,7 +213,7 @@ async function exportToDocx() {
     const hasCoversContent = coversAdditionalInfo.trim() || coversAdditionalNotes.trim() || mbState.coverRows.some(row => (row.value || '').trim());
     const hasWorkTeam = mbState.teamMembers.some(member => (member.name || '').trim() || (member.task || '').trim() || (member.workLocation || '').trim());
     const introAdditionalDetails = mbState.introAdditionalDetails || '';
-    const hasIntroBlocks  = mbBlocksAnyFilled(mbState.introBlocks);
+    const hasIntroBlocks  = !(typeof mbIsLearnerGuide === 'function' && mbIsLearnerGuide()) && mbBlocksAnyFilled(mbState.introBlocks);
     /* The qualifications-framework card used to count as intro content
        of its own. Its fields are rows of the module information table
        now, so they are already covered by hasCoversContent. */
@@ -923,7 +923,7 @@ async function exportToDocx() {
         
         /* Only the filled sections exist as far as the document is
            concerned; an empty one must not create a blank page. */
-        const introBlocks = mbBlocksFilled(mbState.introBlocks);
+        const introBlocks = (typeof mbIsLearnerGuide === 'function' && mbIsLearnerGuide()) ? [] : mbBlocksFilled(mbState.introBlocks);
         /* 3.69.0: the module overview table (intro_table.js) — all ten rows
            when any box has text, none otherwise. */
         const introTableRows = (typeof mbIntroTableRows === 'function') ? mbIntroTableRows(mbState.introTable, _mbLang()) : [];

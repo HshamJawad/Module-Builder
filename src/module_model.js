@@ -267,7 +267,7 @@ function mbBuildModuleModel(lang, state) {
                     };
                 })
                 .filter(function (m) { return m.name.trim() || m.task.trim() || m.location.trim(); }),
-            blocks: _mmArr(st.introBlocks)
+            blocks: _mmArr(lg ? [] : st.introBlocks)
                 .map(function (b) {
                     return { title: _mmStr(b && b.title), body: _mmStr(b && b.body),
                              tables: _mmTables(b && b.tables) };
