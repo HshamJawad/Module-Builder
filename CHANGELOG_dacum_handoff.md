@@ -1,3 +1,14 @@
+# الإصدار 3.78.0 (٢٣ تشرين الأول ٢٠٢٦) — بطاقة فريق العمل جدولاً بعناوين وخانات تتمدد
+
+**ملفات معدّلة:** `src/workteam.js`، `src/mb-translations.js`، `mb-styles.css`، `index.html` (‎?v=3.78.0)، `sw.js` (‏mb-3.78.0)، `version.json`، `tests/README.md`.
+**اختبار جديد:** `tests/specs/work-team.spec.js`.
+
+- **صف عناوين** أعلى بطاقة فريق العمل: الاسم، المهمة، مكان العمل — بلغة الواجهة (Name / Task / Work Location، Nom / Tâche / Lieu de travail).
+- **الخانات تتمدد عمودياً** مع النص الطويل (ومعها المتصفحات القديمة)، وEnter لا يقسم الخانة إلى أسطر. النص يُحفظ أثناء الكتابة.
+- العربية: «موقع العمل» صار «مكان العمل» في الشاشة وفي عنوان عمود الجدول المصدَّر.
+
+---
+
 # الإصدار 3.77.0 (٢٢ تشرين الأول ٢٠٢٦) — «تفريغ المحتوى» في بطاقة التأمل، وخانة أسطر صغيرة، والتراجع/الإعادة
 
 **ملفات معدّلة:** `src/learner_guide.js`، `src/history.js`، `src/events.js`، `mb-styles.css`، `index.html` (‎?v=3.77.0)، `sw.js` (‏mb-3.77.0)، `version.json`، `tests/specs/reflection-more.spec.js`، `tests/README.md`.

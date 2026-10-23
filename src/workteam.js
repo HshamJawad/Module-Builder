@@ -46,36 +46,41 @@ function renderWorkTeam() {
     mbEnsureTeamMemberRow();
 
     
-    container.innerHTML = mbState.teamMembers.map((member, index) => `
-        <div class="team-member-row" style="display: grid; grid-template-columns: 2fr 2fr 2fr auto; gap: 10px; align-items: center; padding: 12px; border-bottom: 1px solid #e5e7eb; background: ${index % 2 === 0 ? '#ffffff' : '#f9fafb'};">
-            <input type="text" 
-                   id="team-name-${member.id}" 
-                   value="${escapeHtml(biGetStrict(member.name, contentLang()))}" 
-                   data-act="updateTeamMember" data-on="change" data-args='[${member.id},"name"]'
-                   placeholder="${window.i18n.t('dgTeamName')}" data-i18n-placeholder="dgTeamName" 
-                   style="padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;"
-                   class="mb-content-field">
-            <input type="text" 
-                   id="team-task-${member.id}" 
-                   value="${escapeHtml(biGetStrict(member.task, contentLang()))}" 
-                   data-act="updateTeamMember" data-on="change" data-args='[${member.id},"task"]'
-                   placeholder="${window.i18n.t('dgTeamTask')}" data-i18n-placeholder="dgTeamTask" 
-                   style="padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;"
-                   class="mb-content-field">
-            <input type="text" 
-                   id="team-location-${member.id}" 
-                   value="${escapeHtml(biGetStrict(member.workLocation, contentLang()))}" 
-                   data-act="updateTeamMember" data-on="change" data-args='[${member.id},"workLocation"]'
-                   placeholder="${window.i18n.t('dgTeamLocation')}" data-i18n-placeholder="dgTeamLocation" 
-                   style="padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;"
-                   class="mb-content-field">
+    /* 3.78.0: a table — a header row (Name, Task, Work location, in the
+       interface language) and boxes that grow downwards with long text
+       (criteria.js mbAutoGrow, also on browsers without field-sizing). */
+    const cell = (member, field, domField, key) => `
+            <textarea rows="1"
+                   id="team-${domField}-${member.id}"
+                   data-act="updateTeamMember" data-on="input" data-args='[${member.id},"${field}"]'
+                   placeholder="${window.i18n.t(key)}" data-i18n-placeholder="${key}" aria-label="${window.i18n.t(key)}"
+                   dir="auto" class="mb-content-field mb-autogrow team-field">${escapeHtml(biGetStrict(member[field], contentLang()))}</textarea>`;
+    container.innerHTML =
+        `<div class="team-member-row team-head-row" role="row">
+            <div class="team-head" role="columnheader" data-i18n="dgTeamName">${window.i18n.t('dgTeamName')}</div>
+            <div class="team-head" role="columnheader" data-i18n="dgTeamTask">${window.i18n.t('dgTeamTask')}</div>
+            <div class="team-head" role="columnheader" data-i18n="dgTeamLocation">${window.i18n.t('dgTeamLocation')}</div>
+            <div aria-hidden="true"></div>
+        </div>` +
+        mbState.teamMembers.map((member, index) => `
+        <div class="team-member-row" role="row" style="background: ${index % 2 === 0 ? '#ffffff' : '#f9fafb'};">
+            ${cell(member, 'name', 'name', 'dgTeamName')}
+            ${cell(member, 'task', 'task', 'dgTeamTask')}
+            ${cell(member, 'workLocation', 'location', 'dgTeamLocation')}
             <button class="mb-icon-btn danger" data-act="deleteTeamMember" data-args='[${member.id}]'
                     title="${window.i18n.t('mbDelete')}" data-i18n-title="mbDelete">
                 <svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg>
             </button>
         </div>
     `).join('');
+    if (typeof mbAutoGrowAll === 'function') mbAutoGrowAll(container);
 }
+
+/* One line per field: Enter does not break a name, task or place into
+   lines (the text still wraps to the width of its box). */
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && e.target && e.target.matches && e.target.matches('textarea.team-field')) e.preventDefault();
+});
 
 function updateTeamMember(memberId, field) {
     const member = mbState.teamMembers.find(m => m.id === memberId);
