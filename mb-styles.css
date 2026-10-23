@@ -1044,12 +1044,25 @@
             border-top: 1px solid #e0e0e0;
         }
 
+        /* 3.80.0: a floating notice. It used to sit in the page flow after
+           the disclaimer, so «Module saved» appeared far below the screen
+           and 💾 looked as if it had done nothing. */
         .status {
-            margin-top: 20px;
-            padding: 15px;
+            position: fixed;
+            left: 50%;
+            bottom: 24px;
+            transform: translateX(-50%);
+            z-index: 100000;
+            width: max-content;
+            max-width: min(92vw, 560px);
+            margin: 0;
+            padding: 12px 18px;
             border-radius: 10px;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.22);
             text-align: center;
             font-weight: 600;
+            overflow-wrap: anywhere;
+            cursor: pointer;
             display: none;
         }
 
@@ -4223,3 +4236,10 @@ button.mb-cmk-opt.is-on { outline: 3px solid #0f766e; outline-offset: 1px; }
 .lg-hist-btn.is-off { opacity: .45; }
 .lg-clear-icon:hover { background: #fef2f2; border-color: #fca5a5; color: #b91c1c; }
 .lg-know-card .lg-field { margin-top: 8px; width: 100%; }
+
+/* ── 3.80.0: an icon on the side-navigation tabs that had none ── */
+.tabs .tab[data-tab-icon]::before {
+    content: attr(data-tab-icon);
+    flex: 0 0 auto;
+    margin-inline-end: .5em;
+}
