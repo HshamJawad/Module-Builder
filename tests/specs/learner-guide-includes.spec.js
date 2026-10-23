@@ -70,7 +70,27 @@ test('the learning outcomes card: its own heading, the numbering button opposite
   expect(errors).toEqual([]);
 });
 
-test('«Each learning unit includes the following:» — fixed paragraphs edited in place, own lines, printed when asked', async ({ page }) => {
+test('the unit card: no explanatory line, no fill button, no print switch; icon-only numbering buttons', async ({ page }) => {
+  const errors = await openApp(page, { contentLang: 'en' });
+  await buildGuide(page);
+  await tab(page, 'intro');
+  const host = page.locator('#lg-unit-section');
+  await expect(host.locator('.mb-blocks-note')).toHaveCount(0);
+  await expect(host).not.toContainText('Empty parts are not exported');
+  await expect(host.locator('[data-act="mbLgFillItems"]')).toHaveCount(0);
+  await expect(host.locator('input[type="checkbox"]')).toHaveCount(0);
+  const btns = host.locator('.lg-num-btn');
+  await expect(btns).toHaveCount(2);
+  for (let i = 0; i < 2; i++) {
+    await expect(btns.nth(i)).toHaveClass(/mb-icon-btn/);
+    await expect(btns.nth(i).locator('svg')).toHaveCount(1);
+    expect((await btns.nth(i).innerText()).trim()).toBe('');
+    await expect(btns.nth(i)).toHaveAttribute('aria-label', 'Numbering');
+  }
+  expect(errors).toEqual([]);
+});
+
+test('«Each learning unit includes the following:» — fixed paragraphs edited in place, own lines, printed with the introduction', async ({ page }) => {
   const errors = await openApp(page, { contentLang: 'en' });
   await buildGuide(page);
   await tab(page, 'intro');
@@ -81,22 +101,26 @@ test('«Each learning unit includes the following:» — fixed paragraphs edited
   const vals = await card.locator('.lg-inc-input').evaluateAll(l => l.map(i => i.value));
   expect(vals).toEqual(['Introducing the subject', 'Things you need to know', 'Things to do', 'To reflect on what you have learned']);
 
-  // nothing is stored, and nothing printed, until the card is touched and switched on
+  // nothing is stored until the card is edited; with no introduction the unit has no introduction page
   expect(await page.evaluate(() => mbCurrentLOObject().lgIncludes)).toBeUndefined();
   let t = await docxText(page);
   expect(t).not.toContain('Each learning unit includes');
+
+  // an introduction brings the card with it, on the same page, with the tool's texts
+  await page.locator('#lg-unit-section [data-lg-field="intro.body"]').fill('These tools help with maintenance.');
+  t = await docxText(page);
+  expect(t).toContain('Each learning unit includes the following:');
+  expect(t).toContain('Learning Activities: Things to do');
 
   await card.locator('[data-lg-field="includes.activities"]').fill('Things to do and make');
   await card.locator('[data-lg-field="includes.items"]').fill('A competency assessment module');
   await card.locator('.lg-num-btn').click();
   t = await docxText(page);
-  expect(t).not.toContain('Each learning unit includes');          // «Print this part» is off
-  await card.locator('.lg-inc-print input').check();
-  t = await docxText(page);
   const at = (s) => { const i = t.indexOf(s); expect(i, s).toBeGreaterThan(-1); return i; };
-  const order = ['1-1 Introduction', 'Each learning unit includes the following:', 'Introduction: Introducing the subject',
-    'Knowledge: Things you need to know', 'Learning Activities: Things to do and make',
-    'Reflection: To reflect on what you have learned', '1- A competency assessment module'].map(at);
+  const order = ['1-1 Introduction', 'These tools help with maintenance.', 'Each learning unit includes the following:',
+    'Introduction: Introducing the subject', 'Knowledge: Things you need to know',
+    'Learning Activities: Things to do and make', 'Reflection: To reflect on what you have learned',
+    '1- A competency assessment module', '1-2 Knowledge: Screwdrivers'].map(at);
   expect([...order].sort((a, b) => a - b)).toEqual(order);
 
   // HTML and PDF read the same model
@@ -112,25 +136,25 @@ test('«Each learning unit includes the following:» — fixed paragraphs edited
 
   // every language keeps its own default after the first edit
   await page.evaluate(() => setContentLang('ar'));
-  const ar = await page.evaluate(() => mbCurrentLOObject().lgIncludes.knowledge.ar);
-  expect(ar).toBe('أشياء تحتاج إلى معرفتها');
+  expect(await page.evaluate(() => mbCurrentLOObject().lgIncludes.knowledge.ar)).toBe('أشياء تحتاج إلى معرفتها');
   // restore
   await page.evaluate(() => setContentLang('en'));
   await tab(page, 'basic-info');
   await tab(page, 'intro');
   await page.locator('#lg-unit-section .lg-inc-restore').click();
   await expect(card.locator('[data-lg-field="includes.activities"]')).toHaveValue('Things to do');
-  expect(await page.evaluate(() => mbCurrentLOObject().lgIncludes.on)).toBe(true);
   expect(errors).toEqual([]);
 });
 
-test('«Each learning unit includes the following:» alone makes the unit print; old projects are unchanged', async ({ page }) => {
+test('an edited «Each learning unit includes…» card makes the unit print even with no introduction text', async ({ page }) => {
   const errors = await openApp(page, { contentLang: 'en' });
   await buildGuide(page);
-  await page.evaluate(() => { const lo = mbCurrentLOObject(); lo.lgIncludes = { on: true }; saveCurrentModuleLOData(); });
+  await tab(page, 'intro');
+  await page.locator('#lg-unit-section .lg-inc-card [data-lg-field="includes.items"]').fill('One more thing');
   const t = await docxText(page);
   expect(t).toContain('Each learning unit includes the following:');
-  expect(t).toContain('Introduction: Introducing the subject');
+  expect(t).toContain('One more thing');
+  // old projects (no lgIncludes, no introduction) are unchanged
   await page.evaluate(() => { const lo = mbCurrentLOObject(); delete lo.lgIncludes; saveCurrentModuleLOData(); });
   expect(await docxText(page)).not.toContain('Each learning unit includes');
   expect(errors).toEqual([]);
