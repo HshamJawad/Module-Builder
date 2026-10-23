@@ -80,6 +80,13 @@ var MB_PASTE_TARGETS = {
             }
             if (!scope) return null;
             return scope.id === 'back-cover-tab' ? 'back' : 'front';
+        },
+        /* No window: Ctrl+V works anywhere in the cover tab, so a refused
+           one-click paste just says so. */
+        fail: function (side, reason) {
+            _mbPasteStatus(reason === 'url'
+                ? _mbPasteT('dgPasteUrlFailed', 'That looks like an image link, not an image. Use right-click → Copy image.')
+                : _mbPasteT('dgCoverPasteHint', 'Nothing could be pasted from the clipboard. Copy an image, then press Ctrl+V (⌘+V on Mac) on this page.'), 'error');
         }
     },
     qr: {
