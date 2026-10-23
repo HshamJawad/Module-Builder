@@ -370,3 +370,36 @@ test('assessment tab: no «Add Assessment Form» button — the chosen learning 
   expect(await docxText(page)).toContain('Uses a screwdriver correctly');
   expect(errors).toEqual([]);
 });
+
+test('tabs: a small Back button opposite Proceed, light grey, going to the previous tab', async ({ page }) => {
+  const errors = await openApp(page, { contentLang: 'en' });
+  await buildGuide(page);
+  const chain = [['module-info', 'basic-info'], ['covers', 'module-info'], ['intro', 'covers'], ['info', 'intro'], ['activity', 'info'],
+                 ['reflection', 'activity'], ['assessment', 'reflection'], ['references', 'assessment'], ['back-cover', 'references']];
+  for (const [t, prev] of chain) {
+    await tab(page, t);
+    const back = page.locator(`#${t}-tab .mb-nav-back:visible`);
+    await expect(back, t).toHaveCount(1);
+    expect(await back.getAttribute('data-args'), t).toBe(JSON.stringify([prev]));
+  }
+  await tab(page, 'basic-info');
+  await expect(page.locator('#basic-info-tab .mb-nav-back')).toHaveCount(0);
+  // opposite sides, small, grey
+  await tab(page, 'intro');
+  const g = await page.evaluate(() => {
+    const b = document.querySelector('#intro-tab .mb-nav-back'), n = document.querySelector('#intro-tab .mb-nav-next');
+    const rb = b.getBoundingClientRect(), rn = n.getBoundingClientRect(), cs = getComputedStyle(b);
+    return { backLeft: rb.left < rn.left, h: rb.height, bg: cs.backgroundImage + cs.backgroundColor, color: cs.color, nextSame: getComputedStyle(n).backgroundImage === cs.backgroundImage };
+  });
+  expect(g.backLeft).toBe(true);
+  expect(g.h).toBeLessThan(44);
+  expect(g.bg).not.toContain('118, 75, 162');
+  expect(g.nextSame).toBe(true);
+  await page.locator('#intro-tab .mb-nav-back').click();
+  await expect(page.locator('#covers-tab')).toHaveClass(/active/);
+  // standard template: the assessment tab goes back to the activity sheet
+  await page.evaluate(() => mbSwitchTemplate('standard', { ask: false }));
+  await tab(page, 'assessment');
+  expect(await page.locator('#assessment-tab .mb-nav-back:visible').getAttribute('data-args')).toBe('["activity"]');
+  expect(errors).toEqual([]);
+});

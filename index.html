@@ -367,8 +367,8 @@
      card is gone (the criteria are still kept with the outcome and used by the sheets). -->
 </div>
 <!-- 3.63.0: Proceed Button -->
-<div style="text-align: center; margin-top: 30px; padding: 20px 0;">
-<button data-act="proceedToTab" data-args='["module-info"]' data-i18n="mbProceedToModuleInfo" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 32px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3); transition: all 0.3s ease;">
+<div class="mb-nav-row">
+<button type="button" class="mb-nav-btn mb-nav-next" data-act="proceedToTab" data-args='["module-info"]' data-i18n="mbProceedToModuleInfo">
                         Proceed to Module Information →
                     </button>
 </div>
@@ -410,8 +410,9 @@
 <textarea class="mb-content-field" data-i18n="mbEnterAnyAdditionalNotesToAppear" data-i18n-attr="placeholder" id="covers-additional-notes" placeholder="Enter any additional notes to appear after the module information table..." rows="4" style="width: 100%; padding: 10px; border: 2px solid #d1d5db; border-radius: 6px; font-size: 1em;"></textarea>
 </div>
 <!-- Proceed Button -->
-<div style="text-align: center; margin-top: 30px; padding: 20px 0;">
-<button data-act="proceedToTab" data-args='["covers"]' data-i18n="mbProceedToFrontCover" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 32px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3); transition: all 0.3s ease;">
+<div class="mb-nav-row">
+<button type="button" class="mb-nav-btn mb-nav-back" data-act="switchTab" data-args='["basic-info"]' data-i18n="mbNavBack">← Back</button>
+<button type="button" class="mb-nav-btn mb-nav-next" data-act="proceedToTab" data-args='["covers"]' data-i18n="mbProceedToFrontCover">
                         Proceed to Front Cover →
                     </button>
 </div>
@@ -447,8 +448,9 @@
 <input accept="image/*" data-act="handleFrontCoverUpload" data-on="change" id="front-cover-image-input" style="display:none;" type="file"/>
 </div>
 <!-- Proceed Button -->
-<div style="text-align: center; margin-top: 30px; padding: 20px 0;">
-<button data-act="proceedToTab" data-args='["intro"]' data-i18n="mbProceedToIntroductionPages" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 32px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3); transition: all 0.3s ease;">
+<div class="mb-nav-row">
+<button type="button" class="mb-nav-btn mb-nav-back" data-act="switchTab" data-args='["module-info"]' data-i18n="mbNavBack">← Back</button>
+<button type="button" class="mb-nav-btn mb-nav-next" data-act="proceedToTab" data-args='["intro"]' data-i18n="mbProceedToIntroductionPages">
                         Proceed to Introduction Pages →
                     </button>
 </div>
@@ -541,8 +543,9 @@
 <div class="mb-blocks mb-blocks--lo lg-unit" id="lg-unit-section" style="display:none;"></div>
 </div>
 <!-- Proceed Button -->
-<div style="text-align: center; margin-top: 30px; padding: 20px 0;">
-<button data-act="proceedToTab" data-args='["info"]' data-i18n="mbProceedToInformationSheet" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 32px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3); transition: all 0.3s ease;">
+<div class="mb-nav-row">
+<button type="button" class="mb-nav-btn mb-nav-back" data-act="switchTab" data-args='["covers"]' data-i18n="mbNavBack">← Back</button>
+<button type="button" class="mb-nav-btn mb-nav-next" data-act="proceedToTab" data-args='["info"]' data-i18n="mbProceedToInformationSheet">
                         Proceed to Information Sheet →
                     </button>
 </div>
@@ -709,8 +712,9 @@
 </div>
 </div>
 <!-- Proceed Button -->
-<div style="text-align: center; margin-top: 30px; padding: 20px 0;">
-<button data-act="proceedToTab" data-args='["activity"]' data-i18n="mbProceedToActivityJobSheet" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 32px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3); transition: all 0.3s ease;">
+<div class="mb-nav-row">
+<button type="button" class="mb-nav-btn mb-nav-back" data-act="switchTab" data-args='["intro"]' data-i18n="mbNavBack">← Back</button>
+<button type="button" class="mb-nav-btn mb-nav-next" data-act="proceedToTab" data-args='["activity"]' data-i18n="mbProceedToActivityJobSheet">
                     Proceed to Activity / Job Sheet →
                 </button>
 </div>
@@ -917,11 +921,12 @@
 </div>
 </div>
 <!-- Proceed Button (3.69.0: outside the standard-only checklist group, so the Learner guide has it too) -->
-<div style="text-align: center; margin-top: 30px; padding: 20px 0;">
-<button data-tpl-only="standard lowLiteracy" data-act="proceedToTab" data-args='["assessment"]' data-i18n="mbProceedToAssessmentUnit" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 32px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3); transition: all 0.3s ease;">
+<div class="mb-nav-row">
+<button type="button" class="mb-nav-btn mb-nav-back" data-act="switchTab" data-args='["info"]' data-i18n="mbNavBack">← Back</button>
+<button type="button" class="mb-nav-btn mb-nav-next" data-tpl-only="standard lowLiteracy" data-act="proceedToTab" data-args='["assessment"]' data-i18n="mbProceedToAssessmentUnit">
                     Proceed to Assessment Unit →
                 </button>
-<button data-tpl-only="learnerGuide" data-act="proceedToTab" data-args='["reflection"]' data-i18n="lgProceedToReflection" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 32px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3); transition: all 0.3s ease;">
+<button type="button" class="mb-nav-btn mb-nav-next" data-tpl-only="learnerGuide" data-act="proceedToTab" data-args='["reflection"]' data-i18n="lgProceedToReflection">
                     Proceed to Reflection →
                 </button>
 </div>
@@ -943,8 +948,9 @@
 </select>
 </div>
 <div class="mb-blocks mb-blocks--lo lg-unit lg-refl" id="lg-reflection-section"></div>
-<div style="text-align: center; margin-top: 30px; padding: 20px 0;">
-<button data-act="proceedToTab" data-args='["assessment"]' data-i18n="mbProceedToAssessmentUnit" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 32px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3); transition: all 0.3s ease;">
+<div class="mb-nav-row">
+<button type="button" class="mb-nav-btn mb-nav-back" data-act="switchTab" data-args='["activity"]' data-i18n="mbNavBack">← Back</button>
+<button type="button" class="mb-nav-btn mb-nav-next" data-act="proceedToTab" data-args='["assessment"]' data-i18n="mbProceedToAssessmentUnit">
                         Proceed to Assessment →
                     </button>
 </div>
@@ -995,6 +1001,11 @@
 <div id="assessment-forms-list"></div>
 </div>
 </div>
+<div class="mb-nav-row">
+<button type="button" class="mb-nav-btn mb-nav-back" data-tpl-only="standard lowLiteracy" data-act="switchTab" data-args='["activity"]' data-i18n="mbNavBack">← Back</button>
+<button type="button" class="mb-nav-btn mb-nav-back" data-tpl-only="learnerGuide" data-act="switchTab" data-args='["reflection"]' data-i18n="mbNavBack">← Back</button>
+<button type="button" class="mb-nav-btn mb-nav-next" data-act="proceedToTab" data-args='["references"]' data-i18n="mbProceedToReferences">Proceed to References →</button>
+</div>
 </div>
 <!-- References Tab -->
 <div class="tab-content" id="references-tab">
@@ -1035,8 +1046,9 @@
 </div>
 </div>
 <!-- Proceed Button -->
-<div style="text-align: center; margin-top: 30px; padding: 20px 0;">
-<button data-act="proceedToTab" data-args='["back-cover"]' data-i18n="mbProceedToBackCover" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 32px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3); transition: all 0.3s ease;">
+<div class="mb-nav-row">
+<button type="button" class="mb-nav-btn mb-nav-back" data-act="switchTab" data-args='["assessment"]' data-i18n="mbNavBack">← Back</button>
+<button type="button" class="mb-nav-btn mb-nav-next" data-act="proceedToTab" data-args='["back-cover"]' data-i18n="mbProceedToBackCover">
                         Proceed to Back Cover →
                     </button>
 </div>
@@ -1070,6 +1082,9 @@
 </div>
 <input accept="image/*" data-act="handleBackCoverUpload" data-on="change" id="back-cover-image-input" style="display:none;" type="file"/>
 </div>
+</div>
+<div class="mb-nav-row">
+<button type="button" class="mb-nav-btn mb-nav-back" data-act="switchTab" data-args='["references"]' data-i18n="mbNavBack">← Back</button>
 </div>
 </div>
 <!-- Help Tab -->
