@@ -80,8 +80,10 @@ test('the unit card: no explanatory line, no fill button, no print switch; icon-
   await expect(host.locator('[data-act="mbLgFillItems"]')).toHaveCount(0);
   await expect(host.locator('input[type="checkbox"]')).toHaveCount(0);
   const btns = host.locator('.lg-num-btn');
-  await expect(btns).toHaveCount(2);
-  for (let i = 0; i < 2; i++) {
+  await expect(btns).toHaveCount(1);                      // only the learning outcomes card has one
+  await expect(host.locator('.lg-inc-card .lg-num-btn')).toHaveCount(0);
+  await expect(host.locator('.lg-inc-card .lg-sub')).toHaveCount(0);
+  for (let i = 0; i < 1; i++) {
     await expect(btns.nth(i)).toHaveClass(/mb-icon-btn/);
     await expect(btns.nth(i).locator('svg')).toHaveCount(1);
     expect((await btns.nth(i).innerText()).trim()).toBe('');
@@ -114,13 +116,12 @@ test('«Each learning unit includes the following:» — fixed paragraphs edited
 
   await card.locator('[data-lg-field="includes.activities"]').fill('Things to do and make');
   await card.locator('[data-lg-field="includes.items"]').fill('A competency assessment module');
-  await card.locator('.lg-num-btn').click();
   t = await docxText(page);
   const at = (s) => { const i = t.indexOf(s); expect(i, s).toBeGreaterThan(-1); return i; };
   const order = ['1-1 Introduction', 'These tools help with maintenance.', 'Each learning unit includes the following:',
     'Introduction: Introducing the subject', 'Knowledge: Things you need to know',
     'Learning Activities: Things to do and make', 'Reflection: To reflect on what you have learned',
-    '1- A competency assessment module', '1-2 Knowledge: Screwdrivers'].map(at);
+    'A competency assessment module', '1-2 Knowledge: Screwdrivers'].map(at);
   expect([...order].sort((a, b) => a - b)).toEqual(order);
 
   // HTML and PDF read the same model
@@ -157,5 +158,26 @@ test('an edited «Each learning unit includes…» card makes the unit print eve
   // old projects (no lgIncludes, no introduction) are unchanged
   await page.evaluate(() => { const lo = mbCurrentLOObject(); delete lo.lgIncludes; saveCurrentModuleLOData(); });
   expect(await docxText(page)).not.toContain('Each learning unit includes');
+  expect(errors).toEqual([]);
+});
+
+test('the introduction page: the module title heads it (not the learning unit), the outcomes lead is the card title', async ({ page }) => {
+  const errors = await openApp(page, { contentLang: 'en' });
+  await buildGuide(page);
+  await page.evaluate(() => {
+    const m = mbState.modulesData.find(x => x.id === mbState.currentModuleId);
+    m.fullTitle = { en: 'Computer hardware maintenance', ar: '', fr: '' };
+    const lo = mbCurrentLOObject();
+    lo.lgIntro = { body: { en: 'Welcome to the guide.', ar: '', fr: '' }, items: { en: 'To use hand tools', ar: '', fr: '' } };
+    saveCurrentModuleLOData();
+  });
+  const t = await docxText(page);
+  const at = (s) => { const i = t.indexOf(s); expect(i, s).toBeGreaterThan(-1); return i; };
+  const order = ['Computer hardware maintenance', '1-1 Introduction', 'Welcome to the guide.',
+    'The learning outcomes for this guide are:', '1. To use hand tools'].map(at);
+  expect([...order].sort((a, b) => a - b)).toEqual(order);
+  expect(t).not.toContain('In this learning unit you will learn how to');
+  const m = await page.evaluate(() => { const model = mbBuildModuleModel('en'); return model.outcomes[0].pageHeading; });
+  expect(m).toBe('Computer hardware maintenance');
   expect(errors).toEqual([]);
 });

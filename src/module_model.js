@@ -309,6 +309,7 @@ function mbBuildModuleModel(lang, state) {
         try { return mbSeeAlsoFor(lo.id, lang, _mmArr(st.learningOutcomesData), seeRefs); } catch (e) { return []; }
     };
 
+    let lgModTitleUsed = false;
     _mmArr(st.learningOutcomesData).forEach(function (lo, loIndex) {
         /* Same gate as the Word export. An outcome that fails it does
            not appear at all — not as an empty heading, not as a stub.
@@ -345,6 +346,9 @@ function mbBuildModuleModel(lang, state) {
         /* 3.59.0: «1- Learning unit: …» — the Learner guide's heading. */
         out.heading = lg ? ((typeof mbLgUnitHeading === 'function') ? mbLgUnitHeading(loIndex + 1, out.title, lang)
             : _lgT('lgUnitHead', { v0: loIndex + 1, v1: out.title })) : '';   // 3.67.0: named in Settings
+        /* 3.79.0: the introduction page carries the module's title, not the learning unit's. */
+        out.pageHeading = '';
+        if (lg && !lgModTitleUsed && model.title && mbLgIntroFilled(lo)) { out.pageHeading = model.title; lgModTitleUsed = true; }
 
         _mmArr(lo.infoSheets).forEach(function (sh, si) {
             if (!mmSheetHasContent(sh)) return;

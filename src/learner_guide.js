@@ -60,7 +60,6 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgNumber: 'Numbering', lgNumberTip: 'Number the lines (1-, 2-, 3-) — click again to remove the numbers',
         lgIncCard: 'Each learning unit includes the following:',
         lgIncRestore: 'Restore the default text',
-        lgIncItemsLabel: 'Add your own lines (one per line):',
         lgIncItemsPh: 'Anything else the learning unit includes…',
         lgIncIntroLbl: 'Introduction:', lgIncIntroTxt: 'Introducing the subject',
         lgIncKnowLbl: 'Knowledge:', lgIncKnowTxt: 'Things you need to know',
@@ -95,7 +94,7 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgActObjShowTip: 'Add objectives to this sheet (optional)',
         lgSelectUnit: '-- Select learning unit --',
         lgIntroHead: '{v0} Introduction',
-        lgYouWillLearn: 'In this learning unit you will learn how to:',
+        lgYouWillLearn: 'The learning outcomes for this guide are:',
         lgKnowledge: 'Knowledge',
         lgActivity: 'Learning activity',
         lgWorksheet: 'Worksheet',
@@ -141,7 +140,6 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgNumber: 'Numérotation', lgNumberTip: 'Numéroter les lignes (1-, 2-, 3-) — cliquer de nouveau pour retirer les numéros',
         lgIncCard: 'Chaque unité d’apprentissage comprend les éléments suivants :',
         lgIncRestore: 'Rétablir le texte par défaut',
-        lgIncItemsLabel: 'Ajoutez vos propres lignes (une par ligne) :',
         lgIncItemsPh: 'Tout autre élément de l’unité d’apprentissage…',
         lgIncIntroLbl: 'Introduction :', lgIncIntroTxt: 'Présentation du sujet',
         lgIncKnowLbl: 'Connaissances :', lgIncKnowTxt: 'Ce que vous devez savoir',
@@ -176,7 +174,7 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgActObjShowTip: 'Ajouter des objectifs à cette fiche (facultatif)',
         lgSelectUnit: '-- Choisir une unité d’apprentissage --',
         lgIntroHead: '{v0} Introduction',
-        lgYouWillLearn: 'Dans cette unité d’apprentissage, vous apprendrez à :',
+        lgYouWillLearn: 'Les résultats d’apprentissage de ce guide sont :',
         lgKnowledge: 'Connaissances',
         lgActivity: 'Activité d’apprentissage',
         lgWorksheet: 'Fiche de travail',
@@ -222,7 +220,6 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgNumber: 'ترقيم', lgNumberTip: 'ترقيم الأسطر (1-، 2-، 3-) — اضغط مرة أخرى لإزالة الأرقام',
         lgIncCard: 'تتضمن كل وحدة تعلمية ما يلي:',
         lgIncRestore: 'استعادة النص الافتراضي',
-        lgIncItemsLabel: 'أضف أسطرك الخاصة (سطر لكل بند):',
         lgIncItemsPh: 'أي شيء آخر تتضمنه الوحدة التعلمية…',
         lgIncIntroLbl: 'المقدمة:', lgIncIntroTxt: 'التعريف بالموضوع',
         lgIncKnowLbl: 'المعرفة:', lgIncKnowTxt: 'أشياء تحتاج إلى معرفتها',
@@ -257,7 +254,7 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgActObjShowTip: 'إضافة أهداف إلى هذه الورقة (اختياري)',
         lgSelectUnit: '— اختر وحدة تعلمية —',
         lgIntroHead: '{v0} المقدمة',
-        lgYouWillLearn: 'ستتعلم في هذه الوحدة التعلمية كيفية:',
+        lgYouWillLearn: 'محصلات التعلم لهذا الدليل هي:',
         lgKnowledge: 'المعرفة',
         lgActivity: 'النشاط التعلمي',
         lgWorksheet: 'ورقة العمل',
@@ -637,7 +634,6 @@ function _lgRenderPart(part, force) {
             '<div class="mb-block lg-part lg-inc-card">' +
               '<div class="lg-part-head"><span>' + _lgEsc(_lgT('lgIncCard')) + '</span></div>' +
               incRows +
-              '<div class="lg-sub-row"><label class="lg-sub">' + _lgEsc(_lgT('lgIncItemsLabel')) + '</label>' + numBtn('includes.items') + '</div>' +
               field('includes.items', 'textarea', _lgT('lgIncItemsPh'), g(inc.items), 3) +
               '<button type="button" class="lg-restore lg-inc-restore" data-act="mbLgIncRestore">↺ ' + _lgEsc(_lgT('lgIncRestore')) + '</button>' +
             '</div>';
