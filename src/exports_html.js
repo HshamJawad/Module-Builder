@@ -577,10 +577,18 @@ function mbBuildModuleHtml(model, opts) {
         add('glossary', gTitle, _hxSection('glossary', '', gTitle, _hxTables(model.glossary.tables)));
     }
 
-    if (model.references.items.length && inc('references')) {
-        var rf = '<ol class="mx-refs">' + model.references.items.map(function (r) {
+    var _facs = model.references.facilities || [];
+    if ((model.references.items.length || _facs.length) && inc('references')) {
+        var rf = model.references.items.length ? '<ol class="mx-refs">' + model.references.items.map(function (r) {
             return '<li>' + _hxText(r) + '</li>';
-        }).join('') + '</ol>';
+        }).join('') + '</ol>' : '';
+        /* 3.81.0: Learner guide — material facilities under the resources */
+        if (_facs.length) {
+            rf += '<table class="mx-tbl"><thead><tr><th style="width:14%">' + _hxEsc(model.references.facilitiesNumber) + '</th><th>' +
+                _hxEsc(model.references.facilitiesTitle) + '</th></tr></thead><tbody>' +
+                _facs.map(function (f) { return '<tr><td style="text-align:center">' + _hxEsc(f.qty) + '</td><td>' + _hxEsc(f.name) + '</td></tr>'; }).join('') +
+                '</tbody></table>';
+        }
         var rTitle = model.references.title || t('references');
         add('references', rTitle, _hxSection('references', '', rTitle, rf));
     }

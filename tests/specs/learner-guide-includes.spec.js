@@ -232,3 +232,41 @@ test('knowledge sheet list box: editable title, numbering, clear, undo/redo, 3 l
   await expect(u.locator('[data-lg-field="intro.items"]')).toHaveValue('');
   expect(errors).toEqual([]);
 });
+
+test('References tab (Learner guide): «Suggested resources…» heading, facilities, one table in Word, names in Settings', async ({ page }) => {
+  const errors = await openApp(page, { contentLang: 'en' });
+  await buildGuide(page);
+  await tab(page, 'references');
+  await expect(page.locator('#references-title-display')).toContainText('Suggested resources for this unit:');
+  await expect(page.locator('#references-list .ref-input').first()).toHaveAttribute('placeholder', /web address/);
+  const card = page.locator('#facilities-card');
+  await expect(card).toContainText('Material facilities (for 15 learners) for this module:');
+  await page.locator('#references-list .ref-input').first().fill('https://www.wikihow.com/Cut-Wire');
+  await card.locator('.fac-qty').first().fill('1');
+  await card.locator('.fac-input').first().fill('Classroom');
+  await card.locator('.fac-add').click();
+  await card.locator('.fac-qty').nth(1).fill('15');
+  await card.locator('.fac-input').nth(1).fill('Computer laboratory');
+  const t = await docxText(page);
+  const at = (x) => { const i = t.indexOf(x); expect(i, x).toBeGreaterThan(-1); return i; };
+  const order = ['Suggested resources for this unit:', 'https://www.wikihow.com/Cut-Wire', 'Number', 'Material facilities (for 15 learners) for this module:', 'Classroom', 'Computer laboratory'].map(at);
+  expect([...order].sort((a, b) => a - b)).toEqual(order);
+  // a link, not plain text
+  const rels = await page.evaluate(async () => {
+    let got = null;
+    window.mbExportSink = { take: (b) => { got = b; return Promise.resolve(); }, skip: () => {}, fail: (e) => { throw e; } };
+    try { await exportToDocx(); } finally { window.mbExportSink = null; }
+    const z = fflate.unzipSync(new Uint8Array(await got.arrayBuffer()));
+    return new TextDecoder().decode(z['word/_rels/document.xml.rels']);
+  });
+  expect(rels).toContain('https://www.wikihow.com/Cut-Wire');
+  // the names are in Settings, with the old name beside the first
+  await page.evaluate(() => { const s = wsReadSettings(); s.lgLabels = { en: { references: 'My resources' }, fr: {}, ar: {} }; wsWriteSettings(s); });
+  await page.evaluate(() => renderReferences());
+  await expect(page.locator('#references-title-display')).toContainText('My resources');
+  // saved with the module
+  expect(await page.evaluate(() => mbState.facilitiesData.map(f => f.qty + ':' + f.value))).toEqual(['1:Classroom', '15:Computer laboratory']);
+  await page.locator('#facilities-card [data-act="deleteFacility"]').first().click();
+  await expect(card.locator('.fac-input')).toHaveCount(1);
+  expect(errors).toEqual([]);
+});

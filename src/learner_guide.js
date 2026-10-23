@@ -99,6 +99,9 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgIntroHead: '{v0} Introduction',
         lgYouWillLearn: 'The learning outcomes for this guide are:',
         lgKnowledge: 'Knowledge',
+        lgReferences: 'Suggested resources for this unit:',
+        lgFacilities: 'Material facilities (for 15 learners) for this module:',
+        lgFacNumber: 'Number', lgFacItemPh: 'e.g. Classroom', lgFacAdd: 'Add item', lgRefPh: 'A web address (https://…) or a reference, e.g. Smith, J. (2020). Vocational Training Handbook. Publisher.',
         lgActivity: 'Learning activity',
         lgWorksheet: 'Worksheet',
         lgReflDefault: 'Reflection on learning unit {v0}',
@@ -180,6 +183,9 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgIntroHead: '{v0} Introduction',
         lgYouWillLearn: 'Les résultats d’apprentissage de ce guide sont :',
         lgKnowledge: 'Connaissances',
+        lgReferences: 'Ressources suggérées pour cette unité :',
+        lgFacilities: 'Installations et matériel (pour 15 apprenants) pour ce module :',
+        lgFacNumber: 'Nombre', lgFacItemPh: 'p. ex. Salle de classe', lgFacAdd: 'Ajouter un élément', lgRefPh: 'Une adresse web (https://…) ou une référence, p. ex. Smith, J. (2020). Vocational Training Handbook. Éditeur.',
         lgActivity: 'Activité d’apprentissage',
         lgWorksheet: 'Fiche de travail',
         lgReflDefault: 'Réflexion sur l’unité d’apprentissage {v0}',
@@ -261,6 +267,9 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgIntroHead: '{v0} المقدمة',
         lgYouWillLearn: 'محصلات التعلم لهذا الدليل هي:',
         lgKnowledge: 'المعرفة',
+        lgReferences: 'المصادر المقترحة لهذه الوحدة:',
+        lgFacilities: 'التسهيلات المادية (لـ 15 متعلماً) لهذه الوحدة:',
+        lgFacNumber: 'العدد', lgFacItemPh: 'مثال: قاعة دراسية', lgFacAdd: 'إضافة بند', lgRefPh: 'عنوان موقع ويب (https://…) أو مرجع، مثال: Smith, J. (2020). Vocational Training Handbook. Publisher.',
         lgActivity: 'النشاط التعلمي',
         lgWorksheet: 'ورقة العمل',
         lgReflDefault: 'التأمل في الوحدة التعلمية {v0}',
@@ -416,8 +425,8 @@ function mbLgReflectionGroups(lo, lang) {
    name below). `unit` heads each learning outcome («1- Learning unit:
    …»), `objectives` is the optional objectives part of a knowledge
    sheet; info / activity / job are the three sheets. */
-var MB_LG_LABEL_KINDS = ['unit', 'info', 'activity', 'job', 'objectives'];
-var _LG_LABEL_KEYS = { unit: 'lgUnit', info: 'lgKnowledge', activity: 'lgActivity', job: 'lgWorksheet', objectives: 'lgObjectives' };
+var MB_LG_LABEL_KINDS = ['unit', 'info', 'activity', 'job', 'objectives', 'references', 'facilities'];
+var _LG_LABEL_KEYS = { unit: 'lgUnit', info: 'lgKnowledge', activity: 'lgActivity', job: 'lgWorksheet', objectives: 'lgObjectives', references: 'lgReferences', facilities: 'lgFacilities' };
 
 /** The name the user typed for this part in this language, or ''. */
 function mbLgLabelCustom(kind, lang) {
@@ -433,6 +442,17 @@ function mbLgLabelDefault(kind, lang) {
 /** The name to show and print: the user's, else the tool's. */
 function mbLgLabel(kind, lang) {
     return mbLgLabelCustom(kind, lang) || mbLgLabelDefault(kind, lang);
+}
+
+/** 3.81.0: the heading of the References page. In this template it is
+ *  «Suggested resources…» unless the author renamed the section (a title
+ *  other than the tool's own «References» is theirs and stays). */
+function mbLgRefsTitle(stored, lang) {
+    var s = String(stored || '').trim();
+    if (!_lgOn()) return s;
+    var seed = (window.i18n && window.i18n.tIn) ? String(window.i18n.tIn('expReferences', lang) || '').trim() : '';
+    if (!s || s === seed || s === 'References') return mbLgLabel('references', lang);
+    return s;
 }
 
 /** «1- Learning unit: title» — an outcome's heading in this template. */
@@ -1072,6 +1092,7 @@ function _lgRepaintAll() {
     try { if (typeof mbSeqPaintNumberFields === 'function') mbSeqPaintNumberFields(); } catch (e) { /* not ready */ }
     try { mbLgPaintObjective(); } catch (e) { /* not ready */ }   // 3.67.0
     try { _lgPaintKnowBox(); } catch (e) { /* not ready */ }      // 3.80.0
+    try { if (typeof renderReferences === 'function') renderReferences(); } catch (e) { /* not ready */ }   // 3.81.0
 }
 window.addEventListener('mb:settingschange', function () { try { mbLgPaintObjective(); } catch (e) { /* not ready */ } });
 window.addEventListener('mb:templatechange', _lgRepaintAll);

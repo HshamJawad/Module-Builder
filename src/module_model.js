@@ -290,7 +290,12 @@ function mbBuildModuleModel(lang, state) {
             tables: _mmTables(st.glossary && st.glossary.tables)
         },
         references: {
-            title: _mmStr(st.referencesTitle),
+            title: (lg && typeof mbLgRefsTitle === 'function') ? mbLgRefsTitle(_mmStr(st.referencesTitle), lang) : _mmStr(st.referencesTitle),
+            /* 3.81.0: the Learner guide's material facilities, in the same table */
+            facilitiesTitle: (lg && typeof mbLgLabel === 'function') ? mbLgLabel('facilities', lang) : '',
+            facilitiesNumber: (lg && typeof _lgTIn === 'function') ? _lgTIn('lgFacNumber', lang) : '',
+            facilities: lg ? _mmArr(st.facilitiesData).map(function (r) { return { qty: _mmStr(r && r.qty).trim(), name: _mmStr(r && r.value).trim() }; })
+                .filter(function (r) { return r.name; }) : [],
             items: _mmArr(st.referencesData)
                 .map(function (r) { return _mmStr(r && r.value); })
                 .filter(function (v) { return v.trim(); })

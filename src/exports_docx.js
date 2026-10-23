@@ -2627,7 +2627,51 @@ async function exportToDocx() {
         // ── References page ──────────────────────────────────────────
         syncReferencesFromDOM();
         const hasRefs = mbState.referencesData.some(r => r.value.trim());
-        if (hasRefs) {
+        /* 3.81.0: the Learner guide prints its suggested resources and its
+           material facilities as ONE table — a heading row, a row per
+           resource (a web address becomes a link), then the facilities
+           with their numbers. */
+        const _facRows = _lgDoc ? (mbState.facilitiesData || []).filter(f => f && String(f.value || '').trim()) : [];
+        if (_lgDoc && (hasRefs || _facRows.length)) {
+            const { Table, TableRow, TableCell, WidthType } = mbDocxLib();
+            const _lib = mbDocxLib();
+            const _storedTitle = (typeof mbState.referencesTitle === 'string') ? mbState.referencesTitle : '';
+            const _refsHead = (typeof mbLgRefsTitle === 'function') ? mbLgRefsTitle(_storedTitle, _mbLang()) : _storedTitle;
+            const _facHead = (typeof mbLgLabel === 'function') ? mbLgLabel('facilities', _mbLang()) : '';
+            const _numHead = (typeof _lgTIn === 'function') ? _lgTIn('lgFacNumber', _mbLang()) : 'Number';
+            const _headCell = (text, span, w, center) => new TableCell({
+                children: [new Paragraph({ children: [new TextRun({ text: text, bold: true, size: _wsTable(), color: _wsTblText(), rightToLeft: _mbRtl() })],
+                    alignment: center ? AlignmentType.CENTER : _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { before: 60, after: 60 } })],
+                shading: { fill: _wsTblFill(), type: 'clear' }, columnSpan: span, width: { size: w, type: WidthType.PERCENTAGE }
+            });
+            const _isUrl = (t) => /^(https?:\/\/|www\.)\S+$/i.test(t);
+            const _refCell = (t) => {
+                const kids = [];
+                if (_isUrl(t) && _lib.ExternalHyperlink) {
+                    kids.push(new _lib.ExternalHyperlink({ link: /^www\./i.test(t) ? 'https://' + t : t,
+                        children: [new TextRun({ text: t, size: _wsTable(), color: '0000FF', underline: {} })] }));
+                } else {
+                    kids.push(new TextRun({ text: t, size: _wsTable(), rightToLeft: _mbRtl() }));
+                }
+                return new TableCell({ children: [new Paragraph({ children: kids, alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { before: 60, after: 60 } })],
+                    columnSpan: 2, width: { size: 100, type: WidthType.PERCENTAGE } });
+            };
+            const _rows = [];
+            if (hasRefs) {
+                _rows.push(new TableRow({ children: [_headCell(_refsHead, 2, 100, false)], tableHeader: true }));
+                mbState.referencesData.forEach(r => { const t = String(r.value || '').trim(); if (t) _rows.push(new TableRow({ children: [_refCell(t)] })); });
+            }
+            if (_facRows.length) {
+                _rows.push(new TableRow({ children: [_headCell(_numHead, 1, 13, true), _headCell(_facHead, 1, 87, false)], tableHeader: !hasRefs }));
+                _facRows.forEach(f => _rows.push(new TableRow({ children: [
+                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: String(f.qty || '').trim(), size: _wsTable(), rightToLeft: _mbRtl() })], alignment: AlignmentType.CENTER, spacing: { before: 60, after: 60 } })], width: { size: 13, type: WidthType.PERCENTAGE } }),
+                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: String(f.value).trim(), size: _wsTable(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { before: 60, after: 60 } })], width: { size: 87, type: WidthType.PERCENTAGE } })
+                ] })));
+            }
+            sections.push({ properties: { bidi: _mbRtl() }, children: [
+                new Table({ rows: _rows, width: { size: 100, type: WidthType.PERCENTAGE }, visuallyRightToLeft: _mbRtl() })
+            ] });
+        } else if (hasRefs) {
             const refChildren = [];
 
             // Section heading
