@@ -111,6 +111,11 @@ function renderAssessmentForms() {
         return;
     }
     
+    /* 3.84.0: the unit chosen in the bar always has its form. */
+    if (mbState.currentLOId && mbState.learningOutcomesData.some(l => l.id === mbState.currentLOId) &&
+        !mbState.assessmentFormsData[mbState.currentLOId]) {
+        mbState.assessmentFormsData[mbState.currentLOId] = _asmNewForm();
+    }
     const loIdsWithForms = Object.keys(mbState.assessmentFormsData);
     if (loIdsWithForms.length === 0) {
         container.innerHTML = '<p style="color: #6b7280; text-align: center; padding: 20px;" data-i18n="dgNoAssessmentFormsYet">' +
@@ -151,10 +156,6 @@ function renderAssessmentForms() {
                     <button data-act="clearAssessmentForm" data-args='["${lo.id}"]' 
                         style="background: #f59e0b; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9em;">
                         <svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg> <span data-i18n="rxClearForm">${window.i18n.t('rxClearForm')}</span>
-                    </button>
-                    <button data-act="deleteAssessmentForm" data-args='["${lo.id}"]' 
-                        style="background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9em;">
-                        <svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg> <span data-i18n="dgDeleteForm">${window.i18n.t('dgDeleteForm')}</span>
                     </button>
                 </div>
             </div>
@@ -272,6 +273,22 @@ function renderAssessmentForms() {
     if (typeof mbAutoGrowAll === 'function') mbAutoGrowAll(container);   // 3.61.0: Chrome before 123 (criteria.js)
 }
 
+/* 3.84.0: a learning unit has exactly one assessment form, made when the
+   unit is chosen in the bar (see renderAssessmentForms). */
+function _asmNewForm() {
+    return {
+        rows: [1, 2, 3, 4, 5].map(function () { return { criteria: '', activities: '', outcomes: '', verification: '', date: '' }; }),
+        competent: false,
+        notYetCompetent: false,
+        teacherName: '',
+        teacherSignature: '',
+        teacherDate: '',
+        learnerName: '',
+        learnerSignature: '',
+        learnerDate: ''
+    };
+}
+
 async function addNewAssessmentForm() {
     syncLearningOutcomesFromCurrentModule();
     
@@ -294,23 +311,7 @@ async function addNewAssessmentForm() {
         return;
     }
     
-    mbState.assessmentFormsData[loWithoutForm.id] = {
-        rows: [
-            { criteria: '', activities: '', outcomes: '', verification: '', date: '' },
-            { criteria: '', activities: '', outcomes: '', verification: '', date: '' },
-            { criteria: '', activities: '', outcomes: '', verification: '', date: '' },
-            { criteria: '', activities: '', outcomes: '', verification: '', date: '' },
-            { criteria: '', activities: '', outcomes: '', verification: '', date: '' },
-        ],
-        competent: false,
-        notYetCompetent: false,
-        teacherName: '',
-        teacherSignature: '',
-        teacherDate: '',
-        learnerName: '',
-        learnerSignature: '',
-        learnerDate: ''
-    };
+    mbState.assessmentFormsData[loWithoutForm.id] = _asmNewForm();
     
     renderAssessmentForms();
 }
