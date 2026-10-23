@@ -79,13 +79,13 @@ function renderFacilities() {
     const dir = (typeof biIsRtl === 'function' && biIsRtl(lang)) ? 'rtl' : 'ltr';
     const rows = mbState.facilitiesData.map((f) =>
         '<div class="fac-entry" data-fac-id="' + f.id + '">' +
-          '<input type="number" min="0" step="1" inputmode="numeric" class="mb-content-field fac-qty" dir="ltr" aria-label="' + escapeHtml(window.i18n.t('lgFacNumber')) + '" placeholder="' + escapeHtml(window.i18n.t('lgFacNumber')) + '" value="' + escapeHtml(f.qty) + '" data-act="updateFacilityValue" data-on="input" data-args=\'[' + f.id + ',"qty","$value"]\' />' +
+          '<input type="number" min="0" step="1" inputmode="numeric" class="mb-content-field fac-qty" dir="ltr" aria-label="' + escapeHtml(window.i18n.t('lgFacNumber')) + '" placeholder="' + escapeHtml(window.i18n.t('lgFacNo')) + '" title="' + escapeHtml(window.i18n.t('lgFacNumber')) + '" value="' + escapeHtml(f.qty) + '" data-act="updateFacilityValue" data-on="input" data-args=\'[' + f.id + ',"qty","$value"]\' />' +
           '<input type="text" class="mb-content-field fac-input" dir="' + dir + '" placeholder="' + escapeHtml(window.i18n.t('lgFacItemPh')) + '" value="' + escapeHtml(f.value) + '" data-act="updateFacilityValue" data-on="input" data-args=\'[' + f.id + ',"value","$value"]\' />' +
           (mbState.facilitiesData.length > 1 ? '<button type="button" class="mb-icon-btn danger" data-act="deleteFacility" data-args=\'[' + f.id + ']\' title="' + escapeHtml(window.i18n.t('mbDelete')) + '" aria-label="' + escapeHtml(window.i18n.t('mbDelete')) + '">' + ico + '</button>' : '') +
         '</div>').join('');
     card.innerHTML =
         '<div class="fac-head-row"><span class="fac-head" id="facilities-title-display">' + escapeHtml('🧰 ' + _facTitleNow()) + '</span>' +
-          '<button type="button" class="mb-has-ico" data-act="renameFacilitiesTitle" title="' + escapeHtml(window.i18n.t('tiRenameSectionHeading')) + '" style="background:#f3f4f6;color:#374151;border:1.5px solid #d1d5db;padding:4px 12px;border-radius:6px;cursor:pointer;font-size:0.85em;">' + window.i18n.t('mbRename') + '</button></div>' +
+          '<button class="mb-has-ico" data-act="renameFacilitiesTitle" data-i18n-title="tiRenameSectionHeading" style="background: #f3f4f6; color: #374151; border: 1.5px solid #d1d5db; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 0.82em; font-weight: 600; transition: background 0.2s;" title="' + escapeHtml(window.i18n.t('tiRenameSectionHeading')) + '"><svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4.5 19.5h4l10-10a2.1 2.1 0 0 0-3-3l-10 10z"/><path d="M14.5 6.5l3 3"/><path d="M4.5 19.5l.6-3.4"/></svg><span>' + escapeHtml(window.i18n.t('mbRename')) + '</span></button></div>' +
         '<div id="facilities-list">' + rows + '</div>' +
         '<div style="margin-top:8px;"><button type="button" class="fac-add" data-act="addFacility">➕ ' + escapeHtml(window.i18n.t('lgFacAdd')) + '</button></div>';
 }
