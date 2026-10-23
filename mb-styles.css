@@ -4179,3 +4179,25 @@ button.mb-cmk-opt.is-on { outline: 3px solid #0f766e; outline-offset: 1px; }
 .lg-clear-btn:hover { background: #fef2f2; border-color: #fca5a5; }
 .lg-lines-label { display: inline-flex; align-items: center; gap: 6px; margin-inline-start: auto; font-size: .9em; font-weight: 600; color: #374151; }
 .lg-tools-row .lg-lines { width: 4.2em; min-width: 0; padding: 4px 6px; margin: 0; text-align: center; box-sizing: border-box; }
+
+/* ── 3.78.0: Work Team as a table — a header row, boxes that grow with their text ── */
+#work-team-container .team-member-row {
+    display: grid; grid-template-columns: 2fr 2fr 2fr 40px; gap: 10px;
+    align-items: start; padding: 10px 12px; border-bottom: 1px solid #e5e7eb;
+}
+#work-team-container .team-head-row {
+    background: #eef2ff !important; border-bottom: 2px solid #c7d2fe; border-radius: 8px 8px 0 0; padding: 9px 12px;
+}
+#work-team-container .team-head { font-weight: 700; color: #3730a3; font-size: .95em; text-align: start; }
+#work-team-container textarea.team-field {
+    display: block; width: 100%; min-width: 0; box-sizing: border-box; min-height: 40px;
+    padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; background: #fff;
+    font: inherit; font-size: 1em; line-height: 1.45; text-align: start;
+    resize: none; overflow-y: hidden; overflow-wrap: anywhere; field-sizing: content;
+}
+#work-team-container textarea.team-field:focus { border-color: #3b82f6; outline: none; }
+#work-team-container .team-member-row .mb-icon-btn { margin-top: 2px; }
+@media (max-width: 560px) {
+    #work-team-container .team-member-row { grid-template-columns: 1fr 1fr 1fr 36px; gap: 6px; padding: 8px 6px; }
+    #work-team-container .team-head { font-size: .85em; }
+}
