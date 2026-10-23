@@ -421,10 +421,14 @@
 <div class="tab-content" id="covers-tab">
 <div class="form-group">
 <!-- ══ FRONT COVER ══ -->
-<div style="margin-bottom: 30px; padding: 20px; background: #f0f9ff; border-radius: 12px; border: 2px solid #38bdf8;">
-<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+<div id="front-cover-card" style="margin-bottom: 30px; padding: 20px; background: #f0f9ff; border-radius: 12px; border: 2px solid #38bdf8;">
+<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 6px;">
 <span data-i18n="mbFrontCover" style="font-size: 1.1em; font-weight: 700; color: #0369a1;">🖼️ Front Cover</span>
 <span data-i18n="mbOptionalExportedAsTheVeryFirst" style="font-size: 0.85em; color: #6b7280;">(Optional — exported as the very first page)</span>
+<div class="mb-cover-tools" style="margin-inline-start:auto; display:flex; gap:6px; align-items:center;">
+<button type="button" class="btn-add-image btn-paste-image" data-act="mbCoverPasteImage" data-args='["front"]' id="front-cover-paste-btn" data-cover-tip="pasteTip">📋 <span data-cover-lbl="paste">Paste Image</span></button>
+<button type="button" class="btn-remove mb-icon-btn danger" data-act="deleteFrontCoverImage" id="front-cover-remove-top" data-cover-tip="removeTip" style="display:none;"><svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg></button>
+</div>
 </div>
 <div style="background:#e0f2fe; border-left:4px solid #0369a1; border-radius:6px; padding:10px 14px; margin-bottom:16px; font-size:0.86em; color:#075985; line-height:1.6;">
                         💡 <strong data-i18n="mbTip">Tip:</strong><span data-i18n="txUploadAn">Upload an</span><strong data-i18n="mbA4SizedImage210297Mm">A4-sized image (210 × 297 mm)</strong><span data-i18n="txForBestResults">for best results.</span><br/><span data-i18n="txRecommended">Recommended:</span><strong data-i18n="mb24803508Px">2480 × 3508 px</strong><span data-i18n="txAt300DpiOr">at 300 dpi — or</span><strong data-i18n="mb12401754Px">1240 × 1754 px</strong><span data-i18n="txAt150Dpi">at 150 dpi.</span><br/><span data-i18n="txSmallerImagesWillBeAutomaticallySt">Smaller images will be automatically stretched to fill the full A4 page.</span></div>
@@ -1043,10 +1047,14 @@
 <div class="tab-content" id="back-cover-tab">
 <div class="form-group">
 <!-- Back Cover Section -->
-<div style="margin-top: 30px; padding: 20px; background: #faf5ff; border-radius: 12px; border: 2px solid #a78bfa;">
-<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+<div id="back-cover-card" style="margin-top: 30px; padding: 20px; background: #faf5ff; border-radius: 12px; border: 2px solid #a78bfa;">
+<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 6px;">
 <span data-i18n="mbBackCover" style="font-size: 1.1em; font-weight: 700; color: #7c3aed;">🖼️ Back Cover</span>
 <span data-i18n="mbOptionalExportedAsTheLastPage" style="font-size: 0.85em; color: #6b7280;">(Optional — exported as the last page)</span>
+<div class="mb-cover-tools" style="margin-inline-start:auto; display:flex; gap:6px; align-items:center;">
+<button type="button" class="btn-add-image btn-paste-image" data-act="mbCoverPasteImage" data-args='["back"]' id="back-cover-paste-btn" data-cover-tip="pasteTip">📋 <span data-cover-lbl="paste">Paste Image</span></button>
+<button type="button" class="btn-remove mb-icon-btn danger" data-act="deleteBackCoverImage" id="back-cover-remove-top" data-cover-tip="removeTip" style="display:none;"><svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg></button>
+</div>
 </div>
 <div style="background:#ede9fe; border-left:4px solid #7c3aed; border-radius:6px; padding:10px 14px; margin-bottom:16px; font-size:0.86em; color:#5b21b6; line-height:1.6;">
                         💡 <strong data-i18n="mbTip">Tip:</strong><span data-i18n="txUploadAn">Upload an</span><strong data-i18n="mbA4SizedImage210297Mm">A4-sized image (210 × 297 mm)</strong><span data-i18n="txForBestResults">for best results.</span><br/><span data-i18n="txRecommended">Recommended:</span><strong data-i18n="mb24803508Px">2480 × 3508 px</strong><span data-i18n="txAt300DpiOr">at 300 dpi — or</span><strong data-i18n="mb12401754Px">1240 × 1754 px</strong><span data-i18n="txAt150Dpi">at 150 dpi.</span><br/><span data-i18n="txSmallerImagesWillBeAutomaticallySt">Smaller images will be automatically stretched to fill the full A4 page.</span></div>

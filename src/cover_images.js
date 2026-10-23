@@ -10,6 +10,73 @@
 // that is the difference between a 100 MB module and a 6 MB one.
 // ============================================================
 
+/* 3.81.0: 📋 Paste Image in each cover's header, and a 🗑 beside it once a
+   picture is there. Labels live in a table THIS FILE owns, matched to the
+   interface language and repainted on every language change (same reason
+   as steps.js / content.js: a stale dictionary must not leave a raw key
+   on the button). */
+var _MB_COVER_LABELS = {
+    ar: { paste: 'لصق صورة', pasteTip: 'لصق صورة منسوخة من الحافظة أو من صفحة ويب (Ctrl+V)',
+          removeTip: 'حذف صورة الغلاف', pasted: 'تم لصق الصورة' },
+    en: { paste: 'Paste Image', pasteTip: 'Paste an image copied from the clipboard or a web page (Ctrl+V)',
+          removeTip: 'Remove the cover image', pasted: 'Image pasted' },
+    fr: { paste: 'Coller une image', pasteTip: 'Coller une image copiée depuis le presse-papiers ou une page web (Ctrl+V)',
+          removeTip: 'Supprimer l’image de couverture', pasted: 'Image collée' }
+};
+function _mbCoverT(key) {
+    var lang = (window.i18n && window.i18n.getLang) ? window.i18n.getLang() : 'en';
+    var table = _MB_COVER_LABELS[lang] || _MB_COVER_LABELS.en;
+    return table[key] || _MB_COVER_LABELS.en[key] || key;
+}
+function mbPaintCoverButtons() {
+    document.querySelectorAll('[data-cover-lbl]').forEach(function (el) {
+        el.textContent = _mbCoverT(el.getAttribute('data-cover-lbl'));
+    });
+    document.querySelectorAll('[data-cover-tip]').forEach(function (el) {
+        var tip = _mbCoverT(el.getAttribute('data-cover-tip'));
+        el.title = tip;
+        el.setAttribute('aria-label', tip);
+    });
+}
+window.addEventListener('mb:langchange', mbPaintCoverButtons);
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mbPaintCoverButtons);
+else mbPaintCoverButtons();
+
+/** The one place a cover picture is stored: upload, drop and paste all end
+ *  here. It records its own Undo step (the picture arrives asynchronously,
+ *  after the action dispatcher has already looked), shows the preview and
+ *  tells autosave. */
+function _mbApplyCoverImage(side, dataUrl, announce) {
+    var hist = (typeof mbHistBegin === 'function') ? mbHistBegin('coverImage') : null;
+    if (side === 'front') mbState.frontCoverImage = dataUrl;
+    else                  mbState.backCoverImage  = dataUrl;
+    _showCoverPreview(side, dataUrl);
+    if (hist && typeof mbHistEnd === 'function') mbHistEnd(hist);
+    _mbCoverNotifyChanged(side);
+    if (announce && typeof showStatus === 'function') showStatus(_mbCoverT('pasted'), 'success');
+}
+
+/* Autosave listens for input/change bubbling out of the tab; a paste, a
+   drop or an Undo fires neither. */
+function _mbCoverNotifyChanged(side) {
+    var tab = document.getElementById(side === 'front' ? 'covers-tab' : 'back-cover-tab');
+    if (tab) tab.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+/** Both previews repainted from the state (Undo / Redo). */
+function mbRefreshCoverPreviews() {
+    if (!document.getElementById('front-cover-preview')) return;
+    if (mbState.frontCoverImage) _showCoverPreview('front', mbState.frontCoverImage);
+    else deleteFrontCoverImage();
+    if (mbState.backCoverImage) _showCoverPreview('back', mbState.backCoverImage);
+    else deleteBackCoverImage();
+}
+
+/** 📋 in the cover header (data-act). */
+function mbCoverPasteImage(side) {
+    mbPasteImageInto('cover', side === 'back' ? 'back' : 'front');
+}
+
 /**
  * One path for both covers and both ways of supplying a file.
  *
@@ -20,11 +87,7 @@
 function _mbSetCoverImage(side, file) {
     if (!file || !file.type || file.type.indexOf('image/') !== 0) return;
 
-    var apply = function (dataUrl) {
-        if (side === 'front') mbState.frontCoverImage = dataUrl;
-        else                  mbState.backCoverImage  = dataUrl;
-        _showCoverPreview(side, dataUrl);
-    };
+    var apply = function (dataUrl) { _mbApplyCoverImage(side, dataUrl, false); };
 
     if (typeof mbPrepareImageAndReport === 'function') {
         mbPrepareImageAndReport(file, 'cover').then(function (out) { apply(out.dataUrl); });
@@ -51,6 +114,7 @@ function deleteFrontCoverImage() {
     document.getElementById('front-cover-preview-wrap').style.display = 'none';
     document.getElementById('front-cover-placeholder').style.display = 'block';
     document.getElementById('front-cover-delete-row').style.display = 'none';
+    var rt = document.getElementById('front-cover-remove-top'); if (rt) rt.style.display = 'none';
 }
 
 // ── Back Cover functions ────────────────────────────────────────
@@ -69,6 +133,7 @@ function deleteBackCoverImage() {
     document.getElementById('back-cover-preview-wrap').style.display = 'none';
     document.getElementById('back-cover-placeholder').style.display = 'block';
     document.getElementById('back-cover-delete-row').style.display = 'none';
+    var rt = document.getElementById('back-cover-remove-top'); if (rt) rt.style.display = 'none';
 }
 
 // ── Shared cover preview helper ──────────────────────────────────
@@ -77,6 +142,7 @@ function _showCoverPreview(side, src) {
     document.getElementById(`${side}-cover-preview-wrap`).style.display = 'block';
     document.getElementById(`${side}-cover-placeholder`).style.display = 'none';
     document.getElementById(`${side}-cover-delete-row`).style.display = 'block';
+    const rt = document.getElementById(`${side}-cover-remove-top`); if (rt) rt.style.display = 'inline-flex';
     const img = new Image();
     img.onload = function() {
         const sizeInfo = document.getElementById(`${side}-cover-size-info`);
