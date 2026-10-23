@@ -145,7 +145,10 @@
     function mbSaveModulePackage(mid, opts) {
         mid = (typeof mid === 'string' && mid) || mbLib.openId || mbState.currentModuleId;
         opts = (opts && typeof opts === 'object' && !opts.nodeType) ? opts : {};
-        if (!mid) return Promise.resolve(false);
+        if (!mid) {
+            showStatus(t('mbNoModuleSelected'), 'error');
+            return Promise.resolve(false);
+        }
         /* 📁 A folder is linked: 💾 updates the module's file in it — the
            same file autosave keeps up to date — instead of downloading
            yet another copy. ("⬇️ Download" in the panel still downloads.) */
