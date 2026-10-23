@@ -23,10 +23,25 @@
 // ============================================================
 
 var MB_HIST_MAX = 40;
-var mbHist = { undo: [], redo: [], moduleId: null, field: null };
+var mbHist = { undo: [], redo: [], moduleId: null, field: null, imgs: [null], imgIds: null };
+
+/* 3.81.0: the front / back cover pictures are part of every step, so a
+   pasted, replaced or removed cover is undone like any other change.
+   A picture is a large string and a step is a JSON text, so a step holds
+   only a small number; the pictures themselves are kept once each here
+   (the same picture in forty steps is stored once). Reset with the steps
+   when another module is opened. */
+function _mbHistImgRef(src) {
+    if (!src) return 0;
+    if (!mbHist.imgIds) mbHist.imgIds = new Map();
+    var id = mbHist.imgIds.get(src);
+    if (!id) { id = mbHist.imgs.length; mbHist.imgs.push(src); mbHist.imgIds.set(src, id); }
+    return id;
+}
+function _mbHistImgGet(id) { return (id && mbHist.imgs[id]) || null; }
 
 /* Actions that never change the module — no snapshot taken for them. */
-var MB_HIST_SKIP = /^(switch|prev|next|mbSwitch|mbToggle|mbOpen|mbJump|mbUndo|mbRedo|export|saveWork|loadWork|mbLibrary|toggle|show|mbExp|mbLang|setLang|clearAll|mbAnalyze|mbAddManual|mbRemoveProposal|mbCreateFromSelection|mbAddSelectionTo|mbSetItem|mbUnassign|mbStartManual|mbCmToggle|mbCmFilter|mbSpView|mbSpCheck|mbSpOpen|mbCov|_mb)/;
+var MB_HIST_SKIP = /^(switch|prev|next|mbSwitch|mbToggle|mbOpen|mbJump|mbUndo|mbRedo|export|saveWork|loadWork|mbLibrary|toggle|show|mbExp|mbLang|setLang|clearAll|mbAnalyze|mbAddManual|mbRemoveProposal|mbCreateFromSelection|mbAddSelectionTo|mbSetItem|mbUnassign|mbStartManual|mbCmToggle|mbCmFilter|mbSpView|mbSpCheck|mbSpOpen|mbCov|handle(Front|Back)CoverUpload|_mb)/;
 /* 3.33.0: the suggested-content panels (mbSp…) and the distribution of
    the items (module.contentMap) are part of every step, so approving,
    editing, moving or building an item is undone like any other change. */
@@ -34,7 +49,7 @@ var MB_HIST_SKIP = /^(switch|prev|next|mbSwitch|mbToggle|mbOpen|mbJump|mbUndo|mb
 function _mbHistLabels() {
     var lang = (window.i18n && window.i18n.getLang) ? window.i18n.getLang() : 'en';
     var L = {
-        en: { typing: 'typing', removeContentSection: 'delete a content section', addContentSection: 'add a content section', insertContentAfter: 'add a content section', moveContentUp: 'move a content section', moveContentDown: 'move a content section', moveContent: 'move a content section',
+        en: { typing: 'typing', removeContentSection: 'delete a content section', coverImage: 'change a cover image', deleteFrontCoverImage: 'remove the front cover image', deleteBackCoverImage: 'remove the back cover image', addContentSection: 'add a content section', insertContentAfter: 'add a content section', moveContentUp: 'move a content section', moveContentDown: 'move a content section', moveContent: 'move a content section',
               removeStep: 'delete a step', addStep: 'add a step', insertStepAfter: 'add a step', moveStepUp: 'move a step', moveStepDown: 'move a step', moveStep: 'move a step', addResource: 'add a resource', removeResource: 'delete a resource',
               addCriteria: 'add a criterion', removeCurrentInfoSheet: 'delete an information sheet', removeCurrentActivitySheet: 'delete an activity sheet',
               addNewInfoSheet: 'add an information sheet', addNewActivitySheet: 'add an activity sheet',
@@ -43,7 +58,7 @@ function _mbHistLabels() {
               mbSpApprove: 'approve an item', mbSpUnapprove: 'withdraw an approval', mbSpEdit: 'edit an item', mbSpRemove: 'remove an item', mbSpMove: 'move an item', mbSpAlso: 'send an item to another sheet', mbSpSetLo: 'change an item’s outcome', mbSpBuild: 'build sheets', mbSpAddToOpen: 'add to the open sheet', mbSpApproveAll: 'approve the items', mbApproveAndBuild: 'Approve & Build', mbApplyTaPicker: 'add from Task Analysis', other: 'the last change',
               undone: 'Undone: {v0}', redone: 'Redone: {v0}', nothingUndo: 'Nothing to undo', nothingRedo: 'Nothing to redo',
               undoTip: 'Undo (Ctrl+Z)', redoTip: 'Redo (Ctrl+Y)', undo: 'Undo', redo: 'Redo' },
-        fr: { typing: 'saisie', removeContentSection: 'supprimer une section', addContentSection: 'ajouter une section', insertContentAfter: 'ajouter une section', moveContentUp: 'déplacer une section', moveContentDown: 'déplacer une section', moveContent: 'déplacer une section',
+        fr: { typing: 'saisie', removeContentSection: 'supprimer une section', coverImage: 'changer une image de couverture', deleteFrontCoverImage: 'supprimer l’image de la première de couverture', deleteBackCoverImage: 'supprimer l’image de la quatrième de couverture', addContentSection: 'ajouter une section', insertContentAfter: 'ajouter une section', moveContentUp: 'déplacer une section', moveContentDown: 'déplacer une section', moveContent: 'déplacer une section',
               removeStep: 'supprimer une étape', addStep: 'ajouter une étape', insertStepAfter: 'ajouter une étape', moveStepUp: 'déplacer une étape', moveStepDown: 'déplacer une étape', moveStep: 'déplacer une étape', addResource: 'ajouter une ressource', removeResource: 'supprimer une ressource',
               addCriteria: 'ajouter un critère', removeCurrentInfoSheet: 'supprimer une fiche d’information', removeCurrentActivitySheet: 'supprimer une fiche d’activité',
               addNewInfoSheet: 'ajouter une fiche d’information', addNewActivitySheet: 'ajouter une fiche d’activité',
@@ -52,7 +67,7 @@ function _mbHistLabels() {
               mbSpApprove: 'approuver un élément', mbSpUnapprove: 'retirer une approbation', mbSpEdit: 'modifier un élément', mbSpRemove: 'retirer un élément', mbSpMove: 'déplacer un élément', mbSpAlso: 'envoyer un élément vers une autre fiche', mbSpSetLo: 'changer le résultat d’un élément', mbSpBuild: 'construire des fiches', mbSpAddToOpen: 'ajouter à la fiche ouverte', mbSpApproveAll: 'approuver les éléments', mbApproveAndBuild: 'Approuver et construire', mbApplyTaPicker: 'ajout depuis l’analyse des tâches', other: 'la dernière modification',
               undone: 'Annulé : {v0}', redone: 'Rétabli : {v0}', nothingUndo: 'Rien à annuler', nothingRedo: 'Rien à rétablir',
               undoTip: 'Annuler (Ctrl+Z)', redoTip: 'Rétablir (Ctrl+Y)', undo: 'Annuler', redo: 'Rétablir' },
-        ar: { typing: 'الكتابة', removeContentSection: 'حذف قسم محتوى', addContentSection: 'إضافة قسم محتوى', insertContentAfter: 'إضافة قسم محتوى', moveContentUp: 'نقل قسم محتوى', moveContentDown: 'نقل قسم محتوى', moveContent: 'نقل قسم محتوى',
+        ar: { typing: 'الكتابة', removeContentSection: 'حذف قسم محتوى', coverImage: 'تغيير صورة غلاف', deleteFrontCoverImage: 'حذف صورة الغلاف الأمامي', deleteBackCoverImage: 'حذف صورة الغلاف الخلفي', addContentSection: 'إضافة قسم محتوى', insertContentAfter: 'إضافة قسم محتوى', moveContentUp: 'نقل قسم محتوى', moveContentDown: 'نقل قسم محتوى', moveContent: 'نقل قسم محتوى',
               removeStep: 'حذف خطوة', addStep: 'إضافة خطوة', insertStepAfter: 'إضافة خطوة', moveStepUp: 'نقل خطوة', moveStepDown: 'نقل خطوة', moveStep: 'نقل خطوة', addResource: 'إضافة مورد', removeResource: 'حذف مورد',
               addCriteria: 'إضافة معيار', removeCurrentInfoSheet: 'حذف ورقة معلومات', removeCurrentActivitySheet: 'حذف ورقة نشاط',
               addNewInfoSheet: 'إضافة ورقة معلومات', addNewActivitySheet: 'إضافة ورقة نشاط',
@@ -73,6 +88,7 @@ function _mbHistT(key, v0) {
 function _mbHistSameModule() {
     if (mbHist.moduleId !== mbState.currentModuleId) {
         mbHist.undo = []; mbHist.redo = []; mbHist.field = null;
+        mbHist.imgs = [null]; mbHist.imgIds = null;
         mbHist.moduleId = mbState.currentModuleId;
     }
 }
@@ -84,7 +100,8 @@ function _mbHistData() {
     try { if (typeof saveCurrentModuleLOData === 'function') saveCurrentModuleLOData(); } catch (e) { /* ignore */ }
     var m = (mbState.modulesData || []).find(function (x) { return x.id === mbState.currentModuleId; });
     return JSON.stringify({ los: mbState.learningOutcomesData || [], forms: mbState.assessmentFormsData || {},
-                            map: (m && m.contentMap) || null });
+                            map: (m && m.contentMap) || null,
+                            covers: [_mbHistImgRef(mbState.frontCoverImage), _mbHistImgRef(mbState.backCoverImage)] });
 }
 function _mbHistView() {
     return { lo: mbState.currentLOId, is: mbState.currentInfoSheetIndex || 0, as: mbState.currentActivitySheetIndex || 0 };
@@ -149,6 +166,13 @@ function _mbHistApply(step) {
     mbState.assessmentFormsData = d.forms || {};
     var mod = (mbState.modulesData || []).find(function (x) { return x.id === mbState.currentModuleId; });
     if (mod) { if (d.map) mod.contentMap = d.map; else delete mod.contentMap; }
+    /* 3.81.0: a step from before covers were recorded has none: leave them. */
+    if (d.covers) {
+        mbState.frontCoverImage = _mbHistImgGet(d.covers[0]);
+        mbState.backCoverImage  = _mbHistImgGet(d.covers[1]);
+        if (typeof mbRefreshCoverPreviews === 'function') mbRefreshCoverPreviews();
+        if (typeof _mbCoverNotifyChanged === 'function') { _mbCoverNotifyChanged('front'); _mbCoverNotifyChanged('back'); }
+    }
     var los = mbState.learningOutcomesData;
     mbState.currentLOId = los.some(function (l) { return l.id === v.lo; }) ? v.lo : (los[0] ? los[0].id : null);
     if (typeof renderLOSelector === 'function') renderLOSelector();

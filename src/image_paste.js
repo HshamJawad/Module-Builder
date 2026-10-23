@@ -62,6 +62,26 @@ var MB_PASTE_TARGETS = {
        bucket; the 'qr' profile keeps it PNG, since JPEG blurs the
        modules of a QR code. No cardSelector: it is reached from the
        dialog's own button and paste listener, never from a card. */
+    /* 3.81.0: the Front / Back Cover. One image per side, so like the QR
+       code it brings its own `put`; unlike it, a failed one-click paste
+       falls back to the Ctrl+V window (touch screens have no Ctrl+V, but
+       a long-press paste lands in that window's box). `idFrom` serves the
+       Ctrl+V listener: it resolves the side from where the paste
+       happened, and also from the open cover tab when nothing is focused. */
+    cover: {
+        profile: 'cover',
+        put: function (side, dataUrl) {
+            if (typeof _mbApplyCoverImage === 'function') _mbApplyCoverImage(side, dataUrl, true);
+        },
+        idFrom: function (el) {
+            var scope = el.closest('#covers-tab, #back-cover-tab');
+            if (!scope && (el === document.body || el === document.documentElement)) {
+                scope = document.querySelector('#covers-tab.active, #back-cover-tab.active');
+            }
+            if (!scope) return null;
+            return scope.id === 'back-cover-tab' ? 'back' : 'front';
+        }
+    },
     qr: {
         profile: 'qr',
         put: function (id, dataUrl) {
@@ -407,11 +427,15 @@ document.addEventListener('paste', function (e) {
     var names = Object.keys(MB_PASTE_TARGETS);
     for (var i = 0; i < names.length; i++) {
         var t = MB_PASTE_TARGETS[names[i]];
-        if (!t.cardSelector) continue;
-        var card = el.closest(t.cardSelector);
-        if (!card) continue;
-        var field = card.querySelector('[' + t.idAttr + ']');
-        var id = field ? field.getAttribute(t.idAttr) : null;
+        var id = null;
+        if (t.idFrom) {
+            id = t.idFrom(el);
+        } else if (t.cardSelector) {
+            var card = el.closest(t.cardSelector);
+            if (!card) continue;
+            var field = card.querySelector('[' + t.idAttr + ']');
+            id = field ? field.getAttribute(t.idAttr) : null;
+        }
         if (!id) continue;
         e.preventDefault();
         _mbStorePastedBlob(names[i], id, blob);
