@@ -55,7 +55,7 @@ function _mbHistLabels() {
               addNewInfoSheet: 'add an information sheet', addNewActivitySheet: 'add an activity sheet',
               deleteAssessmentRow: 'delete an assessment row', addAssessmentRow: 'add an assessment row', clearAssessmentRows: 'clear the assessment rows',
               clearAssessmentForm: 'clear an assessment form', deleteAssessmentForm: 'delete an assessment form', addNewAssessmentForm: 'add an assessment form',
-              mbSpApprove: 'approve an item', mbSpUnapprove: 'withdraw an approval', mbSpEdit: 'edit an item', mbSpRemove: 'remove an item', mbSpMove: 'move an item', mbSpAlso: 'send an item to another sheet', mbSpSetLo: 'change an item’s outcome', mbSpBuild: 'build sheets', mbSpAddToOpen: 'add to the open sheet', mbSpApproveAll: 'approve the items', mbApproveAndBuild: 'Approve & Build', mbApplyTaPicker: 'add from Task Analysis', mbToolsAdd: 'add a tool or material', mbToolsDelete: 'delete a tool or material', mbToolsClear: 'clear the tools list', mbToolsPaste: 'paste tools', mbToolsPasteApply: 'paste tools', mbToolsApplyPick: 'insert tools from DACUM', other: 'the last change',
+              mbSpApprove: 'approve an item', mbSpUnapprove: 'withdraw an approval', mbSpEdit: 'edit an item', mbSpRemove: 'remove an item', mbSpMove: 'move an item', mbSpAlso: 'send an item to another sheet', mbSpSetLo: 'change an item’s outcome', mbSpBuild: 'build sheets', mbSpAddToOpen: 'add to the open sheet', mbSpApproveAll: 'approve the items', mbApproveAndBuild: 'Approve & Build', mbApplyTaPicker: 'add from Task Analysis', mbToolsStyle: 'change the numbering of the tools list', mbToolsClear: 'clear the tools list', mbToolsPaste: 'paste tools', mbToolsPasteApply: 'paste tools', mbToolsApplyPick: 'insert tools from DACUM', other: 'the last change',
               undone: 'Undone: {v0}', redone: 'Redone: {v0}', nothingUndo: 'Nothing to undo', nothingRedo: 'Nothing to redo',
               undoTip: 'Undo (Ctrl+Z)', redoTip: 'Redo (Ctrl+Y)', undo: 'Undo', redo: 'Redo' },
         fr: { typing: 'saisie', removeContentSection: 'supprimer une section', coverImage: 'changer une image de couverture', deleteFrontCoverImage: 'supprimer l’image de la première de couverture', deleteBackCoverImage: 'supprimer l’image de la quatrième de couverture', addContentSection: 'ajouter une section', insertContentAfter: 'ajouter une section', moveContentUp: 'déplacer une section', moveContentDown: 'déplacer une section', moveContent: 'déplacer une section',
@@ -64,7 +64,7 @@ function _mbHistLabels() {
               addNewInfoSheet: 'ajouter une fiche d’information', addNewActivitySheet: 'ajouter une fiche d’activité',
               deleteAssessmentRow: 'supprimer une ligne d’évaluation', addAssessmentRow: 'ajouter une ligne d’évaluation', clearAssessmentRows: 'vider les lignes d’évaluation',
               clearAssessmentForm: 'vider un formulaire d’évaluation', deleteAssessmentForm: 'supprimer un formulaire d’évaluation', addNewAssessmentForm: 'ajouter un formulaire d’évaluation',
-              mbSpApprove: 'approuver un élément', mbSpUnapprove: 'retirer une approbation', mbSpEdit: 'modifier un élément', mbSpRemove: 'retirer un élément', mbSpMove: 'déplacer un élément', mbSpAlso: 'envoyer un élément vers une autre fiche', mbSpSetLo: 'changer le résultat d’un élément', mbSpBuild: 'construire des fiches', mbSpAddToOpen: 'ajouter à la fiche ouverte', mbSpApproveAll: 'approuver les éléments', mbApproveAndBuild: 'Approuver et construire', mbApplyTaPicker: 'ajout depuis l’analyse des tâches', mbToolsAdd: 'ajouter un outil ou un matériau', mbToolsDelete: 'supprimer un outil ou un matériau', mbToolsClear: 'vider la liste des outils', mbToolsPaste: 'coller des outils', mbToolsPasteApply: 'coller des outils', mbToolsApplyPick: 'insérer des outils depuis DACUM', other: 'la dernière modification',
+              mbSpApprove: 'approuver un élément', mbSpUnapprove: 'retirer une approbation', mbSpEdit: 'modifier un élément', mbSpRemove: 'retirer un élément', mbSpMove: 'déplacer un élément', mbSpAlso: 'envoyer un élément vers une autre fiche', mbSpSetLo: 'changer le résultat d’un élément', mbSpBuild: 'construire des fiches', mbSpAddToOpen: 'ajouter à la fiche ouverte', mbSpApproveAll: 'approuver les éléments', mbApproveAndBuild: 'Approuver et construire', mbApplyTaPicker: 'ajout depuis l’analyse des tâches', mbToolsStyle: 'changer la numérotation de la liste des outils', mbToolsClear: 'vider la liste des outils', mbToolsPaste: 'coller des outils', mbToolsPasteApply: 'coller des outils', mbToolsApplyPick: 'insérer des outils depuis DACUM', other: 'la dernière modification',
               undone: 'Annulé : {v0}', redone: 'Rétabli : {v0}', nothingUndo: 'Rien à annuler', nothingRedo: 'Rien à rétablir',
               undoTip: 'Annuler (Ctrl+Z)', redoTip: 'Rétablir (Ctrl+Y)', undo: 'Annuler', redo: 'Rétablir' },
         ar: { typing: 'الكتابة', removeContentSection: 'حذف قسم محتوى', coverImage: 'تغيير صورة غلاف', deleteFrontCoverImage: 'حذف صورة الغلاف الأمامي', deleteBackCoverImage: 'حذف صورة الغلاف الخلفي', addContentSection: 'إضافة قسم محتوى', insertContentAfter: 'إضافة قسم محتوى', moveContentUp: 'نقل قسم محتوى', moveContentDown: 'نقل قسم محتوى', moveContent: 'نقل قسم محتوى',
@@ -73,7 +73,7 @@ function _mbHistLabels() {
               addNewInfoSheet: 'إضافة ورقة معلومات', addNewActivitySheet: 'إضافة ورقة نشاط',
               deleteAssessmentRow: 'حذف صف تقييم', addAssessmentRow: 'إضافة صف تقييم', clearAssessmentRows: 'مسح صفوف التقييم',
               clearAssessmentForm: 'مسح استمارة تقييم', deleteAssessmentForm: 'حذف استمارة تقييم', addNewAssessmentForm: 'إضافة استمارة تقييم',
-              mbSpApprove: 'المصادقة على بند', mbSpUnapprove: 'سحب مصادقة', mbSpEdit: 'تعديل بند', mbSpRemove: 'حذف بند', mbSpMove: 'نقل بند', mbSpAlso: 'إرسال بند إلى ورقة أخرى', mbSpSetLo: 'تغيير محصلة بند', mbSpBuild: 'بناء الأوراق', mbSpAddToOpen: 'الإضافة إلى الورقة المفتوحة', mbSpApproveAll: 'المصادقة على البنود', mbApproveAndBuild: 'الاعتماد والبناء', mbApplyTaPicker: 'الإضافة من تحليل المهام', mbToolsAdd: 'إضافة أداة أو مادة', mbToolsDelete: 'حذف أداة أو مادة', mbToolsClear: 'مسح قائمة الأدوات', mbToolsPaste: 'لصق أدوات', mbToolsPasteApply: 'لصق أدوات', mbToolsApplyPick: 'إدراج أدوات من DACUM', other: 'آخر تغيير',
+              mbSpApprove: 'المصادقة على بند', mbSpUnapprove: 'سحب مصادقة', mbSpEdit: 'تعديل بند', mbSpRemove: 'حذف بند', mbSpMove: 'نقل بند', mbSpAlso: 'إرسال بند إلى ورقة أخرى', mbSpSetLo: 'تغيير محصلة بند', mbSpBuild: 'بناء الأوراق', mbSpAddToOpen: 'الإضافة إلى الورقة المفتوحة', mbSpApproveAll: 'المصادقة على البنود', mbApproveAndBuild: 'الاعتماد والبناء', mbApplyTaPicker: 'الإضافة من تحليل المهام', mbToolsStyle: 'تغيير ترقيم قائمة الأدوات', mbToolsClear: 'مسح قائمة الأدوات', mbToolsPaste: 'لصق أدوات', mbToolsPasteApply: 'لصق أدوات', mbToolsApplyPick: 'إدراج أدوات من DACUM', other: 'آخر تغيير',
               undone: 'تم التراجع: {v0}', redone: 'تمت الإعادة: {v0}', nothingUndo: 'لا شيء للتراجع عنه', nothingRedo: 'لا شيء لإعادته',
               undoTip: 'تراجع (Ctrl+Z)', redoTip: 'إعادة (Ctrl+Y)', undo: 'تراجع', redo: 'إعادة' }
     };
@@ -106,7 +106,7 @@ function _mbHistData() {
                             asm: { c: mbState.assessmentContent === undefined ? null : mbState.assessmentContent,
                                    b: mbState.assessmentBlocks || [], l: mbState.lgAsm || null },
                             covers: [_mbHistImgRef(mbState.frontCoverImage), _mbHistImgRef(mbState.backCoverImage)],
-                            tools: (m && m.toolsResources) || [] });
+                            tools: (m && m.toolsText) || '' });
 }
 function _mbHistView() {
     return { lo: mbState.currentLOId, is: mbState.currentInfoSheetIndex || 0, as: mbState.currentActivitySheetIndex || 0 };
@@ -179,8 +179,8 @@ function _mbHistApply(step) {
         if (typeof _mbCoverNotifyChanged === 'function') { _mbCoverNotifyChanged('front'); _mbCoverNotifyChanged('back'); }
     }
     /* 3.79.0: the Tools & Resources list; a step from before has none. */
-    if (mod && d.tools) {
-        if (d.tools.length) mod.toolsResources = d.tools; else delete mod.toolsResources;
+    if (mod && typeof d.tools === 'string') {
+        if (d.tools) mod.toolsText = d.tools; else delete mod.toolsText;
         if (typeof mbToolsRender === 'function') mbToolsRender();
     }
     /* 3.83.0: a step from before the assessment cards were recorded has none. */

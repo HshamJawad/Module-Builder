@@ -21,31 +21,36 @@ function handoffWithTools() {
 }
 const vals = (page) => page.evaluate(() => mbToolsList());
 
-test('tools tab: add, edit, delete, clear', async ({ page }) => {
+test('tools tab: one box, numbering and bullets buttons, clear', async ({ page }) => {
   const errors = await openApp(page, { handoff: handoffWithTools(), contentLang: 'en' });
   await tab(page, 'tools');
   await expect(page.locator('#tools-tab')).toHaveClass(/active/);
-  await page.locator('[data-act="mbToolsAdd"]').click();
-  await page.locator('#tools-list .tr-input').first().fill('Pliers');
-  await page.locator('[data-act="mbToolsAdd"]').click();
-  await page.locator('#tools-list .tr-input').nth(1).fill('Cable ties');
-  expect(await vals(page)).toEqual(['Pliers', 'Cable ties']);
-  await expect(page.locator('#tools-list .tr-num').nth(1)).toHaveText('2-');
-  await page.locator('#tools-list [data-act="mbToolsDelete"]').first().click();
-  expect(await vals(page)).toEqual(['Cable ties']);
+  await expect(page.locator('#tools-text')).toHaveCount(1);
+  await page.locator('#tools-text').fill('Pliers\nCable ties\n2-inch pipe');
+  expect(await vals(page)).toEqual(['Pliers', 'Cable ties', '2-inch pipe']);
+  await page.locator('#tools-btn-num').click();
+  await expect(page.locator('#tools-text')).toHaveValue('1- Pliers\n2- Cable ties\n3- 2-inch pipe');
+  expect(await vals(page)).toEqual(['Pliers', 'Cable ties', '2-inch pipe']);
+  await page.locator('#tools-btn-bul').click();
+  await expect(page.locator('#tools-text')).toHaveValue('▪ Pliers\n▪ Cable ties\n▪ 2-inch pipe');
+  await page.locator('#tools-btn-bul').click();
+  await expect(page.locator('#tools-text')).toHaveValue('Pliers\nCable ties\n2-inch pipe');
   await page.locator('[data-act="mbToolsClear"]').click();
-  await page.locator('.mb-dialog-overlay .mb-dialog-ok').first().click();
+  await page.locator('.mb-dialog-overlay .mb-dialog-ok').click();
   await expect.poll(() => vals(page)).toEqual([]);
   expect(errors).toEqual([]);
 });
 
-test('tools tab: paste box cleans lines, skips duplicates', async ({ page }) => {
+test('tools tab: paste box cleans lines, skips duplicates, keeps the numbering', async ({ page }) => {
   const errors = await openApp(page, { handoff: handoffWithTools(), contentLang: 'en' });
   await tab(page, 'tools');
+  await page.locator('#tools-text').fill('Hammer');
+  await page.locator('#tools-btn-num').click();
   await page.evaluate(() => mbToolsPasteBox());
-  await page.locator('#tr-paste-ta').fill('• Hammer\n2- 2-inch pipe\n3) Tape measure\n\n  Hammer  \n- Saw');
+  await page.locator('#tr-paste-ta').fill('• Hammer\n2- 2-inch pipe\n3) Tape measure\n\n  Saw  \n- Saw');
   await page.locator('[data-act="mbToolsPasteApply"]').click();
   expect(await vals(page)).toEqual(['Hammer', '2-inch pipe', 'Tape measure', 'Saw']);
+  await expect(page.locator('#tools-text')).toHaveValue('1- Hammer\n2- 2-inch pipe\n3- Tape measure\n4- Saw');
   expect(errors).toEqual([]);
 });
 
