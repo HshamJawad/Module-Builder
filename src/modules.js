@@ -129,6 +129,11 @@ function _mbApplyDacumModuleFields(module, dacumModule, exportData) {
        tasks — read by the Training Structure Mapping tab (module-ai.js).
        sourceTasks (DACUM 3.44+) carries the code and statement of every
        source task, so a task without Task Analysis is still labelled. */
+    /* 3.79.0: the tools list of DACUM's Additional Info tab (DACUM 3.139+),
+       offered by the Tools & Resources tab. Absent before, then unset. */
+    const addTools = Array.isArray(exportData && exportData.additionalInfoTools)
+        ? exportData.additionalInfoTools.map(x => String(x == null ? '' : x).trim()).filter(Boolean) : [];
+    if (addTools.length) module.additionalInfoTools = addTools; else delete module.additionalInfoTools;
     module.taskAnalysisSource = {
         sourceTaskIds: dacumModule.sourceTaskIds || [],
         taskAnalysis: dacumModule.taskAnalysis || {},

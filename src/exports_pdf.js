@@ -61,7 +61,7 @@ var _PDF_STRINGS = {
         colOutcomes: 'Outcomes', colVerification: 'Verification', colDate: 'Date',
         result: 'The learner is', competent: 'Competent', notYet: 'Not Yet Competent',
         trainer: 'Trainer', learner: 'Learner', signature: 'Signature',
-        references: 'References', glossary: 'Glossary of Terms', team: 'Work Team', intro: 'Introduction',
+        tools: 'Tools, Equipment and Materials Required', references: 'References', glossary: 'Glossary of Terms', team: 'Work Team', intro: 'Introduction',
         name: 'Name', task: 'Task / Role', location: 'Work Location'
     },
     fr: {
@@ -83,7 +83,7 @@ var _PDF_STRINGS = {
         colOutcomes: 'Résultats', colVerification: 'Vérification', colDate: 'Date',
         result: 'L’apprenant est', competent: 'Compétent', notYet: 'Pas encore compétent',
         trainer: 'Formateur', learner: 'Apprenant', signature: 'Signature',
-        references: 'Références', glossary: 'Glossaire', team: 'Équipe de travail', intro: 'Introduction',
+        tools: 'Outils, équipements et matériaux requis', references: 'Références', glossary: 'Glossaire', team: 'Équipe de travail', intro: 'Introduction',
         name: 'Nom', task: 'Tâche / Rôle', location: 'Lieu de travail'
     },
     ar: {
@@ -105,7 +105,7 @@ var _PDF_STRINGS = {
         colOutcomes: 'النواتج', colVerification: 'التحقّق', colDate: 'التاريخ',
         result: 'المتعلم', competent: 'جدير', notYet: 'غير جدير بعد',
         trainer: 'المدرّب', learner: 'المتدرّب', signature: 'التوقيع',
-        references: 'المراجع', glossary: 'مسرد المصطلحات', team: 'فريق العمل', intro: 'التقديم',
+        tools: 'الأدوات والمعدات والمواد المطلوبة', references: 'المراجع', glossary: 'مسرد المصطلحات', team: 'فريق العمل', intro: 'التقديم',
         name: 'الاسم', task: 'المهمة / الدور', location: 'موقع العمل'
     }
 };
@@ -746,6 +746,15 @@ function _pdfBuild(pdf, model, lang) {
 
     /* 3.42.0: Glossary of Terms — its own page, before the references. */
     if (!lgDoc && model.glossary && model.glossary.tables.length) _pdfGlossary(w, model, t, S);
+
+    /* 3.79.0: Tools & Resources — its own page, one shaded heading row and
+       the items numbered «1- …», before the references. */
+    if (model.toolsResources && model.toolsResources.items.length) {
+        w.newPage();
+        w.table([model.toolsResources.title || t('tools')],
+            model.toolsResources.items.map(function (x, i) { return [(i + 1) + '- ' + x]; }),
+            [w.CW], { size: S.utable });
+    }
 
     /* References */
     var _facs = model.references.facilities || [];

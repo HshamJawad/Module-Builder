@@ -51,7 +51,7 @@ var _HX_STRINGS = {
         colOutcomes: 'Outcomes', colVerification: 'Verification', colDate: 'Date',
         result: 'The learner is', competent: 'Competent', notYet: 'Not Yet Competent',
         trainer: 'Trainer', learner: 'Learner',
-        references: 'References', glossary: 'Glossary of Terms', print: 'Print', progress: 'read',
+        tools: 'Tools, Equipment and Materials Required', references: 'References', glossary: 'Glossary of Terms', print: 'Print', progress: 'read',
         name: 'Name', task: 'Task / Role', location: 'Work Location',
         generated: 'Generated', backTop: 'Top'
     },
@@ -74,7 +74,7 @@ var _HX_STRINGS = {
         colOutcomes: 'Résultats', colVerification: 'Vérification', colDate: 'Date',
         result: 'L’apprenant est', competent: 'Compétent', notYet: 'Pas encore compétent',
         trainer: 'Formateur', learner: 'Apprenant',
-        references: 'Références', glossary: 'Glossaire', print: 'Imprimer', progress: 'lu',
+        tools: 'Outils, équipements et matériaux requis', references: 'Références', glossary: 'Glossaire', print: 'Imprimer', progress: 'lu',
         name: 'Nom', task: 'Tâche / Rôle', location: 'Lieu de travail',
         generated: 'Généré le', backTop: 'Haut'
     },
@@ -97,7 +97,7 @@ var _HX_STRINGS = {
         colOutcomes: 'النواتج', colVerification: 'التحقّق', colDate: 'التاريخ',
         result: 'المتعلم', competent: 'جدير', notYet: 'غير جدير بعد',
         trainer: 'المدرّب', learner: 'المتدرّب',
-        references: 'المراجع', glossary: 'مسرد المصطلحات', print: 'طباعة', progress: 'مقروء',
+        tools: 'الأدوات والمعدات والمواد المطلوبة', references: 'المراجع', glossary: 'مسرد المصطلحات', print: 'طباعة', progress: 'مقروء',
         name: 'الاسم', task: 'المهمة / الدور', location: 'موقع العمل',
         generated: 'أُنشئ في', backTop: 'الأعلى'
     }
@@ -576,6 +576,14 @@ function mbBuildModuleHtml(model, opts) {
     if (model.template !== 'learnerGuide' && model.glossary && model.glossary.tables.length && inc('glossary')) {
         var gTitle = model.glossary.title || t('glossary');
         add('glossary', gTitle, _hxSection('glossary', '', gTitle, _hxTables(model.glossary.tables)));
+    }
+
+    /* 3.79.0: Tools & Resources — before the references. */
+    if (model.toolsResources && model.toolsResources.items.length && inc('tools')) {
+        var trTitle = model.toolsResources.title || t('tools');
+        var trRows = model.toolsResources.items.map(function (x, i) { return '<tr><td>' + (i + 1) + '- ' + _hxEsc(x) + '</td></tr>'; }).join('');
+        add('tools', trTitle, _hxSection('tools', '', trTitle,
+            '<table class="mx-tbl"><tbody>' + trRows + '</tbody></table>'));
     }
 
     var _facs = model.references.facilities || [];

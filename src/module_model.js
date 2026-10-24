@@ -289,6 +289,11 @@ function mbBuildModuleModel(lang, state) {
             title: _mmStr(st.glossary && st.glossary.title),
             tables: _mmTables(st.glossary && st.glossary.tables)
         },
+        /* 3.79.0: Tools & Resources — one list, its own page before the references. */
+        toolsResources: {
+            title: (typeof window !== 'undefined' && window.i18n && window.i18n.tIn) ? window.i18n.tIn('expToolsResources', lang) : '',
+            items: (typeof mbToolsList === 'function') ? mbToolsList(raw) : []
+        },
         references: {
             title: (lg && typeof mbLgRefsTitle === 'function') ? mbLgRefsTitle(_mmStr(st.referencesTitle), lang) : _mmStr(st.referencesTitle),
             /* 3.81.0: the Learner guide's material facilities, in the same table */

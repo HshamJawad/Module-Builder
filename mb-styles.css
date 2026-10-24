@@ -4281,3 +4281,10 @@ button.mb-cmk-opt.is-on { outline: 3px solid #0f766e; outline-offset: 1px; }
 .mb-nav-btn:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
 .mb-nav-next { margin-inline-start: auto; }
 @media (max-width: 600px) { .mb-nav-row { flex-wrap: wrap; } .mb-nav-btn { flex: 1 1 140px; } }
+
+/* 3.79.0 — Tools & Resources tab */
+.tr-bar { display: flex; flex-wrap: wrap; gap: 8px; }
+.tr-entry { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.tr-num { color: #6b7280; font-weight: 600; min-width: 28px; text-align: end; }
+.tr-input { flex: 1; padding: 9px 12px; border: 2px solid #d1d5db; border-radius: 6px; font-size: 0.97em; background: #fff; }
+.tr-empty { margin: 0; }
