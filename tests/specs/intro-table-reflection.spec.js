@@ -117,22 +117,17 @@ test('Learner guide: the unit card in Introduction Pages, the reflection in its 
 
   // nothing of the card is left in the Module tab
   await tab(page, 'basic-info');
-  expect(await page.evaluate(() => document.getElementById('lg-unit-section').closest('.tab-content').id)).toBe('intro-tab');
+  expect(await page.evaluate(() => document.getElementById('lg-unit-section').closest('.tab-content').id)).toBe('unit-tab');
 
-  // Introduction Pages: Work Team first … the overview table, then the learning unit card last;
-  // the extra introduction sections are not part of this template
+  // Introduction Pages: Work Team first … then the overview table; the learning unit card has its own tab after it
   await tab(page, 'intro');
   await expect(page.locator('#intro-blocks-section')).toBeHidden();
-  const order = await page.evaluate(() => ['work-team-container', 'intro-additional-details', 'intro-table-section', 'lg-unit-wrap']
+  const order = await page.evaluate(() => ['work-team-container', 'intro-additional-details', 'intro-table-section']
     .map(id => document.getElementById(id).getBoundingClientRect().top));
-  expect(await page.evaluate(() => {   // nothing but the Proceed button after the card
-    let n = document.getElementById('lg-unit-wrap').nextElementSibling;
-    while (n && (n.offsetParent === null)) n = n.nextElementSibling;
-    return n ? !!n.querySelector('[data-act="proceedToTab"]') : true;
-  })).toBe(true);
   expect([...order].sort((a, b) => a - b)).toEqual(order);
+  await tab(page, 'unit');
   await expect(page.locator('#lg-unit-section')).toBeVisible();
-  await expect(page.locator('#lg-unit-wrap .mb-ctx-bar')).toContainText('Learning unit');
+  await expect(page.locator('#unit-tab .mb-ctx-bar')).toContainText('Learning unit');
   await expect(page.locator('#lg-unit-section [data-lg-field="refl.questions"]')).toHaveCount(0);
   await page.locator('#lg-unit-section [data-lg-field="intro.body"]').fill('Intro of unit 1');
 
@@ -148,7 +143,7 @@ test('Learner guide: the unit card in Introduction Pages, the reflection in its 
   await expect(q).toHaveValue('');
   await q.fill('What was hard in unit 2?');
   // every bar follows
-  expect(await page.evaluate(() => ['current-lo-selector', 'intro-lo-selector', 'info-lo-selector'].map(i => document.getElementById(i).value)))
+  expect(await page.evaluate(() => ['current-lo-selector', 'unit-lo-selector', 'info-lo-selector'].map(i => document.getElementById(i).value)))
     .toEqual([ids[1], ids[1], ids[1]]);
   const saved = await page.evaluate(() => mbState.learningOutcomesData.map(l => l.lgReflection && l.lgReflection.questions && l.lgReflection.questions.en));
   expect(saved).toEqual(['What was hard in unit 1?', 'What was hard in unit 2?']);
@@ -187,5 +182,26 @@ test('Learner guide in Arabic: the Reflection tab and its bar', async ({ page })
   await expect(page.locator('#lg-reflection-section')).toContainText('التأمل');
   await page.setViewportSize({ width: 360, height: 800 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+  expect(errors).toEqual([]);
+});
+
+test('Learning unit tab (Learner guide): after Introduction Pages, bar names the module only with several', async ({ page }) => {
+  const errors = await openApp(page, { lang: 'en', contentLang: 'en' });
+  await buildGuide(page);
+  const btn = page.locator('#mb-sidenav .tab[data-args=\'["unit"]\']');
+  await expect(btn).toBeVisible();
+  await expect(btn).toHaveText('🧭 Learning unit');
+  const order = await page.evaluate(() => [...document.querySelectorAll('#mb-sidenav .tabs .tab')].filter(b => b.offsetParent).map(b => (JSON.parse(b.dataset.args || '[]'))[0]));
+  expect(order.indexOf('unit')).toBe(order.indexOf('intro') + 1);
+  await tab(page, 'intro');
+  await expect(page.locator('#intro-tab #lg-unit-wrap')).toHaveCount(0);
+  await page.locator('#intro-tab .mb-nav-next:visible').click();
+  await expect(page.locator('#unit-tab')).toHaveClass(/active/);
+  await expect(page.locator('#lg-unit-section')).toBeVisible();
+  const many = await page.evaluate(() => mbState.modulesData.length > 1);
+  await expect(page.locator('#unit-tab .mb-ctx-bar')).toHaveClass(many ? /^((?!mb-ctx-solo).)*$/ : /mb-ctx-solo/);
+  await expect(page.locator('#unit-module-selector')).toBeVisible({ visible: many });
+  await expect(page.locator('#unit-lo-selector')).toBeVisible();
+  // standard template: no such tab
   expect(errors).toEqual([]);
 });

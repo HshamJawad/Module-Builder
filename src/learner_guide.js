@@ -46,6 +46,8 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
     en: {
         lgUnitCard: 'Learning unit (Learner guide)',
         lgReflTab: '🪞 Reflection',
+        lgUnitTab: '🧭 Learning unit',
+        lgProceedToUnit: 'Proceed to Learning unit →',
         lgProceedToReflection: 'Proceed to Reflection →',
         lgReflCard: 'Reflection — closes the learning unit',
         lgReflNote: 'For the learning unit chosen in the bar above. Empty parts are not exported.',
@@ -132,6 +134,8 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
     fr: {
         lgUnitCard: 'Unité d’apprentissage (Guide de l’apprenant)',
         lgReflTab: '🪞 Réflexion',
+        lgUnitTab: '🧭 Unité d’apprentissage',
+        lgProceedToUnit: 'Continuer vers l’unité d’apprentissage →',
         lgProceedToReflection: 'Passer à la réflexion →',
         lgReflCard: 'Réflexion — termine l’unité d’apprentissage',
         lgReflNote: 'Pour l’unité d’apprentissage choisie dans la barre ci-dessus. Les parties vides ne sont pas exportées.',
@@ -218,6 +222,8 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
     ar: {
         lgUnitCard: 'الوحدة التعلمية (دليل المتعلم)',
         lgReflTab: '🪞 التأمل',
+        lgUnitTab: '🧭 الوحدة التعلمية',
+        lgProceedToUnit: 'المتابعة إلى الوحدة التعلمية ←',
         lgProceedToReflection: 'المتابعة إلى التأمل ←',
         lgReflCard: 'التأمل — خاتمة الوحدة التعلمية',
         lgReflNote: 'للوحدة التعلمية المختارة في الشريط أعلاه. الأجزاء الفارغة لا تُصدَّر.',
