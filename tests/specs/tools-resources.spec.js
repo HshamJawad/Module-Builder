@@ -128,3 +128,11 @@ test('an empty tools list prints no page', async ({ page }) => {
   expect(await page.evaluate(() => mbBuildModuleModel('en').toolsResources.items)).toEqual([]);
   expect(errors).toEqual([]);
 });
+
+test('insert from DACUM on a module that did not come from DACUM explains why it is empty', async ({ page }) => {
+  const errors = await openApp(page, { contentLang: 'en' });
+  await tab(page, 'tools');
+  await page.locator('[data-act="mbToolsOpenDacum"]').click();
+  await expect(page.locator('#tr-dacum-pick .mb-pick-empty')).toContainText('did not come from DACUM');
+  expect(errors).toEqual([]);
+});

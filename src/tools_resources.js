@@ -31,7 +31,7 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
           trPickHead: 'Tools, equipment and materials from DACUM', trPickAdd: 'Add the ticked items', trPickClose: 'Close',
           trPickAll: 'Tick all', trPickNothing: 'DACUM sent no tools, equipment or materials for this module. Add them in DACUM (Task Analysis or Additional Info), then press Build in Module Builder again.',
           trPickAdditional: 'Additional Info — tools list', trPickOnList: 'on the list',
-          trPickNone: 'Tick at least one item.', trAfter: 'Proceed to Tools & Resources →'
+          trNoSource: 'This module did not come from DACUM. Each module template is its own workspace: the modules built from DACUM are in the project of the other template. To use the same project in both, turn on «Allow converting» in Settings → Misc and switch the template again.', trPickNone: 'Tick at least one item.', trAfter: 'Proceed to Tools & Resources →'
           },
     fr: { expToolsResources: 'Outils, équipements et matériaux requis', trTab: 'Outils et ressources', trTitle: 'Outils, équipements et matériaux requis pour ce module',
           trHint: 'Une seule liste, imprimée sur sa propre page avant les références. Laissez-la vide pour ne pas imprimer la page.',
@@ -43,7 +43,7 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
           trPickHead: 'Outils, équipements et matériaux de DACUM', trPickAdd: 'Ajouter les éléments cochés', trPickClose: 'Fermer',
           trPickAll: 'Tout cocher', trPickNothing: 'DACUM n’a envoyé ni outils, ni équipements, ni matériaux pour ce module. Ajoutez-les dans DACUM (analyse des tâches ou informations complémentaires), puis relancez « Construire dans Module Builder ».',
           trPickAdditional: 'Informations complémentaires — liste des outils', trPickOnList: 'dans la liste',
-          trPickNone: 'Cochez au moins un élément.', trAfter: 'Continuer vers Outils et ressources →'
+          trNoSource: 'Ce module ne vient pas de DACUM. Chaque modèle de module est un espace de travail distinct : les modules construits depuis DACUM sont dans le projet de l’autre modèle. Pour utiliser le même projet dans les deux, activez « Autoriser la conversion » dans Paramètres → Divers puis changez de modèle.', trPickNone: 'Cochez au moins un élément.', trAfter: 'Continuer vers Outils et ressources →'
           },
     ar: { expToolsResources: 'الأدوات والمعدات والمواد المطلوبة', trTab: 'الأدوات والموارد', trTitle: 'الأدوات والمعدات والمواد المطلوبة لهذه الوحدة',
           trHint: 'قائمة واحدة تُطبع في صفحة مستقلة قبل المراجع. اتركها فارغة لتخطي الصفحة.',
@@ -55,7 +55,7 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
           trPickHead: 'الأدوات والمعدات والمواد من DACUM', trPickAdd: 'إضافة البنود المحددة', trPickClose: 'إغلاق',
           trPickAll: 'تحديد الكل', trPickNothing: 'لم يرسل DACUM أدوات أو معدات أو مواد لهذه الوحدة. أضفها في DACUM (تحليل المهام أو المعلومات الإضافية) ثم أعد الضغط على «Build in Module Builder».',
           trPickAdditional: 'معلومات إضافية — قائمة الأدوات', trPickOnList: 'في القائمة',
-          trPickNone: 'حدّد بنداً واحداً على الأقل.', trAfter: 'المتابعة إلى الأدوات والموارد ←'
+          trNoSource: 'هذه الوحدة لم تأتِ من DACUM. لكل نموذج وحدة مساحة عمل مستقلة: الوحدات المبنية من DACUM موجودة في مشروع النموذج الآخر. لاستخدام المشروع نفسه في النموذجين فعّل «السماح بالتحويل» في الإعدادات ← متفرقات ثم بدّل النموذج.', trPickNone: 'حدّد بنداً واحداً على الأقل.', trAfter: 'المتابعة إلى الأدوات والموارد ←'
           }
 });
 
@@ -232,7 +232,7 @@ function mbToolsOpenDacum() {
         return '<details class="mb-pick-task" open><summary>' + escapeHtml(g.label) + '</summary>' + rows + '</details>';
     }).join('');
     host.innerHTML = '<div class="mb-pick" id="tr-dacum-pick"><div class="mb-pick-head" dir="auto">📥 ' + escapeHtml(_trT('trPickHead')) + '</div>' +
-        (body || '<p class="mb-pick-empty">' + escapeHtml(_trT('trPickNothing')) + '</p>') +
+        (body || '<p class="mb-pick-empty">' + escapeHtml(_trT(module.taskAnalysisSource || (module.additionalInfoTools || []).length ? 'trPickNothing' : 'trNoSource')) + '</p>') +
         '<div class="mb-pick-btns">' +
         (body ? '<button type="button" class="btn-add" data-act="mbToolsPickAll" style="background:#f1f5f9;color:#475569;">' + escapeHtml(_trT('trPickAll')) + '</button>' +
                 '<button type="button" class="btn-add" data-act="mbToolsApplyPick">➕ ' + escapeHtml(_trT('trPickAdd')) + '</button>' : '') +
