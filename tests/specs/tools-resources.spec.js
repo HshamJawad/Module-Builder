@@ -34,7 +34,7 @@ test('tools tab: add, edit, delete, clear', async ({ page }) => {
   await page.locator('#tools-list [data-act="mbToolsDelete"]').first().click();
   expect(await vals(page)).toEqual(['Cable ties']);
   await page.locator('[data-act="mbToolsClear"]').click();
-  await page.locator('.mb-dialog button.danger, .mb-dialog .mb-dlg-ok').first().click();
+  await page.locator('.mb-dialog-overlay .mb-dialog-ok').first().click();
   await expect.poll(() => vals(page)).toEqual([]);
   expect(errors).toEqual([]);
 });
