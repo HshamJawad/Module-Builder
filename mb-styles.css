@@ -4290,3 +4290,9 @@ button.mb-cmk-opt.is-on { outline: 3px solid #0f766e; outline-offset: 1px; }
 .tr-empty { margin: 0; }
 .tr-text { width: 100%; min-height: 220px; padding: 10px 12px; border: 2px solid #d1d5db; border-radius: 8px; font-size: 0.97em; line-height: 1.8; background: #fff; resize: vertical; box-sizing: border-box; }
 .tr-style.is-on { background: #4338ca !important; color: #fff !important; }
+
+/* 3.80.0 — one module: the bar is only the learning unit */
+.mb-ctx-bar.mb-ctx-solo > .mb-ctx-label:first-child,
+.mb-ctx-bar.mb-ctx-solo > .mb-ctx-mod,
+.mb-ctx-bar.mb-ctx-solo > .mb-ctx-sep { display: none; }
+#unit-tab .lg-unit-wrap { margin-top: 0; }

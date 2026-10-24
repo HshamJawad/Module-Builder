@@ -35,7 +35,7 @@ async function buildGuide(page) {
 test('the learning outcomes card: its own heading, the numbering button opposite it', async ({ page }) => {
   const errors = await openApp(page, { contentLang: 'en' });
   await buildGuide(page);
-  await tab(page, 'intro');
+  await tab(page, 'unit');
   const card = page.locator('#lg-unit-section .lg-outcomes-card');
   await expect(card.locator('.lg-part-head > span:first-child')).toHaveText('The learning outcomes for this guide are:');
   await expect(page.locator('#lg-unit-section')).not.toContainText('You will learn how to');
@@ -73,7 +73,7 @@ test('the learning outcomes card: its own heading, the numbering button opposite
 test('the unit card: no explanatory line, no fill button, no print switch; icon-only numbering buttons', async ({ page }) => {
   const errors = await openApp(page, { contentLang: 'en' });
   await buildGuide(page);
-  await tab(page, 'intro');
+  await tab(page, 'unit');
   const host = page.locator('#lg-unit-section');
   await expect(host.locator('.mb-blocks-note')).toHaveCount(0);
   await expect(host).not.toContainText('Empty parts are not exported');
@@ -95,7 +95,7 @@ test('the unit card: no explanatory line, no fill button, no print switch; icon-
 test('«Each learning unit includes the following:» — fixed paragraphs edited in place, own lines, printed with the introduction', async ({ page }) => {
   const errors = await openApp(page, { contentLang: 'en' });
   await buildGuide(page);
-  await tab(page, 'intro');
+  await tab(page, 'unit');
   const card = page.locator('#lg-unit-section .lg-inc-card');
   await expect(card.locator('.lg-part-head > span:first-child')).toHaveText('Each learning unit includes the following:');
   const labels = await card.locator('.lg-inc-lbl').allTextContents();
@@ -141,7 +141,7 @@ test('«Each learning unit includes the following:» — fixed paragraphs edited
   // restore
   await page.evaluate(() => setContentLang('en'));
   await tab(page, 'basic-info');
-  await tab(page, 'intro');
+  await tab(page, 'unit');
   await page.locator('#lg-unit-section .lg-inc-restore').click();
   await expect(card.locator('[data-lg-field="includes.activities"]')).toHaveValue('Things to do');
   expect(errors).toEqual([]);
@@ -150,7 +150,7 @@ test('«Each learning unit includes the following:» — fixed paragraphs edited
 test('an edited «Each learning unit includes…» card makes the unit print even with no introduction text', async ({ page }) => {
   const errors = await openApp(page, { contentLang: 'en' });
   await buildGuide(page);
-  await tab(page, 'intro');
+  await tab(page, 'unit');
   await page.locator('#lg-unit-section .lg-inc-card [data-lg-field="includes.items"]').fill('One more thing');
   const t = await docxText(page);
   expect(t).toContain('Each learning unit includes the following:');
@@ -224,7 +224,7 @@ test('knowledge sheet list box: editable title, numbering, clear, undo/redo, 3 l
   // buttons exist on both cards
   await expect(card.locator('.lg-undo-btn svg')).toHaveCount(1);
   await expect(card.locator('.lg-redo-btn svg')).toHaveCount(1);
-  await tab(page, 'intro');
+  await tab(page, 'unit');
   const u = page.locator('#lg-unit-section .lg-outcomes-card');
   for (const c of ['.lg-undo-btn', '.lg-redo-btn', '.lg-clear-icon', '.lg-num-btn']) await expect(u.locator(c)).toHaveCount(1);
   await u.locator('[data-lg-field="intro.items"]').fill('abc');
@@ -374,8 +374,8 @@ test('assessment tab: no «Add Assessment Form» button — the chosen learning 
 test('tabs: a small Back button opposite Proceed, light grey, going to the previous tab', async ({ page }) => {
   const errors = await openApp(page, { contentLang: 'en' });
   await buildGuide(page);
-  const chain = [['module-info', 'basic-info'], ['covers', 'module-info'], ['intro', 'covers'], ['info', 'intro'], ['activity', 'info'],
-                 ['reflection', 'activity'], ['assessment', 'reflection'], ['references', 'assessment'], ['back-cover', 'references']];
+  const chain = [['module-info', 'basic-info'], ['covers', 'module-info'], ['intro', 'covers'], ['unit', 'intro'], ['info', 'unit'], ['activity', 'info'],
+                 ['reflection', 'activity'], ['assessment', 'reflection'], ['tools', 'assessment'], ['references', 'tools'], ['back-cover', 'references']];
   for (const [t, prev] of chain) {
     await tab(page, t);
     const back = page.locator(`#${t}-tab .mb-nav-back:visible`);
@@ -387,7 +387,7 @@ test('tabs: a small Back button opposite Proceed, light grey, going to the previ
   // opposite sides, small, grey
   await tab(page, 'intro');
   const g = await page.evaluate(() => {
-    const b = document.querySelector('#intro-tab .mb-nav-back'), n = document.querySelector('#intro-tab .mb-nav-next');
+    const b = document.querySelector('#intro-tab .mb-nav-back'), n = [...document.querySelectorAll('#intro-tab .mb-nav-next')].find(x => x.offsetParent);
     const rb = b.getBoundingClientRect(), rn = n.getBoundingClientRect(), cs = getComputedStyle(b);
     return { backLeft: rb.left < rn.left, h: rb.height, bg: cs.backgroundImage + cs.backgroundColor, color: cs.color, nextSame: getComputedStyle(n).backgroundImage === cs.backgroundImage };
   });

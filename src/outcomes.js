@@ -7,7 +7,7 @@
 /* 3.69.0: every select that chooses the learning outcome — the Module tab's
    and the bar at the top of each tab. One list, so a new bar is one line. */
 var MB_LO_SELECTORS = ['current-lo-selector', 'info-lo-selector', 'activity-lo-selector', 'mapping-lo-selector',
-                       'assessment-lo-selector', 'intro-lo-selector', 'reflection-lo-selector'];
+                       'assessment-lo-selector', 'unit-lo-selector', 'reflection-lo-selector'];
 
 /**
  * A caller-supplied title, or nothing.

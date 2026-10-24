@@ -108,7 +108,7 @@ test('the editor: the unit card writes the outcome; the activity row is saved wi
   const errors = await openApp(page, { contentLang: 'en' });
   await buildGuide(page);
   // 3.69.0: the introduction in Introduction Pages, the reflection in its own tab
-  await tab(page, 'intro');
+  await tab(page, 'unit');
   await expect(page.locator('#lg-unit-section')).toBeVisible();
   await page.locator('#lg-unit-section [data-lg-field="intro.body"]').fill('Typed introduction');
   await tab(page, 'reflection');
