@@ -4288,3 +4288,5 @@ button.mb-cmk-opt.is-on { outline: 3px solid #0f766e; outline-offset: 1px; }
 .tr-num { color: #6b7280; font-weight: 600; min-width: 28px; text-align: end; }
 .tr-input { flex: 1; padding: 9px 12px; border: 2px solid #d1d5db; border-radius: 6px; font-size: 0.97em; background: #fff; }
 .tr-empty { margin: 0; }
+.tr-text { width: 100%; min-height: 220px; padding: 10px 12px; border: 2px solid #d1d5db; border-radius: 8px; font-size: 0.97em; line-height: 1.8; background: #fff; resize: vertical; box-sizing: border-box; }
+.tr-style.is-on { background: #4338ca !important; color: #fff !important; }

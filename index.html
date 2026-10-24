@@ -1015,13 +1015,14 @@
 <div class="tr-head" data-i18n="trTitle" style="font-size: 1.2em; font-weight: 600; color: #667eea; margin-bottom: 6px;">Tools, equipment and materials required for this module</div>
 <p class="example-text" data-i18n="trHint" style="margin: 0 0 14px;">One list, printed on its own page before the References. Leave it empty to skip the page.</p>
 <div class="tr-bar">
-<button type="button" class="btn-add" data-act="mbToolsAdd">➕ <span data-i18n="trAdd">Add item</span></button>
+<button type="button" class="btn-add tr-style" id="tools-btn-num" data-act="mbToolsStyle" data-args='["num"]' data-i18n-title="trNum" style="background:#eef2ff;color:#3730a3;">1- <span data-i18n="trNum">Numbering</span></button>
+<button type="button" class="btn-add tr-style" id="tools-btn-bul" data-act="mbToolsStyle" data-args='["bul"]' data-i18n-title="trBul" style="background:#eef2ff;color:#3730a3;">▪ <span data-i18n="trBul">Bullets</span></button>
 <button type="button" class="btn-add" data-act="mbToolsPaste" data-i18n-title="trPasteTip" style="background:#0ea5e9;">📝 <span data-i18n="trPaste">Paste text</span></button>
 <button type="button" class="btn-add" data-act="mbToolsOpenDacum" style="background:#8b5cf6;">📥 <span data-i18n="trDacum">Insert from DACUM</span></button>
 <button type="button" class="btn-add" data-act="mbToolsClear" style="background:#f1f5f9;color:#b91c1c;">🗑️ <span data-i18n="trClear">Clear list</span></button>
 </div>
 <div id="tools-pick"></div>
-<div id="tools-list" style="margin-top: 12px;"></div>
+<textarea id="tools-text" class="mb-content-field tr-text" rows="12" data-act="mbToolsText" data-on="input" data-args='["$value"]' style="margin-top:12px;"></textarea>
 </div>
 <div class="mb-nav-row">
 <button type="button" class="mb-nav-btn mb-nav-back" data-act="switchTab" data-args='["assessment"]' data-i18n="mbNavBack">← Back</button>

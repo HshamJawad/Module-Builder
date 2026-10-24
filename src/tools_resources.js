@@ -5,14 +5,14 @@
 // on its own page before the suggested resources / references.
 //
 // DATA
-//   module.toolsResources = [{ id, value }]   — per module, plain strings
+//   module.toolsText = '…'                    — per module: ONE text, a line per item
 //   module.additionalInfoTools = ['…']        — DACUM's Additional Info
 //                                               tools list (handoff 3.139+)
 //   Both live on the module record, so they are saved, packaged and
-//   undone with the module (history.js carries toolsResources).
+//   undone with the module (history.js carries toolsText).
 //
 // THE LIST
-//   add / edit / delete a row · clear all · «Paste text» (one line = one
+//   one box, a line per item · «Numbering» / «Bullets» button · «Paste text» (one line = one
 //   row, bullets and numbers removed, duplicates skipped) · «Insert from
 //   DACUM»: the tools, equipment and materials of the module's tasks
 //   (grouped by task) and DACUM's Additional Info list, ticked and added.
@@ -23,37 +23,37 @@
 if (window.i18n && window.i18n.extend) window.i18n.extend({
     en: { expToolsResources: 'Tools, Equipment and Materials Required', trTab: 'Tools & Resources', trTitle: 'Tools, equipment and materials required for this module',
           trHint: 'One list, printed on its own page before the References. Leave it empty to skip the page.',
-          trPh: 'e.g. Screwdriver set', trAdd: 'Add item', trPaste: 'Paste text', trDacum: 'Insert from DACUM', trClear: 'Clear list',
-          trClearQ: 'Remove every item from this list?', trEmpty: 'No items yet.',
+          trPh: 'One item per line, e.g. Screwdriver set', trNum: 'Numbering', trBul: 'Bullets', trPaste: 'Paste text', trDacum: 'Insert from DACUM', trClear: 'Clear list',
+          trClearQ: 'Remove every item from this list?', 
           trPasteTip: 'One line becomes one item; bullets and numbers are removed',
           trPasteHead: 'Paste the list here', trPasteOk: 'Add to list', trPasteNone: 'No lines to add.',
           trPasted: 'Added {v0} item(s).', trSkipped: '{v0} already on the list.',
           trPickHead: 'Tools, equipment and materials from DACUM', trPickAdd: 'Add the ticked items', trPickClose: 'Close',
-          trPickAll: 'Tick all', trPickNothing: 'DACUM sent no tools, equipment or materials for this module.',
+          trPickAll: 'Tick all', trPickNothing: 'DACUM sent no tools, equipment or materials for this module. Add them in DACUM (Task Analysis or Additional Info), then press Build in Module Builder again.',
           trPickAdditional: 'Additional Info — tools list', trPickOnList: 'on the list',
           trPickNone: 'Tick at least one item.', trAfter: 'Proceed to Tools & Resources →'
           },
     fr: { expToolsResources: 'Outils, équipements et matériaux requis', trTab: 'Outils et ressources', trTitle: 'Outils, équipements et matériaux requis pour ce module',
           trHint: 'Une seule liste, imprimée sur sa propre page avant les références. Laissez-la vide pour ne pas imprimer la page.',
-          trPh: 'ex. Jeu de tournevis', trAdd: 'Ajouter un élément', trPaste: 'Coller le texte', trDacum: 'Insérer depuis DACUM', trClear: 'Vider la liste',
-          trClearQ: 'Supprimer tous les éléments de cette liste ?', trEmpty: 'Aucun élément pour l’instant.',
+          trPh: 'Un élément par ligne, p. ex. Jeu de tournevis', trNum: 'Numérotation', trBul: 'Puces', trPaste: 'Coller le texte', trDacum: 'Insérer depuis DACUM', trClear: 'Vider la liste',
+          trClearQ: 'Supprimer tous les éléments de cette liste ?', 
           trPasteTip: 'Une ligne devient un élément ; les puces et numéros sont retirés',
           trPasteHead: 'Collez la liste ici', trPasteOk: 'Ajouter à la liste', trPasteNone: 'Aucune ligne à ajouter.',
           trPasted: '{v0} élément(s) ajouté(s).', trSkipped: '{v0} déjà dans la liste.',
           trPickHead: 'Outils, équipements et matériaux de DACUM', trPickAdd: 'Ajouter les éléments cochés', trPickClose: 'Fermer',
-          trPickAll: 'Tout cocher', trPickNothing: 'DACUM n’a envoyé ni outils, ni équipements, ni matériaux pour ce module.',
+          trPickAll: 'Tout cocher', trPickNothing: 'DACUM n’a envoyé ni outils, ni équipements, ni matériaux pour ce module. Ajoutez-les dans DACUM (analyse des tâches ou informations complémentaires), puis relancez « Construire dans Module Builder ».',
           trPickAdditional: 'Informations complémentaires — liste des outils', trPickOnList: 'dans la liste',
           trPickNone: 'Cochez au moins un élément.', trAfter: 'Continuer vers Outils et ressources →'
           },
     ar: { expToolsResources: 'الأدوات والمعدات والمواد المطلوبة', trTab: 'الأدوات والموارد', trTitle: 'الأدوات والمعدات والمواد المطلوبة لهذه الوحدة',
           trHint: 'قائمة واحدة تُطبع في صفحة مستقلة قبل المراجع. اتركها فارغة لتخطي الصفحة.',
-          trPh: 'مثال: طقم مفكات', trAdd: 'إضافة بند', trPaste: 'لصق نص', trDacum: 'إدراج من DACUM', trClear: 'مسح القائمة',
-          trClearQ: 'حذف كل البنود من هذه القائمة؟', trEmpty: 'لا توجد بنود بعد.',
+          trPh: 'بند في كل سطر، مثال: طقم مفكات', trNum: 'ترقيم', trBul: 'نقاط', trPaste: 'لصق نص', trDacum: 'إدراج من DACUM', trClear: 'مسح القائمة',
+          trClearQ: 'حذف كل البنود من هذه القائمة؟', 
           trPasteTip: 'كل سطر يصبح بنداً، وتُزال الرموز والأرقام في بدايته',
           trPasteHead: 'الصق القائمة هنا', trPasteOk: 'إضافة إلى القائمة', trPasteNone: 'لا توجد أسطر للإضافة.',
           trPasted: 'تمت إضافة {v0} بند.', trSkipped: '{v0} موجود مسبقاً في القائمة.',
           trPickHead: 'الأدوات والمعدات والمواد من DACUM', trPickAdd: 'إضافة البنود المحددة', trPickClose: 'إغلاق',
-          trPickAll: 'تحديد الكل', trPickNothing: 'لم يرسل DACUM أدوات أو معدات أو مواد لهذه الوحدة.',
+          trPickAll: 'تحديد الكل', trPickNothing: 'لم يرسل DACUM أدوات أو معدات أو مواد لهذه الوحدة. أضفها في DACUM (تحليل المهام أو المعلومات الإضافية) ثم أعد الضغط على «Build in Module Builder».',
           trPickAdditional: 'معلومات إضافية — قائمة الأدوات', trPickOnList: 'في القائمة',
           trPickNone: 'حدّد بنداً واحداً على الأقل.', trAfter: 'المتابعة إلى الأدوات والموارد ←'
           }
@@ -67,22 +67,8 @@ function _trT(k, v0) {
 function _trModule() {
     return (mbState.modulesData || []).find(function (m) { return m.id === mbState.currentModuleId; }) || null;
 }
-function _trRows(module) {
-    if (!module) return [];
-    if (!Array.isArray(module.toolsResources)) module.toolsResources = [];
-    return module.toolsResources;
-}
 function _trNorm(s) { return String(s == null ? '' : s).replace(/\s+/g, ' ').trim().toLowerCase(); }
-function _trNextId(rows) { return rows.reduce(function (m, r) { return Math.max(m, r.id || 0); }, 0) + 1; }
-
-/** The items to print (trimmed, empty rows dropped) for a module / state. */
-function mbToolsList(state) {
-    var st = state || window.mbState || {};
-    var mods = Array.isArray(st.modulesData) ? st.modulesData : [];
-    var m = mods.find(function (x) { return x.id === st.currentModuleId; });
-    var rows = m && Array.isArray(m.toolsResources) ? m.toolsResources : [];
-    return rows.map(function (r) { return String((r && r.value) || '').trim(); }).filter(Boolean);
-}
+function _trText(module) { return module && typeof module.toolsText === 'string' ? module.toolsText : ''; }
 
 /** Lines of pasted text → items: invisible characters removed, the
  *  bullet / number at the start of a line removed (never «2-inch pipe»:
@@ -100,69 +86,80 @@ function mbToolsParse(raw) {
         .filter(Boolean);
 }
 
-/** Add items that are not on the list yet. Returns {added, skipped}. */
-function _trAddItems(module, items) {
-    var rows = _trRows(module);
-    var have = new Set(rows.map(function (r) { return _trNorm(r.value); }));
-    var added = 0, skipped = 0;
-    /* an empty first row (the one a new list starts with) is filled first */
-    items.forEach(function (t) {
-        var k = _trNorm(t);
-        if (!k) return;
-        if (have.has(k)) { skipped++; return; }
-        have.add(k);
-        var blank = rows.find(function (r) { return !String(r.value || '').trim(); });
-        if (blank) blank.value = t; else rows.push({ id: _trNextId(rows), value: t });
-        added++;
-    });
-    return { added: added, skipped: skipped };
+/** The items to print (markers removed, empty lines dropped) for a state. */
+function mbToolsList(state) {
+    var st = state || window.mbState || {};
+    var mods = Array.isArray(st.modulesData) ? st.modulesData : [];
+    var m = mods.find(function (x) { return x.id === st.currentModuleId; });
+    return mbToolsParse(_trText(m));
 }
 
-function _trDelIco() {
-    return '<svg class="mb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg>';
+/** How the text is laid out now: 'num' («1- x» on every line), 'bul'
+ *  («▪ x» on every line) or 'none'. */
+function _trStyleOf(text) {
+    var ls = String(text || '').split('\n').filter(function (l) { return l.trim(); });
+    if (!ls.length) return 'none';
+    if (ls.every(function (l) { return /^\s*\d{1,3}-\s/.test(l); })) return 'num';
+    if (ls.every(function (l) { return /^\s*▪\s/.test(l); })) return 'bul';
+    return 'none';
+}
+function _trFormat(items, style) {
+    return items.map(function (t, i) { return style === 'num' ? (i + 1) + '- ' + t : style === 'bul' ? '▪ ' + t : t; }).join('\n');
 }
 
 function mbToolsRender() {
-    var list = document.getElementById('tools-list');
-    if (!list) return;
+    var ta = document.getElementById('tools-text');
+    if (!ta) return;
     var module = _trModule();
-    var rows = _trRows(module);
-    var dir = (typeof biIsRtl === 'function' && biIsRtl(contentLang())) ? 'rtl' : 'ltr';
-    list.innerHTML = rows.length ? rows.map(function (r, i) {
-        return '<div class="tr-entry" data-tr-id="' + r.id + '">' +
-            '<span class="tr-num" dir="ltr">' + (i + 1) + '-</span>' +
-            '<input type="text" class="mb-content-field tr-input" dir="' + dir + '" placeholder="' + escapeHtml(_trT('trPh')) + '" value="' + escapeHtml(r.value) + '"' +
-            ' data-act="mbToolsUpdate" data-on="input" data-args=\'[' + r.id + ',"$value"]\' />' +
-            '<button type="button" class="mb-icon-btn danger" data-act="mbToolsDelete" data-args=\'[' + r.id + ']\' title="' + escapeHtml(_trT('mbDelete')) + '" aria-label="' + escapeHtml(_trT('mbDelete')) + '">' + _trDelIco() + '</button>' +
-            '</div>';
-    }).join('') : '<p class="example-text tr-empty">' + escapeHtml(_trT('trEmpty')) + '</p>';
+    var text = _trText(module);
+    if (ta.value !== text) ta.value = text;
+    ta.dir = (typeof biIsRtl === 'function' && biIsRtl(contentLang())) ? 'rtl' : 'ltr';
+    ta.placeholder = _trT('trPh');
+    var st = _trStyleOf(text);
+    var n = document.getElementById('tools-btn-num'), b = document.getElementById('tools-btn-bul');
+    if (n) n.classList.toggle('is-on', st === 'num');
+    if (b) b.classList.toggle('is-on', st === 'bul');
+    if (typeof mbAutoGrow === 'function') { try { mbAutoGrow(ta); } catch (e) { /* fixed-height box */ } }
 }
 
-function mbToolsUpdate(id, value) {
-    var r = _trRows(_trModule()).find(function (x) { return x.id === id; });
-    if (r) r.value = value;
+function mbToolsText(value) {
+    var module = _trModule();
+    if (module) module.toolsText = value;
 }
-function mbToolsAdd() {
+/** The numbering / bullet button: lays every line out that way; pressed
+ *  again it takes it off. */
+function mbToolsStyle(style) {
     var module = _trModule();
     if (!module) return;
-    var rows = _trRows(module);
-    rows.push({ id: _trNextId(rows), value: '' });
-    mbToolsRender();
-    var ins = document.querySelectorAll('#tools-list .tr-input');
-    if (ins.length) ins[ins.length - 1].focus();
-}
-function mbToolsDelete(id) {
-    var module = _trModule();
-    if (!module) return;
-    module.toolsResources = _trRows(module).filter(function (r) { return r.id !== id; });
+    var ta = document.getElementById('tools-text');
+    var text = ta ? ta.value : _trText(module);
+    var items = mbToolsParse(text);
+    if (!items.length) return;
+    module.toolsText = _trFormat(items, _trStyleOf(text) === style ? 'none' : style);
     mbToolsRender();
 }
 async function mbToolsClear() {
     var module = _trModule();
-    if (!module || !_trRows(module).length) return;
+    if (!module || !mbToolsParse(_trText(module)).length) return;
     if (!(await mbConfirm(_trT('trClearQ'), { danger: true }))) return;
-    module.toolsResources = [];
+    module.toolsText = '';
     mbToolsRender();
+}
+
+/** Add items that are not on the list yet, keeping its layout. */
+function _trAddItems(module, items) {
+    var text = _trText(module);
+    var cur = mbToolsParse(text);
+    var have = new Set(cur.map(_trNorm));
+    var added = 0, skipped = 0;
+    items.forEach(function (t) {
+        var k = _trNorm(t);
+        if (!k) return;
+        if (have.has(k)) { skipped++; return; }
+        have.add(k); cur.push(t); added++;
+    });
+    module.toolsText = _trFormat(cur, _trStyleOf(text));
+    return { added: added, skipped: skipped };
 }
 
 /* ── Paste text ──────────────────────────────────────────────── */
@@ -223,9 +220,10 @@ function mbToolsOpenDacum() {
     if (host.querySelector('#tr-dacum-pick')) { host.innerHTML = ''; return; }   // a second press closes
     var module = _trModule();
     if (!module) return;
-    var on = new Set(_trRows(module).map(function (r) { return _trNorm(r.value); }));
+    var ta = document.getElementById('tools-text');
+    var on = new Set(mbToolsParse(ta ? ta.value : _trText(module)).map(_trNorm));
     var groups = mbToolsDacumGroups(module);
-    var body = groups.map(function (g, gi) {
+    var body = groups.map(function (g) {
         var rows = g.items.map(function (t) {
             var used = on.has(_trNorm(t));
             return '<label class="mb-pick-row' + (used ? ' is-used' : '') + '"><input type="checkbox" data-text="' + escapeHtml(t) + '"' + (used ? ' disabled' : '') + '>' +
@@ -247,6 +245,8 @@ function mbToolsApplyPick() {
     var module = _trModule();
     var items = Array.prototype.map.call(document.querySelectorAll('#tr-dacum-pick input[type=checkbox]:checked'), function (cb) { return cb.dataset.text; });
     if (!module || !items.length) { showStatus(_trT('trPickNone'), 'error'); return; }
+    var ta = document.getElementById('tools-text');
+    if (ta) module.toolsText = ta.value;   // what is typed counts
     var r = _trAddItems(module, items);
     mbToolsRender();
     mbToolsClosePick();
