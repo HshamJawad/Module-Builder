@@ -483,6 +483,7 @@ function _mbRenderOpenModule() {
     if (typeof renderAssignedItemsPanel === 'function') renderAssignedItemsPanel();
     if (typeof mbRenderTaskAnalysisIndex === 'function') mbRenderTaskAnalysisIndex();
     if (typeof mbSpRefresh === 'function') mbSpRefresh();   // 3.33.0
+    if (typeof mbToolsRender === 'function') mbToolsRender();   // 3.79.0
 }
 
 /** Swap the open module for its light copy. Its record is already saved. */

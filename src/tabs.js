@@ -63,6 +63,8 @@ async function switchTab(tabName) {
         try { mbRenderLgUnit(true); } catch (e) { /* not ready */ }
     }
 
+    if (tabName === 'tools' && typeof mbToolsRender === 'function') mbToolsRender();   // 3.79.0
+
     if (tabName === 'mapping') {
         /* Sheets can be removed, and mapped items returned to Available,
            from the Information / Activity / Assessment tabs — repaint the

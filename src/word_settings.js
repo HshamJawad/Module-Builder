@@ -250,6 +250,7 @@ Object.assign(_WS_STRINGS.en, {
     wsMiscSrc: 'Show 📚 Draft from sources on information sheets',
     wsMiscSrcNote: 'The AI writes a draft of an information sheet from pages you choose in a PDF or text source. Sources stay on this device; only the chosen pages are sent, and nothing is sent before you press Generate.',
     wsSec_glossary: 'Glossary of Terms',
+    wsSec_tools: 'Tools & Resources',
     wsMiscSeqTitle: 'Order and numbering inside a learning outcome',
     wsMiscSeqNote: 'For guides written as one sequence — e.g. 1-1 Introduction, 1-2 Knowledge, 1-3 Learning Activity, … 1-6 Reflection. An outcome section prints at the start or the end of its outcome when you choose that on the section itself.',
     wsMiscOrder: 'Order of the sheets',
@@ -282,6 +283,7 @@ Object.assign(_WS_STRINGS.fr, {
     wsMiscSrc: 'Afficher 📚 Rédiger depuis les sources sur les fiches d\u2019information',
     wsMiscSrcNote: 'L\u2019IA rédige un brouillon de fiche d\u2019information à partir des pages choisies dans un PDF ou un texte. Les sources restent sur cet appareil ; seules les pages choisies sont envoyées, et rien n\u2019est envoyé avant de cliquer sur Générer.',
     wsSec_glossary: 'Glossaire',
+    wsSec_tools: 'Outils et ressources',
     wsMiscSeqTitle: 'Ordre et numérotation dans un résultat d\u2019apprentissage',
     wsMiscSeqNote: 'Pour les guides écrits en une seule suite — p. ex. 1-1 Introduction, 1-2 Connaissances, 1-3 Activité d\u2019apprentissage, … 1-6 Réflexion. Une section d\u2019un résultat s\u2019imprime à son début ou à sa fin si vous le choisissez sur la section elle-même.',
     wsMiscOrder: 'Ordre des fiches',
@@ -314,6 +316,7 @@ Object.assign(_WS_STRINGS.ar, {
     wsMiscSrc: 'إظهار 📚 صياغة من المصادر في أوراق المعلومات',
     wsMiscSrcNote: 'يكتب الذكاء الاصطناعي مسودة لورقة معلومات من صفحات تختارها في ملف PDF أو نص. تبقى المصادر على هذا الجهاز، ولا يُرسل إلا ما تختاره من صفحات، ولا يُرسل شيء قبل الضغط على «توليد».',
     wsSec_glossary: 'مسرد المصطلحات',
+    wsSec_tools: 'الأدوات والموارد',
     wsMiscSeqTitle: 'الترتيب والترقيم داخل محصلة التعلم',
     wsMiscSeqNote: 'للأدلة المكتوبة تسلسلاً واحداً — مثل 1-1 مقدمة، 1-2 معرفة، 1-3 نشاط تعليمي، … 1-6 تأمل. ويُطبع قسم المحصلة في بدايتها أو نهايتها إذا اخترت ذلك في القسم نفسه.',
     wsMiscOrder: 'ترتيب الأوراق',
@@ -481,7 +484,7 @@ function _wsValidFigWords(o) {
 }
 
 var WS_HTML_SECTIONS = ['overview', 'intro', 'outcomes', 'infoSheets',
-                        'activitySheets', 'assessment', 'glossary', 'references'];
+                        'activitySheets', 'assessment', 'glossary', 'tools', 'references'];
 
 /* 3.42.0: the names a user may type, validated on read like every field. */
 var WS_LABEL_LANGS = ['en', 'fr', 'ar'];

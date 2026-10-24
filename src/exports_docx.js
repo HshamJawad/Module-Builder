@@ -2623,6 +2623,27 @@ async function exportToDocx() {
            unit, before the assessment unit (see above). */
         if (!_lgDoc) _pushGlossary();
 
+        // ── Tools & Resources page (3.79.0) ──────────────────────────
+        /* One list for the module: a shaded heading row and the items
+           numbered «1- …», on its own page before the references. Empty
+           list, no page. */
+        const _toolsItems = (typeof mbToolsList === 'function') ? mbToolsList(window.mbState) : [];
+        if (_toolsItems.length) {
+            const { Table, TableRow, TableCell, WidthType } = mbDocxLib();
+            const _tCell = (text, head) => new TableCell({
+                children: [new Paragraph({
+                    children: [new TextRun({ text: text, bold: !!head, size: _wsTable(), color: head ? _wsTblText() : undefined, rightToLeft: _mbRtl() })],
+                    alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { before: 60, after: 60 } })],
+                shading: head ? { fill: _wsTblFill(), type: 'clear' } : undefined,
+                width: { size: 100, type: WidthType.PERCENTAGE }
+            });
+            const _tRows = [new TableRow({ children: [_tCell(_mbT('expToolsResources'), true)], tableHeader: true })];
+            _toolsItems.forEach((x, i) => _tRows.push(new TableRow({ children: [_tCell((i + 1) + '- ' + x, false)] })));
+            sections.push({ properties: { bidi: _mbRtl() }, children: [
+                new Table({ rows: _tRows, width: { size: 100, type: WidthType.PERCENTAGE }, visuallyRightToLeft: _mbRtl() })
+            ] });
+        }
+
         // ── References page ──────────────────────────────────────────
         syncReferencesFromDOM();
         const hasRefs = mbState.referencesData.some(r => r.value.trim());
