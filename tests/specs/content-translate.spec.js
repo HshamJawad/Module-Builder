@@ -49,6 +49,7 @@ test('translates the empty side of every text once, keeps manual edits, and the 
   const ar = page.locator('.mbtr-lang[data-lang="ar"]');
   await expect(ar).toContainText('Original');
   await expect(ar).toContainText('Shown');
+  await expect(page.locator('.mbtr-lang')).toHaveCount(1);          // only versions that exist, as in DACUM Live Pro
 
   await page.selectOption('#mbtr-to', 'en');
   await page.click('[data-mbtr="go"]');
@@ -69,6 +70,8 @@ test('translates the empty side of every text once, keeps manual edits, and the 
   expect(await page.evaluate(() => mbState.coverRows[0].value.en)).toBe('[EN] الكهرباء');
   expect(Object.keys(mod.mbTr)).toEqual(['to_en']);                 // no key that reads as a language pair
 
+  // The translation is now a version of its own.
+  await expect(page.locator('.mbtr-lang')).toHaveCount(2);
   // The coverage meter on the card counts the new side.
   await expect(page.locator('.mbtr-lang[data-lang="en"] .mbtr-cov')).not.toContainText('0 of');
 
@@ -144,5 +147,56 @@ test('a failing service keeps what was translated and warns', async ({ page }) =
   const title = await openModule(page, m => m.title);
   expect(title.ar).toBe('أساسيات الكهرباء');
   expect(title.en || '').toBe('');
+  expect(errors).toEqual([]);
+});
+
+test('Reset to default removes the AI translations, keeps manual edits, shows the original again', async ({ page }) => {
+  const errors = await openApp(page, { handoff: HANDOFF, contentLang: 'ar' });
+  await stubAI(page, []);
+  await arabicModule(page);
+  await openLanguagePane(page);
+  await page.selectOption('#mbtr-original', 'ar');
+  await expect(page.locator('[data-mbtr="reset"]')).toBeDisabled();   // nothing to reset yet
+  await page.selectOption('#mbtr-to', 'en');
+  await page.click('[data-mbtr="go"]');
+  await expect(page.locator('#mbtr-msg')).toContainText('Translated', { timeout: 15_000 });
+  await page.click('.mbtr-lang[data-lang="en"]');                     // the translation is on screen
+  await page.evaluate(() => { mbState.modulesData.find(x => x.id === mbState.currentModuleId).title.en = 'My own wording'; });
+
+  await page.click('[data-mbtr="reset"]');
+  await page.locator('.mb-dialog-overlay .mb-dialog-ok').click();
+  await expect(page.locator('#mbtr-msg')).toContainText('AI translations removed');
+
+  const m = await openModule(page, x => ({ title: x.title, lo: x.learningOutcomes[0].title, mbTr: x.mbTr || null }));
+  expect(m.title.en).toBe('My own wording');                          // edited by hand: kept
+  expect(m.lo.en || '').toBe('');                                     // AI text: removed
+  expect(m.lo.ar).toBe('قياس الجهد');                                 // the original is untouched
+  expect(m.mbTr).toBeNull();
+  expect(await page.evaluate(() => [contentLang(), exportLang()])).toEqual(['ar', 'ar']);
+  await expect(page.locator('.mbtr-lang')).toHaveCount(1);
+  await expect(page.locator('#mbtr-original')).toBeEnabled();
+  expect(errors).toEqual([]);
+});
+
+test('a batch the model garbles is retried in halves, so one bad text does not lose the rest', async ({ page }) => {
+  const errors = await openApp(page, { handoff: HANDOFF, contentLang: 'ar' });
+  await page.route('**/api/generate-dacum', async (route) => {
+    const prompt = JSON.parse(route.request().postData()).prompt;
+    const src = JSON.parse(prompt.split('SOURCE\n')[1].split('\n\nOUTPUT FORMAT')[0]);
+    const keys = Object.keys(src);
+    const bad = keys.length > 1 || src[keys[0]] === 'الكهرباء';      // garbles any group, and one text on its own
+    const text = bad ? 'sorry, here you go: {"t": {' : JSON.stringify({ t: { [keys[0]]: '[EN] ' + src[keys[0]] } });
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ content: [{ type: 'text', text }] }) });
+  });
+  await arabicModule(page);
+  await openLanguagePane(page);
+  await page.selectOption('#mbtr-original', 'ar');
+  await page.selectOption('#mbtr-to', 'en');
+  await page.click('[data-mbtr="go"]');
+  await expect(page.locator('#mb-ai-err')).toBeVisible({ timeout: 20_000 });       // the one that stayed bad is reported
+  const m = await openModule(page, x => ({ t: x.title.en, lo: x.learningOutcomes[0].title.en }));
+  expect(m.t).toBe('[EN] أساسيات الكهرباء');
+  expect(m.lo).toBe('[EN] قياس الجهد');
+  expect(await page.evaluate(() => mbState.coverRows[0].value.en || '')).toBe('');
   expect(errors).toEqual([]);
 });

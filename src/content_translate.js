@@ -55,7 +55,12 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         mbTrStopped: 'Stopped after {v0} of {v1} texts. What was translated is kept.',
         mbTrShowTranslated: 'Show the translated version',
         mbTrSafe: 'What was already translated is kept.',
-        mbTrNoModule: 'Open a module first.'
+        mbTrNoModule: 'Open a module first.',
+        mbTrReset: 'Reset to default',
+        mbTrResetNote: 'Removes the AI translations of this module and shows the original language again. Texts you edited by hand are kept.',
+        mbTrResetConfirm: 'Remove the AI translations of this module?\nTexts you edited by hand are kept.',
+        mbTrResetOk: 'Remove translations',
+        mbTrResetDone: 'AI translations removed ({v0} texts). The original language is shown.'
     },
     fr: {
         mbTrTitle: 'Traduction',
@@ -82,7 +87,12 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         mbTrStopped: 'Arrêté après {v0} textes sur {v1}. Ce qui est traduit est conservé.',
         mbTrShowTranslated: 'Afficher la version traduite',
         mbTrSafe: 'Ce qui a déjà été traduit est conservé.',
-        mbTrNoModule: 'Ouvrez d’abord un module.'
+        mbTrNoModule: 'Ouvrez d’abord un module.',
+        mbTrReset: 'Rétablir par défaut',
+        mbTrResetNote: 'Supprime les traductions IA de ce module et réaffiche la langue d’origine. Les textes modifiés à la main sont conservés.',
+        mbTrResetConfirm: 'Supprimer les traductions IA de ce module ?\nLes textes modifiés à la main sont conservés.',
+        mbTrResetOk: 'Supprimer les traductions',
+        mbTrResetDone: 'Traductions IA supprimées ({v0} textes). La langue d’origine est affichée.'
     },
     ar: {
         mbTrTitle: 'الترجمة',
@@ -109,7 +119,12 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         mbTrStopped: 'توقفت الترجمة بعد {v0} من {v1} نصاً. وما تُرجم محفوظ.',
         mbTrShowTranslated: 'عرض النسخة المترجمة',
         mbTrSafe: 'ما تُرجم سابقاً محفوظ.',
-        mbTrNoModule: 'افتح وحدة أولاً.'
+        mbTrNoModule: 'افتح وحدة أولاً.',
+        mbTrReset: 'إعادة إلى الوضع الافتراضي',
+        mbTrResetNote: 'يحذف الترجمات الآلية لهذه الوحدة ويعيد عرض اللغة الأصلية. النصوص التي عدّلتها يدوياً تبقى كما هي.',
+        mbTrResetConfirm: 'هل تريد حذف الترجمات الآلية لهذه الوحدة؟\nالنصوص التي عدّلتها يدوياً تبقى كما هي.',
+        mbTrResetOk: 'حذف الترجمات',
+        mbTrResetDone: 'تم حذف الترجمات الآلية ({v0} نصاً). تُعرض اللغة الأصلية.'
     }
 });
 
@@ -327,20 +342,34 @@ async function _mbTrCallAI(prompt) {
     if (data && Array.isArray(data.content)) raw = data.content.map(function (b) { return (b && b.type !== 'tool_use' && b.text) || ''; }).join('');
     else if (data && typeof data.text === 'string') raw = data.text;
     var body = raw.trim().replace(/```json\s*/gi, '').replace(/```/g, '').trim();
-    if (!body) throw new Error('badReply: empty AI reply');
+    var bad = function (why) {
+        var err = new Error('badReply: ' + why);
+        err.detail = body.slice(0, 300);          // shown under "Technical details"
+        return err;
+    };
+    if (!body) throw bad('empty AI reply');
     try { return JSON.parse(body); } catch (e) {
         var a = body.indexOf('{'), b = body.lastIndexOf('}');
         if (a !== -1 && b > a) { try { return JSON.parse(body.slice(a, b + 1)); } catch (_) {} }
-        throw new Error('badReply: ' + (data && data.stop_reason === 'max_tokens' ? 'AI reply was cut off' : 'not JSON'));
+        throw bad(data && data.stop_reason === 'max_tokens' ? 'AI reply was cut off' : 'not JSON');
     }
+}
+
+/** The { "1": text, … } object of a reply, whichever of the usual shapes the model chose:
+ *  {t:{…}}, {translations:{…}}, the bare object, or an array in the order sent. */
+function _mbTrAnswers(reply) {
+    var t = reply && (reply.t || reply.translations || reply.translation || reply);
+    if (Array.isArray(t)) { var o = {}; t.forEach(function (v, i) { o[String(i + 1)] = v; }); t = o; }
+    return (t && typeof t === 'object') ? t : {};
 }
 
 /** Write the answers of one batch into the pairs; returns how many texts were stored. */
 function _mbTrApply(m, batch, reply, to) {
-    var t = (reply && (reply.t || reply.translations)) || {};
+    var t = _mbTrAnswers(reply);
     var map = _mbTrMap(m, to, true), n = 0;
     batch.forEach(function (it, i) {
         var v = t[String(i + 1)];
+        if (v && typeof v === 'object') v = v.t || v.text || v.translation;
         if (typeof v !== 'string' || !v.trim()) return;
         var tr = mbTrTidy(it.src, v);
         if (!tr) return;
@@ -383,19 +412,20 @@ async function mbTrRun(from, to, retranslate) {
     if (!plan.hasSource) { _mbTrSay(_mbTrT('mbTrNoSource', { v0: biLangLabel(from) }), 'error'); return; }
     if (!plan.items.length) { _mbTrSay(_mbTrT('mbTrNothing', { v0: biLangLabel(to) }), 'ok'); return; }
 
-    var batches = mbTrBatches(plan.items);
+    var queue = mbTrBatches(plan.items);
     var context = biGet(m.title, from) || '';
     var total = plan.items.length, done = 0, failed = 0, lastError = null, stopped = false, fatal = false;
     _mbTr.running = true; _mbTr.cancel = false; _mbTr.done = 0; _mbTr.total = total;
     _mbTrSetBusy(true);
 
     try {
-        for (var i = 0; i < batches.length; i++) {
+        while (queue.length) {
             if (_mbTr.cancel) { stopped = true; break; }
+            var batch = queue.shift();
             _mbTrSay(_mbTrT('mbTrProgress', { v0: done, v1: total }), 'busy');
             try {
-                var reply = await _mbTrCallAI(mbTrPrompt(from, to, batches[i], context));
-                var n = _mbTrApply(m, batches[i], reply, to);
+                var reply = await _mbTrCallAI(mbTrPrompt(from, to, batch, context));
+                var n = _mbTrApply(m, batch, reply, to);
                 if (!n) throw new Error('badReply: no translations in the reply');
                 done += n;
                 _mbTr.done = done;
@@ -404,10 +434,17 @@ async function mbTrRun(from, to, retranslate) {
                 if (to === contentLang() && typeof mbRepaintContent === 'function') mbRepaintContent();
                 if (typeof updateContentLangHint === 'function') updateContentLangHint();
             } catch (err) {
-                failed++;
-                lastError = err;
                 var kind = (typeof mbClassifyAIError === 'function') ? mbClassifyAIError(err) : 'failed';
-                if (kind === 'offline' || kind === 'credit' || kind === 'auth' || kind === 'rate') { fatal = true; break; }
+                if (kind === 'offline' || kind === 'credit' || kind === 'auth' || kind === 'rate') { lastError = err; fatal = true; break; }
+                if (batch.length > 1) {
+                    /* One bad text (a stray quote, a long line) must not lose its neighbours:
+                       retry the two halves on their own. */
+                    var half = Math.ceil(batch.length / 2);
+                    queue.unshift(batch.slice(0, half), batch.slice(half));
+                } else {
+                    failed++;
+                    lastError = err;
+                }
             }
         }
     } finally {
@@ -423,9 +460,42 @@ async function mbTrRun(from, to, retranslate) {
     else _mbTrSay(_mbTrT('mbTrDoneMissing', counts), 'warn');
     _mbTr.last = { to: to, done: done };
     _mbTrRefresh();
-    if (lastError && (fatal || failed) && typeof mbShowAIError === 'function') {
+    if (lastError && typeof mbShowAIError === 'function') {
         mbShowAIError(lastError, { safeKey: 'mbTrSafe' });
     }
+}
+
+/* ── Reset to default ──────────────────────────────────────── */
+
+/** Remove the AI translations of the open module (texts edited by hand stay),
+ *  show the original language again. */
+async function mbTrReset() {
+    var m = mbTrModule();
+    if (!m || _mbTr.running || !mbTrHasTranslations(m)) return;
+    if (typeof mbConfirm === 'function' &&
+        !(await mbConfirm(_mbTrT('mbTrResetConfirm'), { danger: true, okLabel: _mbTrT('mbTrResetOk') }))) return;
+
+    if (typeof _mbLibFlush === 'function') _mbLibFlush();
+    var original = mbTrOriginal(m);
+    /* Back to the original first (flushes the screen into the side being left). */
+    if (contentLang() !== original && typeof switchContentLang === 'function') switchContentLang(original);
+    if (typeof setExportLang === 'function') setExportLang(original);
+
+    var n = 0;
+    mbTrCollect(m).forEach(function (p) {
+        BILANG_CODES.forEach(function (c) {
+            var map = _mbTrMap(m, c, false);
+            var t = _mbTrSide(p.pair, c);
+            if (map && t && map[mbTrHash(t)] !== undefined) { p.pair[c] = ''; n++; }
+        });
+    });
+    delete m.mbTr;
+    if (typeof mbRepaintContent === 'function') mbRepaintContent();
+    if (typeof mbLibrarySave === 'function') { try { mbLibrarySave(); } catch (e) { console.warn('[translate] save', e); } }
+
+    _mbTr.last = null; _mbTr.from = null; _mbTr.to = null;
+    _mbTrSay(_mbTrT('mbTrResetDone', { v0: n }), 'ok');
+    _mbTrRefresh();
 }
 
 /* ── The Language pane section ─────────────────────────────── */
@@ -452,7 +522,14 @@ function _mbTrSection() {
         }).join('');
     };
 
-    var cards = BILANG_CODES.map(function (c) {
+    /* Only the versions that exist, as in DACUM Live Pro: the original, the
+       languages holding an AI translation, and the one on screen. A language
+       nobody has translated into is not a version yet — it appears when it is. */
+    var versions = BILANG_CODES.filter(function (c) {
+        var map = _mbTrMap(m, c, false);
+        return c === original || c === shown || (map && Object.keys(map).length > 0);
+    });
+    var cards = versions.map(function (c) {
         return '<button type="button" class="mbtr-lang' + (c === shown ? ' is-on' : '') + '" data-mbtr="show" data-lang="' + c +
                '" role="radio" aria-checked="' + (c === shown ? 'true' : 'false') + '">' +
             '<span class="mbtr-dot" aria-hidden="true"></span>' +
@@ -474,7 +551,10 @@ function _mbTrSection() {
             '<select id="mbtr-original" class="mbtr-select" data-mbtr="original"' + (locked || !m ? ' disabled' : '') + '>' + opts(original) + '</select>' +
             '<p class="mbtr-note">' + _mbTrEsc(_mbTrT('mbTrOriginalNote')) + '</p>' +
             '<div class="mbtr-langs" role="radiogroup">' + cards + '</div>' +
-            '<p class="mbtr-note">' + _mbTrEsc(_mbTrT('mbTrShowNote')) + '</p>' +
+            '<button type="button" class="mbtr-reset" data-mbtr="reset"' + (locked && !_mbTr.running ? '' : ' disabled') + '>\u21BA ' +
+                _mbTrEsc(_mbTrT('mbTrReset')) + '</button>' +
+            '<p class="mbtr-note">' + _mbTrEsc(_mbTrT('mbTrResetNote')) + '</p>' +
+            (versions.length > 1 ? '<p class="mbtr-note">' + _mbTrEsc(_mbTrT('mbTrShowNote')) + '</p>' : '') +
         '</div>' +
         '<div class="mbtr-card">' +
             '<div class="mbtr-head"><span class="mbtr-title">🤖 ' + _mbTrEsc(_mbTrT('mbTrTranslateTitle')) + '</span>' +
@@ -540,8 +620,21 @@ function _mbTrEnsureStyle() {
         '#ws-overlay .mbtr-check{display:flex;align-items:flex-start;gap:9px;margin:0;color:#334155;font-weight:600;cursor:pointer;}',
         '#ws-overlay .mbtr-check input{margin-top:4px;width:16px;height:16px;accent-color:#0284c7;}',
         '#ws-overlay .mbtr-actions{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:14px 0 0;}',
-        '#ws-overlay .mbtr-go{background:#0284c7;border-color:#0284c7;}',
-        '#ws-overlay .mbtr-go:disabled{opacity:.6;cursor:progress;}',
+        '#ws-overlay .mbtr-actions .mbtr-go{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:50px;',
+        'padding:12px 34px;border:none;border-radius:12px;color:#fff;font:inherit;font-size:1.1em;font-weight:700;letter-spacing:.01em;',
+        'background:linear-gradient(135deg,#0ea5e9,#0369a1);box-shadow:0 4px 14px rgba(3,105,161,.32);cursor:pointer;',
+        'transition:transform .12s,box-shadow .12s,filter .12s;}',
+        '#ws-overlay .mbtr-actions .mbtr-go:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 18px rgba(3,105,161,.4);filter:brightness(1.05);}',
+        '#ws-overlay .mbtr-actions .mbtr-go:focus-visible{outline:3px solid #7dd3fc;outline-offset:2px;}',
+        '#ws-overlay .mbtr-actions .mbtr-go:disabled{opacity:.6;box-shadow:none;cursor:progress;}',
+        '#ws-overlay .mbtr-go-ico{font-size:1.25em;line-height:1;}',
+        '#ws-overlay .mbtr-stop{min-height:50px;padding:10px 22px;border:1.5px solid #cbd5e1;border-radius:12px;background:#fff;color:#334155;font:inherit;font-weight:600;cursor:pointer;}',
+        '#ws-overlay .mbtr-stop:hover{border-color:#94a3b8;background:#f8fafc;}',
+        '#ws-overlay .mbtr-reset{margin:14px 0 0;padding:9px 16px;border:1.5px solid #cbd5e1;border-radius:10px;background:#fff;color:#334155;font:inherit;font-weight:600;cursor:pointer;}',
+        '#ws-overlay .mbtr-reset:hover:not(:disabled){border-color:#94a3b8;background:#f8fafc;}',
+        '#ws-overlay .mbtr-reset:disabled{opacity:.5;cursor:not-allowed;}',
+        '#ws-overlay .mbtr-msg{flex:1 1 100%;}',
+        '@media (max-width:700px){#ws-overlay .mbtr-actions .mbtr-go{width:100%;}}',
         '#ws-overlay .mbtr-msg{font-size:.9em;color:#475569;}',
         '#ws-overlay .mbtr-msg.is-ok{color:#047857;}',
         '#ws-overlay .mbtr-msg.is-warn{color:#b45309;}',
@@ -570,6 +663,8 @@ document.addEventListener('click', function (e) {
         mbTrRun(_mbTr.from, _mbTr.to, !!_mbTr.retr);
     } else if (act === 'stop') {
         _mbTr.cancel = true;
+    } else if (act === 'reset') {
+        mbTrReset();
     }
 });
 
