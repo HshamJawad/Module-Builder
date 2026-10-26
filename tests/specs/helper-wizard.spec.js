@@ -84,3 +84,21 @@ test('helper: Learner guide adds Learning unit and Reflection steps', async ({ p
   await expect(page.locator('#mb-hw .mb-hw-dot')).toHaveCount(12);
   expect(errors).toEqual([]);
 });
+
+// 3.80.12: the × on the floating chip hides it; the Help tab brings it back.
+test('chip: × hides the helper button, Help tab "Start the helper" shows it again', async ({ page }) => {
+  const errors = await openApp(page);
+  await expect(page.locator('#mb-hw-chip')).toBeVisible();
+  await page.locator('#mb-hw-chip-x').click();
+  await expect(page.locator('#mb-hw-chip')).toBeHidden();
+  await expect(page.locator('#mb-hw-chip-x')).toBeHidden();
+  await page.reload();
+  await page.waitForFunction(() => window.mbLib && window.mbLib.booted === true);
+  await expect(page.locator('#mb-hw-chip')).toBeHidden();
+  await page.evaluate(() => window.switchTab('help'));
+  await page.locator('.mb-hw-helpcard [data-act="mbHelperAct"]').click();
+  await expect(page.locator('#mb-hw')).toBeVisible();
+  await page.locator('#mb-hw .mb-hw-x').click();
+  await expect(page.locator('#mb-hw-chip')).toBeVisible();
+  expect(errors).toEqual([]);
+});

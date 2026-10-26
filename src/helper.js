@@ -184,7 +184,16 @@
     /* ── The chip ──────────────────────────────────────────────── */
     function chipEl() { return document.getElementById('mb-hw-chip'); }
     function paintChip() {
+        var wrap = document.getElementById('mb-hw-chipwrap');
         var chip = chipEl();
+        if (!wrap) {
+            /* 3.81.1: the chip and its × sit side by side in one wrapper
+               (a button cannot contain a button). */
+            wrap = document.createElement('div');
+            wrap.id = 'mb-hw-chipwrap';
+            wrap.className = 'mb-hw-chipwrap';
+            document.body.appendChild(wrap);
+        }
         if (!chip) {
             chip = document.createElement('button');
             chip.type = 'button';
@@ -192,17 +201,30 @@
             chip.className = 'mb-hw-chip';
             chip.setAttribute('data-act', 'mbHelperAct');
             chip.setAttribute('data-args', '["toggle"]');
-            document.body.appendChild(chip);
+            wrap.appendChild(chip);
+        }
+        var x = document.getElementById('mb-hw-chip-x');
+        if (!x) {
+            x = document.createElement('button');
+            x.type = 'button';
+            x.id = 'mb-hw-chip-x';
+            x.className = 'mb-hw-chip-x';
+            x.setAttribute('data-act', 'mbHelperAct');
+            x.setAttribute('data-args', '["hideChip"]');
+            x.textContent = '\u00D7';
+            wrap.appendChild(x);
         }
         var ord = order(), n = ord.indexOf(current) + 1;
         chip.innerHTML = '<span aria-hidden="true">🧭</span><span class="mb-hw-chip-t">' + esc(t('hwzChip')) +
             '</span><small>' + n + '/' + ord.length + '</small>';
         chip.title = t('hwzChipTip');
         chip.setAttribute('aria-label', t('hwzChipTip'));
-        chip.hidden = open || chipMode() === 'hidden';
+        x.title = t('hwzHide');
+        x.setAttribute('aria-label', t('hwzHide'));
+        wrap.setAttribute('dir', isRtl() ? 'rtl' : 'ltr');
+        chip.hidden = x.hidden = wrap.hidden = open || chipMode() === 'hidden';
     }
 
-    /* ── The panel ─────────────────────────────────────────────── */
     function panelEl() { return document.getElementById('mb-hw'); }
 
     function badge(state) {
@@ -435,7 +457,7 @@
             hwzGo: 'Go to this tab',
             hwzGuide: 'Open the ? guide',
             hwzHide: 'Hide the helper button',
-            hwzHiddenMsg: 'The helper button is hidden. Start it again from the Help tab.',
+            hwzHiddenMsg: 'The helper button is hidden. Show it again from the Help tab.',
             hwzDone: 'Done',
             hwzPartial: 'In progress',
             hwzTodo: 'To do',
