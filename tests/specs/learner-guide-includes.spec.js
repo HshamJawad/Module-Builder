@@ -374,7 +374,7 @@ test('assessment tab: no «Add Assessment Form» button — the chosen learning 
 test('tabs: a small Back button opposite Proceed, light grey, going to the previous tab', async ({ page }) => {
   const errors = await openApp(page, { contentLang: 'en' });
   await buildGuide(page);
-  const chain = [['module-info', 'basic-info'], ['covers', 'module-info'], ['intro', 'covers'], ['unit', 'intro'], ['info', 'unit'], ['activity', 'info'],
+  const chain = [['covers', 'basic-info'], ['intro', 'covers'], ['unit', 'intro'], ['info', 'unit'], ['activity', 'info'],
                  ['reflection', 'activity'], ['assessment', 'reflection'], ['tools', 'assessment'], ['references', 'tools'], ['back-cover', 'references']];
   for (const [t, prev] of chain) {
     await tab(page, t);
