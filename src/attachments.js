@@ -73,6 +73,9 @@ var _MB_ATT_STR = {
         startAct: 'Before the first step',
         missing: '(deleted)',
         warnMissing: 'The step or section this item was placed by no longer exists — it is printed at the end.',
+        moveUp: 'Move this item up',
+        moveDown: 'Move this item down',
+        dragTip: 'Drag to reorder the items',
         remove: 'Remove this item',
         confirmRemove: 'Remove this attached item?',
         stepN: 'Step {n}',
@@ -108,6 +111,9 @@ var _MB_ATT_STR = {
         startAct: 'Avant la première étape',
         missing: '(supprimé)',
         warnMissing: 'L’étape ou la section près de laquelle cet élément était placé n’existe plus — il est imprimé à la fin.',
+        moveUp: 'Monter cet élément',
+        moveDown: 'Descendre cet élément',
+        dragTip: 'Glisser pour réordonner les éléments',
         remove: 'Supprimer cet élément',
         confirmRemove: 'Supprimer cet élément joint ?',
         stepN: 'Étape {n}',
@@ -143,6 +149,9 @@ var _MB_ATT_STR = {
         startAct: 'قبل أول خطوة',
         missing: '(محذوف)',
         warnMissing: 'الخطوة أو القسم الذي رُبط به هذا العنصر لم يعد موجوداً، فسيُطبع في النهاية.',
+        moveUp: 'نقل هذا العنصر إلى الأعلى',
+        moveDown: 'نقل هذا العنصر إلى الأسفل',
+        dragTip: 'اسحب لإعادة ترتيب العناصر',
         remove: 'حذف هذا العنصر',
         confirmRemove: 'حذف هذا العنصر الملحق؟',
         stepN: 'الخطوة {n}',
@@ -485,7 +494,12 @@ function _mbAttBuild(kind, data) {
 
     card.innerHTML =
         '<div class="mb-att-head">' +
+          '<span class="mb-step-handle" data-att-tip="dragTip" title="' + _mbAttEsc(_mbAttT('dragTip')) + '" aria-label="' + _mbAttEsc(_mbAttT('dragTip')) + '" role="img">⠿</span>' +
           '<span class="mb-att-title" data-att-type-label>' + _mbAttEsc(type ? _mbAttT(type === 'image' ? 'typeImage' : 'typeTable') : _mbAttT('add')) + '</span>' +
+          '<span class="mb-att-move">' +
+            '<button type="button" class="mb-step-move" data-act="mbAttMoveUp" data-args=\'[' + aid + ']\' data-att-tip="moveUp" title="' + _mbAttEsc(_mbAttT('moveUp')) + '" aria-label="' + _mbAttEsc(_mbAttT('moveUp')) + '">▲</button>' +
+            '<button type="button" class="mb-step-move" data-act="mbAttMoveDown" data-args=\'[' + aid + ']\' data-att-tip="moveDown" title="' + _mbAttEsc(_mbAttT('moveDown')) + '" aria-label="' + _mbAttEsc(_mbAttT('moveDown')) + '">▼</button>' +
+          '</span>' +
           '<button type="button" class="btn-remove mb-icon-btn danger" data-act="mbAttRemove" data-args=\'[' + aid + ']\' data-att-tip="remove" title="' + _mbAttEsc(_mbAttT('remove')) + '" aria-label="' + _mbAttEsc(_mbAttT('remove')) + '">' + _MB_ATT_TRASH + '</button>' +
         '</div>' +
         '<div class="mb-att-choose"' + (type ? ' hidden' : '') + '>' +
@@ -581,6 +595,115 @@ async function mbAttRemove(aid) {
     _mbAttSync(kind);   // 3.67.0: the last one closes the card
     _mbAttTouch(parent);
 }
+
+/* ── 3.80.3: reorder the items — ▲ / ▼ and the ⠿ handle ─────────
+   The same controls as the content cards and the steps. The items print
+   in list order within the place chosen for them, so the order on screen
+   is the order in the document. As there, the sheet is stored BEFORE the
+   move so every item is on record under its uid; the save after the move
+   then matches by uid, never by position (uid.js, biMergeArrayById). */
+function _mbAttMove(aid, dir) {
+    var el = document.getElementById('att-item-' + aid);
+    if (!el || !el.parentNode) return;
+    var box = el.parentNode;
+    if (typeof saveCurrentSheetToLO === 'function') {
+        try { saveCurrentSheetToLO(); } catch (e) { /* ignore */ }
+    }
+    if (dir < 0) {
+        var prev = el.previousElementSibling;
+        if (!prev) return;
+        box.insertBefore(el, prev);
+    } else {
+        var next = el.nextElementSibling;
+        if (!next) return;
+        box.insertBefore(el, next.nextSibling);
+    }
+    mbAttRenumber();
+    var btn = el.querySelector(dir < 0 ? '[data-act="mbAttMoveUp"]' : '[data-act="mbAttMoveDown"]');
+    if (btn && !btn.disabled) btn.focus();
+    if (el.scrollIntoView) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    _mbAttTouch(box);
+}
+function mbAttMoveUp(aid)   { _mbAttMove(aid, -1); }
+function mbAttMoveDown(aid) { _mbAttMove(aid, +1); }
+
+/** The first item cannot go up and the last cannot go down. */
+function mbAttRenumber() {
+    document.querySelectorAll('.mb-att-list').forEach(function (list) {
+        var items = Array.prototype.filter.call(list.children, function (c) { return c.classList.contains('mb-att-item'); });
+        items.forEach(function (item, i) {
+            var up = item.querySelector('[data-act="mbAttMoveUp"]');
+            var down = item.querySelector('[data-act="mbAttMoveDown"]');
+            if (up) up.disabled = (i === 0);
+            if (down) down.disabled = (i === items.length - 1);
+        });
+    });
+}
+
+/* Drag by the ⠿ handle only — see content.js mbContentDrag for the
+   reasoning. Touch screens have the ▲ / ▼ buttons. */
+(function mbAttDrag() {
+    var SEL = '.mb-att-list > .mb-att-item';
+    var dragEl = null, hist = null;
+
+    function release() {
+        document.querySelectorAll(SEL + '[draggable="true"]').forEach(function (el) {
+            if (el !== dragEl) el.removeAttribute('draggable');
+        });
+    }
+    document.addEventListener('pointerdown', function (e) {
+        var h = e.target && e.target.closest && e.target.closest('.mb-att-list .mb-step-handle');
+        if (!h) return;
+        var item = h.closest('.mb-att-item');
+        if (item) item.setAttribute('draggable', 'true');
+    });
+    document.addEventListener('pointerup', release);
+
+    document.addEventListener('dragstart', function (e) {
+        var item = e.target && e.target.closest && e.target.closest(SEL);
+        if (!item || item.getAttribute('draggable') !== 'true') return;
+        if (typeof saveCurrentSheetToLO === 'function') {
+            try { saveCurrentSheetToLO(); } catch (err) { /* ignore */ }
+        }
+        dragEl = item;
+        item.classList.add('is-dragging');
+        try {
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', '');
+        } catch (err) { /* ignore */ }
+        hist = (typeof mbHistBegin === 'function') ? mbHistBegin('moveAttachment') : null;
+    });
+
+    document.addEventListener('dragover', function (e) {
+        if (!dragEl) return;
+        var box = dragEl.parentNode;
+        var target = e.target && e.target.closest && e.target.closest(SEL);
+        if (!box || !box.contains(e.target)) return;
+        e.preventDefault();
+        if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+        if (!target || target === dragEl || target.parentNode !== box) return;
+        var r = target.getBoundingClientRect();
+        var before = e.clientY < r.top + r.height / 2;
+        var ref = before ? target : target.nextSibling;
+        if (ref !== dragEl && ref !== dragEl.nextSibling) box.insertBefore(dragEl, ref);
+    });
+
+    document.addEventListener('drop', function (e) {
+        if (dragEl) e.preventDefault();
+    });
+
+    document.addEventListener('dragend', function () {
+        if (!dragEl) return;
+        var el = dragEl;
+        dragEl = null;
+        el.classList.remove('is-dragging');
+        el.removeAttribute('draggable');
+        mbAttRenumber();
+        if (hist && typeof mbHistEnd === 'function') mbHistEnd(hist);
+        hist = null;
+        (el.parentNode || document).dispatchEvent(new Event('change', { bubbles: true }));
+    });
+})();
 
 function mbAttPickImage(aid) {
     var input = document.getElementById('att-file-' + aid);
@@ -785,6 +908,13 @@ window.addEventListener('mb:langchange', _mbAttPaintStatic);
             var box = document.getElementById(id);
             if (box) obs.observe(box, { childList: true });
         });
+        /* 3.80.3: the ▲ / ▼ follow the items as they come and go. */
+        var renum = new MutationObserver(mbAttRenumber);
+        Object.keys(MB_ATT_KINDS).forEach(function (k) {
+            var list = document.getElementById(MB_ATT_KINDS[k].list);
+            if (list) renum.observe(list, { childList: true });
+        });
+        mbAttRenumber();
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
     else start();
