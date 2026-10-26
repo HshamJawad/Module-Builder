@@ -294,7 +294,12 @@ function mbRenderBlocks(host) {
 
     var box     = document.getElementById(cfg.container);
     var section = document.getElementById(cfg.section);
-    if (!box) return;
+    /* 3.80.4: the outcome card is no longer on the Module tab; the Learner
+       guide's unit card still follows the outcome. */
+    if (!box) {
+        if (host === 'lo' && typeof mbRenderLgUnit === 'function') mbRenderLgUnit();
+        return;
+    }
 
     var list = mbBlockList(host);
 

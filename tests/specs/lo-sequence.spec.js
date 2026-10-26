@@ -112,13 +112,13 @@ test('editor: the number field shows the computed number, read-only; "Comes afte
   await expect(page.locator('#activity-after-info option')).toHaveCount(3);   // Automatic + 2 sheets
   await page.locator('#activity-after-info').selectOption({ index: 1 });      // after the first sheet
   await expect(num).toHaveValue('1-4');
-  // the outcome card: each section chooses where it prints
+  // 3.80.4: the «Learning Outcome Sections» card is gone from the Module tab; sections already
+  // written keep their place and are still changed by the same function
   await tab(page, 'basic-info');
-  await page.evaluate(() => mbRenderBlocks('lo'));
-  const sel = page.locator('#lo-blocks-container .mb-block-place select');
-  await expect(sel).toHaveCount(3);
-  await expect(sel.nth(0)).toHaveValue('before');
-  await sel.nth(2).selectOption('after');
+  await expect(page.locator('#lo-blocks-section')).toHaveCount(0);
+  await page.evaluate(() => mbRenderBlocks('lo'));   // no card to paint: must not throw
+  expect(await page.evaluate(() => mbState.learningOutcomesData[0].blocks[0].place)).toBe('before');
+  await page.evaluate(() => mbBlockSetPlace(mbState.learningOutcomesData[0].blocks[2].uid, 'after'));
   expect(await page.evaluate(() => mbState.learningOutcomesData[0].blocks[2].place)).toBe('after');
   // switched off: the field is editable again
   await page.evaluate(() => {
