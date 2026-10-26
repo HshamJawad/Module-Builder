@@ -69,3 +69,65 @@ test('standalone mode sets the CSS hook; the page has no horizontal scroll on a 
     expect(errors).toEqual([]);
   }
 });
+
+// 3.81.1: the install bar is at the top of the window, never over the bottom-end helper button.
+test('install bar sits at the top, below the toolbar', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const errors = await openApp(page);
+  await page.evaluate(() => {
+    const ev = new Event('beforeinstallprompt', { cancelable: true });
+    ev.prompt = () => {}; ev.userChoice = Promise.resolve({ outcome: 'dismissed' });
+    window.dispatchEvent(ev);
+  });
+  const bar = page.locator('.mb-pwa-bar');
+  await expect(bar).toBeVisible({ timeout: 15_000 });
+  const r = await page.evaluate(() => ({
+    bar: document.querySelector('.mb-pwa-bar').getBoundingClientRect(),
+    tb: document.querySelector('.figma-toolbar').getBoundingClientRect().bottom,
+  }));
+  expect(r.bar.top).toBeGreaterThanOrEqual(r.tb);
+  expect(r.bar.bottom).toBeLessThan(300);
+  expect(errors).toEqual([]);
+});
+
+// 3.81.1: phones and tablets get the sections as a drawer (like DACUM Live Pro).
+for (const [lang, width] of [['en', 390], ['ar', 390], ['en', 820]]) {
+  test(`sections drawer: ☰ opens a vertical list, choosing a section closes it (${lang}, ${width}px)`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    const errors = await openApp(page, { lang });
+    const toggle = page.locator('#mb-nav-toggle');
+    const nav = page.locator('#mb-sidenav');
+    await expect(toggle).toBeVisible();
+    await expect(nav).toBeHidden();                       // closed on start
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await toggle.click();
+    await expect(nav).toBeVisible();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    const tabs = await nav.locator('.tabs .tab:visible').evaluateAll(b => b.map(x => Math.round(x.getBoundingClientRect().top)));
+    expect(tabs.length).toBeGreaterThan(5);
+    expect(new Set(tabs).size).toBe(tabs.length);          // one per row: a list, not a strip
+    const box = await nav.boundingBox();
+    expect(box.width).toBeLessThanOrEqual(width * 0.87);
+    if (lang === 'ar') expect(box.x + box.width).toBeGreaterThanOrEqual(width - 1);   // opens from the right
+    await nav.locator('.tab[data-args=\'["references"]\']').click();
+    await expect(page.locator('#references-tab')).toHaveClass(/active/);
+    await expect(nav).toBeHidden();
+    await toggle.click();
+    await page.keyboard.press('Escape');
+    await expect(nav).toBeHidden();
+    await toggle.click();
+    await page.locator('#mb-nav-backdrop').click({ position: { x: width > 400 ? width - 20 : 370, y: 400 } });
+    await expect(nav).toBeHidden();
+    expect(errors).toEqual([]);
+  });
+}
+
+test('desktop width keeps the fixed rail and ☰ folds it', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  const errors = await openApp(page);
+  await expect(page.locator('#mb-sidenav')).toBeVisible();
+  await expect(page.locator('#mb-nav-close')).toBeHidden();
+  await page.locator('#mb-nav-toggle').click();
+  await expect(page.locator('#mb-sidenav')).toBeHidden();
+  expect(errors).toEqual([]);
+});
