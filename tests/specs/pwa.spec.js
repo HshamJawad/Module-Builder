@@ -4,7 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 const { test, expect } = require('@playwright/test');
-const { openApp } = require('../helpers');
+const { openApp, fixture, tab } = require('../helpers');
 
 const ROOT = path.join(__dirname, '..', '..');
 
@@ -129,5 +129,23 @@ test('desktop width keeps the fixed rail and ☰ folds it', async ({ page }) => 
   await expect(page.locator('#mb-nav-close')).toBeHidden();
   await page.locator('#mb-nav-toggle').click();
   await expect(page.locator('#mb-sidenav')).toBeHidden();
+  expect(errors).toEqual([]);
+});
+
+// 3.81.3: portrait phone — the sheet buttons and the assessment signatures stay inside the screen.
+test('portrait phone: sheet buttons and signature table fit the screen', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 800 });
+  const errors = await openApp(page, { handoff: fixture('dacum-handoff.json'), contentLang: 'en' });
+  for (const [name, sel] of [['info', '#info-tab [data-act="addNewInfoSheet"]'], ['activity', '#activity-tab [data-act="addNewActivitySheet"]']]) {
+    await tab(page, name);
+    const b = await page.locator(sel).boundingBox();
+    expect(b.x, name).toBeGreaterThanOrEqual(0);
+    expect(b.x + b.width, name).toBeLessThanOrEqual(361);
+  }
+  await tab(page, 'assessment');
+  const cells = await page.locator('#assessment-tab .mb-sig-grid > div').evaluateAll(d => d.map(e => { const r = e.getBoundingClientRect(); return [r.left, r.right]; }));
+  expect(cells.length).toBe(6);
+  for (const [l, r] of cells) { expect(l).toBeGreaterThanOrEqual(0); expect(r).toBeLessThanOrEqual(361); }
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
   expect(errors).toEqual([]);
 });
