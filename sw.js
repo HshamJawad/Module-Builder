@@ -25,11 +25,11 @@
 // Playwright suite checks that every tag is listed here).
 // ============================================================
 
-const CACHE_VERSION = 'mb-3.80.11';
+const CACHE_VERSION = 'mb-3.81.0';
 const CACHE_NAME    = 'module-builder-' + CACHE_VERSION;
 const BASE          = self.registration ? self.registration.scope : '/';
 const OFFLINE_URL   = BASE + 'index.html';
-const NETWORK_FIRST_EXT = /\.(html|js|css|json)$/i;
+const NETWORK_FIRST_EXT = /\.(html|js|css|json|webmanifest)$/i;
 
 const PRECACHE_URLS = [
   BASE,
@@ -40,6 +40,12 @@ const PRECACHE_URLS = [
   BASE + 'version.json',
   BASE + 'module-builder-guide.html',
   BASE + 'qr-code_Module_Builder.png',
+  BASE + 'manifest.webmanifest',
+  BASE + 'icons/icon-192.png',
+  BASE + 'icons/icon-512.png',
+  BASE + 'icons/icon-maskable-512.png',
+  BASE + 'icons/apple-touch-icon.png',
+  BASE + 'icons/favicon-32.png',
 
   // ── Third-party libraries, self-hosted (vendor/README.md) ──
   BASE + 'vendor/docx-7.8.2/index.js',
@@ -132,6 +138,7 @@ const PRECACHE_URLS = [
   BASE + 'src/helper.js',
   BASE + 'src/toolbar_fit.js',
   BASE + 'src/sw_register.js',
+  BASE + 'src/pwa.js',
   BASE + 'src/app.js',
   BASE + 'src/autosave.js'
   // Not precached, cached on first use instead: the Arial and Calibri
