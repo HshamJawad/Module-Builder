@@ -126,6 +126,8 @@ test('the editor: the unit card writes the outcome; the activity row is saved wi
     .toEqual(['Typed introduction', 'Typed unit line', true]);
   await tab(page, 'activity');
   await expect(page.locator('#lg-act-row')).toBeVisible();
+  // 3.80.8: the order follows the tabs (knowledge sheets, then activity sheets): no «Comes after»
+  await expect(page.locator('#activity-after-row')).toBeHidden();
   await expect(page.locator('#resources-table')).toBeHidden();
   await page.locator('#lg-act-contributes').selectOption('no');
   await page.locator('#lg-act-product').fill('A photo of the work');
@@ -154,6 +156,9 @@ test('Learner guide: HTML and PDF follow the same structure as Word', async ({ p
   });
   expect(r.template).toBe('learnerGuide');
   expect(r.seq).toEqual(['lgIntro', 'info', 'info', 'activity', 'activity', 'lgReflection']);
+  // even when an activity names a sheet it "comes after" (an older project), the order is by tab
+  expect(await page.evaluate(() => { const lo = mbState.learningOutcomesData[0]; lo.activitySheets[0].afterInfo = mbInfoSheetKey(lo.infoSheets[0]); return mbLoSequence(lo).map(x => x.kind); }))
+    .toEqual(['lgIntro', 'info', 'info', 'activity', 'activity', 'lgReflection']);
   for (const doc of [r.html, r.pdf]) {
     let last = -1;
     for (const s of ['1- Learning unit: Use hand tools', '1-1 Introduction', '1-2 Knowledge: Screwdrivers', '1-4 Learning activity: Using hand tools',
