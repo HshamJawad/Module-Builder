@@ -149,3 +149,32 @@ test('portrait phone: sheet buttons and signature table fit the screen', async (
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
   expect(errors).toEqual([]);
 });
+
+// Phone: the language menu opens fully inside the screen; colour swatches stay square on a touch device.
+for (const lang of ['en', 'ar']) {
+  test(`phone: language menu fits the screen (${lang})`, async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const errors = await openApp(page, { lang });
+    await page.locator('.mb-lang-trigger').click();
+    const panel = page.locator('#mb-lang-panel');
+    await expect(panel).toBeVisible();
+    const b = await panel.boundingBox();
+    expect(b.x).toBeGreaterThanOrEqual(0);
+    expect(b.x + b.width).toBeLessThanOrEqual(391);
+    expect(b.width).toBeGreaterThan(150);
+    await expect(panel.locator('.mb-lang-opt')).toHaveCount(3);
+    expect(errors).toEqual([]);
+  });
+}
+
+test('touch device: colour swatches stay square', async ({ browser }) => {
+  const ctx = await browser.newContext({ hasTouch: true, isMobile: true, viewport: { width: 390, height: 844 }, serviceWorkers: 'block' });
+  const page = await ctx.newPage();
+  const errors = await openApp(page);
+  await page.evaluate(() => window.openWordSettings());
+  const sw = await page.locator('.ws-modal .ws-swatch').evaluateAll(b => b.map(e => { const r = e.getBoundingClientRect(); return [r.width, r.height]; }));
+  expect(sw.length).toBeGreaterThan(3);
+  for (const [w, h] of sw) expect(Math.abs(w - h)).toBeLessThanOrEqual(1);
+  expect(errors).toEqual([]);
+  await ctx.close();
+});

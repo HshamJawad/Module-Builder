@@ -4489,7 +4489,11 @@ body { padding-top: calc(76px + env(safe-area-inset-top, 0px)); }
     select, textarea { font-size: max(16px, 1em); }
 
     /* Comfortable targets (44px, the HIG / WCAG 2.5.5 size). */
-    button, .tab, .figma-btn, .mb-dialog-btn, select,
+    /* Named, not every <button>: a bare `button` rule stretched the small
+       fixed-size round / square buttons (colour swatches, step dots, ×)
+       into ovals and tall bars. */
+    .tab, .figma-btn, .mb-dialog-btn, .btn-action, .btn-remove-sheet, .mb-hw-btn,
+    .mb-pwa-bar button, select,
     input[type="button"], input[type="submit"] { min-height: 44px; }
     input[type="checkbox"], input[type="radio"] { width: 22px; height: 22px; }
 
@@ -4794,5 +4798,21 @@ body:has(.mb-pwa-bar) .mb-pwa-notice { top: calc(var(--mb-tb-h, 56px) + env(safe
         display: flex; align-items: center; width: 100%; padding: 11px 14px; border-radius: 10px;
         border: 1px solid transparent; background: transparent; color: var(--mb-nav-ink-soft);
         white-space: normal; flex-shrink: 0;
+    }
+}
+
+/* 3.81.5 — the language menu on phones.
+   It was position:fixed with both inline insets at 12px, which a
+   containing block other than the window turned into a ~60px sliver cut
+   by the screen edge in the installed app. It hangs from its button like
+   the desktop one, and cannot leave the screen: the button is at the
+   end of the toolbar and the panel is never wider than the window. */
+@media (max-width: 600px) {
+    .mb-lang-panel {
+        position: absolute;
+        top: calc(100% + 8px);
+        inset-inline-start: auto;
+        inset-inline-end: 0;
+        width: min(220px, calc(100vw - 24px));
     }
 }
