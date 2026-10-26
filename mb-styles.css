@@ -762,7 +762,8 @@
         .mb-step-move:focus-visible { outline: 2px solid #667eea; outline-offset: 1px; }
         .mb-step-move:disabled { opacity: 0.35; cursor: default; }
         .step-item.is-dragging,
-        .content-section-item.is-dragging {
+        .content-section-item.is-dragging,
+        .mb-att-item.is-dragging {
             opacity: 0.55;
             border: 1px dashed #667eea;
         }
@@ -3933,7 +3934,8 @@ button.mb-asm-edit { padding: 6px 12px !important; border: 1px solid #cbd5e1 !im
     display: flex; flex-direction: column; gap: 8px;
 }
 .mb-att-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.mb-att-title { font-weight: 700; color: #1e293b; font-size: .93em; }
+.mb-att-title { font-weight: 700; color: #1e293b; font-size: .93em; flex: 1 1 auto; min-width: 0; }
+.mb-att-move { display: inline-flex; gap: 5px; align-items: center; flex: 0 0 auto; }
 .mb-att-choose, .mb-att-btns { display: flex; flex-wrap: wrap; gap: 8px; }
 .mb-att-choose[hidden], .mb-att-body[hidden], .mb-att-fields[hidden],
 .mb-att-ref[hidden], .mb-att-warn[hidden] { display: none !important; }

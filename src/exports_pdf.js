@@ -361,7 +361,17 @@ function _pdfWriter(pdf, style, lang) {
     w.textImageRows = function (text, images, caps, opts) {
         opts = opts || {};
         images = (images || []).filter(function (im) { return im; });
-        if (!images.length) { w.text(text, opts.textOpts); return; }
+        /* opts.lead / opts.draw: the heading that belongs to this block. It
+           is drawn here, after the page is chosen, so it never stays alone
+           at the foot of a page with its text and picture on the next. */
+        var lead = opts.lead || 0;
+        var drawHead = function () { if (typeof opts.draw === 'function') opts.draw(); };
+        if (!images.length) {
+            if (lead) w.need(lead + w.lineH(style.body) * 2);
+            drawHead();
+            w.text(text, opts.textOpts);
+            return;
+        }
         var size = style.body, lh = w.lineH(size);
         var colW = CW / 2, padX = 3, padY = 3;
         var PX = 25.4 / 96;                                   // mm per CSS px
@@ -415,6 +425,16 @@ function _pdfWriter(pdf, style, lang) {
                 }
             }
         };
+
+        /* The heading goes with the first row: when the whole row fits on a
+           page it must fit under the heading, else both start a new page;
+           a row taller than a page keeps at least two lines with it. */
+        var row0 = Math.max(tLines.length * lh, pics[0] ? pics[0].total : 0) + padY * 2;
+        if (lead) {
+            var keep = (row0 <= BOTTOM - M - lead) ? row0 : (2 * lh + padY * 2);
+            if (w.y + lead + keep > BOTTOM) w.newPage();
+        }
+        drawHead();
 
         /* Row 0: the text, long text split by lines across pages, and the
            first picture beside the last part of it. */
@@ -626,10 +646,16 @@ function _pdfBuild(pdf, model, lang) {
 
             sh.sections.forEach(function (cs, k) {
                 _pdfAttachments(w, sh.attachments, k, S);   // 3.56.0
-                if (cs.heading) w.label(cs.heading);
-                if (cs.subheading) w.text(cs.subheading, { bold: true, after: 1 });   // 3.72.0
-                if (cs.images && cs.images.length) w.textImageRows(cs.text, cs.images, cs.imageCaps);   // 3.80.2: as Word
-                else if (cs.text) w.text(cs.text);
+                /* 3.80.3: the heading travels with its text and picture — it
+                   is drawn by the block, after the page is chosen. */
+                var _lh = w.lineH(S.body);
+                var _lead = (cs.heading ? _lh + 2.5 : 0) + (cs.subheading ? _lh + 1 : 0);
+                var _head = function () {
+                    if (cs.heading) w.label(cs.heading);
+                    if (cs.subheading) w.text(cs.subheading, { bold: true, after: 1 });   // 3.72.0
+                };
+                if ((cs.images && cs.images.length) || cs.text) w.textImageRows(cs.text, cs.images, cs.imageCaps, { lead: _lead, draw: _head });   // 3.80.2: as Word
+                else _head();
                 cs.tables.forEach(function (tb) {
                     /* The captions print even when the grid is empty —
                        a named table with nothing in it yet is something
