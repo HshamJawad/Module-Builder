@@ -556,10 +556,10 @@ GUIDE.en = {
     badge: '📘 Official Documentation',
     title: 'Module Builder',
     sub: 'A complete guide to designing, building, and exporting competency-based training modules — in English, French and Arabic, all inside your browser.',
-    meta: ['👨‍💻 by Husham Jawad Kadhim', '🔖 Version <span class="mb-ver">3.80.10</span>']
+    meta: ['👨‍💻 by Husham Jawad Kadhim', '🔖 Version <span class="mb-ver">3.80.11</span>']
   },
   footer: {
-    line1: '<strong>Module Builder v<span class="mb-ver">3.80.10</span></strong> — User Guide',
+    line1: '<strong>Module Builder v<span class="mb-ver">3.80.11</span></strong> — User Guide',
     line2: 'Created by <strong>Husham Jawad Kadhim</strong> · TVET Curriculum Developer &amp; Educational Technology Innovator',
     disclaimer: 'Module Builder is provided "as is" without warranty of any kind. Users are solely responsible for verifying and validating all exported content before use.'
   },
@@ -579,7 +579,7 @@ GUIDE.en = {
           { ico: '🏷', h: 'Marks, tables, images', p: 'Eleven instructional marks plus your own, inline tables, multiple images and attached figures' },
           { ico: '🔁', h: 'Autosave and offline', p: 'Every change is saved in the browser within a second. The tool is installable and works without a connection' }
         ]},
-        { t: 'callout', k: 'info', txt: 'This guide describes <strong>version <span class="mb-ver">3.80.10</span></strong>. The version number shown here is read from the tool itself, so it is always the version you are using.' }
+        { t: 'callout', k: 'info', txt: 'This guide describes <strong>version <span class="mb-ver">3.80.11</span></strong>. The version number shown here is read from the tool itself, so it is always the version you are using.' }
       ]
     },
     {
@@ -589,12 +589,33 @@ GUIDE.en = {
         { t: 'steps', items: [
           'On the first start a window asks you to <strong>choose the module template</strong> — Standard or Learner guide. You can change it later from the side bar or from Settings.',
           'Open <strong>Module Information</strong>. Add your first module with <strong>➕ Add Module</strong>, then add its Learning Outcomes with <strong>➕ Add Learning Outcome</strong>. If you have a DACUM chart, import it instead (see <em>DACUM hand-off</em>).',
-          'Fill in the <strong>Front Cover</strong> and <strong>Introduction Pages</strong> once. They are shared by every module of the project.',
+          'Fill in the <strong>Front Cover</strong>, the optional <strong>Module Information</strong> card and the <strong>Introduction Pages</strong> once. They are shared by every module of the project.',
           'For each Learning Outcome, write its <strong>Information Sheets</strong> (what the learner must know) and <strong>Activity / Job Sheets</strong> (what the learner must do).',
           'Open the <strong>Assessment Unit</strong> and complete one form per Learning Outcome. Add <strong>Tools &amp; Resources</strong> and <strong>References</strong>.',
           'Click <strong>Export</strong> in the toolbar and choose Word, HTML, PDF or PowerPoint. Use <strong>💾 Save module</strong> to keep a file copy of your work.'
         ]},
-        { t: 'callout', k: 'tip', txt: 'Stuck on what to write in a tab? Click the round <strong>?</strong> button on the Information, Activity and Assessment tabs. It opens short, practical guidance for that sheet.' }
+        { t: 'callout', k: 'tip', txt: 'Prefer a guided route? Open the <strong>🧭 Helper</strong>. Stuck on what to write in a tab? Click the round <strong>?</strong> button on the Information, Activity and Assessment tabs. It opens short, practical guidance for that sheet.' }
+      ]
+    },
+    {
+      id: 'helper', nav: '🧭 Helper', label: '🧭 Step-by-step Helper', title: 'The Step-by-step Helper',
+      lead: 'A small panel that walks you through the tabs in the order of the exported document, shows what is done and what is not, and takes you to each tab with one click. It changes nothing in your project.',
+      blocks: [
+        { t: 'steps', items: [
+          'Click the <strong>🧭 Helper</strong> button at the bottom corner of the window, or <strong>Start the helper</strong> in the Help tab.',
+          'The row of round buttons is the list of steps. Colour shows the state: green is done, amber is in progress, grey is to do, and a dashed border marks an optional step that is still empty.',
+          'Read the step, then press <strong>Go to this tab</strong>. The tab opens and the main button of that tab is highlighted for a moment. On the Information, Activity and Assessment steps, <strong>Open the ? guide</strong> opens that tab\u2019s guidance.',
+          'Use <strong>Next</strong> and <strong>Back</strong>, or the left and right arrow keys. If you open a tab yourself, the helper moves to the matching step.',
+          'The last step offers <strong>Save module</strong> and <strong>Export to Word</strong>.'
+        ]},
+        { t: 'table', head: ['State', 'Meaning'], rows: [
+          ['<span class="pill pill-green">Done</span>', 'Everything the step asks for exists, for example every Learning Outcome has an information sheet with a title'],
+          ['<span class="pill pill-amber">In progress</span>', 'Some of it exists'],
+          ['<span class="pill pill-purple">To do</span>', 'None of it yet'],
+          ['<span class="pill pill-blue">Optional</span>', 'An optional step with nothing in it. It is not a gap']
+        ]},
+        { t: 'callout', k: 'info', txt: 'The steps follow your template. The <strong>Learner guide</strong> template adds the Learning unit and Reflection steps. The helper remembers the last step <strong>per project</strong>.' },
+        { t: 'callout', k: 'tip', txt: 'It stays out of your way: it does not cover the screen, <kbd>Esc</kbd> closes it, and <strong>Hide the helper button</strong> removes the button. Bring it back from the Help tab.' }
       ]
     },
     {
@@ -629,9 +650,9 @@ GUIDE.en = {
           'Moving between tabs, modules or Learning Outcomes saves what you were editing first — you never need to save before switching.'
         ]},
         { t: 'table', head: ['Tab', 'What you do there'], rows: [
-          ['🏠 <strong>Module Information</strong>', 'Create modules and Learning Outcomes, performance criteria, the structure from DACUM, and the TVQF/NQF framework card'],
-          ['<strong>Front Cover</strong>', 'Cover image, the module information table and notes'],
-          ['<strong>Introduction Pages</strong>', 'Identification table, work team and introductory text'],
+          ['🏠 <strong>Module Information</strong>', 'Create modules and Learning Outcomes, plus the optional, folded Module Information card (information table and notes) and the structure received from DACUM'],
+          ['<strong>Front Cover</strong>', 'The cover image'],
+          ['<strong>Introduction Pages</strong>', 'Module overview table, work team and introductory text'],
           ['🧭 <strong>Learning unit</strong>', '<em>Learner guide only.</em> The introduction and knowledge of each learning unit'],
           ['<strong>Information Sheet</strong>', 'Content, images, tables, self-check and answer key'],
           ['<strong>Activity / Job Sheet</strong>', 'Resources, steps and the performance criteria checklist'],
@@ -686,7 +707,7 @@ GUIDE.en = {
     },
     {
       id: 'basic-info', nav: '📦 Module Information', label: '📦 Module Information', title: 'Module Information Tab',
-      lead: 'Your starting point. Create modules and Learning Outcomes, define performance criteria, and describe where the module sits in a qualifications framework.',
+      lead: 'Your starting point. Create modules and Learning Outcomes, and fill in the optional Module Information card.',
       blocks: [
         { t: 'card', ico: '📦', bg: '#dbeafe', h: 'Modules', sub: 'Create, rename, switch and delete', blocks: [
           { t: 'steps', items: [
@@ -696,15 +717,20 @@ GUIDE.en = {
         ]},
         { t: 'card', ico: '📚', bg: '#ede9fe', h: 'Learning Outcomes and performance criteria', sub: 'The backbone of the module', blocks: [
           { t: 'steps', items: [
-            'Click <strong>➕ Add Learning Outcome</strong>, select an outcome to work on it, and add its <strong>performance criteria</strong>. The criteria feed the activity checklists and the assessment form.',
-            'Summary cards show how many Information Sheets and Activity Sheets each outcome has.',
-            'Outcomes can carry written criteria from DACUM and can be reordered.'
+            'Click <strong>➕ Add Learning Outcome</strong> and select an outcome from <strong>Current Learning Outcome</strong> to work on it.',
+            'The summary line shows the module, its number of Learning Outcomes and its total sheets; for the open outcome it shows the Information Sheets and Activity Sheets.',
+            'An outcome keeps its <strong>performance criteria</strong> (for example those received from DACUM). They feed the activity checklists and the assessment form.',
+            'When the module came from DACUM, <strong>🧹 Clear Imported Structure &amp; Start Manual Authoring</strong> removes the imported modules, outcomes and criteria and lets you author from scratch. It asks for confirmation first.'
           ]}
         ]},
-        { t: 'card', ico: '🏛️', bg: '#dcfce7', h: 'Qualifications Framework Card (TVQF/NQF)', sub: 'Optional', blocks: [
-          { t: 'p', txt: 'Describes where the module sits in a national qualifications framework: framework name and version or year (for example <em>TVQF – Iraq, 2018 Guidelines</em>), level, and the optional extended fields. <strong>Only fields you fill in are exported.</strong> <strong>Clear framework card</strong> empties it in both halves and all languages, after a confirmation.' }
-        ]},
-        { t: 'callout', k: 'tip', txt: 'Learning-unit titles and objectives are optional. Leave them empty when your programme does not use them and they are simply not exported.' }
+        { t: 'card', ico: '📋', bg: '#dcfce7', h: 'Module Information (Optional)', sub: 'A folded card, closed by default', blocks: [
+          { t: 'steps', items: [
+            'Click the card title to open it. It holds <strong>Additional Information</strong> (project name, institution…), the <strong>Module Information Table</strong> and <strong>Additional Notes</strong> after the table.',
+            'In the table, click a label to rename it and use <strong>➕ Add Custom Row</strong> for your own rows. The table also carries the qualifications-framework rows (TVQF/NQF) such as level, framework name, notional hours, awarding body and dates.',
+            '<strong>Rows left empty are not exported.</strong> The table and notes print on the cover page, after the cover image.'
+          ]},
+          { t: 'callout', k: 'tip', txt: 'The Learner guide template does not use this card, which is why it is folded by default.' }
+        ]}
       ]
     },
     {
@@ -721,7 +747,7 @@ GUIDE.en = {
         ]},
         { t: 'card', ico: '🗺️', bg: '#ede9fe', h: 'Training Structure Mapping', sub: 'Where is the task analysis?', blocks: [
           { t: 'p', txt: 'A map of every source task of the module with its Task Analysis, so you see which tasks are analysed, which are not, and which outcome owns each. To analyse a task, click it to open its Task Analysis in DACUM Live Pro; press <strong>↩ Back to Module Builder</strong> there and the module updates at once while your sheets stay.' },
-          { t: 'p', txt: 'Tasks can be marked as <strong>excluded</strong> when they do not belong in this module. The framework level and worker behaviours from DACUM are carried over.' }
+          { t: 'p', txt: 'Tasks can be marked as <strong>excluded</strong> when they do not belong in this module.' }
         ]},
         { t: 'card', ico: '🧭', bg: '#fef3c7', h: 'Content map — each item written once', sub: 'Decide before you write', blocks: [
           { t: 'p', txt: 'Lists every Task Analysis item with a suggested outcome and destination. Decide which outcome owns each item and where it goes, so an item shared by several outcomes is written in one place only. Rows you change are marked <em>Your choice</em>; <strong>Back to suggestions</strong> resets the map without touching sheets or drafts.' }
@@ -741,12 +767,12 @@ GUIDE.en = {
     },
     {
       id: 'covers', nav: '🎨 Covers', label: '🎨 Covers', title: 'Front Cover and Back Cover Tabs',
-      lead: 'The front and back covers are separate tabs and are shared by every module in the project.',
+      lead: 'The front and back covers are separate tabs holding the two cover images. They are shared by every module in the project.',
       blocks: [
         { t: 'feats', items: [
           { ico: '🖼️', h: 'Front cover image', p: 'A full-page image (A4 proportions recommended) as the first page' },
-          { ico: '📊', h: 'Module information table', p: 'Sector, occupation, qualification, level, version and similar rows. Empty rows are skipped in the export' },
-          { ico: '📝', h: 'Notes', p: 'Free text above and below the table' },
+          { ico: '📊', h: 'Module information table', p: 'Lives in the folded <em>Module Information (Optional)</em> card of the first tab: sector, occupation, qualification, level, version and similar rows. Empty rows are skipped in the export' },
+          { ico: '📝', h: 'Notes', p: 'Additional information before the table and additional notes after it, in the same card' },
           { ico: '🔙', h: 'Back cover', p: 'Its own tab: an optional full-page image as the last page' }
         ]},
         { t: 'callout', k: 'info', txt: 'The cover table prints at <strong>18 pt</strong> by default — larger on purpose. Change it in Settings without touching body text.' }
@@ -754,12 +780,13 @@ GUIDE.en = {
     },
     {
       id: 'intro', nav: '📋 Introduction', label: '📋 Introduction', title: 'Introduction Pages Tab',
-      lead: 'The pages that come before the module content: identification, work team and introductory text.',
+      lead: 'The pages that come before the module content: the module overview table, work team and introductory text.',
       blocks: [
         { t: 'steps', items: [
-          'Fill in the <strong>identification table</strong> of the module (track or code prefix, title and similar).',
+          'Fill in the <strong>module overview table</strong>: Title, Subject, Level, Prerequisites, Duration, Purpose, Learning Outcomes, Sources, Activities and Procedures, Assessment. You write the right-hand column; the headings are the tool\u2019s own, in the export language. It prints when at least one box has text.',
           'In the <strong>Work Team</strong> table, add each person with name, task or role and work location. Rows with no name are skipped.',
-          'Use the additional introduction text for a foreword or acknowledgments. It starts on a new page when it has content.'
+          'Use the additional introduction text for a foreword or acknowledgments. It starts on a new page when it has content.',
+          'Use <strong>➕ Add Introduction Section</strong> for further sections. Each starts on a new page and empty sections are not exported.'
         ]},
         { t: 'callout', k: 'info', txt: 'The Module Overview (all outcomes and their performance criteria) is generated automatically in the export.' }
       ]
@@ -893,7 +920,7 @@ GUIDE.en = {
         { t: 'card', ico: '📄', bg: '#dcfce7', h: 'Document structure', sub: 'Export order, Standard template', blocks: [
           { t: 'table', head: ['#', 'Section', 'Notes'], rows: [
             ['1', 'Front cover', 'Image, information table and notes'],
-            ['2', 'Introduction pages', 'Identification, work team, extra text'],
+            ['2', 'Introduction pages', 'Overview table, work team, extra text and sections'],
             ['3', 'Module overview', 'All outcomes and performance criteria'],
             ['4+', '<strong>Per Learning Outcome</strong>', 'Repeated for each outcome'],
             ['', '&nbsp;&nbsp;↳ Information Sheet N-N', 'Content, images, marks, tables, attached figures'],
@@ -1073,10 +1100,10 @@ GUIDE.fr = {
     badge: '📘 Documentation officielle',
     title: 'Module Builder',
     sub: 'Un guide complet pour concevoir, construire et exporter des modules de formation par compétences — en français, en anglais et en arabe, entièrement dans votre navigateur.',
-    meta: ['👨‍💻 par Husham Jawad Kadhim', '🔖 Version <span class="mb-ver">3.80.10</span>']
+    meta: ['👨‍💻 par Husham Jawad Kadhim', '🔖 Version <span class="mb-ver">3.80.11</span>']
   },
   footer: {
-    line1: '<strong>Module Builder v<span class="mb-ver">3.80.10</span></strong> — Guide de l’utilisateur',
+    line1: '<strong>Module Builder v<span class="mb-ver">3.80.11</span></strong> — Guide de l’utilisateur',
     line2: 'Créé par <strong>Husham Jawad Kadhim</strong> · Concepteur de curricula EFTP &amp; innovateur en technologie éducative',
     disclaimer: 'Module Builder est fourni « en l’état », sans garantie d’aucune sorte. L’utilisateur est seul responsable de la vérification et de la validation de tout contenu exporté avant son utilisation.'
   },
@@ -1096,7 +1123,7 @@ GUIDE.fr = {
           { ico: '🏷', h: 'Marques, tableaux, images', p: 'Onze marques pédagogiques plus les vôtres, tableaux intégrés, images multiples et figures jointes' },
           { ico: '🔁', h: 'Enregistrement auto et hors ligne', p: 'Chaque modification est enregistrée dans le navigateur en moins d’une seconde. L’outil est installable et fonctionne sans connexion' }
         ]},
-        { t: 'callout', k: 'info', txt: 'Ce guide décrit la <strong>version <span class="mb-ver">3.80.10</span></strong>. Le numéro de version affiché ici est lu dans l’outil lui-même : c’est donc toujours celui que vous utilisez.' }
+        { t: 'callout', k: 'info', txt: 'Ce guide décrit la <strong>version <span class="mb-ver">3.80.11</span></strong>. Le numéro de version affiché ici est lu dans l’outil lui-même : c’est donc toujours celui que vous utilisez.' }
       ]
     },
     {
@@ -1112,6 +1139,27 @@ GUIDE.fr = {
           'Cliquez sur <strong>Exporter</strong> dans la barre d’outils et choisissez Word, HTML, PDF ou PowerPoint. Utilisez <strong>💾 Enregistrer le module</strong> pour garder une copie dans un fichier.'
         ]},
         { t: 'callout', k: 'tip', txt: 'Vous ne savez pas quoi écrire dans un onglet ? Cliquez sur le bouton rond <strong>?</strong> des onglets Fiche d’information, Fiche d’activité et Évaluation : il ouvre des conseils courts et pratiques.' }
+      ]
+    },
+    {
+      id: 'helper', nav: '🧭 Assistant', label: '🧭 Assistant pas à pas', title: 'L’assistant pas à pas',
+      lead: 'Un petit panneau qui vous guide dans les onglets, dans l’ordre du document exporté, montre ce qui est fait ou non, et vous mène à chaque onglet d’un clic. Il ne modifie rien dans votre projet.',
+      blocks: [
+        { t: 'steps', items: [
+          'Cliquez sur le bouton <strong>🧭 Assistant</strong> dans le coin inférieur de la fenêtre, ou sur <strong>Lancer l’assistant</strong> dans l’onglet Aide.',
+          'La rangée de boutons ronds est la liste des étapes. La couleur indique l’état : vert pour terminé, ambre pour en cours, gris pour à faire, et une bordure en pointillés marque une étape facultative encore vide.',
+          'Lisez l’étape, puis appuyez sur <strong>Aller à cet onglet</strong>. L’onglet s’ouvre et le bouton principal de l’onglet est mis en évidence un instant. Pour les étapes Fiche d’information, Fiche d’activité et Évaluation, <strong>Ouvrir le guide ?</strong> ouvre les conseils de l’onglet.',
+          'Utilisez <strong>Suivant</strong> et <strong>Précédent</strong>, ou les flèches gauche et droite du clavier. Si vous ouvrez un onglet vous-même, l’assistant passe à l’étape correspondante.',
+          'La dernière étape propose <strong>Enregistrer le module</strong> et <strong>Exporter vers Word</strong>.'
+        ]},
+        { t: 'table', head: ['État', 'Signification'], rows: [
+          ['<span class="pill pill-green">Terminé</span>', 'Tout ce que l’étape demande existe, par exemple chaque résultat d’apprentissage a une fiche d’information avec un titre'],
+          ['<span class="pill pill-amber">En cours</span>', 'Une partie existe'],
+          ['<span class="pill pill-purple">À faire</span>', 'Rien pour l’instant'],
+          ['<span class="pill pill-blue">Facultatif</span>', 'Une étape facultative sans contenu. Ce n’est pas un manque']
+        ]},
+        { t: 'callout', k: 'info', txt: 'Les étapes suivent votre modèle. Le modèle <strong>Guide de l’apprenant</strong> ajoute les étapes Unité d’apprentissage et Réflexion. L’assistant retient la dernière étape <strong>par projet</strong>.' },
+        { t: 'callout', k: 'tip', txt: 'Il reste discret : il ne couvre pas l’écran, <kbd>Échap</kbd> le ferme, et <strong>Masquer le bouton de l’assistant</strong> retire le bouton. Retrouvez-le dans l’onglet Aide.' }
       ]
     },
     {
@@ -1146,9 +1194,9 @@ GUIDE.fr = {
           'Changer d’onglet, de module ou de résultat d’apprentissage enregistre d’abord ce que vous éditiez : inutile d’enregistrer avant de changer.'
         ]},
         { t: 'table', head: ['Onglet', 'Ce que vous y faites'], rows: [
-          ['🏠 <strong>Informations du module</strong>', 'Créer les modules et résultats d’apprentissage, les critères de performance, la structure issue de DACUM et la fiche du cadre TVQF/NQF'],
-          ['<strong>Couverture</strong>', 'Image de couverture, tableau d’informations du module et notes'],
-          ['<strong>Pages d’introduction</strong>', 'Tableau d’identification, équipe de travail et texte d’introduction'],
+          ['🏠 <strong>Informations du module</strong>', 'Créer les modules et résultats d’apprentissage, plus la fiche facultative et repliée Informations du module (tableau d’informations et notes) et la structure reçue de DACUM'],
+          ['<strong>Couverture</strong>', 'L’image de couverture'],
+          ['<strong>Pages d’introduction</strong>', 'Tableau de présentation, équipe de travail et texte d’introduction'],
           ['🧭 <strong>Unité d’apprentissage</strong>', '<em>Guide de l’apprenant uniquement.</em> L’introduction et les connaissances de chaque unité'],
           ['<strong>Fiche d’information</strong>', 'Contenu, images, tableaux, auto-évaluation et corrigé'],
           ['<strong>Fiche d’activité / de travail</strong>', 'Ressources, étapes et liste de vérification des critères de performance'],
@@ -1203,7 +1251,7 @@ GUIDE.fr = {
     },
     {
       id: 'basic-info', nav: '📦 Infos du module', label: '📦 Informations du module', title: 'Onglet Informations du module',
-      lead: 'Votre point de départ. Créez les modules et résultats d’apprentissage, définissez les critères de performance et décrivez la place du module dans un cadre de certification.',
+      lead: 'Votre point de départ. Créez les modules et résultats d’apprentissage, et remplissez la fiche facultative Informations du module.',
       blocks: [
         { t: 'card', ico: '📦', bg: '#dbeafe', h: 'Modules', sub: 'Créer, renommer, changer et supprimer', blocks: [
           { t: 'steps', items: [
@@ -1213,15 +1261,20 @@ GUIDE.fr = {
         ]},
         { t: 'card', ico: '📚', bg: '#ede9fe', h: 'Résultats d’apprentissage et critères de performance', sub: 'L’ossature du module', blocks: [
           { t: 'steps', items: [
-            'Cliquez sur <strong>➕ Ajouter un résultat d’apprentissage</strong>, sélectionnez-le pour travailler dessus, puis ajoutez ses <strong>critères de performance</strong>. Ils alimentent les listes de vérification des activités et le formulaire d’évaluation.',
-            'Des cartes de synthèse indiquent le nombre de fiches d’information et d’activité de chaque résultat.',
-            'Les résultats peuvent porter les critères rédigés dans DACUM et peuvent être réordonnés.'
+            'Cliquez sur <strong>➕ Ajouter un résultat d’apprentissage</strong> et choisissez un résultat dans <strong>Résultat d’apprentissage actuel</strong> pour travailler dessus.',
+            'La ligne de synthèse indique le module, son nombre de résultats d’apprentissage et son total de fiches ; pour le résultat ouvert, elle indique les fiches d’information et d’activité.',
+            'Un résultat conserve ses <strong>critères de performance</strong> (par exemple ceux reçus de DACUM). Ils alimentent les listes de vérification des activités et le formulaire d’évaluation.',
+            'Quand le module vient de DACUM, <strong>🧹 Effacer la structure importée et passer à la rédaction manuelle</strong> supprime les modules, résultats et critères importés et vous laisse rédiger de zéro, après confirmation.'
           ]}
         ]},
-        { t: 'card', ico: '🏛️', bg: '#dcfce7', h: 'Fiche du cadre de certification (TVQF/NQF)', sub: 'Facultatif', blocks: [
-          { t: 'p', txt: 'Décrit la place du module dans un cadre national de certification : nom et version ou année du cadre (par exemple <em>TVQF – Irak, lignes directrices 2018</em>), niveau, et champs étendus facultatifs. <strong>Seuls les champs remplis sont exportés.</strong> <strong>Vider la fiche du cadre</strong> la vide dans les deux moitiés et toutes les langues, après confirmation.' }
-        ]},
-        { t: 'callout', k: 'tip', txt: 'Les titres et objectifs d’unité d’apprentissage sont facultatifs. Laissez-les vides si votre programme ne les utilise pas : ils ne sont simplement pas exportés.' }
+        { t: 'card', ico: '📋', bg: '#dcfce7', h: 'Informations du module (facultatif)', sub: 'Une fiche repliée, fermée par défaut', blocks: [
+          { t: 'steps', items: [
+            'Cliquez sur le titre de la fiche pour l’ouvrir. Elle contient les <strong>Informations complémentaires</strong> (nom du projet, établissement…), le <strong>Tableau d’informations du module</strong> et les <strong>Notes complémentaires</strong> après le tableau.',
+            'Dans le tableau, cliquez sur un libellé pour le renommer et utilisez <strong>➕ Ajouter une ligne personnalisée</strong> pour vos propres lignes. Le tableau comprend aussi les lignes du cadre de certification (TVQF/NQF) : niveau, nom du cadre, heures nominales, organisme certificateur et dates.',
+            '<strong>Les lignes laissées vides ne sont pas exportées.</strong> Le tableau et les notes s’impriment sur la page de couverture, après l’image.'
+          ]},
+          { t: 'callout', k: 'tip', txt: 'Le modèle Guide de l’apprenant n’utilise pas cette fiche, d’où son état replié par défaut.' }
+        ]}
       ]
     },
     {
@@ -1238,7 +1291,7 @@ GUIDE.fr = {
         ]},
         { t: 'card', ico: '🗺️', bg: '#ede9fe', h: 'Structuration pédagogique', sub: 'Où est l’analyse des tâches ?', blocks: [
           { t: 'p', txt: 'Une carte de chaque tâche source du module avec son analyse : vous voyez quelles tâches sont analysées, lesquelles ne le sont pas, et quel résultat les porte. Pour analyser une tâche, cliquez dessus pour ouvrir son analyse dans DACUM Live Pro ; appuyez sur <strong>↩ Retour à Module Builder</strong> et le module se met à jour aussitôt, vos fiches restant intactes.' },
-          { t: 'p', txt: 'Les tâches peuvent être <strong>exclues</strong> quand elles n’ont pas leur place dans ce module. Le niveau du cadre et les comportements professionnels issus de DACUM sont repris.' }
+          { t: 'p', txt: 'Les tâches peuvent être <strong>exclues</strong> quand elles n’ont pas leur place dans ce module.' }
         ]},
         { t: 'card', ico: '🧭', bg: '#fef3c7', h: 'Carte du contenu — chaque élément rédigé une fois', sub: 'Décidez avant d’écrire', blocks: [
           { t: 'p', txt: 'Liste chaque élément de l’analyse des tâches avec un résultat et une destination suggérés. Décidez quel résultat porte chaque élément et où il va, afin qu’un élément partagé par plusieurs résultats ne soit rédigé qu’à un seul endroit. Les lignes modifiées sont marquées <em>Votre choix</em> ; <strong>Revenir aux suggestions</strong> réinitialise la carte sans toucher aux fiches ni aux brouillons.' }
@@ -1258,12 +1311,12 @@ GUIDE.fr = {
     },
     {
       id: 'covers', nav: '🎨 Couvertures', label: '🎨 Couvertures', title: 'Onglets Couverture et Quatrième de couverture',
-      lead: 'La première et la dernière de couverture sont des onglets séparés, communs à tous les modules du projet.',
+      lead: 'La première et la dernière de couverture sont des onglets séparés qui contiennent les deux images. Ils sont communs à tous les modules du projet.',
       blocks: [
         { t: 'feats', items: [
           { ico: '🖼️', h: 'Image de couverture', p: 'Une image pleine page (proportions A4 recommandées) en première page' },
-          { ico: '📊', h: 'Tableau d’informations du module', p: 'Secteur, profession, qualification, niveau, version, etc. Les lignes vides sont ignorées à l’export' },
-          { ico: '📝', h: 'Notes', p: 'Texte libre au-dessus et au-dessous du tableau' },
+          { ico: '📊', h: 'Tableau d’informations du module', p: 'Il se trouve dans la fiche repliée <em>Informations du module (facultatif)</em> du premier onglet : secteur, profession, qualification, niveau, version, etc. Les lignes vides sont ignorées à l’export' },
+          { ico: '📝', h: 'Notes', p: 'Informations complémentaires avant le tableau et notes complémentaires après, dans la même fiche' },
           { ico: '🔙', h: 'Quatrième de couverture', p: 'Son propre onglet : une image pleine page facultative en dernière page' }
         ]},
         { t: 'callout', k: 'info', txt: 'Le tableau de couverture s’imprime en <strong>18 pt</strong> par défaut — volontairement plus grand. Modifiez-le dans les Paramètres sans toucher au corps du texte.' }
@@ -1271,12 +1324,13 @@ GUIDE.fr = {
     },
     {
       id: 'intro', nav: '📋 Introduction', label: '📋 Introduction', title: 'Onglet Pages d’introduction',
-      lead: 'Les pages qui précèdent le contenu du module : identification, équipe de travail et texte d’introduction.',
+      lead: 'Les pages qui précèdent le contenu du module : tableau de présentation, équipe de travail et texte d’introduction.',
       blocks: [
         { t: 'steps', items: [
-          'Remplissez le <strong>tableau d’identification</strong> du module (préfixe de filière ou de code, titre, etc.).',
+          'Remplissez le <strong>tableau de présentation du module</strong> : Titre, Sujet, Niveau, Prérequis, Durée, Objectif, Résultats d’apprentissage, Sources, Activités et procédures, Évaluation. Vous écrivez la colonne de droite ; les intitulés sont ceux de l’outil, dans la langue d’export. Il s’imprime dès qu’une case contient du texte.',
           'Dans le tableau <strong>Équipe de travail</strong>, ajoutez chaque personne avec son nom, sa tâche ou son rôle et son lieu de travail. Les lignes sans nom sont ignorées.',
-          'Utilisez le texte d’introduction complémentaire pour une préface ou des remerciements. Il commence sur une nouvelle page s’il a du contenu.'
+          'Utilisez le texte d’introduction complémentaire pour une préface ou des remerciements. Il commence sur une nouvelle page s’il a du contenu.',
+          'Utilisez <strong>➕ Ajouter une section d’introduction</strong> pour d’autres sections. Chacune commence sur une nouvelle page et les sections vides ne sont pas exportées.'
         ]},
         { t: 'callout', k: 'info', txt: 'L’aperçu du module (tous les résultats et leurs critères de performance) est généré automatiquement à l’export.' }
       ]
@@ -1410,7 +1464,7 @@ GUIDE.fr = {
         { t: 'card', ico: '📄', bg: '#dcfce7', h: 'Structure du document', sub: 'Ordre d’export, modèle Standard', blocks: [
           { t: 'table', head: ['#', 'Section', 'Remarques'], rows: [
             ['1', 'Couverture', 'Image, tableau d’informations et notes'],
-            ['2', 'Pages d’introduction', 'Identification, équipe de travail, texte complémentaire'],
+            ['2', 'Pages d’introduction', 'Tableau de présentation, équipe de travail, texte et sections complémentaires'],
             ['3', 'Aperçu du module', 'Tous les résultats et critères de performance'],
             ['4+', '<strong>Par résultat d’apprentissage</strong>', 'Répété pour chaque résultat'],
             ['', '&nbsp;&nbsp;↳ Fiche d’information N-N', 'Contenu, images, marques, tableaux, figures jointes'],
@@ -1590,10 +1644,10 @@ GUIDE.ar = {
     badge: '📘 التوثيق الرسمي',
     title: 'باني الوحدات التدريبية',
     sub: 'دليل كامل لتصميم وحدات التدريب القائمة على الجدارات وبنائها وتصديرها — بالعربية والإنجليزية والفرنسية، كل ذلك داخل المتصفّح.',
-    meta: ['👨‍💻 إعداد هشام جواد كاظم', '🔖 الإصدار <span class="mb-ver">3.80.10</span>']
+    meta: ['👨‍💻 إعداد هشام جواد كاظم', '🔖 الإصدار <span class="mb-ver">3.80.11</span>']
   },
   footer: {
-    line1: '<strong>باني الوحدات التدريبية — الإصدار <span class="mb-ver">3.80.10</span></strong> — دليل المستخدم',
+    line1: '<strong>باني الوحدات التدريبية — الإصدار <span class="mb-ver">3.80.11</span></strong> — دليل المستخدم',
     line2: 'إعداد <strong>هشام جواد كاظم</strong> · مطوّر مناهج التعليم والتدريب المهني والتقني ومبتكر في تقنيات التعليم',
     disclaimer: 'تُقدَّم أداة باني الوحدات التدريبية «كما هي» دون أي ضمان من أي نوع. المستخدم وحده مسؤول عن مراجعة كل المحتوى المُصدَّر والتحقق منه قبل استخدامه.'
   },
@@ -1613,7 +1667,7 @@ GUIDE.ar = {
           { ico: '🏷', h: 'علامات وجداول وصور', p: 'إحدى عشرة علامة تعليمية إضافة إلى علاماتك الخاصة، وجداول مضمّنة، وصور متعددة، وأشكال وجداول مرفقة' },
           { ico: '🔁', h: 'حفظ تلقائي وعمل دون اتصال', p: 'يُحفظ كل تغيير في المتصفّح خلال ثانية. يمكن تثبيت الأداة وتعمل دون اتصال' }
         ]},
-        { t: 'callout', k: 'info', txt: 'يصف هذا الدليل <strong>الإصدار <span class="mb-ver">3.80.10</span></strong>. رقم الإصدار المعروض هنا يُقرأ من الأداة نفسها، فهو دائماً الإصدار الذي تستخدمه.' }
+        { t: 'callout', k: 'info', txt: 'يصف هذا الدليل <strong>الإصدار <span class="mb-ver">3.80.11</span></strong>. رقم الإصدار المعروض هنا يُقرأ من الأداة نفسها، فهو دائماً الإصدار الذي تستخدمه.' }
       ]
     },
     {
@@ -1629,6 +1683,27 @@ GUIDE.ar = {
           'انقر <strong>تصدير</strong> في الشريط العلوي واختر Word أو HTML أو PDF أو PowerPoint. واستخدم <strong>💾 حفظ الوحدة</strong> للاحتفاظ بنسخة في ملف.'
         ]},
         { t: 'callout', k: 'tip', txt: 'لا تدري ماذا تكتب في تبويب؟ انقر الزر الدائري <strong>؟</strong> في تبويبات ورقة المعلومات وورقة النشاط والتقييم؛ يفتح إرشادات قصيرة وعملية.' }
+      ]
+    },
+    {
+      id: 'helper', nav: '🧭 المساعد', label: '🧭 المساعد خطوة بخطوة', title: 'المساعد خطوة بخطوة',
+      lead: 'لوحة صغيرة ترافقك بين التبويبات بترتيب المستند المُصدَّر، وتُظهر ما أُنجز وما لم يُنجز، وتنقلك إلى كل تبويب بنقرة. ولا تغيّر شيئاً في مشروعك.',
+      blocks: [
+        { t: 'steps', items: [
+          'انقر زر <strong>🧭 المساعد</strong> في زاوية النافذة السفلية، أو <strong>ابدأ المساعد</strong> في تبويب المساعدة.',
+          'صف الأزرار الدائرية هو قائمة الخطوات. يدل اللون على الحالة: الأخضر مكتمل، والعنبري قيد الإنجاز، والرمادي لم يبدأ، والحد المتقطع يعلّم خطوة اختيارية ما زالت فارغة.',
+          'اقرأ الخطوة ثم اضغط <strong>اذهب إلى هذا التبويب</strong>. يُفتح التبويب ويُبرَز لحظة زره الرئيسي. وفي خطوات ورقة المعلومات وورقة النشاط والتقييم يفتح <strong>افتح إرشادات ؟</strong> إرشادات ذلك التبويب.',
+          'استخدم <strong>التالي</strong> و<strong>السابق</strong>، أو سهمي اليمين واليسار في لوحة المفاتيح. وإذا فتحت تبويباً بنفسك ينتقل المساعد إلى الخطوة المقابلة.',
+          'تعرض الخطوة الأخيرة <strong>حفظ الوحدة</strong> و<strong>تصدير إلى Word</strong>.'
+        ]},
+        { t: 'table', head: ['الحالة', 'المعنى'], rows: [
+          ['<span class="pill pill-green">مكتمل</span>', 'كل ما تطلبه الخطوة موجود، مثل أن تكون لكل محصلة تعلم ورقة معلومات لها عنوان'],
+          ['<span class="pill pill-amber">قيد الإنجاز</span>', 'بعضه موجود'],
+          ['<span class="pill pill-purple">لم يبدأ</span>', 'لا شيء منه بعد'],
+          ['<span class="pill pill-blue">اختياري</span>', 'خطوة اختيارية بلا محتوى. وهي ليست نقصاً']
+        ]},
+        { t: 'callout', k: 'info', txt: 'تتبع الخطوات نموذجك. ويضيف نموذج <strong>دليل المتعلم</strong> خطوتي الوحدة التعلمية والتأمل. ويتذكر المساعد آخر خطوة <strong>لكل مشروع</strong>.' },
+        { t: 'callout', k: 'tip', txt: 'لا يزاحمك: لا يغطي الشاشة، ويغلقه <kbd>Esc</kbd>، ويزيل <strong>إخفاء زر المساعد</strong> الزر. وتعيده من تبويب المساعدة.' }
       ]
     },
     {
@@ -1663,9 +1738,9 @@ GUIDE.ar = {
           'التنقل بين التبويبات أو الوحدات أو محصلات التعلم يحفظ أولاً ما كنت تحرره، فلا حاجة إلى الحفظ قبل التنقل.'
         ]},
         { t: 'table', head: ['التبويب', 'ما تفعله فيه'], rows: [
-          ['🏠 <strong>معلومات الوحدة</strong>', 'إنشاء الوحدات ومحصلات التعلم، ومعايير الأداء، والهيكل القادم من DACUM، وبطاقة إطار المؤهلات TVQF/NQF'],
-          ['<strong>الغلاف الأمامي</strong>', 'صورة الغلاف وجدول معلومات الوحدة والملاحظات'],
-          ['<strong>صفحات التقديم</strong>', 'جدول التعريف وفريق العمل ونص التقديم'],
+          ['🏠 <strong>معلومات الوحدة</strong>', 'إنشاء الوحدات ومحصلات التعلم، إضافة إلى بطاقة معلومات الوحدة الاختيارية المطوية (جدول المعلومات والملاحظات) والهيكل المستلم من DACUM'],
+          ['<strong>الغلاف الأمامي</strong>', 'صورة الغلاف'],
+          ['<strong>صفحات التقديم</strong>', 'جدول نظرة عامة على الوحدة وفريق العمل ونص التقديم'],
           ['🧭 <strong>الوحدة التعلمية</strong>', '<em>في دليل المتعلم فقط.</em> مقدمة كل وحدة تعلمية ومعارفها'],
           ['<strong>ورقة المعلومات</strong>', 'المحتوى والصور والجداول والتقييم الذاتي والأجوبة النموذجية'],
           ['<strong>ورقة النشاط/العمل</strong>', 'الموارد والخطوات وقائمة تدقيق معايير الأداء'],
@@ -1720,7 +1795,7 @@ GUIDE.ar = {
     },
     {
       id: 'basic-info', nav: '📦 معلومات الوحدة', label: '📦 معلومات الوحدة', title: 'تبويب معلومات الوحدة',
-      lead: 'نقطة البداية. أنشئ الوحدات ومحصلات التعلم، وحدّد معايير الأداء، وصِف موضع الوحدة في إطار المؤهلات.',
+      lead: 'نقطة البداية. أنشئ الوحدات ومحصلات التعلم، واملأ بطاقة معلومات الوحدة الاختيارية.',
       blocks: [
         { t: 'card', ico: '📦', bg: '#dbeafe', h: 'الوحدات', sub: 'إنشاء وإعادة تسمية وتبديل وحذف', blocks: [
           { t: 'steps', items: [
@@ -1730,15 +1805,20 @@ GUIDE.ar = {
         ]},
         { t: 'card', ico: '📚', bg: '#ede9fe', h: 'محصلات التعلم ومعايير الأداء', sub: 'العمود الفقري للوحدة', blocks: [
           { t: 'steps', items: [
-            'انقر <strong>➕ إضافة محصلة تعلم</strong>، وحدّدها لتعمل عليها، ثم أضف <strong>معايير أدائها</strong>. تغذي المعايير قوائم تدقيق الأنشطة واستمارة التقييم.',
-            'تعرض بطاقات الملخص عدد أوراق المعلومات وأوراق النشاط لكل محصلة.',
-            'يمكن أن تحمل المحصلات معايير مكتوبة قادمة من DACUM، ويمكن إعادة ترتيبها.'
+            'انقر <strong>➕ إضافة محصلة تعلم</strong> ثم اختر محصلة من <strong>محصلة التعلم الحالية</strong> لتعمل عليها.',
+            'يعرض سطر الملخص الوحدة وعدد محصلاتها ومجموع أوراقها؛ وللمحصلة المفتوحة يعرض أوراق المعلومات وأوراق النشاط.',
+            'تحتفظ المحصلة بـ<strong>معايير أدائها</strong> (مثل التي استُلمت من DACUM). تغذي هذه المعايير قوائم تدقيق الأنشطة واستمارة التقييم.',
+            'إذا كانت الوحدة قادمة من DACUM فإن <strong>🧹 مسح الهيكل المستورد والبدء بالتأليف اليدوي</strong> يزيل الوحدات والمحصلات والمعايير المستوردة لتؤلف من الصفر، بعد طلب التأكيد.'
           ]}
         ]},
-        { t: 'card', ico: '🏛️', bg: '#dcfce7', h: 'بطاقة إطار المؤهلات (TVQF/NQF)', sub: 'اختيارية', blocks: [
-          { t: 'p', txt: 'تصف موضع الوحدة في إطار وطني للمؤهلات: اسم الإطار وإصداره أو سنته (مثل <em>TVQF – العراق، إرشادات 2018</em>)، والمستوى، والحقول الإضافية الاختيارية. <strong>لا تُصدَّر إلا الحقول التي تملؤها.</strong> <strong>تفريغ البطاقة</strong> يفرّغها في نصفيها وبكل اللغات بعد التأكيد.' }
-        ]},
-        { t: 'callout', k: 'tip', txt: 'عناوين الوحدات التعلمية وأهدافها اختيارية. اتركها فارغة إن لم يستخدمها برنامجك فلا تُصدَّر ببساطة.' }
+        { t: 'card', ico: '📋', bg: '#dcfce7', h: 'معلومات الوحدة (اختياري)', sub: 'بطاقة مطوية، مغلقة افتراضياً', blocks: [
+          { t: 'steps', items: [
+            'انقر عنوان البطاقة لفتحها. تضم <strong>معلومات إضافية</strong> (اسم المشروع والجهة…) و<strong>جدول معلومات الوحدة</strong> و<strong>ملاحظات إضافية</strong> بعد الجدول.',
+            'في الجدول انقر تسمية لتغيير اسمها واستخدم <strong>➕ إضافة صف مخصص</strong> لصفوفك الخاصة. ويحمل الجدول أيضاً صفوف إطار المؤهلات (TVQF/NQF) مثل المستوى واسم الإطار والساعات الاسمية والجهة المانحة والتواريخ.',
+            '<strong>الصفوف الفارغة لا تُصدَّر.</strong> يُطبع الجدول والملاحظات في صفحة الغلاف بعد صورته.'
+          ]},
+          { t: 'callout', k: 'tip', txt: 'نموذج دليل المتعلم لا يستخدم هذه البطاقة، ولذلك تكون مطوية افتراضياً.' }
+        ]}
       ]
     },
     {
@@ -1755,7 +1835,7 @@ GUIDE.ar = {
         ]},
         { t: 'card', ico: '🗺️', bg: '#ede9fe', h: 'هيكلة البنية التدريبية', sub: 'أين تحليل المهام؟', blocks: [
           { t: 'p', txt: 'خريطة لكل مهمة مصدر في الوحدة مع تحليلها، فترى أي المهام حُللت وأيها لم تُحلل، وأي محصلة تملكها. لتحليل مهمة انقرها لتفتح تحليلها في DACUM Live Pro؛ ثم اضغط <strong>↩ العودة إلى باني الوحدات</strong> فتتحدث الوحدة فوراً وتبقى أوراقك كما هي.' },
-          { t: 'p', txt: 'يمكن <strong>استبعاد</strong> مهام لا مكان لها في هذه الوحدة. ويُنقل مستوى الإطار والسلوكيات المهنية القادمة من DACUM.' }
+          { t: 'p', txt: 'يمكن <strong>استبعاد</strong> مهام لا مكان لها في هذه الوحدة.' }
         ]},
         { t: 'card', ico: '🧭', bg: '#fef3c7', h: 'خريطة المحتوى — كل عنصر يُكتب مرة واحدة', sub: 'قرّر قبل أن تكتب', blocks: [
           { t: 'p', txt: 'تسرد كل عنصر من تحليل المهام مع محصلة ووجهة مقترحتين. قرّر أي محصلة تملك كل عنصر وأين يذهب، فلا يُكتب عنصر تشترك فيه عدة محصلات إلا في مكان واحد. تُعلَّم الصفوف التي غيّرتها بـ <em>اختيارك</em>؛ و<strong>العودة إلى المقترحات</strong> تعيد الخريطة دون المساس بالأوراق أو المسودات.' }
@@ -1775,12 +1855,12 @@ GUIDE.ar = {
     },
     {
       id: 'covers', nav: '🎨 الأغلفة', label: '🎨 الأغلفة', title: 'تبويبا الغلاف الأمامي والخلفي',
-      lead: 'الغلافان الأمامي والخلفي تبويبان منفصلان، ومشتركان بين كل وحدات المشروع.',
+      lead: 'الغلافان الأمامي والخلفي تبويبان منفصلان يحملان صورتي الغلاف، ومشتركان بين كل وحدات المشروع.',
       blocks: [
         { t: 'feats', items: [
           { ico: '🖼️', h: 'صورة الغلاف الأمامي', p: 'صورة بحجم الصفحة (يُفضَّل نسبة A4) تكون الصفحة الأولى' },
-          { ico: '📊', h: 'جدول معلومات الوحدة', p: 'القطاع والمهنة والمؤهل والمستوى والإصدار وغيرها. تُتجاوز الصفوف الفارغة عند التصدير' },
-          { ico: '📝', h: 'ملاحظات', p: 'نص حر فوق الجدول وتحته' },
+          { ico: '📊', h: 'جدول معلومات الوحدة', p: 'يقع في بطاقة <em>معلومات الوحدة (اختياري)</em> المطوية في التبويب الأول: القطاع والمهنة والمؤهل والمستوى والإصدار وغيرها. تُتجاوز الصفوف الفارغة عند التصدير' },
+          { ico: '📝', h: 'ملاحظات', p: 'معلومات إضافية قبل الجدول وملاحظات إضافية بعده، في البطاقة نفسها' },
           { ico: '🔙', h: 'الغلاف الخلفي', p: 'له تبويبه الخاص: صورة اختيارية بحجم الصفحة تكون الصفحة الأخيرة' }
         ]},
         { t: 'callout', k: 'info', txt: 'يُطبع جدول الغلاف بحجم <strong>18 نقطة</strong> افتراضياً — أكبر عمداً. غيّره من الإعدادات دون المساس بنص المتن.' }
@@ -1788,12 +1868,13 @@ GUIDE.ar = {
     },
     {
       id: 'intro', nav: '📋 التقديم', label: '📋 التقديم', title: 'تبويب صفحات التقديم',
-      lead: 'الصفحات التي تسبق محتوى الوحدة: التعريف وفريق العمل ونص التقديم.',
+      lead: 'الصفحات التي تسبق محتوى الوحدة: جدول نظرة عامة على الوحدة وفريق العمل ونص التقديم.',
       blocks: [
         { t: 'steps', items: [
-          'املأ <strong>جدول التعريف</strong> بالوحدة (بادئة المسار أو الرمز، والعنوان، وما شابه).',
+          'املأ <strong>جدول نظرة عامة على الوحدة</strong>: العنوان، الموضوع، المستوى، المتطلبات السابقة، المدة، الغرض، محصلات التعلم، المصادر، الأنشطة والإجراءات، التقييم. تكتب أنت العمود الأيمن؛ أما العناوين فهي من الأداة وبلغة التصدير. ويُطبع الجدول إذا كان في أي خانة نص.',
           'في جدول <strong>فريق العمل</strong> أضف كل شخص باسمه ومهمته أو دوره ومكان عمله. تُتجاوز الصفوف التي بلا اسم.',
-          'استخدم نص التقديم الإضافي لتمهيد أو شكر وتقدير. يبدأ في صفحة جديدة إن كان فيه محتوى.'
+          'استخدم نص التقديم الإضافي لتمهيد أو شكر وتقدير. يبدأ في صفحة جديدة إن كان فيه محتوى.',
+          'استخدم <strong>➕ إضافة قسم تقديمي</strong> لأقسام أخرى. يبدأ كل قسم في صفحة جديدة ولا تُصدَّر الأقسام الفارغة.'
         ]},
         { t: 'callout', k: 'info', txt: 'تُنشأ نظرة عامة على الوحدة (كل المحصلات ومعايير أدائها) تلقائياً عند التصدير.' }
       ]
@@ -1927,7 +2008,7 @@ GUIDE.ar = {
         { t: 'card', ico: '📄', bg: '#dcfce7', h: 'بنية المستند', sub: 'ترتيب التصدير في النموذج القياسي', blocks: [
           { t: 'table', head: ['#', 'القسم', 'ملاحظات'], rows: [
             ['1', 'الغلاف الأمامي', 'الصورة وجدول المعلومات والملاحظات'],
-            ['2', 'صفحات التقديم', 'التعريف وفريق العمل والنص الإضافي'],
+            ['2', 'صفحات التقديم', 'جدول النظرة العامة وفريق العمل والنص والأقسام الإضافية'],
             ['3', 'نظرة عامة على الوحدة', 'كل المحصلات ومعايير الأداء'],
             ['4+', '<strong>لكل محصلة تعلم</strong>', 'يتكرر لكل محصلة'],
             ['', '&nbsp;&nbsp;↳ ورقة المعلومات N-N', 'المحتوى والصور والعلامات والجداول والأشكال المرفقة'],
