@@ -4751,3 +4751,17 @@ body:has(.mb-pwa-bar) .mb-pwa-notice { top: calc(var(--mb-tb-h, 56px) + env(safe
     /* The panel no longer needs the strip's clearance. */
     .tab-content.active { border-radius: 14px; }
 }
+
+/* 3.81.2 — small round buttons stay round on touch screens.
+   The 44px minimum height (pointer: coarse) stretched the 24–34px circles
+   into ovals. Their size is fixed; the touch target is an invisible
+   ::after around each one instead. */
+@media (pointer: coarse) {
+    #mb-hw button.mb-hw-dot,
+    button.mb-hw-chip-x#mb-hw-chip-x,
+    .mb-tab-help-btn { min-height: 0; min-width: 0; flex: 0 0 auto; }
+    #mb-hw button.mb-hw-dot { position: relative; width: 30px; height: 30px; aspect-ratio: 1; }
+    #mb-hw button.mb-hw-dot::after { content: ""; position: absolute; inset: -4px; }
+    .mb-hw-dots { gap: 8px; }
+    .mb-tab-help-btn { aspect-ratio: 1; }
+}
