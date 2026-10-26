@@ -287,9 +287,9 @@
             'max-width:calc(100vw - 24px)',
             'padding:12px 18px',
             'border-radius:14px',
-            'background:linear-gradient(135deg,#6366f1,#8b5cf6)',
+            'background:linear-gradient(135deg,#0ea5e9 0%,#0284c7 100%)',
             'color:#fff',
-            'box-shadow:0 10px 32px rgba(15,23,42,.34)',
+            'box-shadow:0 10px 30px rgba(2,132,199,.35)',
             'font-family:inherit',
             'font-size:.92em',
             'line-height:1.4'
@@ -303,11 +303,11 @@
             '</span>' +
             '<button type="button" class="mb-update-go" style="' +
                 'flex-shrink:0;border:none;border-radius:9px;padding:8px 16px;' +
-                'background:#fff;color:#4f46e5;font-family:inherit;font-size:.95em;' +
+                'background:#fff;color:#0369a1;font-family:inherit;font-size:.95em;' +
                 'font-weight:700;cursor:pointer;"></button>' +
             '<button type="button" class="mb-update-later" style="' +
                 'flex-shrink:0;border:none;border-radius:9px;padding:8px 12px;' +
-                'background:transparent;color:#e9e6ff;font-family:inherit;' +
+                'background:transparent;color:#fff;font-family:inherit;' +
                 'font-size:.92em;font-weight:600;cursor:pointer;' +
                 'text-decoration:underline;"></button>';
 
