@@ -71,7 +71,7 @@ var _mbSawArabic = false;
 
 /* Keys whose values are never prose: base64 images alone would swamp
    the Latin count and force every Arabic module to LTR. */
-var _MB_NON_PROSE = /^(id|uid|.*IdCounter|image|images|.*Image|qrImage|mime|mimeType|fileName|url|linkUrl|href|src|data|schemaVersion|duration|quantity|sheetNumber|level|version|seedKey)$/i;
+var _MB_NON_PROSE = /^(id|uid|.*IdCounter|image|images|.*Image|qrImage|mime|mimeType|fileName|url|linkUrl|href|src|data|schemaVersion|duration|quantity|sheetNumber|level|version|seedKey|mbTr|mbI18n)$/i;
 
 /**
  * Which SIDE did the author write on?

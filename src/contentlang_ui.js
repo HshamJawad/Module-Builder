@@ -72,6 +72,21 @@ function switchContentLang(code) {
 
     setContentLang(code);
 
+    mbRepaintContent();
+    /* Announced in the language just switched TO, not in the interface
+       language: the message confirms which side the editor is now bound
+       to, and saying so in that language is the shortest possible proof
+       that the switch did what it said. */
+    showStatus(window.i18n.tfIn('dgSwitchedTo', code, { v0: biLangLabel(code) }), 'success');
+}
+
+/**
+ * Repaint every content field from the state, on the side now selected.
+ * The second half of a switch (above), and what the translation run
+ * (content_translate.js) calls when it fills the side that is on screen.
+ * Never flushes: the caller has already written the screen into the state.
+ */
+function mbRepaintContent() {
     applyProjectTextToDOM();
     if (typeof renderCoverTable   === 'function') renderCoverTable();
     if (typeof renderWorkTeam     === 'function') renderWorkTeam();
@@ -85,11 +100,6 @@ function switchContentLang(code) {
     applyContentDirection();
     renderContentLangSwitch();
     renderExportLangSwitch();
-    /* Announced in the language just switched TO, not in the interface
-       language: the message confirms which side the editor is now bound
-       to, and saying so in that language is the shortest possible proof
-       that the switch did what it said. */
-    showStatus(window.i18n.tfIn('dgSwitchedTo', code, { v0: biLangLabel(code) }), 'success');
 }
 
 /**
@@ -216,7 +226,13 @@ function updateContentLangHint() {
             }
             return;
         }
-        Object.keys(v).forEach(function (k) { walk(v[k]); });
+        /* mbI18n / mbTr are keyed by language code, so they would read as
+           pairs holding objects — and the count below calls .trim() on
+           every side. They are translation memories, not texts. */
+        Object.keys(v).forEach(function (k) {
+            if (k === 'mbI18n' || k === 'mbTr') return;
+            walk(v[k]);
+        });
     }
     walk(mbState.modulesData);
     walk(mbState.coverRows);
