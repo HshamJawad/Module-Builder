@@ -237,3 +237,93 @@ function mbPrepareImages(fileList, profileName) {
         });
     }, Promise.resolve()).then(function () { return out; });
 }
+
+/* ── Export-time rasterising (3.81.1) ─────────────────────────
+   A picture pasted from Word arrives as SVG (Word puts its drawings on
+   the clipboard as vector markup), and storage keeps it as it is — see
+   the 'vector' note in mbPrepareImage. Word's own exporter already turns
+   such pictures into PNG, but jsPDF reads only PNG and JPEG, and the
+   cover page of the Word export treated every non-PNG as a JPEG. Both
+   exporters now go through this one function.
+
+   Resolves { dataUrl, w, h }, or null when the browser cannot draw the
+   picture (a broken file, an SVG that taints the canvas). It never
+   rejects, so one bad picture cannot stop an export. */
+var MB_RASTER_OK = ['image/png', 'image/jpeg', 'image/jpg'];
+
+function mbImageMime(dataUrl) {
+    var m = /^data:([^;,]+)/i.exec(String(dataUrl || ''));
+    return m ? m[1].toLowerCase() : '';
+}
+
+function mbNeedsRaster(dataUrl) {
+    return typeof dataUrl === 'string' && dataUrl.indexOf('data:image/') === 0 &&
+           MB_RASTER_OK.indexOf(mbImageMime(dataUrl)) === -1;
+}
+
+function mbRasterizeImage(src, opts) {
+    opts = opts || {};
+    var scale  = opts.scale  || 2;          // vector pictures stay sharp when printed
+    var maxPx  = opts.maxPx  || 9e6;        // pixels, so a cover cannot exhaust memory
+    var maxSide = opts.maxSide || 3508;
+    return new Promise(function (resolve) {
+        var img = new Image();
+        img.onload = function () {
+            try {
+                var w = img.naturalWidth, h = img.naturalHeight;
+                if (!w || !h) { w = 600; h = 400; }        // an SVG with no size of its own
+                var k = scale;
+                k = Math.min(k, maxSide / w, maxSide / h, Math.sqrt(maxPx / (w * h)));
+                if (!(k > 0)) k = 1;
+                var cw = Math.max(1, Math.round(w * k)), ch = Math.max(1, Math.round(h * k));
+                var canvas = document.createElement('canvas');
+                canvas.width = cw; canvas.height = ch;
+                var ctx = canvas.getContext('2d');
+                ctx.imageSmoothingEnabled = true;
+                if ('imageSmoothingQuality' in ctx) ctx.imageSmoothingQuality = 'high';
+                ctx.drawImage(img, 0, 0, cw, ch);
+                resolve({ dataUrl: canvas.toDataURL('image/png'), w: cw, h: ch });
+            } catch (e) {
+                console.warn('[ImagePrep] could not rasterise:', e && e.message);
+                resolve(null);
+            }
+        };
+        img.onerror = function () { resolve(null); };
+        img.src = src;
+    });
+}
+
+/** Replace, in place, every picture in `root` (an object or array) that
+ *  PNG/JPEG-only writers cannot read with a PNG. A picture that cannot be
+ *  drawn is removed from its array or set to null, so the writer skips it
+ *  instead of failing; the count of those is returned. */
+function mbRasterizeModelImages(root, opts) {
+    var holders = [];
+    (function scan(v) {
+        if (!v || typeof v !== 'object') return;
+        if (Array.isArray(v)) {
+            for (var i = 0; i < v.length; i++) {
+                if (typeof v[i] === 'string') { if (mbNeedsRaster(v[i])) holders.push([v, i, v[i]]); }
+                else scan(v[i]);
+            }
+            return;
+        }
+        for (var k in v) {
+            if (!Object.prototype.hasOwnProperty.call(v, k)) continue;
+            if (typeof v[k] === 'string') { if (mbNeedsRaster(v[k])) holders.push([v, k, v[k]]); }
+            else scan(v[k]);
+        }
+    })(root);
+    var cache = new Map(), failed = 0;
+    return holders.reduce(function (chain, hd) {
+        return chain.then(function () {
+            var src = hd[2];
+            var p = cache.has(src) ? cache.get(src) : mbRasterizeImage(src, opts);
+            cache.set(src, p);
+            return p.then(function (out) {
+                if (out) hd[0][hd[1]] = out.dataUrl;
+                else { hd[0][hd[1]] = null; failed++; }
+            });
+        });
+    }, Promise.resolve()).then(function () { return failed; });
+}

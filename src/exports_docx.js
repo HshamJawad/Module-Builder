@@ -31,7 +31,7 @@ function _mbDocxB64Bytes(dataUrl) {
     return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
 }
 
-function _mbDocxPrepareOne(src) {
+function _mbDocxPrepareOne(src, vectorScale) {
     return new Promise((resolve) => {
         const img = new Image();
         img.onload = () => {
@@ -39,16 +39,18 @@ function _mbDocxPrepareOne(src) {
                 let w = img.naturalWidth, h = img.naturalHeight;
                 const mime = src.slice(5, src.search(/[;,]/)).toLowerCase();
                 if (MB_DOCX_IMAGE_TYPES.indexOf(mime) !== -1 && /;base64,/.test(src.slice(0, 64))) {
-                    resolve({ data: _mbDocxB64Bytes(src), w, h });
+                    const type = mime === 'image/png' ? 'png' : (mime === 'image/gif' ? 'gif' : (mime === 'image/bmp' ? 'bmp' : 'jpg'));
+                    resolve({ data: _mbDocxB64Bytes(src), w, h, type });
                     return;
                 }
                 /* WebP, SVG, AVIF …: drawn once and kept as PNG. An SVG
                    with no size of its own gets a sensible one. */
                 if (!w || !h) { w = 600; h = 400; }
+                const k = vectorScale || 1;
                 const canvas = document.createElement('canvas');
-                canvas.width = w; canvas.height = h;
-                canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                resolve({ data: _mbDocxB64Bytes(canvas.toDataURL('image/png')), w, h });
+                canvas.width = Math.round(w * k); canvas.height = Math.round(h * k);
+                canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                resolve({ data: _mbDocxB64Bytes(canvas.toDataURL('image/png')), w, h, type: 'png' });
             } catch (e) {
                 console.warn('[DOCX] picture could not be prepared:', e);
                 resolve(null);
@@ -736,37 +738,39 @@ async function exportToDocx() {
         // ── Shared helper: export a cover image as a full A4 page ────
         const _exportCoverPage = async (imgSrc, sectionsArr, docxLib, AlignType) => {
             const { ImageRun: CvImageRun } = docxLib;
-            await new Promise((resolve) => {
-                const img = new Image();
-                img.onload = function () {
-                    const base64Data = imgSrc.split(',')[1];
-                    const ext = imgSrc.startsWith('data:image/png') ? 'png' : 'jpg';
-                    sectionsArr.push({
-                        properties: {
-                            bidi: _mbRtl(),
-                            page: {
-                                size:   { width: 11906, height: 16838 },
-                                margin: { top: 0, right: 0, bottom: 0, left: 0, header: 0, footer: 0, gutter: 0 },
-                            },
-                        },
+            /* 3.81.1: the cover goes through the same preparation as the
+               sheet pictures. It used to take the base64 text as it was and
+               call everything but PNG a JPEG — so an SVG cover (what Word
+               puts on the clipboard) became an empty frame. Vector covers
+               are drawn at twice their size so the printed page stays
+               sharp. */
+            const prep = await _mbDocxPrepareOne(imgSrc, 2);
+            if (!prep) {
+                console.warn('[DOCX] cover picture could not be prepared');
+                if (typeof showStatus === 'function') showStatus('Cover image could not be exported', 'error');
+                return;
+            }
+            sectionsArr.push({
+                properties: {
+                    bidi: _mbRtl(),
+                    page: {
+                        size:   { width: 11906, height: 16838 },
+                        margin: { top: 0, right: 0, bottom: 0, left: 0, header: 0, footer: 0, gutter: 0 },
+                    },
+                },
+                children: [
+                    new Paragraph({
                         children: [
-                            new Paragraph({
-                                children: [
-                                    new CvImageRun({
-                                        data: Uint8Array.from(atob(base64Data), c => c.charCodeAt(0)),
-                                        transformation: { width: 794, height: 1123 },
-                                        type: ext,
-                                    }),
-                                ],
-                                alignment: AlignType.CENTER,
-                                spacing: { before: 0, after: 0 },
+                            new CvImageRun({
+                                data: prep.data,
+                                transformation: { width: 794, height: 1123 },
+                                type: prep.type,
                             }),
                         ],
-                    });
-                    resolve();
-                };
-                img.onerror = () => resolve();
-                img.src = imgSrc;
+                        alignment: AlignType.CENTER,
+                        spacing: { before: 0, after: 0 },
+                    }),
+                ],
             });
         };
 
