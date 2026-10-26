@@ -116,7 +116,7 @@ for (const [lang, width] of [['en', 390], ['ar', 390], ['en', 820]]) {
     await page.keyboard.press('Escape');
     await expect(nav).toBeHidden();
     await toggle.click();
-    await page.locator('#mb-nav-backdrop').click({ position: { x: width > 400 ? width - 20 : 370, y: 400 } });
+    await page.locator('#mb-nav-backdrop').click({ position: { x: lang === 'ar' ? 20 : width - 20, y: 400 } });
     await expect(nav).toBeHidden();
     expect(errors).toEqual([]);
   });

@@ -2,7 +2,7 @@
 // with their names in Settings → Misc, and the "within the required time"
 // row of the performance criteria checklist.
 const { test, expect } = require('@playwright/test');
-const { openApp, fixture, tab } = require('../helpers');
+const { openApp, fixture, tab, openNav } = require('../helpers');
 
 async function buildActivity(page) {
   await tab(page, 'activity');
@@ -105,6 +105,7 @@ test('sheet type: chosen on the sheet, named in the export, renamed in Settings 
   expect(text).toContain('The activity was completed within the required time (30 minutes).');
 
   // Settings → Misc: rename the type, switch the time row off
+  await openNav(page);                 // 3.81.1: on a phone the side navigation is a drawer
   await page.locator('#mb-settings-nav').click();
   const ov = page.locator('#ws-overlay');
   await ov.locator('.ws-nav-btn[data-ws-pane="misc"]').click();
