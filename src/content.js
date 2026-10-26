@@ -921,7 +921,6 @@ function handleInfoImageUpload() {
 
     const apply = function (dataUrl) {
         if (preview) preview.innerHTML = `<img src="${dataUrl}" alt="Info image">`;
-        infoImageData = dataUrl;
     };
 
     if (typeof mbPrepareImageAndReport === 'function') {

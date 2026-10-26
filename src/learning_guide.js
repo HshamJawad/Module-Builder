@@ -176,7 +176,7 @@ var MB_LG_STRINGS = {
  * expLearningOutcomeN) so a sheet title reads identically in the guide
  * and on the sheet's own page.
  */
-function _lgT(key, lang, vars) {
+function _lgGT(key, lang, vars) {
     var table = MB_LG_STRINGS[lang] || MB_LG_STRINGS.en;
     var s = table[key];
     if (s === undefined) s = MB_LG_STRINGS.en[key];
@@ -193,7 +193,7 @@ function _lgT(key, lang, vars) {
 /** The same lookup, in the INTERFACE language — for the card and modal. */
 function _lgUI(key) {
     var lang = (window.i18n && window.i18n.getLang) ? window.i18n.getLang() : 'en';
-    return _lgT(key, lang);
+    return _lgGT(key, lang);
 }
 
 /**
@@ -255,8 +255,8 @@ function mbBuildLearningGuideModel(lo, loIndex, lang) {
         n++;
         sections.push({
             kind: 'info',
-            header: _lgT('lgInfoHeader', lang, { v0: n }),
-            instructions: [_lgT('lgInfoInstr1', lang), _lgT('lgInfoInstr2', lang)],
+            header: _lgGT('lgInfoHeader', lang, { v0: n }),
+            instructions: [_lgGT('lgInfoInstr1', lang), _lgGT('lgInfoInstr2', lang)],
             items: infoSheets.map(function (s) {
                 var idx = (lo.infoSheets || []).indexOf(s);
                 var auto = (typeof getAutoSheetNumber === 'function')
@@ -267,7 +267,7 @@ function mbBuildLearningGuideModel(lo, loIndex, lang) {
                 /* 3.42.0: a name set in Settings → Misc wins (sheet_kinds.js). */
                 var own = (typeof mbSheetLabelExplicit === 'function') ? mbSheetLabelExplicit('info', lang) : '';
                 if (own) return mbSheetHeading(own, num, _lgText(s.title, lang));
-                return _lgT('expInfoSheetTitled', lang, { v0: num, v1: _lgText(s.title, lang) });
+                return _lgGT('expInfoSheetTitled', lang, { v0: num, v1: _lgText(s.title, lang) });
             })
         });
     }
@@ -276,13 +276,13 @@ function mbBuildLearningGuideModel(lo, loIndex, lang) {
         n++;
         sections.push({
             kind: 'self',
-            header: _lgT('lgSelfHeader', lang, { v0: n }),
-            instructions: [_lgT('lgSelfInstr1', lang), _lgT('lgSelfInstr2', lang), _lgT('lgSelfInstr3', lang)],
+            header: _lgGT('lgSelfHeader', lang, { v0: n }),
+            instructions: [_lgGT('lgSelfInstr1', lang), _lgGT('lgSelfInstr2', lang), _lgGT('lgSelfInstr3', lang)],
             /* One cell, not one per number: the sample groups them under
                a single label, and a numbered self-check is a pointer into
                a sheet already listed above rather than a document of its
                own. */
-            items: [_lgT('lgSelfItemsLabel', lang)].concat(selfNums.map(function (x) { return '• ' + x; })),
+            items: [_lgGT('lgSelfItemsLabel', lang)].concat(selfNums.map(function (x) { return '• ' + x; })),
             groupItems: true
         });
     }
@@ -291,8 +291,8 @@ function mbBuildLearningGuideModel(lo, loIndex, lang) {
         n++;
         sections.push({
             kind: 'activity',
-            header: _lgT('lgActHeader', lang, { v0: n }),
-            instructions: [_lgT('lgActInstr1', lang), _lgT('lgActInstr2', lang), _lgT('lgActInstr3', lang)],
+            header: _lgGT('lgActHeader', lang, { v0: n }),
+            instructions: [_lgGT('lgActInstr1', lang), _lgGT('lgActInstr2', lang), _lgGT('lgActInstr3', lang)],
             items: actSheets.map(function (s) {
                 var idx = (lo.activitySheets || []).indexOf(s);
                 var auto = (typeof getAutoSheetNumber === 'function')
@@ -304,15 +304,15 @@ function mbBuildLearningGuideModel(lo, loIndex, lang) {
                 var kind = (typeof mbSheetKind === 'function') ? mbSheetKind(s.sheetType) : 'activity';
                 var own = (typeof mbSheetLabelExplicit === 'function') ? mbSheetLabelExplicit(kind, lang, s) : '';
                 if (own) return mbSheetHeading(own, num, _lgText(s.title, lang));
-                return _lgT('expActivitySheetTitled', lang, { v0: num, v1: _lgText(s.title, lang) });
+                return _lgGT('expActivitySheetTitled', lang, { v0: num, v1: _lgText(s.title, lang) });
             })
         });
     }
 
     return {
-        title:           _lgT('lgTitle', lang),
-        colActivities:   _lgT('lgColActivities', lang),
-        colInstructions: _lgT('lgColInstructions', lang),
+        title:           _lgGT('lgTitle', lang),
+        colActivities:   _lgGT('lgColActivities', lang),
+        colInstructions: _lgGT('lgColInstructions', lang),
         outcomeTitle:    _lgText(lo.title, lang).replace(/^\s*L\.?\s*O\.?\s*\d+\s*[:.\-\u2013]\s*/i, ''),
         sections:        sections
     };
@@ -463,7 +463,7 @@ function previewLearningGuide() {
     (mbState.learningOutcomesData || []).forEach(function (lo, i) {
         var model = mbBuildLearningGuideModel(lo, i, lang);
         if (!model) return;
-        var loLabel = _lgT('expLearningOutcomeN', lang, { v0: i + 1, v1: model.outcomeTitle });
+        var loLabel = _lgGT('expLearningOutcomeN', lang, { v0: i + 1, v1: model.outcomeTitle });
         body += '<div class="lg-block">' +
             '<div class="lg-lo-label" dir="' + (rtl ? 'rtl' : 'ltr') + '">' + _lgEscape(loLabel) + '</div>' +
             '<div class="lg-page-title" dir="' + (rtl ? 'rtl' : 'ltr') + '">' + _lgEscape(model.title) + '</div>' +

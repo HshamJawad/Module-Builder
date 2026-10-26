@@ -78,3 +78,15 @@ Open **Actions → Tests → the failed run**. The log names the test and the
 line; the `test-report` download has screenshots and a trace. A failing
 test means a change broke something a user would notice — fix the change,
 not the test, unless the behaviour was meant to change.
+
+## Static checks and unit tests (no browser)
+
+```
+cd tests && npx eslint -c eslint.config.js ..     # undefined names, duplicate keys, dead code
+node ../tools/check-globals.js                    # top-level names defined in two scripts
+node --test unit/*.test.js                        # project migration (bilang.js)
+node ../tools/bump-version.js 3.81.8              # release: version.json + sw.js + ?v= tags
+```
+
+Policy: user-typed text placed in `innerHTML` must go through `esc()` /
+`escapeHtml()`. These run in CI before the browser tests.
