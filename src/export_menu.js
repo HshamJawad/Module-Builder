@@ -44,39 +44,10 @@ function _xmLang() {
 (function ExportMenu() {
     'use strict';
 
-    function injectStyle() {
-        if (document.getElementById('xm-style')) return;
-        var s = document.createElement('style');
-        s.id = 'xm-style';
-        s.textContent = [
-            '.mb-exp-menu{position:relative;flex:0 0 auto;}',
-            '.mb-exp-caret{font-size:.7em;opacity:.6;margin-inline-start:2px;}',
-
-            /* inset-inline-start rather than left: the panel hangs from
-               the same edge as its trigger in both directions, with no
-               second rule for Arabic. */
-            '.mb-exp-panel{position:absolute;inset-inline-start:0;top:calc(100% + 6px);',
-            'min-width:230px;padding:6px;border:1px solid #e2e8f0;border-radius:12px;',
-            'background:#fff;box-shadow:0 12px 32px rgba(15,23,42,.16);',
-            'z-index:6000;display:none;}',
-            '.mb-exp-menu.is-open .mb-exp-panel{display:block;}',
-
-            '.mb-exp-opt{display:flex;align-items:center;gap:10px;width:100%;',
-            'padding:9px 11px;border:none;border-radius:9px;background:transparent;',
-            'font:inherit;font-size:.93em;color:#334155;text-align:start;cursor:pointer;',
-            'transition:background .12s;}',
-            '.mb-exp-opt:hover,.mb-exp-opt:focus-visible{background:#eef2ff;outline:none;}',
-            '.mb-exp-opt .figma-btn-icon{flex:0 0 auto;}',
-
-            /* The panel is the last thing in the bar in reading order,
-               so on a narrow window it can hang past the edge. Flipping
-               it to the other side there costs one rule and saves a
-               menu the user cannot reach. */
-            '@media (max-width:560px){',
-            '.mb-exp-panel{inset-inline-start:auto;inset-inline-end:0;}}'
-        ].join('');
-        document.head.appendChild(s);
-    }
+    /* 3.81.6: the menu's CSS moved to mb-styles.css. It used to be injected
+       here at DOMContentLoaded, so on a phone the five export buttons sat
+       open in the toolbar until every script had loaded. */
+    function injectStyle() { /* intentionally empty */ }
 
     function paint() {
         var s = _XM_STRINGS[_xmLang()] || _XM_STRINGS.en;
