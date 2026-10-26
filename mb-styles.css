@@ -4816,3 +4816,18 @@ body:has(.mb-pwa-bar) .mb-pwa-notice { top: calc(var(--mb-tb-h, 56px) + env(safe
         width: min(220px, calc(100vw - 24px));
     }
 }
+
+/* 3.81.6 — the Export menu (moved here from src/export_menu.js, which
+   injected it at DOMContentLoaded: until then the five items showed as
+   buttons in the toolbar). Same rules, now in the stylesheet that blocks
+   first paint. */
+.mb-exp-menu{position:relative;flex:0 0 auto;}
+.mb-exp-caret{font-size:.7em;opacity:.6;margin-inline-start:2px;}
+.mb-exp-panel{position:absolute;inset-inline-start:0;top:calc(100% + 6px);min-width:230px;padding:6px;border:1px solid #e2e8f0;border-radius:12px;background:#fff;box-shadow:0 12px 32px rgba(15,23,42,.16);z-index:6000;display:none;}
+.mb-exp-menu.is-open .mb-exp-panel{display:block;}
+.mb-exp-opt{display:flex;align-items:center;gap:10px;width:100%;padding:9px 11px;border:none;border-radius:9px;background:transparent;font:inherit;font-size:.93em;color:#334155;text-align:start;cursor:pointer;transition:background .12s;}
+.mb-exp-opt:hover,.mb-exp-opt:focus-visible{background:#eef2ff;outline:none;}
+.mb-exp-opt .figma-btn-icon{flex:0 0 auto;}
+@media (max-width:560px){
+.mb-exp-panel{inset-inline-start:auto;inset-inline-end:0;}
+}

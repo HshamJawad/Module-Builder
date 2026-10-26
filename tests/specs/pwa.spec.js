@@ -178,3 +178,14 @@ test('touch device: colour swatches stay square', async ({ browser }) => {
   expect(errors).toEqual([]);
   await ctx.close();
 });
+
+// The Export menu is closed from the very first paint — even if its script never runs
+// (it used to inject its own CSS at DOMContentLoaded, so on a phone its items showed in the toolbar).
+test('export menu panel is hidden by the stylesheet, not by its script', async ({ page }) => {
+  await page.route('**/src/export_menu.js*', r => r.abort());
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/index.html');
+  await page.waitForLoadState('domcontentloaded');
+  const d = await page.evaluate(() => getComputedStyle(document.getElementById('mb-exp-panel')).display);
+  expect(d).toBe('none');
+});
