@@ -148,6 +148,7 @@ test('Arabic, 360 px: the Misc pane and the glossary fit; Arabic names', async (
   await expect(page.locator('#content-tables-glossary textarea[data-row="0"][data-col="0"]')).toHaveValue('المصطلح');
   const noScroll = () => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
   expect(await noScroll()).toBe(true);
+  await openNav(page);                 // 360 px: the side navigation is a drawer
   await page.locator('#mb-settings-nav').click();
   const ov = page.locator('#ws-overlay');
   await ov.locator('.ws-nav-btn[data-ws-pane="misc"]').click();
