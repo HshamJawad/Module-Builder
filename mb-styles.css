@@ -4410,3 +4410,137 @@ button.mb-hw-chip#mb-hw-chip:hover { transform: translateY(-2px); box-shadow: 0 
 @media (prefers-reduced-motion: reduce) {
     .mb-hw, .mb-hw-spot, .mb-hw-chip, .mb-hw-dot, .mb-hw-bar i { animation: none !important; transition: none !important; }
 }
+
+/* ============================================================
+   3.81.0 — Installable app (PWA) and touch devices
+   iPhone / iPad (Safari and the Home Screen app), Android phones and
+   tablets, Windows touch laptops and tablets, Chromebooks.
+   ============================================================ */
+
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+/* Notch / status bar. The Home Screen app on iOS runs under a translucent
+   status bar (apple-mobile-web-app-status-bar-style), so the fixed toolbar
+   must grow by the top inset instead of squeezing its buttons into it.
+   The inset is 0 in an ordinary browser tab, so nothing moves there. */
+.figma-toolbar { height: calc(56px + env(safe-area-inset-top, 0px)); }
+body { padding-top: calc(76px + env(safe-area-inset-top, 0px)); }
+@media (max-width: 900px) {
+    .figma-toolbar { height: calc(52px + env(safe-area-inset-top, 0px)); }
+    body { padding-top: calc(68px + env(safe-area-inset-top, 0px)); }
+}
+@media (max-width: 600px) {
+    .figma-toolbar { height: calc(56px + env(safe-area-inset-top, 0px)); }
+    body { padding-top: calc(60px + env(safe-area-inset-top, 0px)); }
+    .mb-lang-panel { top: calc(62px + env(safe-area-inset-top, 0px)); }
+}
+@media (min-width: 1025px) {
+    .tabs-container { top: calc(56px + env(safe-area-inset-top, 0px)); }
+}
+.mb-pk-drophint { top: calc(72px + env(safe-area-inset-top, 0px)); }
+.mb-ro-banner   { top: calc(56px + env(safe-area-inset-top, 0px)); }
+
+/* Landscape phones and tablets with a notch: keep content off the cut-outs
+   (physical edges, so not logical properties — see .figma-toolbar). */
+.container {
+    padding-left:  max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+}
+@media (min-width: 901px) {
+    .container {
+        padding-left:  max(40px, env(safe-area-inset-left));
+        padding-right: max(40px, env(safe-area-inset-right));
+    }
+}
+
+/* Dynamic viewport: on iOS and Android the browser's own bars come and
+   go, and 100vh then hides the bottom buttons of a dialog behind them. */
+@supports (height: 100dvh) {
+    .mb-pk-box      { max-height: calc(100dvh - 32px); }
+    .mb-prv-box     { height: calc(100dvh - 20px); }
+    .mb-hlp-box     { max-height: 86dvh; }
+    .mb-tpl-dialog  { max-height: calc(100dvh - 40px); }
+    .mb-cov-box     { max-height: 100dvh; }
+}
+@media (max-width: 600px) {
+    @supports (height: 100dvh) {
+        .container { min-height: calc(100dvh - 60px); }
+    }
+}
+
+/* Touch screens (tablets, phones, touch laptops) -------------------- */
+@media (pointer: coarse) {
+    /* iOS zooms the page when a field under 16px gets focus, and does not
+       zoom back; the old rule covered phones only (≤600px), not iPads. */
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]),
+    select, textarea { font-size: max(16px, 1em); }
+
+    /* Comfortable targets (44px, the HIG / WCAG 2.5.5 size). */
+    button, .tab, .figma-btn, .mb-dialog-btn, select,
+    input[type="button"], input[type="submit"] { min-height: 44px; }
+    input[type="checkbox"], input[type="radio"] { width: 22px; height: 22px; }
+
+    /* No double-tap-zoom delay on controls; pinch zoom stays available. */
+    button, a, .tab, .figma-btn, select, summary, label { touch-action: manipulation; }
+    * { -webkit-tap-highlight-color: rgba(102, 126, 234, .18); }
+
+    /* Smooth, momentum scrolling inside the scrollable panels. */
+    .tabs-container, .assessment-form, .mb-pk-box, .mb-hlp-box, .mb-prv-list {
+        -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+    }
+}
+
+/* Installed app ------------------------------------------------------ */
+html.mb-standalone body { overscroll-behavior-y: none; }   /* no pull-to-refresh over unsaved work */
+html.mb-standalone { -webkit-touch-callout: none; }
+@media (display-mode: standalone) {
+    .mb-pwa-bar { display: none; }
+}
+
+/* Install bar and offline notice ------------------------------------- */
+.mb-pwa-bar {
+    position: fixed; inset-inline: 16px; margin-inline: auto; max-width: 560px;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    z-index: 9999;
+    display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+    background: #fff; color: #0f172a;
+    border: 1px solid #c7d2fe; border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(55, 48, 163, .28);
+    animation: mbPwaIn .25s ease;
+}
+.mb-pwa-ico   { width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0; }
+.mb-pwa-copy  { display: flex; flex-direction: column; gap: 2px; flex: 1 1 auto; min-width: 0; }
+.mb-pwa-title { font-size: .92em; line-height: 1.35; color: #3730a3; }
+.mb-pwa-note  { font-size: .8em; line-height: 1.4; color: #475569; }
+.mb-pwa-actions { display: flex; gap: 8px; flex-shrink: 0; align-items: center; }
+.mb-pwa-bar button {
+    min-height: 44px; padding: 8px 16px; border-radius: 10px; font: inherit; font-size: .88em; font-weight: 700;
+    cursor: pointer; border: 1px solid #c7d2fe; background: #fff; color: #3730a3;
+}
+.mb-pwa-bar .mb-pwa-go { background: #4f46e5; border-color: #4f46e5; color: #fff; }
+.mb-pwa-bar button:focus-visible { outline: 2px solid #4f46e5; outline-offset: 2px; }
+@media (max-width: 480px) {
+    .mb-pwa-bar { flex-wrap: wrap; }
+    .mb-pwa-actions { width: 100%; justify-content: flex-end; }
+}
+/* One bar at a time: an update on offer wins over an install invitation. */
+body:has(.mb-update-bar.is-open) .mb-pwa-bar { display: none; }
+
+.mb-pwa-notice {
+    position: fixed; inset-inline: 16px; margin-inline: auto; max-width: 520px; text-align: center;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 10001;
+    padding: 10px 16px; border-radius: 12px; font-size: .88em; font-weight: 600; line-height: 1.4;
+    color: #fff; background: #334155; box-shadow: 0 8px 24px rgba(15, 23, 42, .3);
+    opacity: 0; visibility: hidden; transform: translateY(140%);
+    transition: transform .25s ease, opacity .25s ease, visibility .25s;
+    pointer-events: none;
+}
+.mb-pwa-notice.is-open { opacity: 1; visibility: visible; transform: translateY(0); }
+.mb-pwa-notice.is-offline { background: #b45309; }
+.mb-pwa-notice.is-online  { background: #047857; }
+@keyframes mbPwaIn { from { transform: translateY(40%); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+    .mb-pwa-bar { animation: none; }
+    .mb-pwa-notice { transition: none; }
+}
+@media print { .mb-pwa-bar, .mb-pwa-notice { display: none !important; } }
