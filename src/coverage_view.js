@@ -299,7 +299,10 @@ function _covAiPrompt(items) {
         '- "info": knowledge the learner must understand — the information sheet.\n' +
         '- "activity": something the learner does or practises — the activity / job sheet (steps, tools, safety while working).\n' +
         '- "assessment": a criterion or standard the trainer judges competence against — the assessment form.\n' +
-        'An item may belong to more than one, or to none ([]) when it adds nothing to the training. Do not rewrite the items.\n\n' +
+        'An item may belong to more than one, or to none ([]) when it adds nothing to the training. Do not rewrite the items.\n' +
+        ((typeof mbIsLearnerGuide === 'function' && mbIsLearnerGuide())
+            ? 'This module is a LEARNER GUIDE whose main sections are Knowledge ("info"), Learning activity ("activity") and the Assessment unit ("assessment"). Cover those first; give [] to the incidental items (safety remarks, worker behaviours, standards, work conditions, tool lists — tools have their own section) unless the learner clearly needs them in a main section: the author places those by hand.\n' : '') +
+        '\n' +
         'ITEMS\n' + JSON.stringify(src) + '\n\n' +
         'OUTPUT FORMAT\nReturn ONLY a JSON object with exactly the same ids: {"d":{"1":["info","activity"],"2":["assessment"]}}';
 }
