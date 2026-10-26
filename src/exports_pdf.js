@@ -970,6 +970,10 @@ async function mbExportToPdf() {
         if (typeof showStatus === 'function') showStatus(_pdfT('working', lang), 'info');
 
         var model = mbBuildModuleModel(lang);
+        /* 3.81.1: jsPDF reads only PNG and JPEG. A picture pasted from Word
+           is SVG — it was skipped, leaving the PDF without its pictures and
+           covers. Everything else is drawn to PNG first. */
+        if (typeof mbRasterizeModelImages === 'function') await mbRasterizeModelImages(model);
         pdf = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
 
         /* Order matters and is taken from the reference exporter:
