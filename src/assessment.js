@@ -235,7 +235,7 @@ function renderAssessmentForms() {
             
             <div style="margin-bottom: 15px;">
                 <h5 style="font-weight: 600; color: #374151; margin-bottom: 10px;"><span data-i18n="dgSignatures">${window.i18n.t('dgSignatures')}</span></h5>
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; border: 1px solid #d1d5db; border-radius: 4px; overflow: hidden; margin-bottom: 8px;">
+                <div class="mb-sig-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; border: 1px solid #d1d5db; border-radius: 4px; overflow: hidden; margin-bottom: 8px;">
                     <div style="padding: 10px 12px; border-right: 1px solid #d1d5db; background: #f9fafb;">
                         <div style="font-size: 0.82em; color: #6b7280; margin-bottom: 2px;"><span data-i18n="expTrainerName">${window.i18n.t('expTrainerName')}</span></div>
                         <div style="font-size: 0.9em; color: #374151; min-height: 22px;">_______________________</div>
@@ -249,7 +249,7 @@ function renderAssessmentForms() {
                         <div style="font-size: 0.9em; color: #374151; min-height: 22px;">_______________________</div>
                     </div>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; border: 1px solid #d1d5db; border-radius: 4px; overflow: hidden;">
+                <div class="mb-sig-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; border: 1px solid #d1d5db; border-radius: 4px; overflow: hidden;">
                     <div style="padding: 10px 12px; border-right: 1px solid #d1d5db; background: #f9fafb;">
                         <div style="font-size: 0.82em; color: #6b7280; margin-bottom: 2px;"><span data-i18n="expLearnerName">${window.i18n.t('expLearnerName')}</span></div>
                         <div style="font-size: 0.9em; color: #374151; min-height: 22px;">_______________________</div>
