@@ -34,8 +34,10 @@
 function _seqSettings() {
     var s = {};
     try { if (typeof _wsGet === 'function') s = _wsGet() || {}; } catch (e) { s = {}; }
-    /* 3.59.0: the Learner guide template is written as one sequence. */
-    if (typeof mbIsLearnerGuide === 'function' && mbIsLearnerGuide()) return { interleaved: true, unified: true };
+    /* 3.59.0: the Learner guide template is written as one sequence. 3.80.8: in the order of
+       its tabs — every knowledge sheet, then every activity sheet, of each unit (no «Comes
+       after» on the activity sheet). */
+    if (typeof mbIsLearnerGuide === 'function' && mbIsLearnerGuide()) return { interleaved: false, unified: true };
     return {
         interleaved: s.sheetOrder === 'interleaved',
         unified: s.unifiedNumbering === true
