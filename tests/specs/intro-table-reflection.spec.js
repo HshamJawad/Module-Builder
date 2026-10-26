@@ -127,7 +127,8 @@ test('Learner guide: the unit card in Introduction Pages, the reflection in its 
   expect([...order].sort((a, b) => a - b)).toEqual(order);
   await tab(page, 'unit');
   await expect(page.locator('#lg-unit-section')).toBeVisible();
-  await expect(page.locator('#unit-tab .mb-ctx-bar')).toContainText('Learning unit');
+  await expect(page.locator('#unit-tab .mb-ctx-bar')).toContainText('Module');
+  await expect(page.locator('#unit-lo-selector')).toHaveCount(0);   // 3.80.6: the bar names only the module
   await expect(page.locator('#lg-unit-section [data-lg-field="refl.questions"]')).toHaveCount(0);
   await page.locator('#lg-unit-section [data-lg-field="intro.body"]').fill('Intro of unit 1');
 
@@ -143,11 +144,11 @@ test('Learner guide: the unit card in Introduction Pages, the reflection in its 
   await expect(q).toHaveValue('');
   await q.fill('What was hard in unit 2?');
   // every bar follows
-  expect(await page.evaluate(() => ['current-lo-selector', 'unit-lo-selector', 'info-lo-selector'].map(i => document.getElementById(i).value)))
-    .toEqual([ids[1], ids[1], ids[1]]);
+  expect(await page.evaluate(() => ['current-lo-selector', 'info-lo-selector'].map(i => document.getElementById(i).value)))
+    .toEqual([ids[1], ids[1]]);
   const saved = await page.evaluate(() => mbState.learningOutcomesData.map(l => l.lgReflection && l.lgReflection.questions && l.lgReflection.questions.en));
   expect(saved).toEqual(['What was hard in unit 1?', 'What was hard in unit 2?']);
-  expect(await page.evaluate(() => mbState.learningOutcomesData[0].lgIntro.body.en)).toBe('Intro of unit 1');
+  expect(await page.evaluate(() => mbLgModuleOf().lgIntro.body.en)).toBe('Intro of unit 1');
 
   // the Activity tab's Proceed leads to Reflection, and Reflection's to Assessment
   await page.locator('#reflection-lo-selector').selectOption(ids[0]);
@@ -198,11 +199,10 @@ test('Learning unit tab (Learner guide): after Introduction Pages, bar names the
   await page.locator('#intro-tab .mb-nav-next:visible').click();
   await expect(page.locator('#unit-tab')).toHaveClass(/active/);
   await expect(page.locator('#lg-unit-section')).toBeVisible();
-  // 3.80.2: the whole bar (Module › Learning unit), whatever the number of modules
-  await expect(page.locator('#unit-tab .mb-ctx-bar')).not.toHaveClass(/mb-ctx-solo/);
+  // 3.80.6: the bar keeps only the module selector
   await expect(page.locator('#unit-module-selector')).toBeVisible();
-  await expect(page.locator('#unit-tab .mb-ctx-sep')).toBeVisible();
-  await expect(page.locator('#unit-lo-selector')).toBeVisible();
+  await expect(page.locator('#unit-tab .mb-ctx-sep')).toHaveCount(0);
+  await expect(page.locator('#unit-lo-selector')).toHaveCount(0);
   // standard template: no such tab
   expect(errors).toEqual([]);
 });

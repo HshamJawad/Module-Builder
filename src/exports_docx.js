@@ -2029,7 +2029,33 @@ async function exportToDocx() {
         let _lgUnits = 0;   // 3.59.0: the number of the last learning unit printed
         let _seeRefs = null;
         if (typeof mbContentMapRefs === 'function') { try { _seeRefs = mbContentMapRefs(_mbCurrentModule()); } catch (e) { _seeRefs = null; } }
-        let _lgModTitleUsed = false;
+        /* 3.80.6: the Learner guide's module introduction — its own page, headed by the module's
+           title, before the first learning unit. */
+        if (_lgDoc && typeof mbLgModuleOf === 'function') {
+            const _lm = mbLgModuleOf(mbState);
+            if (_lm && mbLgIntroFilled(_lm)) {
+                const _lmTitle = String(_lm.fullTitle || '').trim() || String(_lm.title || '').trim();
+                const lmCh = [];
+                if (_lmTitle) lmCh.push(new Paragraph({ children: [new TextRun({ text: _lmTitle, size: _wsSection(), bold: true, color: _wsHeadColor(), rightToLeft: _mbRtl() })], alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 400, before: 200 } }));
+                _lgTextCh(_lm.lgIntro && _lm.lgIntro.body, lmCh);
+                const lmItems = String((_lm.lgIntro && _lm.lgIntro.items) || '').split('\n').map(l => l.replace(/^\s*(?:[-•*]|\d+[.)-])\s*/, '').trim()).filter(Boolean);
+                if (lmItems.length) {
+                    lmCh.push(_lgPara(_mbT('lgYouWillLearn'), { bold: true, before: 120 }));
+                    lmItems.forEach((it, i) => lmCh.push(_lgPara((i + 1) + '. ' + it, { after: 100 })));
+                }
+                const lmInc = (typeof mbLgIncludesParts === 'function') ? mbLgIncludesParts(_lm, _mbLang()) : null;
+                if (lmInc) {
+                    lmCh.push(_lgPara(lmInc.title, { bold: true, before: 200 }));
+                    lmInc.rows.forEach(r => lmCh.push(new Paragraph({
+                        children: [new TextRun({ text: r.label + ' ', size: _wsBody(), bold: true, rightToLeft: _mbRtl() }),
+                                   new TextRun({ text: r.text, size: _wsBody(), rightToLeft: _mbRtl() })],
+                        alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 100 }
+                    })));
+                    lmInc.extra.forEach(line => lmCh.push(_lgPara(line, { after: 100 })));
+                }
+                sections.push({ properties: { bidi: _mbRtl() }, children: lmCh });
+            }
+        }
         mbState.learningOutcomesData.forEach((lo, loIndex) => {
             /* An outcome with no sheets gets no heading page.
                The loops below skip an untitled info or activity sheet,
@@ -2043,7 +2069,7 @@ async function exportToDocx() {
             const loHasSheets =
                 (lo.infoSheets     || []).some(sh => (sh.title || '').trim()) ||
                 (lo.activitySheets || []).some(sh => (sh.title || '').trim()) ||
-                (_lgDoc && (mbLgIntroFilled(lo) || mbLgReflectionFilled(lo)));   // 3.59.0
+                (_lgDoc && (mbLgUnitFilled(lo) || mbLgReflectionFilled(lo)));   // 3.59.0; 3.80.6
             /* 3.31.0: items of this outcome written in another one ("see
                also", content map). An outcome whose items all live in
                other outcomes' sheets still gets its page, with those lines. */
@@ -2052,15 +2078,9 @@ async function exportToDocx() {
             if (!loHasSheets && !seeAlso.length) return;
 
             const loHdTitle = mbLoPlainTitle(lo.title || '');
-            /* 3.79.0: the introduction page carries the module's title, not the learning unit's. */
-            let _lgModTitle = '';
-            if (_lgDoc && !_lgModTitleUsed && mbLgIntroFilled(lo)) {
-                const _cm = (mbState.modulesData || []).find(m => m.id === mbState.currentModuleId);
-                _lgModTitle = _cm ? (String(_cm.fullTitle || '').trim() || String(_cm.title || '').trim()) : '';
-                if (_lgModTitle) _lgModTitleUsed = true;
-            }
-            const loHdText = _lgModTitle ? _lgModTitle
-                : _lgDoc ? mbLgUnitHeading(loIndex + 1, loHdTitle, _mbLang())   // 3.59.0; 3.67.0 named in Settings
+            /* 3.80.6: the unit's own title (its card in the Knowledge tab), else the outcome's. */
+            const _lgU = _lgDoc ? mbLgUnitParts(lo, _mbLang()) : null;
+            const loHdText = _lgDoc ? mbLgUnitHeading(loIndex + 1, (_lgU && _lgU.title) || loHdTitle, _mbLang())   // 3.59.0; 3.67.0 named in Settings
                 : _mbTitledAlready(loHdTitle, 'expLearningOutcomeN')
                 ? loHdTitle
                 : _mbTf('expLearningOutcomeN', { v0: loIndex + 1, v1: loHdTitle });
@@ -2073,25 +2093,14 @@ async function exportToDocx() {
                 });
             }
             /* 3.59.0: the learning unit's introduction, on its page. */
-            if (_lgDoc && mbLgIntroFilled(lo)) {
+            if (_lgDoc && mbLgUnitFilled(lo)) {
                 const n = mbSeqLgNumber(lo, loIndex, 'lgIntro');
-                loHdCh.push(_lgHead(_mbTf('lgIntroHead', { v0: n }).trim()));
-                _lgTextCh(lo.lgIntro && lo.lgIntro.body, loHdCh);
-                const items = String((lo.lgIntro && lo.lgIntro.items) || '').split('\n').map(l => l.replace(/^\s*(?:[-•*]|\d+[.)-])\s*/, '').trim()).filter(Boolean);
-                if (items.length) {
-                    loHdCh.push(_lgPara(_mbT('lgYouWillLearn'), { bold: true, before: 120 }));
-                    items.forEach((it, i) => loHdCh.push(_lgPara((i + 1) + '. ' + it, { after: 100 })));
-                }
-                /* 3.79.0: «Each learning unit includes the following:» — its paragraphs and the author's lines. */
-                const inc = (typeof mbLgIncludesParts === 'function') ? mbLgIncludesParts(lo, _mbLang()) : null;
-                if (inc) {
-                    loHdCh.push(_lgPara(inc.title, { bold: true, before: 200 }));
-                    inc.rows.forEach(r => loHdCh.push(new Paragraph({
-                        children: [new TextRun({ text: r.label + ' ', size: _wsBody(), bold: true, rightToLeft: _mbRtl() }),
-                                   new TextRun({ text: r.text, size: _wsBody(), rightToLeft: _mbRtl() })],
-                        alignment: _mbStart(AlignmentType), bidirectional: _mbRtl(), spacing: { after: 100 }
-                    })));
-                    inc.extra.forEach(line => loHdCh.push(_lgPara(line, { after: 100 })));
+                /* 3.80.6: «N-1 Introduction: title», its lines as typed, then «you will learn how to:» and its lines. */
+                loHdCh.push(_lgHead((_mbTf('lgIntroHead', { v0: n }).trim() + (_lgU.introTitle ? ': ' + _lgU.introTitle : '')).trim()));
+                _lgU.intro.forEach(line => loHdCh.push(_lgPara(line, { after: 100 })));
+                if (_lgU.learn.length) {
+                    loHdCh.push(_lgPara(_lgU.learnLead, { bold: true, before: 120 }));
+                    _lgU.learn.forEach(line => loHdCh.push(_lgPara(line, { after: 100 })));
                 }
             }
             /* 3.43.0: sections placed at the start of the outcome, on its page. */

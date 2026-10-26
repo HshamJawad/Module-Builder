@@ -319,14 +319,13 @@ function mbBuildModuleModel(lang, state) {
         try { return mbSeeAlsoFor(lo.id, lang, _mmArr(st.learningOutcomesData), seeRefs); } catch (e) { return []; }
     };
 
-    let lgModTitleUsed = false;
     _mmArr(st.learningOutcomesData).forEach(function (lo, loIndex) {
         /* Same gate as the Word export. An outcome that fails it does
            not appear at all — not as an empty heading, not as a stub.
            3.31.0: one whose items are all written in other outcomes
            still appears, with its "see also" lines. */
         const seeAlso = seeAlsoOf(lo);
-        const lgOwn = lg && (mbLgIntroFilled(lo) || mbLgReflectionFilled(lo));   // 3.59.0
+        const lgOwn = lg && (mbLgUnitFilled(lo) || mbLgReflectionFilled(lo));   // 3.59.0
         if (!mmOutcomeHasContent(lo) && !seeAlso.length && !lgOwn) return;
 
         const out = {
@@ -354,11 +353,10 @@ function mbBuildModuleModel(lang, state) {
             seeAlso: seeAlso
         };
         /* 3.59.0: «1- Learning unit: …» — the Learner guide's heading. */
-        out.heading = lg ? ((typeof mbLgUnitHeading === 'function') ? mbLgUnitHeading(loIndex + 1, out.title, lang)
-            : _lgT('lgUnitHead', { v0: loIndex + 1, v1: out.title })) : '';   // 3.67.0: named in Settings
-        /* 3.79.0: the introduction page carries the module's title, not the learning unit's. */
-        out.pageHeading = '';
-        if (lg && !lgModTitleUsed && model.title && mbLgIntroFilled(lo)) { out.pageHeading = model.title; lgModTitleUsed = true; }
+        /* 3.80.6: the unit's own title (its card in the Knowledge tab), else the outcome's. */
+        const lgU = lg ? mbLgUnitParts(lo, lang) : null;
+        out.heading = lg ? ((typeof mbLgUnitHeading === 'function') ? mbLgUnitHeading(loIndex + 1, (lgU && lgU.title) || out.title, lang)
+            : _lgT('lgUnitHead', { v0: loIndex + 1, v1: (lgU && lgU.title) || out.title })) : '';   // 3.67.0: named in Settings
 
         _mmArr(lo.infoSheets).forEach(function (sh, si) {
             if (!mmSheetHasContent(sh)) return;
@@ -525,14 +523,16 @@ function mbBuildModuleModel(lang, state) {
                 if (sh) out.sequence.push({ kind: 'activity', sheet: sh });
             } else if (it.kind === 'lgIntro') {
                 /* 3.59.0: the learning unit's introduction and reflection. */
-                if (lg && mbLgIntroFilled(lo)) out.sequence.push({ kind: 'lgIntro', intro: {
-                    heading: _lgT('lgIntroHead', { v0: mbSeqLgNumber(lo, loIndex, 'lgIntro') }).trim(),
-                    body: _mmStr(lo.lgIntro && lo.lgIntro.body),
-                    lead: _lgT('lgYouWillLearn'),
-                    items: _mmStr(lo.lgIntro && lo.lgIntro.items).split('\n').map(function (l) { return l.replace(/^\s*(?:[-•*]|\d+[.)-])\s*/, '').trim(); }).filter(Boolean),
-                    /* 3.79.0: «Each learning unit includes the following:» (null when not printed) */
-                    includes: (typeof mbLgIncludesParts === 'function') ? mbLgIncludesParts(lo, lang) : null
-                } });
+                if (lg && mbLgUnitFilled(lo)) {
+                    const u = mbLgUnitParts(lo, lang);
+                    out.sequence.push({ kind: 'lgIntro', intro: {
+                        /* 3.80.6: «N-1 Introduction: title», its lines as typed, then «you will learn how to:» and its lines */
+                        heading: (_lgT('lgIntroHead', { v0: mbSeqLgNumber(lo, loIndex, 'lgIntro') }).trim() + (u.introTitle ? ': ' + u.introTitle : '')).trim(),
+                        lines: u.intro,
+                        lead: u.learn.length ? u.learnLead : '',
+                        items: u.learn
+                    } });
+                }
             } else if (it.kind === 'lgReflection') {
                 if (lg && mbLgReflectionFilled(lo)) {
                     const n = mbSeqLgNumber(lo, loIndex, 'lgReflection');
@@ -592,6 +592,22 @@ function mbBuildModuleModel(lang, state) {
             learnerDate: _mmStr(form.learnerDate)
         });
     });
+
+    /* 3.80.6: the Learner guide's module introduction — its own page, headed by the
+       module's title, before the first learning unit (learner_guide.js). */
+    model.lgModule = null;
+    if (lg && typeof mbLgModuleOf === 'function') {
+        const lm = mbLgModuleOf(st);
+        if (lm && mbLgIntroFilled(lm)) {
+            model.lgModule = {
+                heading: model.title,
+                body: _mmStr(lm.lgIntro && lm.lgIntro.body),
+                lead: _lgT('lgYouWillLearn'),
+                items: _mmStr(lm.lgIntro && lm.lgIntro.items).split('\n').map(function (l) { return l.replace(/^\s*(?:[-•*]|\d+[.)-])\s*/, '').trim(); }).filter(Boolean),
+                includes: (typeof mbLgIncludesParts === 'function') ? mbLgIncludesParts(lm, lang) : null
+            };
+        }
+    }
 
     /* 3.59.0: the Learner guide's assessment unit (learner_guide.js) —
        numbered after the last learning unit, the forms in four columns. */

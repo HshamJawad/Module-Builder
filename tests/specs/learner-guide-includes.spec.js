@@ -58,7 +58,7 @@ test('the learning outcomes card: its own heading, the numbering button opposite
   await box.fill('To use hand tools\nTo assemble computer components\n\nTo install printers');
   await card.locator('.lg-num-btn').click();
   await expect(box).toHaveValue('1- To use hand tools\n2- To assemble computer components\n\n3- To install printers');
-  expect(await page.evaluate(() => mbCurrentLOObject().lgIntro.items.en)).toBe('1- To use hand tools\n2- To assemble computer components\n\n3- To install printers');
+  expect(await page.evaluate(() => mbLgModuleOf().lgIntro.items.en)).toBe('1- To use hand tools\n2- To assemble computer components\n\n3- To install printers');
   // a second press takes the numbers off again
   await card.locator('.lg-num-btn').click();
   await expect(box).toHaveValue('To use hand tools\nTo assemble computer components\n\nTo install printers');
@@ -103,8 +103,8 @@ test('«Each learning unit includes the following:» — fixed paragraphs edited
   const vals = await card.locator('.lg-inc-input').evaluateAll(l => l.map(i => i.value));
   expect(vals).toEqual(['Introducing the subject', 'Things you need to know', 'Things to do', 'To reflect on what you have learned']);
 
-  // nothing is stored until the card is edited; with no introduction the unit has no introduction page
-  expect(await page.evaluate(() => mbCurrentLOObject().lgIncludes)).toBeUndefined();
+  // nothing is stored until the card is edited; with no introduction the module has no introduction page
+  expect(await page.evaluate(() => mbLgModuleOf().lgIncludes)).toBeUndefined();
   let t = await docxText(page);
   expect(t).not.toContain('Each learning unit includes');
 
@@ -117,18 +117,17 @@ test('«Each learning unit includes the following:» — fixed paragraphs edited
   await card.locator('[data-lg-field="includes.activities"]').fill('Things to do and make');
   await card.locator('[data-lg-field="includes.items"]').fill('A competency assessment module');
   t = await docxText(page);
-  const at = (s) => { const i = t.indexOf(s); expect(i, s).toBeGreaterThan(-1); return i; };
-  const order = ['1-1 Introduction', 'These tools help with maintenance.', 'Each learning unit includes the following:',
+  const at = (s) => { const i = s.startsWith('1- Learning unit') ? t.lastIndexOf(s) : t.indexOf(s); expect(i, s).toBeGreaterThan(-1); return i; };   // the overview names the unit first
+  const order = ['These tools help with maintenance.', 'Each learning unit includes the following:',
     'Introduction: Introducing the subject', 'Knowledge: Things you need to know',
     'Learning Activities: Things to do and make', 'Reflection: To reflect on what you have learned',
-    'A competency assessment module', '1-2 Knowledge: Screwdrivers'].map(at);
+    'A competency assessment module', '1- Learning unit: Use hand tools', '1-1 Knowledge: Screwdrivers'].map(at);
   expect([...order].sort((a, b) => a - b)).toEqual(order);
 
   // HTML and PDF read the same model
   const m = await page.evaluate(() => {
     const model = mbBuildModuleModel('en');
-    const it = model.outcomes[0].sequence.find(x => x.kind === 'lgIntro');
-    return { inc: it.intro.includes, html: mbBuildModuleHtml(model, {}) };
+    return { inc: model.lgModule.includes, html: mbBuildModuleHtml(model, {}) };
   });
   expect(m.inc.rows.map(r => r.label + ' ' + r.text)).toEqual(['Introduction: Introducing the subject',
     'Knowledge: Things you need to know', 'Learning Activities: Things to do and make', 'Reflection: To reflect on what you have learned']);
@@ -137,7 +136,7 @@ test('«Each learning unit includes the following:» — fixed paragraphs edited
 
   // every language keeps its own default after the first edit
   await page.evaluate(() => setContentLang('ar'));
-  expect(await page.evaluate(() => mbCurrentLOObject().lgIncludes.knowledge.ar)).toBe('أشياء تحتاج إلى معرفتها');
+  expect(await page.evaluate(() => mbLgModuleOf().lgIncludes.knowledge.ar)).toBe('أشياء تحتاج إلى معرفتها');
   // restore
   await page.evaluate(() => setContentLang('en'));
   await tab(page, 'basic-info');
@@ -147,7 +146,7 @@ test('«Each learning unit includes the following:» — fixed paragraphs edited
   expect(errors).toEqual([]);
 });
 
-test('an edited «Each learning unit includes…» card makes the unit print even with no introduction text', async ({ page }) => {
+test('an edited «Each learning unit includes…» card makes the module page print even with no introduction text', async ({ page }) => {
   const errors = await openApp(page, { contentLang: 'en' });
   await buildGuide(page);
   await tab(page, 'unit');
@@ -156,28 +155,27 @@ test('an edited «Each learning unit includes…» card makes the unit print eve
   expect(t).toContain('Each learning unit includes the following:');
   expect(t).toContain('One more thing');
   // old projects (no lgIncludes, no introduction) are unchanged
-  await page.evaluate(() => { const lo = mbCurrentLOObject(); delete lo.lgIncludes; saveCurrentModuleLOData(); });
+  await page.evaluate(() => { delete mbLgModuleOf().lgIncludes; saveCurrentModuleLOData(); });
   expect(await docxText(page)).not.toContain('Each learning unit includes');
   expect(errors).toEqual([]);
 });
 
-test('the introduction page: the module title heads it (not the learning unit), the outcomes lead is the card title', async ({ page }) => {
+test('the introduction page: the module title heads the module page before the first unit, the outcomes lead is the card title', async ({ page }) => {
   const errors = await openApp(page, { contentLang: 'en' });
   await buildGuide(page);
   await page.evaluate(() => {
     const m = mbState.modulesData.find(x => x.id === mbState.currentModuleId);
     m.fullTitle = { en: 'Computer hardware maintenance', ar: '', fr: '' };
-    const lo = mbCurrentLOObject();
-    lo.lgIntro = { body: { en: 'Welcome to the guide.', ar: '', fr: '' }, items: { en: 'To use hand tools', ar: '', fr: '' } };
+    mbLgModuleOf().lgIntro = { body: { en: 'Welcome to the guide.', ar: '', fr: '' }, items: { en: 'To use hand tools', ar: '', fr: '' } };
     saveCurrentModuleLOData();
   });
   const t = await docxText(page);
-  const at = (s) => { const i = t.indexOf(s); expect(i, s).toBeGreaterThan(-1); return i; };
-  const order = ['Computer hardware maintenance', '1-1 Introduction', 'Welcome to the guide.',
-    'The learning outcomes for this guide are:', '1. To use hand tools'].map(at);
+  const at = (s) => { const i = s.startsWith('1- Learning unit') ? t.lastIndexOf(s) : t.indexOf(s); expect(i, s).toBeGreaterThan(-1); return i; };   // the overview names the unit first
+  const order = ['Computer hardware maintenance', 'Welcome to the guide.',
+    'The learning outcomes for this guide are:', '1. To use hand tools', '1- Learning unit: Use hand tools'].map(at);
   expect([...order].sort((a, b) => a - b)).toEqual(order);
   expect(t).not.toContain('In this learning unit you will learn how to');
-  const m = await page.evaluate(() => { const model = mbBuildModuleModel('en'); return model.outcomes[0].pageHeading; });
+  const m = await page.evaluate(() => mbBuildModuleModel('en').lgModule.heading);
   expect(m).toBe('Computer hardware maintenance');
   expect(errors).toEqual([]);
 });

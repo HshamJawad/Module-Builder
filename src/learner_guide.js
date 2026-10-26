@@ -23,8 +23,15 @@
 // interface hides them (data-tpl-only) and the exporters skip them.
 //
 // WHERE THINGS ARE STORED
-//   lo.lgIntro       { body: pair, items: pair }      items: one per line
-//   lo.lgIncludes    { intro, knowledge, activities, reflection: pair, items: pair }
+//   lo.lgUnit        { title, introTitle, intro, learnTitle, learn: pairs } — the
+//                      unit's own page (3.80.6): «N- Learning unit: title», «N-1
+//                      Introduction: title» + its lines, the «In this learning unit,
+//                      you will learn how to:» heading + its lines. Lines are printed
+//                      as typed (numbers / bullets included). title '' = the outcome's.
+//   module.lgIntro  { body: pair, items: pair }      items: one per line — the MODULE's
+//                      introduction page, before the first unit (3.80.6; it was lo.lgIntro,
+//                      moved once by mbLgMigrate and flagged module.lgModMigrated)
+//   module.lgIncludes { intro, knowledge, activities, reflection: pair, items: pair }
 //                      «Each learning unit includes the following:» — absent until the
 //                      author edits the card, then the four paragraphs are the tool's
 //                      texts seeded in every language. Printed with the introduction, on
@@ -91,6 +98,13 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgAsmRestore: 'Restore the default text',
         lgAsmContents: 'Contents of the portfolio',
         lgAsmContentsEmpty: 'No learning activity, worksheet or reflection has a title yet.',
+        lgModCard: 'Module introduction (Learner guide)',
+        lgModNote: 'One for the whole module: printed on its own page, headed by the module’s title, before the first learning unit.',
+        lgLearnLead: 'In this learning unit, you will learn how to:',
+        lgUnitTitlePh: 'Title of this learning unit…',
+        lgUnitIntroTitlePh: 'Title of the introduction (optional)…',
+        lgUnitIntroPh: 'One point per line…',
+        lgBullet: 'Bullets', lgBulletTip: 'Put a bullet in front of the lines — click again to remove them',
         lgUnitHead: '{v0}- Learning unit: {v1}',
         lgUnit: 'Learning unit',
         mbInfoObjectiveLabel: 'Objective:',
@@ -179,6 +193,13 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgAsmRestore: 'Rétablir le texte par défaut',
         lgAsmContents: 'Contenu du portfolio',
         lgAsmContentsEmpty: 'Aucune activité, fiche de travail ou réflexion n’a encore de titre.',
+        lgModCard: 'Introduction du module (Guide de l’apprenant)',
+        lgModNote: 'Une seule pour tout le module : imprimée sur sa propre page, sous le titre du module, avant la première unité d’apprentissage.',
+        lgLearnLead: 'Dans cette unité d’apprentissage, vous apprendrez à :',
+        lgUnitTitlePh: 'Titre de cette unité d’apprentissage…',
+        lgUnitIntroTitlePh: 'Titre de l’introduction (facultatif)…',
+        lgUnitIntroPh: 'Un point par ligne…',
+        lgBullet: 'Puces', lgBulletTip: 'Mettre une puce devant les lignes — cliquer à nouveau pour les retirer',
         lgUnitHead: '{v0}- Unité d’apprentissage : {v1}',
         lgUnit: 'Unité d’apprentissage',
         mbInfoObjectiveLabel: 'Objectif :',
@@ -267,6 +288,13 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         lgAsmRename: 'إعادة تسمية', lgAsmDelete: 'حذف هذه البطاقة', lgAsmDeleted: 'هذه البطاقة محذوفة ولا تُصدَّر.', lgAsmUndelete: 'استعادة البطاقة',
         lgAsmContents: 'محتويات سجل الأعمال (المحفظة)',
         lgAsmContentsEmpty: 'لا يوجد نشاط تعلمي أو ورقة عمل أو تأمل له عنوان بعد.',
+        lgModCard: 'مقدمة الموديول (دليل المتعلم)',
+        lgModNote: 'واحدة لكل الموديول: تُطبع في صفحة مستقلة بعنوان الموديول قبل أول وحدة تعلّمية.',
+        lgLearnLead: 'في هذه الوحدة التعلمية، ستتعلم كيف:',
+        lgUnitTitlePh: 'عنوان هذه الوحدة التعلمية…',
+        lgUnitIntroTitlePh: 'عنوان المقدمة (اختياري)…',
+        lgUnitIntroPh: 'نقطة في كل سطر…',
+        lgBullet: 'تنقيط', lgBulletTip: 'ضع نقطة أمام الأسطر — انقر مرة أخرى لإزالتها',
         lgUnitHead: '{v0}- الوحدة التعلمية: {v1}',
         lgUnit: 'الوحدة التعلمية',
         mbInfoObjectiveLabel: 'الهدف:',
@@ -348,9 +376,55 @@ function _lgOn() { return typeof mbIsLearnerGuide === 'function' && mbIsLearnerG
 
 /* ── Is it printed? ───────────────────────────────────────────── */
 
-function mbLgIntroFilled(lo) {
-    var x = lo && lo.lgIntro;
-    return !!(x && (_lgStr(x.body).trim() || _lgStr(x.items).trim())) || mbLgIncludesTouched(lo);
+/** 3.80.6: the MODULE's introduction page (a module object, or a flattened one). */
+function mbLgIntroFilled(m) {
+    var x = m && m.lgIntro;
+    return !!(x && (_lgStr(x.body).trim() || _lgStr(x.items).trim())) || mbLgIncludesTouched(m);
+}
+/** 3.80.6: does the learning unit have its own page of text (introduction / learn-how-to lines)? */
+function mbLgUnitFilled(lo) {
+    var u = lo && lo.lgUnit;
+    return !!(u && (_lgStr(u.introTitle).trim() || _lgStr(u.intro).trim() || _lgStr(u.learn).trim()));
+}
+/** 3.80.6: the module that owns the introduction page. `st` = the state (default: the live one);
+ *  the first call moves the per-outcome introductions of an older project to the module. */
+function mbLgModuleOf(st) {
+    st = st || (typeof mbState !== 'undefined' ? mbState : null);
+    if (!st) return null;
+    var m = (st.modulesData || []).find(function (x) { return x && x.id === st.currentModuleId; }) || null;
+    if (m) mbLgMigrate(m, st.learningOutcomesData || []);
+    return m;
+}
+/** Once per module: the first outcome's introduction (and «includes» card) become the
+ *  module's; the other outcomes' introduction texts go to their own unit page. Nothing is deleted. */
+function mbLgMigrate(m, los) {
+    if (!m || m.lgModMigrated) return;
+    m.lgModMigrated = true;
+    var clone = function (v) { return (v && typeof v === 'object') ? JSON.parse(JSON.stringify(v)) : v; };
+    (los || []).forEach(function (lo) {
+        if (!lo) return;
+        var x = lo.lgIntro, has = !!(x && (_lgStr(x.body).trim() || _lgStr(x.items).trim()));
+        if (has && !m.lgIntro) m.lgIntro = clone(x);
+        else if (has && x.body && !(lo.lgUnit && _lgStr(lo.lgUnit.intro).trim())) {
+            if (!lo.lgUnit || typeof lo.lgUnit !== 'object') lo.lgUnit = {};
+            lo.lgUnit.intro = clone(x.body);
+        }
+        if (!m.lgIncludes && mbLgIncludesTouched(lo)) m.lgIncludes = clone(lo.lgIncludes);
+    });
+}
+/** The default words of «In this learning unit, you will learn how to:» in a language. */
+function mbLgLearnLead(lang) { return _lgTIn('lgLearnLead', lang); }
+/** What the exporters print for a learning unit (`lo` may be flattened): { title, introHeadExtra, intro:[], learnLead, learn:[] }. */
+function mbLgUnitParts(lo, lang) {
+    var u = (lo && lo.lgUnit) || {};
+    var ln = function (v) { return _lgStr(v, lang).split('\n').map(function (l) { return l.trim(); }).filter(Boolean); };
+    return {
+        title: _lgStr(u.title, lang).trim(),
+        introTitle: _lgStr(u.introTitle, lang).trim(),
+        intro: ln(u.intro),
+        learnLead: _lgStr(u.learnTitle, lang).trim() || mbLgLearnLead(lang),
+        learn: ln(u.learn)
+    };
 }
 
 /* 3.79.0: «Each learning unit includes the following:» — four fixed
@@ -630,6 +704,7 @@ var _LG_ICONS = {
     undo:  '<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11"/>',
     redo:  '<path d="m15 14 5-5-5-5"/><path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5A5.5 5.5 0 0 0 9.5 20H13"/>',
     clear: '<path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/>',
+    bullet: '<path d="M10 6h11M10 12h11M10 18h11"/><g fill="#2563eb" stroke="none"><circle cx="5" cy="6" r="1.5"/><circle cx="5" cy="12" r="1.5"/><circle cx="5" cy="18" r="1.5"/></g>',
     number: '<path d="M10 6h11M10 12h11M10 18h11"/><g stroke="#2563eb"><path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/></g>'
 };
 function _lgIconBtn(cls, act, args, title, kind, aria) {
@@ -641,13 +716,16 @@ function _lgIconBtn(cls, act, args, title, kind, aria) {
 function _lgHistTip(which) {
     return (typeof _mbHistT === 'function') ? _mbHistT(which === 'undo' ? 'undoTip' : 'redoTip') : (which === 'undo' ? 'Undo' : 'Redo');
 }
-function _lgToolBtns(field) {
+/** `opts`: { noNumber: true } leaves the numbering button out; { bullet: true } adds the bullets one (3.80.6). */
+function _lgToolBtns(field, opts) {
     var f = _lgEsc(field);
+    opts = opts || {};
     return '<span class="lg-card-tools">' +
         _lgIconBtn('lg-hist-btn lg-undo-btn is-off', 'mbUndo', '', _lgHistTip('undo'), 'undo') +
         _lgIconBtn('lg-hist-btn lg-redo-btn is-off', 'mbRedo', '', _lgHistTip('redo'), 'redo') +
         _lgIconBtn('lg-clear-icon danger', 'mbLgClearField', '["' + f + '"]', _lgT('lgClearTip'), 'clear') +
-        _lgIconBtn('lg-num-btn', 'mbLgNumberLines', '["' + f + '"]', _lgT('lgNumberTip'), 'number', _lgT('lgNumber')) +
+        (opts.noNumber ? '' : _lgIconBtn('lg-num-btn', 'mbLgNumberLines', '["' + f + '"]', _lgT('lgNumberTip'), 'number', _lgT('lgNumber'))) +
+        (opts.bullet ? _lgIconBtn('lg-bul-btn', 'mbLgBulletLines', '["' + f + '"]', _lgT('lgBulletTip'), 'bullet', _lgT('lgBullet')) : '') +
       '</span>';
 }
 
@@ -664,14 +742,17 @@ function _lgSave() {
 function mbRenderLgUnit(force) {
     _lgRenderPart('intro', force);
     _lgRenderPart('refl', force);
+    mbRenderLgUnitCard(force);   // 3.80.6: the unit's card in the Knowledge tab
 }
 
 function _lgRenderPart(part, force) {
     var host = document.getElementById(part === 'intro' ? 'lg-unit-section' : 'lg-reflection-section');
     if (!host) return;
     var lo = (typeof mbCurrentLOObject === 'function') ? mbCurrentLOObject() : null;
+    /* 3.80.6: the introduction card belongs to the MODULE (one per module). */
+    var mod = (part === 'intro') ? mbLgModuleOf() : null;
     if (!_lgOn()) { host.style.display = 'none'; host.innerHTML = ''; host.removeAttribute('data-render-key'); return; }
-    if (!lo) {
+    if (part === 'intro' ? !mod : !lo) {
         host.removeAttribute('data-render-key');
         if (part === 'intro') { host.style.display = 'none'; host.innerHTML = ''; return; }
         /* The Reflection tab is never blank: it says what to do. */
@@ -681,10 +762,10 @@ function _lgRenderPart(part, force) {
     }
     host.style.display = '';
     var lang = _lgLang();
-    var loIndex = mbState.learningOutcomesData.indexOf(lo);
+    var loIndex = lo ? mbState.learningOutcomesData.indexOf(lo) : -1;
     /* Not while the author is typing here (history.js snapshots on every
        focus, which repaints the outcome card): the fields bind live. */
-    var key = part + '|' + lo.id + '|' + loIndex + '|' + lang + '|' + ((window.i18n && window.i18n.getLang) ? window.i18n.getLang() : '') +
+    var key = part + '|' + (part === 'intro' ? mod.id : lo.id) + '|' + loIndex + '|' + lang + '|' + ((window.i18n && window.i18n.getLang) ? window.i18n.getLang() : '') +
         (part === 'refl' ? '|' + (lo.lgReflectionMore || []).map(function (x) { return x && x.uid; }).join(',') : '');
     /* 3.75.0: the fields bind live, so a repaint for the same outcome,
        languages and groups changes nothing on screen — and rebuilding it
@@ -692,7 +773,7 @@ function _lgRenderPart(part, force) {
        field) swallowed the click on the button being pressed. */
     if (force !== true && host.getAttribute('data-render-key') === key && host.innerHTML) return;
     host.setAttribute('data-render-key', key);
-    var intro = lo.lgIntro || {}, refl = lo.lgReflection || {};
+    var intro = (mod && mod.lgIntro) || {}, refl = (lo && lo.lgReflection) || {};
     var g = function (v) { return _lgEsc((typeof biGetStrict === 'function') ? biGetStrict(v, lang) : _lgStr(v, lang)); };
     var dir = (typeof biIsRtl === 'function' && biIsRtl(lang)) ? 'rtl' : 'ltr';
     var field = function (f, kind, ph, val, rows) {
@@ -704,7 +785,7 @@ function _lgRenderPart(part, force) {
             ' data-act="mbLgEdit" data-on="input" data-args=\'["' + f + '"]\' placeholder="' + _lgEsc(ph) + '" value="' + val + '"/>';
     };
     if (part === 'intro') {
-        var inc = lo.lgIncludes || {};
+        var inc = mod.lgIncludes || {};
         var incRows = MB_LG_INC_KEYS.map(function (k) {
             var v = (inc[k] !== undefined && inc[k] !== null)
                 ? ((typeof biGetStrict === 'function') ? biGetStrict(inc[k], lang) : _lgStr(inc[k], lang))
@@ -714,7 +795,7 @@ function _lgRenderPart(part, force) {
                 ' data-act="mbLgEdit" data-on="input" data-args=\'["includes.' + k + '"]\' value="' + _lgEsc(v) + '"/></div>';
         }).join('');
         host.innerHTML =
-            '<div class="mb-blocks-head"><label class="mb-blocks-label">🧭 ' + _lgEsc(_lgT('lgUnitCard')) + '</label></div>' +
+            '<div class="mb-blocks-head"><label class="mb-blocks-label">🧭 ' + _lgEsc(_lgT('lgModCard')) + '</label></div>' +
             /* 1 — the introduction */
             '<div class="mb-block lg-part">' +
               '<div class="lg-part-head"><span>' + _lgEsc(_lgT('lgIntroTitle')) + '</span></div>' +
@@ -824,8 +905,31 @@ async function mbLgReflMoreRemove(uid) {
 /** Every field of the card writes its pair at once (blocks.js rule). */
 function mbLgEdit(field, el) {
     var lo = (typeof mbCurrentLOObject === 'function') ? mbCurrentLOObject() : null;
-    if (!lo || !el) return;
+    if (!el) return;
     var parts = String(field).split('.');
+    /* 3.80.6: the introduction page and «includes» belong to the module. */
+    if (parts[0] === 'intro' || parts[0] === 'includes') {
+        var mod = mbLgModuleOf();
+        if (!mod) return;
+        if (parts[0] === 'includes') {
+            if (parts[1] !== 'items' && MB_LG_INC_KEYS.indexOf(parts[1]) < 0) return;
+            var inc = _lgIncEnsure(mod);
+            biPut(inc, parts[1], el.value);
+        } else {
+            if (!mod.lgIntro || typeof mod.lgIntro !== 'object') mod.lgIntro = {};
+            biPut(mod.lgIntro, parts[1], el.value);
+        }
+        _lgSave();
+        return;
+    }
+    if (parts[0] === 'unit') {   // 3.80.6: the learning unit's own page (lo.lgUnit)
+        if (!lo || ['title', 'introTitle', 'intro', 'learnTitle', 'learn'].indexOf(parts[1]) < 0) return;
+        if (!lo.lgUnit || typeof lo.lgUnit !== 'object') lo.lgUnit = {};
+        biPut(lo.lgUnit, parts[1], el.value);
+        _lgSave();
+        return;
+    }
+    if (!lo) return;
     if (parts[0] === 'more') {   // 3.75.0: an added group of questions
         var gr = (lo.lgReflectionMore || []).find(function (x) { return x && x.uid === parts[1]; });
         if (!gr) return;
@@ -834,14 +938,7 @@ function mbLgEdit(field, el) {
         _lgSave();
         return;
     }
-    if (parts[0] === 'includes') {   // 3.79.0: «Each learning unit includes the following:»
-        if (parts[1] !== 'items' && MB_LG_INC_KEYS.indexOf(parts[1]) < 0) return;
-        var inc = _lgIncEnsure(lo);
-        biPut(inc, parts[1], el.value);
-        _lgSave();
-        return;
-    }
-    var objKey = parts[0] === 'intro' ? 'lgIntro' : 'lgReflection';
+    var objKey = 'lgReflection';
     if (!lo[objKey] || typeof lo[objKey] !== 'object') lo[objKey] = {};
     var obj = lo[objKey], k = parts[1];
     if (k === 'lines') {
@@ -880,11 +977,30 @@ function mbLgNumberLines(field) {
     try { box.focus(); } catch (e) { /* hidden */ }
 }
 
+/** • Bullets: puts «• » in front of the lines of a box; when every line has one, takes them off again. */
+function mbLgBulletLines(field) {
+    var box = document.querySelector('[data-lg-field="' + String(field).replace(/"/g, '') + '"]');
+    if (!box) return;
+    var lines = String(box.value || '').split('\n');
+    var filled = lines.filter(function (l) { return l.trim(); });
+    if (!filled.length) return;
+    var bulleted = /^\s*[•\-*]\s/;
+    var strip = /^\s*(?:\d+\s*[-.)]|[•\-*])\s*/;
+    var all = filled.every(function (l) { return bulleted.test(l); });
+    box.value = lines.map(function (l) {
+        if (!l.trim()) return l;
+        var bare = l.replace(strip, '');
+        return all ? bare : '• ' + bare;
+    }).join('\n');
+    box.dispatchEvent(new Event('input', { bubbles: true }));
+    try { box.focus(); } catch (e) { /* hidden */ }
+}
+
 /** ↺ The four paragraphs of «Each learning unit includes…» back to the tool's texts. */
 function mbLgIncRestore() {
-    var lo = (typeof mbCurrentLOObject === 'function') ? mbCurrentLOObject() : null;
-    if (!lo || !lo.lgIncludes) return;
-    MB_LG_INC_KEYS.forEach(function (k) { delete lo.lgIncludes[k]; });
+    var mod = mbLgModuleOf();
+    if (!mod || !mod.lgIncludes) return;
+    MB_LG_INC_KEYS.forEach(function (k) { delete mod.lgIncludes[k]; });
     _lgSave();
     _lgRenderPart('intro', true);
 }
@@ -985,6 +1101,52 @@ function mbLgListTitle(sh, lang) {
     return _lgStr(sh && sh.lgListTitle, lang).trim();
 }
 
+/* ── 3.80.6: the learning unit's own card (Knowledge tab, after «Suggested content») ──
+   «N- Learning unit: <title>», «N-1 Introduction: <title>» + a box of lines,
+   «In this learning unit, you will learn how to:» + a box of lines. Written to
+   lo.lgUnit for the outcome chosen in the bar; the card repaints with it. */
+function _lgUnitHost() { return document.getElementById('lg-unit-card'); }
+function mbRenderLgUnitCard(force) {
+    var host = _lgUnitHost();
+    if (!host) return;
+    var lo = (typeof mbCurrentLOObject === 'function') ? mbCurrentLOObject() : null;
+    if (!_lgOn() || !lo) { host.removeAttribute('data-render-key'); host.innerHTML = ''; return; }
+    var lang = _lgLang();
+    var loIndex = mbState.learningOutcomesData.indexOf(lo);
+    /* The numbers are not in the key: typing in the card changes «1-1» (the unit gets its
+       introduction page) and a repaint would take the focus from the field being typed in. */
+    var key = lo.id + '|' + loIndex + '|' + lang + '|' + ((window.i18n && window.i18n.getLang) ? window.i18n.getLang() : '');
+    if (force !== true && host.getAttribute('data-render-key') === key && host.innerHTML) return;
+    host.setAttribute('data-render-key', key);
+    var u = lo.lgUnit || {};
+    var g = function (v) { return _lgEsc((typeof biGetStrict === 'function') ? biGetStrict(v, lang) : _lgStr(v, lang)); };
+    var dir = (typeof biIsRtl === 'function' && biIsRtl(lang)) ? 'rtl' : 'ltr';
+    var loTitle = (typeof biGetStrict === 'function') ? biGetStrict(lo.title, lang) : _lgStr(lo.title, lang);
+    if (typeof mbLoPlainTitle === 'function') loTitle = mbLoPlainTitle(loTitle || '');
+    var inp = function (f, ph, val, cls) {
+        return '<input class="mb-block-title lg-field ' + (cls || '') + '" type="text" dir="' + dir + '" data-lg-field="unit.' + f + '"' +
+            ' data-act="mbLgEdit" data-on="input" data-args=\'["unit.' + f + '"]\' placeholder="' + _lgEsc(ph) + '" value="' + val + '"/>';
+    };
+    var area = function (f, ph) {
+        return '<textarea class="mb-block-body lg-field" rows="4" dir="' + dir + '" data-lg-field="unit.' + f + '"' +
+            ' data-act="mbLgEdit" data-on="input" data-args=\'["unit.' + f + '"]\' placeholder="' + _lgEsc(ph) + '">' + g(u[f]) + '</textarea>';
+    };
+    var paste = function (f) { return (typeof mbPasteTextBtnHtml === 'function') ? '<div class="lg-tools-row">' + mbPasteTextBtnHtml('lg', 'unit.' + f) + '</div>' : ''; };
+    var nUnit = loIndex + 1;
+    var nIntro = nUnit + '-1';   // the card is the unit's introduction
+    var learnVal = (typeof biGetStrict === 'function' ? biGetStrict(u.learnTitle, lang) : _lgStr(u.learnTitle, lang)) || mbLgLearnLead(lang);
+    host.innerHTML =
+        '<div class="lg-part-head lg-ucard-row"><span class="lg-ucard-lbl">' + _lgEsc(mbLgUnitHeading(nUnit, '', lang)) + ':</span>' +
+          inp('title', _lgT('lgUnitTitlePh'), _lgEsc((typeof biGetStrict === 'function' ? biGetStrict(u.title, lang) : _lgStr(u.title, lang)) || loTitle)) + '</div>' +
+        '<div class="lg-part-head lg-ucard-row"><span class="lg-ucard-lbl">' + _lgEsc(_lgTIn('lgIntroHead', lang, { v0: nIntro }).trim()) + ':</span>' +
+          inp('introTitle', _lgT('lgUnitIntroTitlePh'), g(u.introTitle)) + _lgToolBtns('unit.intro', { noNumber: true }) + '</div>' +
+        area('intro', _lgT('lgUnitIntroPh')) + paste('intro') +
+        '<div class="lg-part-head lg-ucard-row lg-ucard-learn">' +
+          inp('learnTitle', mbLgLearnLead(lang), _lgEsc(learnVal)) + _lgToolBtns('unit.learn', { bullet: true }) + '</div>' +
+        area('learn', _lgT('lgIntroItemsPh')) + paste('learn');
+    if (typeof mbHistUI === 'function') { try { mbHistUI(); } catch (e) { /* not ready */ } }
+}
+
 /* ── 3.67.0: the optional objectives of a sheet ───────────────
    In this template a sheet has no objectives unless the author asks
    for them: the objectives part is hidden behind «🎯 Objectives
@@ -1011,7 +1173,7 @@ function mbLgObjectivePrinted(sh) {
 function _lgObjGroup(kind) { return document.getElementById(_LG_OBJ[_lgObjKind(kind)].group); }
 /** sheets.js, when a sheet is put on screen (null = none). */
 function mbLgLoadObjective(sh, kind) {
-    if (_lgObjKind(kind) === 'info') _lgLoadKnowBox(sh);   // 3.80.0
+    if (_lgObjKind(kind) === 'info') { _lgLoadKnowBox(sh); try { mbRenderLgUnitCard(); } catch (e) { /* not ready */ } }   // 3.80.0; 3.80.6: the unit's card follows the outcome
     var g = _lgObjGroup(kind);
     if (!g) return;
     g.setAttribute('data-lg-obj', mbLgObjectiveShown(sh || null) ? '1' : '0');
