@@ -4500,7 +4500,7 @@ html.mb-standalone { -webkit-touch-callout: none; }
 /* Install bar and offline notice ------------------------------------- */
 .mb-pwa-bar {
     position: fixed; inset-inline: 16px; margin-inline: auto; max-width: 560px;
-    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    top: calc(var(--mb-tb-h, 56px) + env(safe-area-inset-top, 0px) + 8px);
     z-index: 9999;
     display: flex; align-items: center; gap: 12px; padding: 12px 14px;
     background: #fff; color: #0f172a;
@@ -4523,24 +4523,218 @@ html.mb-standalone { -webkit-touch-callout: none; }
     .mb-pwa-bar { flex-wrap: wrap; }
     .mb-pwa-actions { width: 100%; justify-content: flex-end; }
 }
-/* One bar at a time: an update on offer wins over an install invitation. */
-body:has(.mb-update-bar.is-open) .mb-pwa-bar { display: none; }
+/* The install bar sits at the top (the helper button and the update bar own the bottom). */
+body:has(.mb-pwa-bar) .mb-pwa-notice { top: calc(var(--mb-tb-h, 56px) + env(safe-area-inset-top, 0px) + 96px); }
 
 .mb-pwa-notice {
     position: fixed; inset-inline: 16px; margin-inline: auto; max-width: 520px; text-align: center;
-    bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 10001;
+    top: calc(var(--mb-tb-h, 56px) + env(safe-area-inset-top, 0px) + 8px); z-index: 10001;
     padding: 10px 16px; border-radius: 12px; font-size: .88em; font-weight: 600; line-height: 1.4;
     color: #fff; background: #334155; box-shadow: 0 8px 24px rgba(15, 23, 42, .3);
-    opacity: 0; visibility: hidden; transform: translateY(140%);
+    opacity: 0; visibility: hidden; transform: translateY(-140%);
     transition: transform .25s ease, opacity .25s ease, visibility .25s;
     pointer-events: none;
 }
 .mb-pwa-notice.is-open { opacity: 1; visibility: visible; transform: translateY(0); }
 .mb-pwa-notice.is-offline { background: #b45309; }
 .mb-pwa-notice.is-online  { background: #047857; }
-@keyframes mbPwaIn { from { transform: translateY(40%); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes mbPwaIn { from { transform: translateY(-40%); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {
     .mb-pwa-bar { animation: none; }
     .mb-pwa-notice { transition: none; }
 }
 @media print { .mb-pwa-bar, .mb-pwa-notice { display: none !important; } }
+
+/* ============================================================
+   3.81.1 — Side navigation as a drawer on phones and tablets
+   (≤1024px), the way DACUM Live Pro does it: ☰ in the toolbar opens a
+   vertical list of the sections; choosing one closes it. Desktop keeps
+   its fixed rail. The strip of pills this replaces needed sideways
+   swiping to find a tab.
+   ============================================================ */
+:root { --mb-tb-h: 56px; }
+@media (max-width: 900px) { :root { --mb-tb-h: 52px; } }
+@media (max-width: 600px) { :root { --mb-tb-h: 56px; } }
+
+#mb-nav-backdrop, .mb-nav-close { display: none; }
+
+@media (max-width: 1024px) {
+    .tabs-container {
+        position: fixed;
+        inset-inline-start: 0;
+        top: calc(var(--mb-tb-h) + env(safe-area-inset-top, 0px));
+        bottom: 0;
+        width: min(300px, 86vw);
+        z-index: 10002;
+        display: flex; flex-direction: column; gap: 16px;
+        margin: 0;
+        padding: 14px 12px calc(20px + env(safe-area-inset-bottom, 0px));
+        padding-inline-start: max(12px, env(safe-area-inset-left));
+        background: linear-gradient(180deg, var(--mb-silver-light) 0%, var(--mb-silver) 55%, var(--mb-silver-dark) 100%);
+        border-inline-end: 1px solid var(--mb-silver-line);
+        overflow-x: hidden; overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-width: thin;
+        transform: translateX(-100%);
+        visibility: hidden;
+        transition: transform .22s ease, visibility .22s;
+    }
+    html[dir="rtl"] .tabs-container { transform: translateX(100%); }
+    body.mb-nav-open .tabs-container {
+        transform: none; visibility: visible;
+        box-shadow: 0 0 28px rgba(15, 23, 42, .35);
+    }
+    body.mb-nav-open { overflow: hidden; }
+    body.mb-nav-no-anim .tabs-container { transition: none !important; }
+
+    #mb-nav-backdrop {
+        display: block; position: fixed; inset: 0; z-index: 10001;
+        background: rgba(15, 23, 42, .5);
+        opacity: 0; visibility: hidden;
+        transition: opacity .22s ease, visibility .22s;
+    }
+    body.mb-nav-open #mb-nav-backdrop { opacity: 1; visibility: visible; }
+
+    /* ☰ shows on phones and tablets, and stays put while the rest of the
+       toolbar is swiped sideways. */
+    .mb-nav-toggle { display: inline-flex; }
+    .mb-nav-toggle + .figma-divider { display: block; }
+    .figma-toolbar-scroll > .mb-nav-toggle {
+        position: sticky; inset-inline-start: 0; z-index: 3;
+        background: #fff; box-shadow: 0 0 8px 6px #fff;
+    }
+    .mb-nav-toggle .figma-btn-icon.silver { width: 38px; height: 38px; font-size: 1.25em; }
+    body.mb-nav-open .mb-nav-toggle .figma-btn-icon.silver { background: var(--mb-accent); color: #fff; }
+
+    .mb-nav-close {
+        display: inline-flex; align-items: center; justify-content: center;
+        margin-inline-start: auto; flex-shrink: 0;
+        width: 44px; height: 44px; padding: 0; border-radius: 12px;
+        border: 1px solid var(--mb-silver-line); background: rgba(255, 255, 255, .7);
+        color: var(--mb-nav-ink); font-size: 1.4em; line-height: 1; cursor: pointer;
+    }
+    html[dir="rtl"] .mb-nav-close { transform: scaleX(-1); }
+
+    /* The helper button would float over the open list. */
+    body.mb-nav-open #mb-hw-chip, body.mb-nav-open .mb-hw-chipwrap { display: none !important; }
+
+
+
+
+    /* ── Rail header ───────────────────────────────────────────── */
+    .mb-nav-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 4px 8px 14px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.75);
+        box-shadow: 0 1px 0 var(--mb-silver-line);
+        flex-shrink: 0;
+    }
+
+    .mb-nav-mark {
+        width: 34px;
+        height: 34px;
+        flex-shrink: 0;
+        border-radius: 9px;
+        background: var(--mb-accent);
+        color: #fff;
+        font-size: 0.78em;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 6px rgba(102, 126, 234, 0.4);
+        direction: ltr;                  /* the mark is always "MB" */
+    }
+
+    .mb-nav-head-text { min-width: 0; }
+
+    .mb-nav-title {
+        display: block;
+        font-size: 0.86em;
+        font-weight: 700;
+        color: var(--mb-nav-ink);
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+    }
+
+    /* ── The list ──────────────────────────────────────────────── */
+    .tabs {
+        display: flex;
+        flex-direction: column;
+        flex-wrap: nowrap;
+        gap: 4px;
+        flex: 1 1 auto;
+        border-bottom: none;
+        margin: 0;
+        min-width: 0;
+    }
+
+    .tabs .tab {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        width: 100%;
+        text-align: start;
+
+        padding: 11px 14px;
+        min-height: 46px;
+        border-radius: 10px;
+        border: 1px solid transparent;
+        border-inline-start: 3px solid transparent;   /* accent slot, no shift */
+
+        background: transparent;
+        color: var(--mb-nav-ink);
+        font-size: 0.94em;
+        font-weight: 600;
+        line-height: 1.4;
+
+        white-space: normal;             /* long Arabic labels wrap */
+        overflow-wrap: anywhere;
+        flex-shrink: 0;
+        transition: background 0.18s, color 0.18s, border-color 0.18s;
+    }
+
+    .tabs .tab:hover {
+        background: rgba(255, 255, 255, 0.72);
+        border-color: rgba(255, 255, 255, 0.9);
+        border-inline-start-color: var(--mb-silver-dark);
+        color: #2F3439;
+    }
+
+    .tabs .tab:focus-visible {
+        outline: 2px solid var(--mb-accent);
+        outline-offset: 2px;
+    }
+
+    .tabs .tab.active {
+        background: #FFFFFF;
+        color: var(--mb-accent);
+        border-color: #FFFFFF;
+        border-inline-start-color: var(--mb-accent);
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+    }
+
+    /* Help sits at the foot of the rail, where a help entry belongs. */
+    .tabs .tab:last-child {
+        margin-top: auto;
+        color: var(--mb-nav-ink-soft);
+        font-size: 0.88em;
+        min-height: 40px;
+    }
+    .tabs .tab:last-child.active { color: var(--mb-accent); }
+    /* 3.38.0: Settings opens a dialog, it is not a page — it sits at the
+       foot with Help, which then follows it directly. */
+    .tabs .tab.mb-nav-settings {
+        margin-top: auto;
+        color: var(--mb-nav-ink-soft);
+        font-size: 0.88em;
+        min-height: 40px;
+    }
+    .tabs .tab.mb-nav-settings + .tab:last-child { margin-top: 0; }
+
+    /* The panel no longer needs the strip's clearance. */
+    .tab-content.active { border-radius: 14px; }
+}
