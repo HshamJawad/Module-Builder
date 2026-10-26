@@ -27,8 +27,9 @@
     en: {
       mbModuleBuilderV20: "Module Builder V 2.0",
       mbACompetencyBasedTrainingModuleDevelopm: "A competency-based training module development tool for structuring learning outcomes, activities, and assessments.",
-      mbBasicInfo: "🏠 Module",
+      mbBasicInfo: "🏠 Module Information",
       mbModuleInfoTab: "📋 Module Information",
+      mbModuleInfoCard: "📋 Module Information (Optional)",
       mbFrontCoverTab: "🖼️ Front Cover",
       mbBackCoverTab: "🖼️ Back Cover",
       mbProceedToModuleInfo: "Proceed to Module Information →",
@@ -1076,8 +1077,9 @@
     fr: {
       mbModuleBuilderV20: "Module Builder V 2.0",
       mbACompetencyBasedTrainingModuleDevelopm: "Un outil de développement de modules de formation par compétences, pour structurer les résultats d'apprentissage, les activités et les évaluations.",
-      mbBasicInfo: "🏠 Module",
+      mbBasicInfo: "🏠 Informations du module",
       mbModuleInfoTab: "📋 Informations du module",
+      mbModuleInfoCard: "📋 Informations du module (facultatif)",
       mbFrontCoverTab: "🖼️ Couverture",
       mbBackCoverTab: "🖼️ Quatrième de couverture",
       mbProceedToModuleInfo: "Passer aux informations du module →",
@@ -2086,8 +2088,9 @@
     ar: {
       mbModuleBuilderV20: "باني الوحدات التدريبية — الإصدار 2.0",
       mbACompetencyBasedTrainingModuleDevelopm: "أداة لتطوير وحدات تدريبية قائمة على الكفاءة، لبناء محصلات التعلم والأنشطة والتقييم.",
-      mbBasicInfo: "🏠 الوحدة",
+      mbBasicInfo: "🏠 معلومات الوحدة",
       mbModuleInfoTab: "📋 معلومات الوحدة",
+      mbModuleInfoCard: "📋 معلومات الوحدة (اختياري)",
       mbFrontCoverTab: "🖼️ الغلاف الأمامي",
       mbBackCoverTab: "🖼️ الغلاف الخلفي",
       mbProceedToModuleInfo: "المتابعة إلى معلومات الوحدة ←",

@@ -168,9 +168,10 @@ test('3.65.1: the Learner guide template has the card and Coverage too', async (
 
 test('3.65.1: no «Cover Page Information» sub-heading in Module Information', async ({ page }) => {
   const errors = await openApp(page, { lang: 'ar' });
-  await tab(page, 'module-info');
+  await tab(page, 'basic-info');
+  await page.locator('#module-info-card summary').click();
   await expect(page.locator('[data-i18n="mbCoverPageInformation"]')).toHaveCount(0);
-  await expect(page.locator('#module-info-tab')).not.toContainText('معلومات صفحة الغلاف');
+  await expect(page.locator('#module-info-card')).not.toContainText('معلومات صفحة الغلاف');
   await expect(page.locator('#covers-additional-info')).toBeVisible();
   expect(errors).toEqual([]);
 });

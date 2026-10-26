@@ -4298,3 +4298,18 @@ button.mb-cmk-opt.is-on { outline: 3px solid #0f766e; outline-offset: 1px; }
 .mb-ctx-bar.mb-ctx-solo > .mb-ctx-mod,
 .mb-ctx-bar.mb-ctx-solo > .mb-ctx-sep { display: none; }
 #unit-tab .lg-unit-wrap { margin-top: 0; }
+
+/* 3.80.5 — «Module Information (Optional)»: a card folded behind its title on the Module Information tab */
+.mb-mi-card { margin: 0 0 20px; border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; }
+.mb-mi-toggle {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 12px 16px; cursor: pointer; list-style: none; font-weight: 700; color: #374151;
+    border-radius: 10px; user-select: none;
+}
+.mb-mi-toggle::-webkit-details-marker { display: none; }
+.mb-mi-toggle:hover { background: #eef2ff; }
+.mb-mi-toggle:focus-visible { outline: 2px solid #6366f1; outline-offset: 2px; }
+.mb-mi-chev { font-size: .9em; transition: transform .15s ease; }
+.mb-mi-card[open] > .mb-mi-toggle { border-bottom: 1px solid #e5e7eb; border-radius: 10px 10px 0 0; background: #eef2ff; }
+.mb-mi-card[open] .mb-mi-chev { transform: rotate(180deg); }
+.mb-mi-body { padding: 16px; }
