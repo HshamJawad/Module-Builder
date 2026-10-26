@@ -65,7 +65,8 @@ test('drag by the handle reorders the content cards', async ({ page }) => {
   const errors = await openApp(page, { handoff: fixture('dacum-handoff.json'), contentLang: 'en' });
   await threeCards(page);
   await cards(page).nth(2).locator('.mb-step-handle').dragTo(cards(page).nth(0), { targetPosition: { x: 40, y: 5 } });
-  expect(await texts(page)).toEqual(['C', 'A', 'B']);
+  // the drop is handled after dragTo returns: wait for it, as the card badges below do
+  await expect.poll(() => texts(page)).toEqual(['C', 'A', 'B']);
   await expect(cards(page).locator('.cs-num')).toHaveText(['1', '2', '3']);
   await expect(cards(page).nth(0)).not.toHaveAttribute('draggable', 'true');
   expect(errors).toEqual([]);
