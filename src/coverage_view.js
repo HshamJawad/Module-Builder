@@ -131,9 +131,9 @@ function _covCell(r, kind) {
         return '<span class="mb-cov-cell is-off" title="' + _covEsc(_covT('mbCovOff', { v0: _covT('mbSpKind_' + kind) })) + '">—</span>';
     }
     var st = r.built.indexOf(kind) !== -1 ? 'built' : (r.ok.indexOf(kind) !== -1 ? 'ok' : 'new');
-    var sym = { built: '✓', ok: '●', new: '○' }[st];
+    var mark = { built: '✓', ok: '●', new: '○' }[st];
     var tip = _covT('mbSpKind_' + kind) + ' — ' + _covT(st === 'built' ? 'mbSpStBuilt' : st === 'ok' ? 'mbSpStOk' : 'mbSpStNew');
-    return '<button type="button" class="mb-cov-cell is-' + st + '" data-act="mbCovGo" data-args="' + _covArgs([kind, r.key]) + '" title="' + _covEsc(tip) + '" aria-label="' + _covEsc(tip) + '">' + sym + '</button>';
+    return '<button type="button" class="mb-cov-cell is-' + st + '" data-act="mbCovGo" data-args="' + _covArgs([kind, r.key]) + '" title="' + _covEsc(tip) + '" aria-label="' + _covEsc(tip) + '">' + mark + '</button>';
 }
 
 function _covHtml() {

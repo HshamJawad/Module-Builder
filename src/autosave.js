@@ -176,18 +176,37 @@
         }
 
         /* ── Save through the module library ──────────────────────── */
+        /* 3.81.7: failures stay non-modal, but after two in a row the user
+           is told once (then at most every 5 min) so work is not lost
+           silently — e.g. storage full or private browsing. */
+        let _failCount = 0, _lastWarn = 0;
+        const _FAIL_MSG = {
+            en: 'Auto-save is failing — export a .mbz backup now so your work is not lost.',
+            fr: 'L’enregistrement automatique échoue — exportez une sauvegarde .mbz maintenant.',
+            ar: 'فشل الحفظ التلقائي — صدّر نسخة احتياطية (.mbz) الآن حتى لا يضيع عملك.'
+        };
+        function _warnSaveFailure() {
+            if (_failCount < 2 || Date.now() - _lastWarn < 300000) return;
+            _lastWarn = Date.now();
+            let l = 'en';
+            try { l = (window.i18n && window.i18n.getLang && window.i18n.getLang()) || 'en'; } catch (e) {}
+            if (typeof showStatus === 'function') showStatus(_FAIL_MSG[l] || _FAIL_MSG.en, 'error');
+        }
+
         function persistNow() {
             clearTimeout(_debounceTimer);
             _debounceTimer = null;
             if (typeof mbLibrarySave !== 'function') return Promise.resolve();
             const run = mbLibrarySave()
-                .then(function (r) { if (r && r.changed) flashDot(); })
+                .then(function (r) { _failCount = 0; if (r && r.changed) flashDot(); })
                 .catch(function (e) {
                     /* Autosave degrades quietly by design — it fires every
                        few seconds and a modal on each failure would make
                        the tool unusable exactly when storage is full. The
                        DELIBERATE save (💾) surfaces its own errors. */
                     console.warn('[AutoSave] write failed:', e && e.message);
+                    _failCount++;
+                    _warnSaveFailure();
                 });
             _saving = run;
             run.then(function () { if (_saving === run) _saving = null; });
@@ -304,6 +323,13 @@
 
         /* For other modules: save now, wait for it. */
         window.mbAutosaveFlush = persistNow;
+
+        /* The hook seven scripts call after changing data without a click or
+           an input (a drag, a pasted table, a sequence repaint) — each as
+           `if (typeof mbTouch === 'function') mbTouch()`. Nothing defined it,
+           so those calls silently did nothing. Found by the lint check
+           (tests/eslint.config.js). */
+        window.mbTouch = scheduleSave;
 
         /* ── Init ─────────────────────────────────────────────────── */
         function init() {

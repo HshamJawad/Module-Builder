@@ -27,6 +27,15 @@ jobs:
       - name: Install test tools
         run: npm ci
 
+      - name: Lint (undefined names, duplicate keys, dead code)
+        run: npx eslint -c eslint.config.js ..
+
+      - name: Check for clashing global names
+        run: node ../tools/check-globals.js
+
+      - name: Unit tests (project migration)
+        run: node --test unit/*.test.js
+
       - name: Install the browser
         run: npx playwright install --with-deps chromium
 
