@@ -34,6 +34,7 @@ async function arabicModule(page) {
     m.description = { en: '', ar: 'قياس الجهد', fr: '' };
     m.learningOutcomes[0].title = { en: '', ar: 'قياس الجهد', fr: '' };
     mbState.coverRows[0].value = { en: '', ar: 'الكهرباء', fr: '' };
+    renderCoverTable();   // on screen, so a flush (what a save does) keeps it
   });
 }
 
