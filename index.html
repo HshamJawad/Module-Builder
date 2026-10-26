@@ -522,11 +522,6 @@
 <select data-act="switchModuleFromTab" data-args='["unit"]' data-on="change" id="unit-module-selector" class="mb-ctx-sel mb-ctx-mod">
 <option data-i18n="mbSelectModule" value="">-- Select Module --</option>
 </select>
-<span class="mb-ctx-sep" aria-hidden="true">›</span>
-<span data-i18n="mbLearningOutcome" class="mb-ctx-label">📚 Learning Outcome:</span>
-<select data-act="switchLearningOutcomeFromTab" data-args='["unit"]' data-on="change" id="unit-lo-selector" class="mb-ctx-sel mb-ctx-lo">
-<option data-i18n="mbSelectLearningOutcome" value="">-- Select Learning Outcome --</option>
-</select>
 </div>
 <div class="lg-unit-wrap" id="lg-unit-wrap">
 <div class="mb-blocks mb-blocks--lo lg-unit" id="lg-unit-section" style="display:none;"></div>
@@ -554,6 +549,8 @@
 </div>
 <!-- 3.33.0: suggested content for this kind of sheet — src/suggest_panel.js -->
 <div id="mb-sp-info" class="mb-sp-host"></div>
+<!-- 3.80.6: Learner guide — the learning unit's card: title, introduction, "you will learn how to" (src/learner_guide.js) -->
+<div class="mb-block lg-part lg-unit-card" data-tpl-only="learnerGuide" id="lg-unit-card"></div>
 <!-- 3.31.0: "see also" — filled by src/content_map.js -->
 <div id="mb-seealso-info"></div>
 <!-- Row 2: sheet controls -->

@@ -616,10 +616,27 @@ function _pdfBuild(pdf, model, lang) {
         });
     }
 
+    /* 3.80.6: the Learner guide's module introduction, on its own page before the first unit. */
+    if (model.lgModule) {
+        var lgm = model.lgModule;
+        w.newPage();
+        if (lgm.heading) w.heading(lgm.heading, 2);
+        if (lgm.body) w.text(lgm.body);
+        if (lgm.items.length) {
+            w.text(lgm.lead, { bold: true });
+            lgm.items.forEach(function (x, i) { w.text((i + 1) + '. ' + x, { indent: 5 }); });
+        }
+        if (lgm.includes) {
+            w.text(lgm.includes.title, { bold: true });
+            lgm.includes.rows.forEach(function (r) { w.text(r.label + ' ' + r.text); });
+            lgm.includes.extra.forEach(function (l) { w.text(l); });
+        }
+    }
+
     /* Outcomes and their sheets */
     model.outcomes.forEach(function (o) {
         w.newPage();
-        w.heading(o.pageHeading || o.heading || (t('outcome') + ' ' + o.index + ': ' + o.title), 2);   // 3.59.0: the Learner guide's unit; 3.79.0: the module's title on the introduction page
+        w.heading(o.heading || (t('outcome') + ' ' + o.index + ': ' + o.title), 2);   // 3.59.0: the Learner guide's unit
         if (o.description) w.text(o.description);
         if (o.criteria.length) {
             w.label(t('criteria'));
@@ -760,18 +777,12 @@ function _pdfBuild(pdf, model, lang) {
             if (it.kind === 'info') renderInfo(it.sheet);
             else if (it.kind === 'activity') renderAct(it.sheet);
             else if (it.kind === 'lgIntro') {
-                /* 3.59.0: on the unit's page. */
+                /* 3.59.0: on the unit's page; 3.80.6: the lines as typed. */
                 w.heading(it.intro.heading, 3);
-                if (it.intro.body) w.text(it.intro.body);
+                it.intro.lines.forEach(function (l) { w.text(l); });
                 if (it.intro.items.length) {
                     w.text(it.intro.lead, { bold: true });
-                    it.intro.items.forEach(function (x, i) { w.text((i + 1) + '. ' + x, { indent: 5 }); });
-                }
-                /* 3.79.0: «Each learning unit includes the following:» */
-                if (it.intro.includes) {
-                    w.text(it.intro.includes.title, { bold: true });
-                    it.intro.includes.rows.forEach(function (r) { w.text(r.label + ' ' + r.text); });
-                    it.intro.includes.extra.forEach(function (l) { w.text(l); });
+                    it.intro.items.forEach(function (x) { w.text(x, { indent: 5 }); });
                 }
             } else if (it.kind === 'lgReflection') {
                 w.newPage();

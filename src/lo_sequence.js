@@ -134,7 +134,7 @@ function _seqPosition(lo, kind, ref) {
     for (var i = 0; i < seq.length; i++) {
         var it = seq[i], counts;
         if (it.kind === 'block') counts = _seqBlockCounts(it.block);
-        else if (it.kind === 'lgIntro') counts = typeof mbLgIntroFilled === 'function' && mbLgIntroFilled(lo);
+        else if (it.kind === 'lgIntro') counts = typeof mbLgUnitFilled === 'function' && mbLgUnitFilled(lo);   // 3.80.6
         else if (it.kind === 'lgReflection') counts = typeof mbLgReflectionFilled === 'function' && mbLgReflectionFilled(lo);
         else counts = _seqSheetCounts(it.kind === 'info' ? infos[it.index] : acts[it.index]);
         if (!counts) continue;

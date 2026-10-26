@@ -317,6 +317,20 @@ function mbBuildModuleHtml(model, opts) {
         add('intro', t('intro'), _hxSection('intro', '', t('intro'), it));
     }
 
+    /* 3.80.6: the Learner guide's module introduction, before the first unit. */
+    if (model.lgModule) {
+        var lgm = model.lgModule, lgi = '';
+        if (lgm.body) lgi += '<p>' + _hxText(lgm.body) + '</p>';
+        if (lgm.items.length) lgi += '<p><strong>' + _hxEsc(lgm.lead) + '</strong></p><ol>' +
+            lgm.items.map(function (i) { return '<li>' + _hxText(i) + '</li>'; }).join('') + '</ol>';
+        if (lgm.includes) {
+            lgi += '<p><strong>' + _hxEsc(lgm.includes.title) + '</strong></p>' +
+                lgm.includes.rows.map(function (r) { return '<p><strong>' + _hxEsc(r.label) + '</strong> ' + _hxText(r.text) + '</p>'; }).join('') +
+                lgm.includes.extra.map(function (l) { return '<p>' + _hxText(l) + '</p>'; }).join('');
+        }
+        add('lg-module', lgm.heading || '', _hxSection('lg-module', '', lgm.heading || '', lgi));
+    }
+
     /* Outcomes, each with its sheets in document order. */
     model.outcomes.forEach(function (o) {
         if (!inc('outcomes') && !inc('infoSheets') && !inc('activitySheets')) return;
@@ -346,18 +360,12 @@ function mbBuildModuleHtml(model, opts) {
             if (it.kind !== 'lgIntro') return;
             var x = it.intro;
             inner += '<div class="mx-sub">' + _hxEsc(x.heading) + '</div>';
-            if (x.body) inner += '<p>' + _hxText(x.body) + '</p>';
-            if (x.items.length) inner += '<p><strong>' + _hxEsc(x.lead) + '</strong></p><ol>' +
-                x.items.map(function (i) { return '<li>' + _hxText(i) + '</li>'; }).join('') + '</ol>';
-            /* 3.79.0: «Each learning unit includes the following:» */
-            if (x.includes) {
-                inner += '<p><strong>' + _hxEsc(x.includes.title) + '</strong></p>' +
-                    x.includes.rows.map(function (r) { return '<p><strong>' + _hxEsc(r.label) + '</strong> ' + _hxText(r.text) + '</p>'; }).join('') +
-                    x.includes.extra.map(function (l) { return '<p>' + _hxText(l) + '</p>'; }).join('');
-            }
+            x.lines.forEach(function (l) { inner += '<p>' + _hxText(l) + '</p>'; });
+            if (x.items.length) inner += '<p><strong>' + _hxEsc(x.lead) + '</strong></p>' +
+                x.items.map(function (i) { return '<p>' + _hxText(i) + '</p>'; }).join('');
         });
         if (inc('outcomes')) {
-            if (o.heading) add(oid, o.heading, _hxSection(oid, '', o.pageHeading || o.heading, inner));
+            if (o.heading) add(oid, o.heading, _hxSection(oid, '', o.heading, inner));
             else add(oid, t('outcome') + ' ' + o.index, _hxSection(oid, t('outcome') + ' ' + o.index, o.title, inner));
         }
 
