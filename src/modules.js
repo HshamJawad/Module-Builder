@@ -330,12 +330,13 @@ function renderModuleSelector() {
     mbSyncCtxBars();
 }
 
-/** 3.80.0: the Learning unit and Reflection bars name the module only when
- *  the project has more than one; with one module the bar is just the
- *  learning unit. */
+/** 3.80.0: the Reflection bar names the module only when the project has
+ *  more than one; with one module the bar is just the learning unit.
+ *  3.80.2: the Learning unit tab always shows the whole bar (Module ›
+ *  Learning unit), as the Information tab does. */
 function mbSyncCtxBars() {
     const solo = (mbState.modulesData || []).length <= 1;
-    document.querySelectorAll('#unit-tab .mb-ctx-bar, #reflection-tab .mb-ctx-bar').forEach(function (b) {
+    document.querySelectorAll('#reflection-tab .mb-ctx-bar').forEach(function (b) {
         b.classList.toggle('mb-ctx-solo', solo);
     });
 }

@@ -198,9 +198,10 @@ test('Learning unit tab (Learner guide): after Introduction Pages, bar names the
   await page.locator('#intro-tab .mb-nav-next:visible').click();
   await expect(page.locator('#unit-tab')).toHaveClass(/active/);
   await expect(page.locator('#lg-unit-section')).toBeVisible();
-  const many = await page.evaluate(() => mbState.modulesData.length > 1);
-  await expect(page.locator('#unit-tab .mb-ctx-bar')).toHaveClass(many ? /^((?!mb-ctx-solo).)*$/ : /mb-ctx-solo/);
-  await expect(page.locator('#unit-module-selector')).toBeVisible({ visible: many });
+  // 3.80.2: the whole bar (Module › Learning unit), whatever the number of modules
+  await expect(page.locator('#unit-tab .mb-ctx-bar')).not.toHaveClass(/mb-ctx-solo/);
+  await expect(page.locator('#unit-module-selector')).toBeVisible();
+  await expect(page.locator('#unit-tab .mb-ctx-sep')).toBeVisible();
   await expect(page.locator('#unit-lo-selector')).toBeVisible();
   // standard template: no such tab
   expect(errors).toEqual([]);

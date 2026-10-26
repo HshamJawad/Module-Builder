@@ -250,6 +250,9 @@ function mbPrepareImages(fileList, profileName) {
    picture (a broken file, an SVG that taints the canvas). It never
    rejects, so one bad picture cannot stop an export. */
 var MB_RASTER_OK = ['image/png', 'image/jpeg', 'image/jpg'];
+/* data URL made here → the picture's own size in px (before any scaling),
+   so a writer can place it at the size Word would, not at its pixels. */
+var MB_RASTER_NATURAL = new Map();
 
 function mbImageMime(dataUrl) {
     var m = /^data:([^;,]+)/i.exec(String(dataUrl || ''));
@@ -279,10 +282,14 @@ function mbRasterizeImage(src, opts) {
                 var canvas = document.createElement('canvas');
                 canvas.width = cw; canvas.height = ch;
                 var ctx = canvas.getContext('2d');
+                var jpeg = opts.format === 'image/jpeg';
+                if (jpeg) { ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, cw, ch); }   // JPEG has no alpha
                 ctx.imageSmoothingEnabled = true;
                 if ('imageSmoothingQuality' in ctx) ctx.imageSmoothingQuality = 'high';
                 ctx.drawImage(img, 0, 0, cw, ch);
-                resolve({ dataUrl: canvas.toDataURL('image/png'), w: cw, h: ch });
+                var out = jpeg ? canvas.toDataURL('image/jpeg', opts.quality || 0.85) : canvas.toDataURL('image/png');
+                MB_RASTER_NATURAL.set(out, { w: w, h: h });
+                resolve({ dataUrl: out, w: cw, h: ch });
             } catch (e) {
                 console.warn('[ImagePrep] could not rasterise:', e && e.message);
                 resolve(null);
