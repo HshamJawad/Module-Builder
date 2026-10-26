@@ -64,8 +64,24 @@ test('insert below, move up / down, renumbered, saved in the new order', async (
 test('drag by the handle reorders the content cards', async ({ page }) => {
   const errors = await openApp(page, { handoff: fixture('dacum-handoff.json'), contentLang: 'en' });
   await threeCards(page);
-  await cards(page).nth(2).locator('.mb-step-handle').dragTo(cards(page).nth(0), { targetPosition: { x: 40, y: 5 } });
-  expect(await texts(page)).toEqual(['C', 'A', 'B']);
+  // Both cards in view and clear of the fixed toolbar, then a real mouse drag in small steps
+  // (dragTo scrolled the target under the toolbar in some runs: the drop never reached a card).
+  await page.evaluate(() => {
+    const c = document.querySelectorAll('#content-sections-container > .content-section-item');
+    const top = c[0].getBoundingClientRect().top + window.scrollY;
+    window.scrollTo(0, Math.max(0, top - 140));
+  });
+  await page.waitForTimeout(300);
+  const from = await cards(page).nth(2).locator('.mb-step-handle').boundingBox();
+  const to = await cards(page).nth(0).boundingBox();
+  await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+  await page.mouse.down();
+  await page.waitForTimeout(80);
+  await page.mouse.move(from.x + from.width / 2, from.y - 20, { steps: 5 });
+  await page.mouse.move(to.x + 40, to.y + 6, { steps: 25 });
+  await page.waitForTimeout(80);
+  await page.mouse.up();
+  await expect.poll(() => texts(page)).toEqual(['C', 'A', 'B']);
   await expect(cards(page).locator('.cs-num')).toHaveText(['1', '2', '3']);
   await expect(cards(page).nth(0)).not.toHaveAttribute('draggable', 'true');
   expect(errors).toEqual([]);

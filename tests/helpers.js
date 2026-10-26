@@ -34,6 +34,14 @@ async function openApp(page, { handoff = null, lang = null, contentLang = null, 
   return errors;
 }
 
+/** On phones and tablets (≤1024px) the side navigation is a drawer: open it. */
+async function openNav(page) {
+  const nav = page.locator('#mb-sidenav');
+  if (await nav.isVisible()) return;
+  await page.locator('#mb-nav-toggle').click();
+  await nav.waitFor({ state: 'visible' });
+}
+
 /** Switch tab the way the side navigation does. */
 async function tab(page, name) {
   await page.evaluate(n => window.switchTab(n), name);
@@ -49,4 +57,5 @@ function openModule(page, expr = 'm => m') {
   }, expr);
 }
 
-module.exports = { fixture, openApp, tab, openModule };
+module.exports = {
+  openNav, fixture, openApp, tab, openModule };
