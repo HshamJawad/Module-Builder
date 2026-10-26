@@ -43,7 +43,7 @@ test('Word: SVG front and back covers are written as PNG pages', async ({ page }
   expect(errors).toEqual([]);
 });
 
-test('PDF: SVG pictures and covers are placed as PNG', async ({ page }) => {
+test('PDF: SVG pictures are placed as PNG, SVG covers as JPEG', async ({ page }) => {
   const errors = await openApp(page, { handoff: fixture('dacum-handoff.json'), contentLang: 'en' });
   await seed(page);
   const placed = await page.evaluate(async () => {
@@ -56,8 +56,34 @@ test('PDF: SVG pictures and covers are placed as PNG', async ({ page }) => {
     return calls;
   });
   expect(placed.some(c => c.svg)).toBe(false);
-  expect(placed.every(c => c.fmt === 'PNG')).toBe(true);
+  expect(placed.filter(c => c.full).every(c => c.fmt === 'JPEG')).toBe(true);   // covers: light, opaque
+  expect(placed.filter(c => !c.full).every(c => c.fmt === 'PNG')).toBe(true);
   expect(placed.filter(c => c.full)).toHaveLength(2);           // front + back cover
   expect(placed.length).toBeGreaterThanOrEqual(3);              // + the sheet picture
   expect(errors).toEqual([]);
 });
+
+// 3.80.2: a step / section picture sits in the second column of a two-column
+// row, like Word's table — at most 280 px (74 mm) wide; mirrored in Arabic.
+for (const lang of ['en', 'ar']) {
+  test(`PDF (${lang}): the picture is in its own column beside the text, no wider than Word's`, async ({ page }) => {
+    const errors = await openApp(page, { handoff: fixture('dacum-handoff.json'), contentLang: lang, lang });
+    await seed(page);
+    const placed = await page.evaluate(async () => {
+      const API = window.jspdf.jsPDF.API;
+      const calls = [];
+      const origAdd = API.addImage, origSave = API.save;
+      API.addImage = function (d, f, x, y, w, h) { calls.push({ x, y, w, h, full: w > 200 && h > 290 }); return origAdd.apply(this, arguments); };
+      API.save = function () { return this; };
+      try { await mbExportToPdf(); } finally { API.addImage = origAdd; API.save = origSave; }
+      return calls.filter(c => !c.full);
+    });
+    expect(placed).toHaveLength(1);
+    const c = placed[0];
+    expect(c.w).toBeLessThanOrEqual(74.3);
+    // page 210 mm, margin 18, columns of 87: the picture lies wholly in the right column (en) or the left one (ar)
+    if (lang === 'en') expect(c.x).toBeGreaterThanOrEqual(105 - 0.01);
+    else expect(c.x + c.w).toBeLessThanOrEqual(105 + 0.01);
+    expect(errors).toEqual([]);
+  });
+}

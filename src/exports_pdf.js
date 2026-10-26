@@ -351,6 +351,103 @@ function _pdfWriter(pdf, style, lang) {
         }
     };
 
+    /** 3.80.2: the Word layout — a two-column table, the text in the first
+        column and the pictures in the second, one picture per row (the
+        first row holds the text and the first picture; each further
+        picture gets its own row with the first cell empty). Pictures are
+        at most 280 px wide and 400 px high, as in Word, and never wider
+        than their cell. In Arabic pdf_arabic.js mirrors the whole table,
+        which is what Word's bidi table does too. */
+    w.textImageRows = function (text, images, caps, opts) {
+        opts = opts || {};
+        images = (images || []).filter(function (im) { return im; });
+        if (!images.length) { w.text(text, opts.textOpts); return; }
+        var size = style.body, lh = w.lineH(size);
+        var colW = CW / 2, padX = 3, padY = 3;
+        var PX = 25.4 / 96;                                   // mm per CSS px
+        var capSize = Math.max(8, size - 2), capLh = w.lineH(capSize);
+        var pageRoom = BOTTOM - M - padY * 2;
+
+        pdf.setFontSize(size);
+        pdf.setFont(undefined, 'normal');
+        var tLines = [];
+        String(text || '').split(/\r\n|\r|\n/).forEach(function (para) {
+            if (!para.trim()) return;
+            pdf.splitTextToSize(para, colW - padX * 2).forEach(function (l) { tLines.push(l); });
+        });
+
+        /* One picture, measured: its size in mm and its caption's lines. */
+        var measure = function (src, cap) {
+            var props, ww = 0, hh = 0;
+            try { props = pdf.getImageProperties(src); } catch (e) { return null; }
+            var nat = (typeof MB_RASTER_NATURAL !== 'undefined' && MB_RASTER_NATURAL.get(src)) || null;
+            var natW = nat ? nat.w : props.width, natH = nat ? nat.h : props.height;
+            var maxW = Math.min(280 * PX, colW - padX * 2), maxH = Math.min(400 * PX, pageRoom * 0.7);
+            ww = Math.min(natW * PX, maxW);
+            hh = ww * (props.height / props.width);
+            if (hh > maxH) { hh = maxH; ww = hh * (props.width / props.height); }
+            var cl = [];
+            if (cap) { pdf.setFontSize(capSize); pdf.setFont(undefined, 'bold'); cl = pdf.splitTextToSize(String(cap), colW - padX * 2); }
+            return { src: src, w: ww, h: hh, cap: cl, total: hh + (cl.length ? cl.length * capLh + 1.5 : 0) };
+        };
+        var pics = [];
+        images.forEach(function (im, i) { var m = measure(im, caps && caps[i]); if (m) pics.push(m); });
+
+        var drawBox = function (x, y, h) {
+            pdf.setDrawColor(0, 0, 0); pdf.setLineWidth(0.2);
+            pdf.rect(x, y, colW, h, 'S');
+        };
+        var drawText = function (lines, y) {
+            pdf.setFontSize(size); pdf.setFont(undefined, 'normal');
+            var rgb = _pdfRgb('1F2430'); pdf.setTextColor(rgb[0], rgb[1], rgb[2]);
+            for (var i = 0; i < lines.length; i++) pdf.text(lines[i], M + padX, y + padY + lh * (i + 0.72));
+        };
+        var drawPic = function (pc, y, h) {
+            var top = y + Math.max(padY, (h - pc.total) / 2);       // centred, as Word's cell is
+            try { pdf.addImage(pc.src, _pdfImgFormat(pc.src), M + colW + (colW - pc.w) / 2, top, pc.w, pc.h); }
+            catch (e) { console.warn('[PDF] image skipped:', e && e.message); }
+            if (pc.cap.length) {
+                pdf.setFontSize(capSize); pdf.setFont(undefined, 'bold');
+                var cc = _pdfRgb(style.heading); pdf.setTextColor(cc[0], cc[1], cc[2]);
+                for (var i = 0; i < pc.cap.length; i++) {
+                    var tw = pdf.getTextWidth(pc.cap[i]);
+                    pdf.text(pc.cap[i], M + colW + (colW - tw) / 2, top + pc.h + 1.5 + capLh * (i + 0.72));
+                }
+            }
+        };
+
+        /* Row 0: the text, long text split by lines across pages, and the
+           first picture beside the last part of it. */
+        var rest = tLines.slice();
+        while (rest.length > 1) {
+            var fullH = Math.max(rest.length * lh, pics[0] ? pics[0].total : 0) + padY * 2;
+            if (w.y + fullH <= BOTTOM) break;
+            if (fullH <= BOTTOM - M) { w.newPage(); break; }
+            var fit = Math.floor((BOTTOM - w.y - padY * 2) / lh);
+            if (fit < 2) { w.newPage(); continue; }
+            var chunk = rest.splice(0, fit), ch = chunk.length * lh + padY * 2;
+            drawBox(M, w.y, ch); drawBox(M + colW, w.y, ch); drawText(chunk, w.y);
+            w.y += ch;
+            if (rest.length) w.newPage();
+        }
+        var h0 = Math.max(rest.length * lh, pics[0] ? pics[0].total : 0) + padY * 2;
+        w.need(h0);
+        drawBox(M, w.y, h0); drawBox(M + colW, w.y, h0);
+        drawText(rest, w.y);
+        if (pics[0]) drawPic(pics[0], w.y, h0);
+        w.y += h0;
+        /* Further pictures: an empty first cell, the picture in the second. */
+        for (var k = 1; k < pics.length; k++) {
+            var hk = pics[k].total + padY * 2;
+            w.need(hk);
+            drawBox(M, w.y, hk); drawBox(M + colW, w.y, hk);
+            drawPic(pics[k], w.y, hk);
+            w.y += hk;
+        }
+        pdf.setFont(undefined, 'normal');
+        w.y += 3;
+    };
+
     /** 3.56.0: an attached picture — wider than a step picture, centred,
         its caption and source under it. */
     w.figure = function (dataUrl, caption, source) {
@@ -429,14 +526,6 @@ function _pdfAttachments(w, list, slot, S) {
         if (a.source) w.text(a.source, { size: Math.max(8, S.body - 2), color: '6B7280', after: 3 });
     });
 }
-function _pdfImages(w, images, caps, S) {
-    (images || []).forEach(function (im, i) {
-        w.image(im);
-        var cap = caps && caps[i];
-        if (cap) w.text(cap, { bold: true, size: Math.max(8, S.body - 1), color: S.heading, after: 2 });
-    });
-}
-
 /* ── The document ───────────────────────────────────────────
    Same order as the Word and HTML exports, from the same model. */
 function _pdfBuild(pdf, model, lang) {
@@ -539,8 +628,8 @@ function _pdfBuild(pdf, model, lang) {
                 _pdfAttachments(w, sh.attachments, k, S);   // 3.56.0
                 if (cs.heading) w.label(cs.heading);
                 if (cs.subheading) w.text(cs.subheading, { bold: true, after: 1 });   // 3.72.0
-                if (cs.text) w.text(cs.text);
-                _pdfImages(w, cs.images, cs.imageCaps, S);
+                if (cs.images && cs.images.length) w.textImageRows(cs.text, cs.images, cs.imageCaps);   // 3.80.2: as Word
+                else if (cs.text) w.text(cs.text);
                 cs.tables.forEach(function (tb) {
                     /* The captions print even when the grid is empty —
                        a named table with nothing in it yet is something
@@ -593,8 +682,8 @@ function _pdfBuild(pdf, model, lang) {
             if (sh.steps.length || (sh.attachments || []).length) {
                 sh.steps.forEach(function (s, k) {
                     _pdfAttachments(w, sh.attachments, k, S);   // 3.56.0
-                    w.text(s.index + '. ' + s.text, { indent: 4 });
-                    _pdfImages(w, s.images, s.imageCaps, S);
+                    if (s.images && s.images.length) w.textImageRows(s.index + '. ' + s.text, s.images, s.imageCaps);   // 3.80.2: as Word
+                    else w.text(s.index + '. ' + s.text, { indent: 4 });
                     (s.tables || []).forEach(function (tb) {
                         if (tb.title) w.label(tb.title);
                         if (tb.subtitle) w.text(tb.subtitle);
@@ -973,7 +1062,17 @@ async function mbExportToPdf() {
         /* 3.81.1: jsPDF reads only PNG and JPEG. A picture pasted from Word
            is SVG — it was skipped, leaving the PDF without its pictures and
            covers. Everything else is drawn to PNG first. */
-        if (typeof mbRasterizeModelImages === 'function') await mbRasterizeModelImages(model);
+        if (typeof mbRasterizeModelImages === 'function') {
+            /* The covers fill a page: opaque JPEG at 150 dpi is sharp and
+               light. Every other picture is shown at most ~7.5 cm wide, so
+               900 px on its long side is already above 300 dpi. */
+            if (model.cover) {
+                var cvr = { cover: { frontImage: model.cover.frontImage, backImage: model.cover.backImage } };
+                await mbRasterizeModelImages(cvr, { maxSide: 1754, format: 'image/jpeg', quality: 0.85 });
+                model.cover.frontImage = cvr.cover.frontImage; model.cover.backImage = cvr.cover.backImage;
+            }
+            await mbRasterizeModelImages(model, { maxSide: 900 });
+        }
         pdf = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
 
         /* Order matters and is taken from the reference exporter:
