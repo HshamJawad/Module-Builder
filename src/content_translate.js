@@ -57,10 +57,10 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         mbTrSafe: 'What was already translated is kept.',
         mbTrNoModule: 'Open a module first.',
         mbTrReset: 'Reset to default',
-        mbTrResetNote: 'Removes the AI translations of this module and shows the original language again. Texts you edited by hand are kept.',
+        mbTrResetNote: 'Back to the default: the AI translations of this module are removed (texts you edited by hand are kept) and the original language is detected again and shown.',
         mbTrResetConfirm: 'Remove the AI translations of this module?\nTexts you edited by hand are kept.',
         mbTrResetOk: 'Remove translations',
-        mbTrResetDone: 'AI translations removed ({v0} texts). The original language is shown.'
+        mbTrResetDone: 'Translation reset — the module shows its original language.'
     },
     fr: {
         mbTrTitle: 'Traduction',
@@ -89,10 +89,10 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         mbTrSafe: 'Ce qui a déjà été traduit est conservé.',
         mbTrNoModule: 'Ouvrez d’abord un module.',
         mbTrReset: 'Rétablir par défaut',
-        mbTrResetNote: 'Supprime les traductions IA de ce module et réaffiche la langue d’origine. Les textes modifiés à la main sont conservés.',
+        mbTrResetNote: 'Retour au réglage par défaut : les traductions IA de ce module sont supprimées (les textes modifiés à la main sont conservés) et la langue d’origine est détectée de nouveau et affichée.',
         mbTrResetConfirm: 'Supprimer les traductions IA de ce module ?\nLes textes modifiés à la main sont conservés.',
         mbTrResetOk: 'Supprimer les traductions',
-        mbTrResetDone: 'Traductions IA supprimées ({v0} textes). La langue d’origine est affichée.'
+        mbTrResetDone: 'Traduction réinitialisée — le module affiche sa langue d’origine.'
     },
     ar: {
         mbTrTitle: 'الترجمة',
@@ -121,10 +121,10 @@ if (window.i18n && window.i18n.extend) window.i18n.extend({
         mbTrSafe: 'ما تُرجم سابقاً محفوظ.',
         mbTrNoModule: 'افتح وحدة أولاً.',
         mbTrReset: 'إعادة إلى الوضع الافتراضي',
-        mbTrResetNote: 'يحذف الترجمات الآلية لهذه الوحدة ويعيد عرض اللغة الأصلية. النصوص التي عدّلتها يدوياً تبقى كما هي.',
+        mbTrResetNote: 'العودة إلى الوضع الافتراضي: تُحذف الترجمات الآلية لهذه الوحدة (والنصوص التي عدّلتها يدوياً تبقى)، وتُكتشف اللغة الأصلية من جديد وتُعرض.',
         mbTrResetConfirm: 'هل تريد حذف الترجمات الآلية لهذه الوحدة؟\nالنصوص التي عدّلتها يدوياً تبقى كما هي.',
         mbTrResetOk: 'حذف الترجمات',
-        mbTrResetDone: 'تم حذف الترجمات الآلية ({v0} نصاً). تُعرض اللغة الأصلية.'
+        mbTrResetDone: 'أُعيدت الترجمة إلى الوضع الافتراضي — تُعرض اللغة الأصلية للوحدة.'
     }
 });
 
@@ -467,34 +467,39 @@ async function mbTrRun(from, to, retranslate) {
 
 /* ── Reset to default ──────────────────────────────────────── */
 
-/** Remove the AI translations of the open module (texts edited by hand stay),
- *  show the original language again. */
+/** Back to the default, as DACUM Live Pro's "Reset to default": the original
+ *  language is detected again (a chosen one is forgotten), the AI translations
+ *  of the open module are removed after a confirmation (texts edited by hand
+ *  stay), and the original language is shown — for editing and for export. */
 async function mbTrReset() {
     var m = mbTrModule();
-    if (!m || _mbTr.running || !mbTrHasTranslations(m)) return;
-    if (typeof mbConfirm === 'function' &&
+    if (!m || _mbTr.running) return;
+    var had = mbTrHasTranslations(m);
+    if (had && typeof mbConfirm === 'function' &&
         !(await mbConfirm(_mbTrT('mbTrResetConfirm'), { danger: true, okLabel: _mbTrT('mbTrResetOk') }))) return;
 
     if (typeof _mbLibFlush === 'function') _mbLibFlush();
-    var original = mbTrOriginal(m);
+    delete m.contentOriginal;                      // detected again from the texts…
+    var original = mbTrOriginal(m);                // …before the AI sides go, which are not authored text
     /* Back to the original first (flushes the screen into the side being left). */
     if (contentLang() !== original && typeof switchContentLang === 'function') switchContentLang(original);
     if (typeof setExportLang === 'function') setExportLang(original);
 
-    var n = 0;
-    mbTrCollect(m).forEach(function (p) {
-        BILANG_CODES.forEach(function (c) {
-            var map = _mbTrMap(m, c, false);
-            var t = _mbTrSide(p.pair, c);
-            if (map && t && map[mbTrHash(t)] !== undefined) { p.pair[c] = ''; n++; }
+    if (had) {
+        mbTrCollect(m).forEach(function (p) {
+            BILANG_CODES.forEach(function (c) {
+                var map = _mbTrMap(m, c, false);
+                var t = _mbTrSide(p.pair, c);
+                if (map && t && map[mbTrHash(t)] !== undefined) p.pair[c] = '';
+            });
         });
-    });
-    delete m.mbTr;
+        delete m.mbTr;
+    }
     if (typeof mbRepaintContent === 'function') mbRepaintContent();
     if (typeof mbLibrarySave === 'function') { try { mbLibrarySave(); } catch (e) { console.warn('[translate] save', e); } }
 
     _mbTr.last = null; _mbTr.from = null; _mbTr.to = null;
-    _mbTrSay(_mbTrT('mbTrResetDone', { v0: n }), 'ok');
+    _mbTrSay(_mbTrT('mbTrResetDone'), 'ok');
     _mbTrRefresh();
 }
 
@@ -551,7 +556,7 @@ function _mbTrSection() {
             '<select id="mbtr-original" class="mbtr-select" data-mbtr="original"' + (locked || !m ? ' disabled' : '') + '>' + opts(original) + '</select>' +
             '<p class="mbtr-note">' + _mbTrEsc(_mbTrT('mbTrOriginalNote')) + '</p>' +
             '<div class="mbtr-langs" role="radiogroup">' + cards + '</div>' +
-            '<button type="button" class="mbtr-reset" data-mbtr="reset"' + (locked && !_mbTr.running ? '' : ' disabled') + '>\u21BA ' +
+            '<button type="button" class="mbtr-reset" data-mbtr="reset"' + (_mbTr.running || !m ? ' disabled' : '') + '>\u21BA ' +
                 _mbTrEsc(_mbTrT('mbTrReset')) + '</button>' +
             '<p class="mbtr-note">' + _mbTrEsc(_mbTrT('mbTrResetNote')) + '</p>' +
             (versions.length > 1 ? '<p class="mbtr-note">' + _mbTrEsc(_mbTrT('mbTrShowNote')) + '</p>' : '') +

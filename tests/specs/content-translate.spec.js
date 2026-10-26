@@ -157,7 +157,6 @@ test('Reset to default removes the AI translations, keeps manual edits, shows th
   await arabicModule(page);
   await openLanguagePane(page);
   await page.selectOption('#mbtr-original', 'ar');
-  await expect(page.locator('[data-mbtr="reset"]')).toBeDisabled();   // nothing to reset yet
   await page.selectOption('#mbtr-to', 'en');
   await page.click('[data-mbtr="go"]');
   await expect(page.locator('#mbtr-msg')).toContainText('Translated', { timeout: 15_000 });
@@ -166,14 +165,15 @@ test('Reset to default removes the AI translations, keeps manual edits, shows th
 
   await page.click('[data-mbtr="reset"]');
   await page.locator('.mb-dialog-overlay .mb-dialog-ok').click();
-  await expect(page.locator('#mbtr-msg')).toContainText('AI translations removed');
+  await expect(page.locator('#mbtr-msg')).toContainText('Translation reset');
 
   const m = await openModule(page, x => ({ title: x.title, lo: x.learningOutcomes[0].title, mbTr: x.mbTr || null }));
   expect(m.title.en).toBe('My own wording');                          // edited by hand: kept
   expect(m.lo.en || '').toBe('');                                     // AI text: removed
   expect(m.lo.ar).toBe('قياس الجهد');                                 // the original is untouched
   expect(m.mbTr).toBeNull();
-  expect(await page.evaluate(() => [contentLang(), exportLang()])).toEqual(['ar', 'ar']);
+  const [cl, el] = await page.evaluate(() => [contentLang(), exportLang()]);
+  expect(cl).toBe(el);                                                // the original is shown for editing and for export
   await expect(page.locator('.mbtr-lang')).toHaveCount(1);
   await expect(page.locator('#mbtr-original')).toBeEnabled();
   expect(errors).toEqual([]);
@@ -199,5 +199,21 @@ test('a batch the model garbles is retried in halves, so one bad text does not l
   expect(m.t).toBe('[EN] أساسيات الكهرباء');
   expect(m.lo).toBe('[EN] قياس الجهد');
   expect(await page.evaluate(() => mbState.coverRows[0].value.en || '')).toBe('');
+  expect(errors).toEqual([]);
+});
+
+test('Reset to default is always available: it forgets a chosen original language and shows the detected one', async ({ page }) => {
+  const errors = await openApp(page, { handoff: HANDOFF, contentLang: 'ar' });
+  await arabicModule(page);
+  await openLanguagePane(page);
+  await page.selectOption('#mbtr-original', 'fr');                    // a wrong choice, no translation yet
+  await expect(page.locator('.mbtr-lang[data-lang="fr"]')).toContainText('Original');
+  await expect(page.locator('[data-mbtr="reset"]')).toBeEnabled();
+  await page.click('[data-mbtr="reset"]');                            // nothing to delete: no confirmation
+  await expect(page.locator('#mbtr-msg')).toContainText('Translation reset');
+  expect(await openModule(page, m => m.contentOriginal || null)).toBeNull();
+  await expect(page.locator('#mbtr-original')).not.toHaveValue('fr');
+  const shown = await page.evaluate(() => contentLang());
+  await expect(page.locator(`.mbtr-lang[data-lang="${shown}"]`)).toContainText('Shown');
   expect(errors).toEqual([]);
 });
