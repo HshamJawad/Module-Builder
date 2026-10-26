@@ -1,3 +1,13 @@
+# الإصدار 3.81.8 (٢٦ تشرين الأول ٢٠٢٦) — تقسيم دالة تصدير Word
+
+**ملفات:** `src/exports_docx.js` (من 2840 إلى نحو 1150 سطرًا)، `src/exports_docx_parts.js` (جديد)، `index.html`، `sw.js` (‏mb-3.81.8)، `version.json`
+
+- دالة `exportToDocx` كانت كتلة واحدة بنحو 2750 سطرًا. نُقلت أكبر أقسامها (خطوات النشاط، رابط QR، الغلاف، المقدمة، فهرس المحتويات، بناء ورقة المعلومات وورقة النشاط، وحدة التقييم، المراجع، دليل المتعلم) إلى دوال مستقلة في `exports_docx_parts.js`.
+- كل جزء يستلم في كائن واحد القيم التي يقرؤها فقط، فلا يصل إلى نطاق الدالة الأم. الكود نفسه والترتيب نفسه؛ لا تغيير في ناتج المستند.
+- حُدِّدت المتغيرات المطلوبة لكل جزء بتحليل نطاقات آلي (eslint-scope) لا يدويًا، وفحص ESLint (no-undef) يمنع نسيان أي متغير.
+
+---
+
 # الإصدار 3.81.7 (٢٦ تشرين الأول ٢٠٢٦) — أدوات الاستقرار: فحص الكود واختبارات الترحيل
 
 **ملفات:** `tests/eslint.config.js`، `tools/check-globals.js`، `tools/bump-version.js`، `tests/unit/bilang-migration.test.js`، `.github/workflows/tests.yml`، `src/autosave.js`، `src/learning_guide.js`، `src/mb-translations.js`، `src/content.js`، `src/coverage_view.js`، `sw.js` (‏mb-3.81.7)، `version.json`، `index.html`
