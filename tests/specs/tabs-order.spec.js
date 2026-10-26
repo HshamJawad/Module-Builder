@@ -11,7 +11,15 @@ test('the side navigation order, and each part in its own tab', async ({ page })
   const errors = await openApp(page, { lang: 'en' });
   const names = await page.locator('#mb-sidenav .tabs .tab').evaluateAll(b => b.map(x => x.getAttribute('data-args') || x.id));
   expect(names).toEqual(['["basic-info"]', '["covers"]', '["intro"]', '["unit"]', '["info"]', '["activity"]',
-    '["reflection"]', '["assessment"]', '["tools"]', '["references"]', '["back-cover"]', 'mb-settings-nav', '["help"]']);
+    '["reflection"]', '["assessment"]', '["tools"]', '["references"]', '["back-cover"]', 'mb-dacum-link', 'mb-settings-nav', '["help"]']);
+  // 3.81.4: the DACUM Live Pro link (same words in every language, opens in a new tab)
+  const link = page.locator('#mb-dacum-link');
+  await expect(link).toHaveText('🔗 DACUM Live Pro ↗');
+  await expect(link).toHaveAttribute('target', '_blank');
+  await expect(link).toHaveAttribute('href', /hshamjawad\.github\.io\/DACUMLivePro/);
+  await page.evaluate(() => window.i18n.setLang('ar'));
+  await expect(link).toHaveText('🔗 DACUM Live Pro ↗');
+  await page.evaluate(() => window.i18n.setLang('en'));
   // 3.69.0: the Reflection tab belongs to the Learner guide — hidden in the standard template
   await expect(page.locator('#mb-sidenav .tab[data-args=\'["reflection"]\']')).toBeHidden();
   await expect(page.locator('#mb-sidenav .tab[data-args=\'["unit"]\']')).toBeHidden();   // 3.80.0
