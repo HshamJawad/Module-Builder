@@ -4778,3 +4778,21 @@ body:has(.mb-pwa-bar) .mb-pwa-notice { top: calc(var(--mb-tb-h, 56px) + env(safe
     .mb-sig-grid > div { border-right: 0 !important; border-bottom: 1px solid #d1d5db; }
     .mb-sig-grid > div:last-child { border-bottom: 0; }
 }
+
+/* 3.81.4 — link to DACUM Live Pro at the foot of the side navigation
+   (above Settings and Help). It is an <a>, not a section: no .active state. */
+#mb-sidenav .tabs a.tab.mb-nav-ext {
+    text-decoration: none; box-sizing: border-box; cursor: pointer;
+    font-size: .88em; min-height: 40px;
+}
+@media (min-width: 1025px), (max-width: 1024px) {
+    #mb-sidenav .tabs a.tab.mb-nav-ext { margin-top: auto; }
+    #mb-sidenav .tabs a.tab.mb-nav-ext + .tab.mb-nav-settings { margin-top: 0; }
+}
+@media (max-width: 1024px) {
+    #mb-sidenav .tabs a.tab.mb-nav-ext {
+        display: flex; align-items: center; width: 100%; padding: 11px 14px; border-radius: 10px;
+        border: 1px solid transparent; background: transparent; color: var(--mb-nav-ink-soft);
+        white-space: normal; flex-shrink: 0;
+    }
+}
