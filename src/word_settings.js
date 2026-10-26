@@ -1013,7 +1013,9 @@ function _wsPaneLang() {
     }).join('');
     return '<h4 class="ws-group">\uD83C\uDF10 ' + _wsT('wsLangTitle') + '</h4>' +
            '<div class="ws-langs">' + btns + '</div>' +
-           '<p class="ws-note ws-note-sm">\u2139\uFE0F ' + _wsT('wsLangNote') + '</p>';
+           '<p class="ws-note ws-note-sm">\u2139\uFE0F ' + _wsT('wsLangNote') + '</p>' +
+           /* content_translate.js: original language, the shown version, AI translation. */
+           (typeof mbTranslatePaneHTML === 'function' ? mbTranslatePaneHTML() : '');
 }
 
 /* Built from MB_SHORTCUTS — the same array the listener reads, so a

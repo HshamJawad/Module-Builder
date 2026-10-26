@@ -127,6 +127,7 @@ const PRECACHE_URLS = [
   BASE + 'src/export_ui.js',
   BASE + 'src/exports_docx.js',
   BASE + 'src/contentlang_ui.js',
+  BASE + 'src/content_translate.js',
   BASE + 'src/events.js',
   BASE + 'src/toolbar_fit.js',
   BASE + 'src/sw_register.js',
