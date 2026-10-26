@@ -34,7 +34,9 @@ async function buildGuide(page, lang = 'en') {
       { title: P('Dismantle a PC'), sheetType: 'job', afterInfo: 'i2', lgContributes: 'yes',
         steps: [{ text: P('Use the screwdrivers.'), stepId: 's2', uid: 'st2' }] }
     ];
-    lo.lgIntro = { body: P('These tools help with maintenance.'), items: P('Use screwdrivers\nUse a soldering iron') };
+    // 3.80.6: the module's introduction page, and the unit's own page of lines
+    mbLgModuleOf().lgIntro = { body: P('This guide is about maintenance.'), items: P('Use screwdrivers\nUse a soldering iron') };
+    lo.lgUnit = { intro: P('These tools help with maintenance.'), learn: P('1- Choose a screwdriver\n• Tighten a screw') };
     lo.lgReflection = { questions: P('Did you use different screwdrivers?\nWhat was most difficult?'), lines: 2 };
     mbState.includeLearningGuide = true;   // must not print in this template
     mbState.assessmentFormsData[lo.id] = { rows: [{ criteria: 'Use screwdrivers correctly', activities: '1-4 Learning activity', outcomes: 'Direct observation', verification: 'VERIFY COL', date: '' }],
@@ -51,10 +53,11 @@ test('Learner guide: one numbered sequence, no self-check/resources/checklist, r
   const errors = await openApp(page, { contentLang: 'en' });
   await buildGuide(page);
   const t = await docxText(page);
-  const at = (s) => { const i = t.indexOf(s); expect(i, s).toBeGreaterThan(-1); return i; };
+  const at = (s) => { const i = s.startsWith('1- Learning unit') ? t.lastIndexOf(s) : t.indexOf(s); expect(i, s).toBeGreaterThan(-1); return i; };   // the overview names the unit first
   const order = [
+    'This guide is about maintenance.', 'The learning outcomes for this guide are:', '1. Use screwdrivers',
     '1- Learning unit: Use hand tools',
-    '1-1 Introduction', 'The learning outcomes for this guide are:', '1. Use screwdrivers',
+    '1-1 Introduction', 'These tools help with maintenance.', 'In this learning unit, you will learn how to:', '1- Choose a screwdriver', '• Tighten a screw',
     '1-2 Knowledge: Screwdrivers',
     '1-3 Knowledge: Soldering iron',
     '1-4 Learning activity: Using hand tools',
@@ -79,7 +82,7 @@ test('Learner guide in Arabic: headings and the tool\'s texts in the export lang
   const errors = await openApp(page, { contentLang: 'ar' });
   await buildGuide(page, 'ar');
   const t = await docxText(page);
-  for (const s of ['1- الوحدة التعلمية: Use hand tools'.replace('Use hand tools', ''), '1-1 المقدمة', 'محصلات التعلم لهذا الدليل هي:',
+  for (const s of ['1- الوحدة التعلمية: Use hand tools'.replace('Use hand tools', ''), '1-1 المقدمة', 'محصلات التعلم لهذا الدليل هي:', 'في هذه الوحدة التعلمية، ستتعلم كيف:',
                    '1-2 المعرفة: Screwdrivers'.replace('Screwdrivers', ''), '1-4 النشاط التعلمي:', '1-5 ورقة العمل:',
                    '1-6 التأمل في الوحدة التعلمية 1', '2- وحدة التقييم', '2-2 سجل الأعمال (محفظة الأدلة)', 'يعتمد تقييم هذه الوحدة']) {
     expect(t, s).toContain(s);
@@ -95,11 +98,13 @@ test('the standard template is unchanged: self-check, resources and checklist st
     lo.infoSheets = [{ title: P('Screwdrivers'), selfCheckContent: P('SELF CHECK TEXT'), contentSections: [] }];
     lo.activitySheets = [{ title: P('Using tools'), resources: [{ name: 'RESOURCE ROW', quantity: '1' }], criteria: [P('CRITERION ROW')], steps: [] }];
     lo.lgIntro = { body: P('LG INTRO') };
+    lo.lgUnit = { intro: P('LG UNIT INTRO') };
     saveCurrentModuleLOData(); mbState.currentLOId = null; _applyLOSwitch(lo.id);
   });
   const t = await docxText(page);
   for (const s of ['SELF CHECK TEXT', 'RESOURCE ROW', 'CRITERION ROW']) expect(t, s).toContain(s);
   expect(t).not.toContain('LG INTRO');
+  expect(t).not.toContain('LG UNIT INTRO');
   expect(t).not.toContain('Learning unit');
   expect(errors).toEqual([]);
 });
@@ -111,12 +116,14 @@ test('the editor: the unit card writes the outcome; the activity row is saved wi
   await tab(page, 'unit');
   await expect(page.locator('#lg-unit-section')).toBeVisible();
   await page.locator('#lg-unit-section [data-lg-field="intro.body"]').fill('Typed introduction');
+  await tab(page, 'info');
+  await page.locator('#lg-unit-card [data-lg-field="unit.intro"]').fill('Typed unit line');
   await tab(page, 'reflection');
   await expect(page.locator('#lg-reflection-section')).toBeVisible();
   await page.locator('#lg-reflection-section [data-lg-field="refl.questions"]').click();
   await page.keyboard.type('Typed question');
-  expect(await page.evaluate(() => [mbCurrentLOObject().lgIntro.body.en, mbCurrentLOObject().lgReflection.questions.en.endsWith('Typed question')]))
-    .toEqual(['Typed introduction', true]);
+  expect(await page.evaluate(() => [mbLgModuleOf().lgIntro.body.en, mbCurrentLOObject().lgUnit.intro.en, mbCurrentLOObject().lgReflection.questions.en.endsWith('Typed question')]))
+    .toEqual(['Typed introduction', 'Typed unit line', true]);
   await tab(page, 'activity');
   await expect(page.locator('#lg-act-row')).toBeVisible();
   await expect(page.locator('#resources-table')).toBeHidden();

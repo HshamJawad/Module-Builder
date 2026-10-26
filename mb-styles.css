@@ -4313,3 +4313,14 @@ button.mb-cmk-opt.is-on { outline: 3px solid #0f766e; outline-offset: 1px; }
 .mb-mi-card[open] > .mb-mi-toggle { border-bottom: 1px solid #e5e7eb; border-radius: 10px 10px 0 0; background: #eef2ff; }
 .mb-mi-card[open] .mb-mi-chev { transform: rotate(180deg); }
 .mb-mi-body { padding: 16px; }
+
+/* 3.80.6: the learning unit's card in the Knowledge tab (src/learner_guide.js) */
+.lg-unit-card { margin-top: 14px; }
+.lg-unit-card .lg-ucard-row { flex-wrap: nowrap; margin-top: 10px; }
+.lg-unit-card .lg-ucard-row:first-child { margin-top: 0; }
+.lg-unit-card .lg-ucard-lbl { white-space: nowrap; }
+.lg-unit-card .lg-ucard-row .lg-field { flex: 1 1 auto; min-width: 0; margin: 0; font-weight: 700; }
+.lg-unit-card .lg-ucard-learn .lg-field { font-weight: 800; color: #0f766e; }
+.lg-unit-card textarea.lg-field { margin-top: 8px; width: 100%; }
+.lg-unit-card .lg-tools-row { margin-top: 6px; }
+@media (max-width: 640px) { .lg-unit-card .lg-ucard-row { flex-wrap: wrap; } }

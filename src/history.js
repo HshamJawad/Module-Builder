@@ -106,7 +106,9 @@ function _mbHistData() {
                             asm: { c: mbState.assessmentContent === undefined ? null : mbState.assessmentContent,
                                    b: mbState.assessmentBlocks || [], l: mbState.lgAsm || null },
                             covers: [_mbHistImgRef(mbState.frontCoverImage), _mbHistImgRef(mbState.backCoverImage)],
-                            tools: (m && m.toolsText) || '' });
+                            tools: (m && m.toolsText) || '',
+                            /* 3.80.6: the Learner guide's module introduction page */
+                            lgm: m ? { i: m.lgIntro || null, n: m.lgIncludes || null } : null });
 }
 function _mbHistView() {
     return { lo: mbState.currentLOId, is: mbState.currentInfoSheetIndex || 0, as: mbState.currentActivitySheetIndex || 0 };
@@ -177,6 +179,11 @@ function _mbHistApply(step) {
         mbState.backCoverImage  = _mbHistImgGet(d.covers[1]);
         if (typeof mbRefreshCoverPreviews === 'function') mbRefreshCoverPreviews();
         if (typeof _mbCoverNotifyChanged === 'function') { _mbCoverNotifyChanged('front'); _mbCoverNotifyChanged('back'); }
+    }
+    /* 3.80.6: the module's introduction page; a step from before has none. */
+    if (mod && d.lgm) {
+        if (d.lgm.i) mod.lgIntro = d.lgm.i; else delete mod.lgIntro;
+        if (d.lgm.n) mod.lgIncludes = d.lgm.n; else delete mod.lgIncludes;
     }
     /* 3.79.0: the Tools & Resources list; a step from before has none. */
     if (mod && typeof d.tools === 'string') {
