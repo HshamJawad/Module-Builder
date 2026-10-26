@@ -106,6 +106,28 @@ var MB_CM_DEFAULTS = {
     cc: ['assessment'],
     lopc: ['assessment']
 };
+/* 3.80.7: the Learner guide's defaults. Its main sections are Knowledge, Learning activity
+   and the Assessment unit (Reflection and Tools & Resources have their own tabs, the tools
+   list is read straight from the tasks' tools). So only the fields that build those go
+   anywhere by default; the rest are OPTIONAL — kept in the map, sent nowhere until the
+   author picks where (Coverage), or changes the defaults in Distribution settings. */
+var MB_CM_DEFAULTS_LG = {
+    performanceSteps: ['activity'],
+    requiredSkills: ['activity'],
+    requiredKnowledge: ['info'],
+    decisionsCriticalPoints: [],
+    basicReading: ['info'], basicWriting: ['info'], basicMath: ['info'], basicScience: ['info'],
+    safetyOSH: [],
+    toolsEquipmentMaterials: [],
+    commonErrorsTroubleshooting: [],
+    workerBehaviours: [],
+    performanceCriteria: [],
+    performanceStandard: [],
+    conditionsWorkEnvironment: [],
+    custom: ['info'],
+    cc: ['assessment'],
+    lopc: ['assessment']
+};
 /* The fields Distribution settings lists, in this order. */
 var MB_CM_DEFAULT_FIELDS = ['performanceSteps', 'requiredSkills', 'requiredKnowledge', 'decisionsCriticalPoints',
     'basicReading', 'basicWriting', 'basicMath', 'basicScience', 'safetyOSH', 'toolsEquipmentMaterials',
@@ -126,7 +148,8 @@ function _cmCleanKinds(v) {
 function mbCmFieldKinds(group) {
     var own = mbState.cmDefaults && _cmCleanKinds(mbState.cmDefaults[group]);
     if (own) return own;
-    return (MB_CM_DEFAULTS[group] || ['info']).slice();
+    var lg = typeof mbIsLearnerGuide === 'function' && mbIsLearnerGuide();   // 3.80.7
+    return ((lg ? MB_CM_DEFAULTS_LG : MB_CM_DEFAULTS)[group] || ['info']).slice();
 }
 
 /* 3.64.0 — the distribution method of the project (🗺️ Coverage):
