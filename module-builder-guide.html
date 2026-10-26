@@ -556,10 +556,10 @@ GUIDE.en = {
     badge: '📘 Official Documentation',
     title: 'Module Builder',
     sub: 'A complete guide to designing, building, and exporting competency-based training modules — in English, French and Arabic, all inside your browser.',
-    meta: ['👨‍💻 by Husham Jawad Kadhim', '🔖 Version <span class="mb-ver">3.80.10</span>']
+    meta: ['👨‍💻 by Husham Jawad Kadhim', '🔖 Version <span class="mb-ver">3.80.11</span>']
   },
   footer: {
-    line1: '<strong>Module Builder v<span class="mb-ver">3.80.10</span></strong> — User Guide',
+    line1: '<strong>Module Builder v<span class="mb-ver">3.80.11</span></strong> — User Guide',
     line2: 'Created by <strong>Husham Jawad Kadhim</strong> · TVET Curriculum Developer &amp; Educational Technology Innovator',
     disclaimer: 'Module Builder is provided "as is" without warranty of any kind. Users are solely responsible for verifying and validating all exported content before use.'
   },
@@ -579,7 +579,7 @@ GUIDE.en = {
           { ico: '🏷', h: 'Marks, tables, images', p: 'Eleven instructional marks plus your own, inline tables, multiple images and attached figures' },
           { ico: '🔁', h: 'Autosave and offline', p: 'Every change is saved in the browser within a second. The tool is installable and works without a connection' }
         ]},
-        { t: 'callout', k: 'info', txt: 'This guide describes <strong>version <span class="mb-ver">3.80.10</span></strong>. The version number shown here is read from the tool itself, so it is always the version you are using.' }
+        { t: 'callout', k: 'info', txt: 'This guide describes <strong>version <span class="mb-ver">3.80.11</span></strong>. The version number shown here is read from the tool itself, so it is always the version you are using.' }
       ]
     },
     {
@@ -594,7 +594,28 @@ GUIDE.en = {
           'Open the <strong>Assessment Unit</strong> and complete one form per Learning Outcome. Add <strong>Tools &amp; Resources</strong> and <strong>References</strong>.',
           'Click <strong>Export</strong> in the toolbar and choose Word, HTML, PDF or PowerPoint. Use <strong>💾 Save module</strong> to keep a file copy of your work.'
         ]},
-        { t: 'callout', k: 'tip', txt: 'Stuck on what to write in a tab? Click the round <strong>?</strong> button on the Information, Activity and Assessment tabs. It opens short, practical guidance for that sheet.' }
+        { t: 'callout', k: 'tip', txt: 'Prefer a guided route? Open the <strong>🧭 Helper</strong>. Stuck on what to write in a tab? Click the round <strong>?</strong> button on the Information, Activity and Assessment tabs. It opens short, practical guidance for that sheet.' }
+      ]
+    },
+    {
+      id: 'helper', nav: '🧭 Helper', label: '🧭 Step-by-step Helper', title: 'The Step-by-step Helper',
+      lead: 'A small panel that walks you through the tabs in the order of the exported document, shows what is done and what is not, and takes you to each tab with one click. It changes nothing in your project.',
+      blocks: [
+        { t: 'steps', items: [
+          'Click the <strong>🧭 Helper</strong> button at the bottom corner of the window, or <strong>Start the helper</strong> in the Help tab.',
+          'The row of round buttons is the list of steps. Colour shows the state: green is done, amber is in progress, grey is to do, and a dashed border marks an optional step that is still empty.',
+          'Read the step, then press <strong>Go to this tab</strong>. The tab opens and the main button of that tab is highlighted for a moment. On the Information, Activity and Assessment steps, <strong>Open the ? guide</strong> opens that tab\u2019s guidance.',
+          'Use <strong>Next</strong> and <strong>Back</strong>, or the left and right arrow keys. If you open a tab yourself, the helper moves to the matching step.',
+          'The last step offers <strong>Save module</strong> and <strong>Export to Word</strong>.'
+        ]},
+        { t: 'table', head: ['State', 'Meaning'], rows: [
+          ['<span class="pill pill-green">Done</span>', 'Everything the step asks for exists, for example every Learning Outcome has an information sheet with a title'],
+          ['<span class="pill pill-amber">In progress</span>', 'Some of it exists'],
+          ['<span class="pill pill-purple">To do</span>', 'None of it yet'],
+          ['<span class="pill pill-blue">Optional</span>', 'An optional step with nothing in it. It is not a gap']
+        ]},
+        { t: 'callout', k: 'info', txt: 'The steps follow your template. The <strong>Learner guide</strong> template adds the Learning unit and Reflection steps. The helper remembers the last step <strong>per project</strong>.' },
+        { t: 'callout', k: 'tip', txt: 'It stays out of your way: it does not cover the screen, <kbd>Esc</kbd> closes it, and <strong>Hide the helper button</strong> removes the button. Bring it back from the Help tab.' }
       ]
     },
     {
@@ -1079,10 +1100,10 @@ GUIDE.fr = {
     badge: '📘 Documentation officielle',
     title: 'Module Builder',
     sub: 'Un guide complet pour concevoir, construire et exporter des modules de formation par compétences — en français, en anglais et en arabe, entièrement dans votre navigateur.',
-    meta: ['👨‍💻 par Husham Jawad Kadhim', '🔖 Version <span class="mb-ver">3.80.10</span>']
+    meta: ['👨‍💻 par Husham Jawad Kadhim', '🔖 Version <span class="mb-ver">3.80.11</span>']
   },
   footer: {
-    line1: '<strong>Module Builder v<span class="mb-ver">3.80.10</span></strong> — Guide de l’utilisateur',
+    line1: '<strong>Module Builder v<span class="mb-ver">3.80.11</span></strong> — Guide de l’utilisateur',
     line2: 'Créé par <strong>Husham Jawad Kadhim</strong> · Concepteur de curricula EFTP &amp; innovateur en technologie éducative',
     disclaimer: 'Module Builder est fourni « en l’état », sans garantie d’aucune sorte. L’utilisateur est seul responsable de la vérification et de la validation de tout contenu exporté avant son utilisation.'
   },
@@ -1102,7 +1123,7 @@ GUIDE.fr = {
           { ico: '🏷', h: 'Marques, tableaux, images', p: 'Onze marques pédagogiques plus les vôtres, tableaux intégrés, images multiples et figures jointes' },
           { ico: '🔁', h: 'Enregistrement auto et hors ligne', p: 'Chaque modification est enregistrée dans le navigateur en moins d’une seconde. L’outil est installable et fonctionne sans connexion' }
         ]},
-        { t: 'callout', k: 'info', txt: 'Ce guide décrit la <strong>version <span class="mb-ver">3.80.10</span></strong>. Le numéro de version affiché ici est lu dans l’outil lui-même : c’est donc toujours celui que vous utilisez.' }
+        { t: 'callout', k: 'info', txt: 'Ce guide décrit la <strong>version <span class="mb-ver">3.80.11</span></strong>. Le numéro de version affiché ici est lu dans l’outil lui-même : c’est donc toujours celui que vous utilisez.' }
       ]
     },
     {
@@ -1118,6 +1139,27 @@ GUIDE.fr = {
           'Cliquez sur <strong>Exporter</strong> dans la barre d’outils et choisissez Word, HTML, PDF ou PowerPoint. Utilisez <strong>💾 Enregistrer le module</strong> pour garder une copie dans un fichier.'
         ]},
         { t: 'callout', k: 'tip', txt: 'Vous ne savez pas quoi écrire dans un onglet ? Cliquez sur le bouton rond <strong>?</strong> des onglets Fiche d’information, Fiche d’activité et Évaluation : il ouvre des conseils courts et pratiques.' }
+      ]
+    },
+    {
+      id: 'helper', nav: '🧭 Assistant', label: '🧭 Assistant pas à pas', title: 'L’assistant pas à pas',
+      lead: 'Un petit panneau qui vous guide dans les onglets, dans l’ordre du document exporté, montre ce qui est fait ou non, et vous mène à chaque onglet d’un clic. Il ne modifie rien dans votre projet.',
+      blocks: [
+        { t: 'steps', items: [
+          'Cliquez sur le bouton <strong>🧭 Assistant</strong> dans le coin inférieur de la fenêtre, ou sur <strong>Lancer l’assistant</strong> dans l’onglet Aide.',
+          'La rangée de boutons ronds est la liste des étapes. La couleur indique l’état : vert pour terminé, ambre pour en cours, gris pour à faire, et une bordure en pointillés marque une étape facultative encore vide.',
+          'Lisez l’étape, puis appuyez sur <strong>Aller à cet onglet</strong>. L’onglet s’ouvre et le bouton principal de l’onglet est mis en évidence un instant. Pour les étapes Fiche d’information, Fiche d’activité et Évaluation, <strong>Ouvrir le guide ?</strong> ouvre les conseils de l’onglet.',
+          'Utilisez <strong>Suivant</strong> et <strong>Précédent</strong>, ou les flèches gauche et droite du clavier. Si vous ouvrez un onglet vous-même, l’assistant passe à l’étape correspondante.',
+          'La dernière étape propose <strong>Enregistrer le module</strong> et <strong>Exporter vers Word</strong>.'
+        ]},
+        { t: 'table', head: ['État', 'Signification'], rows: [
+          ['<span class="pill pill-green">Terminé</span>', 'Tout ce que l’étape demande existe, par exemple chaque résultat d’apprentissage a une fiche d’information avec un titre'],
+          ['<span class="pill pill-amber">En cours</span>', 'Une partie existe'],
+          ['<span class="pill pill-purple">À faire</span>', 'Rien pour l’instant'],
+          ['<span class="pill pill-blue">Facultatif</span>', 'Une étape facultative sans contenu. Ce n’est pas un manque']
+        ]},
+        { t: 'callout', k: 'info', txt: 'Les étapes suivent votre modèle. Le modèle <strong>Guide de l’apprenant</strong> ajoute les étapes Unité d’apprentissage et Réflexion. L’assistant retient la dernière étape <strong>par projet</strong>.' },
+        { t: 'callout', k: 'tip', txt: 'Il reste discret : il ne couvre pas l’écran, <kbd>Échap</kbd> le ferme, et <strong>Masquer le bouton de l’assistant</strong> retire le bouton. Retrouvez-le dans l’onglet Aide.' }
       ]
     },
     {
@@ -1602,10 +1644,10 @@ GUIDE.ar = {
     badge: '📘 التوثيق الرسمي',
     title: 'باني الوحدات التدريبية',
     sub: 'دليل كامل لتصميم وحدات التدريب القائمة على الجدارات وبنائها وتصديرها — بالعربية والإنجليزية والفرنسية، كل ذلك داخل المتصفّح.',
-    meta: ['👨‍💻 إعداد هشام جواد كاظم', '🔖 الإصدار <span class="mb-ver">3.80.10</span>']
+    meta: ['👨‍💻 إعداد هشام جواد كاظم', '🔖 الإصدار <span class="mb-ver">3.80.11</span>']
   },
   footer: {
-    line1: '<strong>باني الوحدات التدريبية — الإصدار <span class="mb-ver">3.80.10</span></strong> — دليل المستخدم',
+    line1: '<strong>باني الوحدات التدريبية — الإصدار <span class="mb-ver">3.80.11</span></strong> — دليل المستخدم',
     line2: 'إعداد <strong>هشام جواد كاظم</strong> · مطوّر مناهج التعليم والتدريب المهني والتقني ومبتكر في تقنيات التعليم',
     disclaimer: 'تُقدَّم أداة باني الوحدات التدريبية «كما هي» دون أي ضمان من أي نوع. المستخدم وحده مسؤول عن مراجعة كل المحتوى المُصدَّر والتحقق منه قبل استخدامه.'
   },
@@ -1625,7 +1667,7 @@ GUIDE.ar = {
           { ico: '🏷', h: 'علامات وجداول وصور', p: 'إحدى عشرة علامة تعليمية إضافة إلى علاماتك الخاصة، وجداول مضمّنة، وصور متعددة، وأشكال وجداول مرفقة' },
           { ico: '🔁', h: 'حفظ تلقائي وعمل دون اتصال', p: 'يُحفظ كل تغيير في المتصفّح خلال ثانية. يمكن تثبيت الأداة وتعمل دون اتصال' }
         ]},
-        { t: 'callout', k: 'info', txt: 'يصف هذا الدليل <strong>الإصدار <span class="mb-ver">3.80.10</span></strong>. رقم الإصدار المعروض هنا يُقرأ من الأداة نفسها، فهو دائماً الإصدار الذي تستخدمه.' }
+        { t: 'callout', k: 'info', txt: 'يصف هذا الدليل <strong>الإصدار <span class="mb-ver">3.80.11</span></strong>. رقم الإصدار المعروض هنا يُقرأ من الأداة نفسها، فهو دائماً الإصدار الذي تستخدمه.' }
       ]
     },
     {
@@ -1641,6 +1683,27 @@ GUIDE.ar = {
           'انقر <strong>تصدير</strong> في الشريط العلوي واختر Word أو HTML أو PDF أو PowerPoint. واستخدم <strong>💾 حفظ الوحدة</strong> للاحتفاظ بنسخة في ملف.'
         ]},
         { t: 'callout', k: 'tip', txt: 'لا تدري ماذا تكتب في تبويب؟ انقر الزر الدائري <strong>؟</strong> في تبويبات ورقة المعلومات وورقة النشاط والتقييم؛ يفتح إرشادات قصيرة وعملية.' }
+      ]
+    },
+    {
+      id: 'helper', nav: '🧭 المساعد', label: '🧭 المساعد خطوة بخطوة', title: 'المساعد خطوة بخطوة',
+      lead: 'لوحة صغيرة ترافقك بين التبويبات بترتيب المستند المُصدَّر، وتُظهر ما أُنجز وما لم يُنجز، وتنقلك إلى كل تبويب بنقرة. ولا تغيّر شيئاً في مشروعك.',
+      blocks: [
+        { t: 'steps', items: [
+          'انقر زر <strong>🧭 المساعد</strong> في زاوية النافذة السفلية، أو <strong>ابدأ المساعد</strong> في تبويب المساعدة.',
+          'صف الأزرار الدائرية هو قائمة الخطوات. يدل اللون على الحالة: الأخضر مكتمل، والعنبري قيد الإنجاز، والرمادي لم يبدأ، والحد المتقطع يعلّم خطوة اختيارية ما زالت فارغة.',
+          'اقرأ الخطوة ثم اضغط <strong>اذهب إلى هذا التبويب</strong>. يُفتح التبويب ويُبرَز لحظة زره الرئيسي. وفي خطوات ورقة المعلومات وورقة النشاط والتقييم يفتح <strong>افتح إرشادات ؟</strong> إرشادات ذلك التبويب.',
+          'استخدم <strong>التالي</strong> و<strong>السابق</strong>، أو سهمي اليمين واليسار في لوحة المفاتيح. وإذا فتحت تبويباً بنفسك ينتقل المساعد إلى الخطوة المقابلة.',
+          'تعرض الخطوة الأخيرة <strong>حفظ الوحدة</strong> و<strong>تصدير إلى Word</strong>.'
+        ]},
+        { t: 'table', head: ['الحالة', 'المعنى'], rows: [
+          ['<span class="pill pill-green">مكتمل</span>', 'كل ما تطلبه الخطوة موجود، مثل أن تكون لكل محصلة تعلم ورقة معلومات لها عنوان'],
+          ['<span class="pill pill-amber">قيد الإنجاز</span>', 'بعضه موجود'],
+          ['<span class="pill pill-purple">لم يبدأ</span>', 'لا شيء منه بعد'],
+          ['<span class="pill pill-blue">اختياري</span>', 'خطوة اختيارية بلا محتوى. وهي ليست نقصاً']
+        ]},
+        { t: 'callout', k: 'info', txt: 'تتبع الخطوات نموذجك. ويضيف نموذج <strong>دليل المتعلم</strong> خطوتي الوحدة التعلمية والتأمل. ويتذكر المساعد آخر خطوة <strong>لكل مشروع</strong>.' },
+        { t: 'callout', k: 'tip', txt: 'لا يزاحمك: لا يغطي الشاشة، ويغلقه <kbd>Esc</kbd>، ويزيل <strong>إخفاء زر المساعد</strong> الزر. وتعيده من تبويب المساعدة.' }
       ]
     },
     {
