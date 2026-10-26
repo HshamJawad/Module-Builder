@@ -102,3 +102,18 @@ test('chip: × hides the helper button, Help tab "Start the helper" shows it aga
   await expect(page.locator('#mb-hw-chip')).toBeVisible();
   expect(errors).toEqual([]);
 });
+
+// 3.81.2: the round buttons stay round on a touch screen (a 44px min-height had made them ovals).
+test('helper dots and chip × are circles on a touch device', async ({ browser }) => {
+  const ctx = await browser.newContext({ hasTouch: true, isMobile: true, viewport: { width: 390, height: 844 }, serviceWorkers: 'block' });
+  const page = await ctx.newPage();
+  const errors = await openApp(page);
+  const x = await page.locator('#mb-hw-chip-x').boundingBox();
+  expect(Math.abs(x.width - x.height)).toBeLessThanOrEqual(1);
+  await page.locator('#mb-hw-chip').click();
+  const dots = await page.locator('#mb-hw .mb-hw-dot').evaluateAll(b => b.map(e => { const r = e.getBoundingClientRect(); return Math.abs(r.width - r.height); }));
+  expect(dots.length).toBeGreaterThan(5);
+  for (const d of dots) expect(d).toBeLessThanOrEqual(1);
+  expect(errors).toEqual([]);
+  await ctx.close();
+});
