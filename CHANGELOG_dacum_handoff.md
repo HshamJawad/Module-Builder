@@ -1,3 +1,13 @@
+# الإصدار 3.81.12 (٢٧ تشرين الأول ٢٠٢٦) — حالة التطبيق: كل مفتاح معلَن في مكان واحد
+
+**ملفات:** `src/mb_state.js`، `tools/check-state.js` (جديد)، `tests/unit/mb-state.test.js` (جديد)، `.github/workflows/tests.yml`، `sw.js` (‏mb-3.81.12)، `version.json`، `index.html`
+
+- سبعة مفاتيح كانت تُنشأ عند أول استخدام داخل ملفات أخرى فلا تظهر في `mb_state.js` (`assessmentResults`، `ratingScale`، `moduleCategories`، `structureProposal`، `mapAllTasks`، `cmFilter`، `cmOpen`). صارت معلَنة بقيمتها الافتراضية السابقة نفسها، فلا يتغير سلوك أي شيء.
+- **`node tools/check-state.js`** في CI: يفشل إن استُخدم `mbState.<مفتاح>` غير معلَن في `mb_state.js` (يلتقط الأخطاء الإملائية في أسماء المفاتيح التي كانت تُنشئ خاصية ثانية بصمت).
+- اختبارات وحدة لشكل الحالة الابتدائية (لا قيم undefined، العدّادات صفر، المفاتيح الجديدة بقيمها).
+
+---
+
 # الإصدار 3.81.11 (٢٧ تشرين الأول ٢٠٢٦) — تنظيف CSS (المرحلة الثانية: تقليل `!important`)
 
 **ملفات:** `mb-styles.css` (‏`!important`: من 381 إلى 157)، `sw.js` (‏mb-3.81.11)، `version.json`، `index.html`

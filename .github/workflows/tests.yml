@@ -33,6 +33,9 @@ jobs:
       - name: Check for clashing global names
         run: node ../tools/check-globals.js
 
+      - name: Check that every mbState key is declared
+        run: node ../tools/check-state.js
+
       - name: Check the stylesheet (parses, no duplicate or unused rules)
         run: node ../tools/check-css.js
 
