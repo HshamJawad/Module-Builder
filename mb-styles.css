@@ -281,12 +281,12 @@
         }
 
         .tab-content.active {
-            display: block !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            min-height: 500px !important;
-            background: #f5f5f5 !important;
-            padding: 20px !important;
+            display: block;
+            visibility: visible;
+            opacity: 1;
+            min-height: 500px;
+            background: #f5f5f5;
+            padding: 20px;
         }
 
         @keyframes fadeIn {
@@ -1354,7 +1354,7 @@
             .title-input-row { flex-wrap: wrap; gap: 8px; }
             .title-input-row input[type="text"]:first-child {
                 width: 72px !important;
-                flex: 0 0 72px !important;
+                flex: 0 0 72px;
             }
 
             /* ── Resource / step rows ── */
@@ -1375,7 +1375,7 @@
             /* ── Modal ── */
 
             /* ── LO sheets summary grid: 1 column ── */
-            #lo-sheets-summary > div > div { grid-template-columns: 1fr !important; gap: 10px !important; }
+            #lo-sheets-summary > div > div { grid-template-columns: 1fr; gap: 10px; }
 
             /* ── Back/Front cover upload areas ── */
             #front-cover-upload-area,
@@ -1875,9 +1875,9 @@ body.mb-nav-no-anim .tabs-container { transition: none !important; }
 }
 
 /* ── Surfaces ──────────────────────────────────────────────────── */
-body                       { background: #E8E9E6 !important; }
-.container                 { background: var(--mb-paper) !important;
-                             box-shadow: 0 18px 50px rgba(15,23,42,0.18) !important; }
+body                       { background: #E8E9E6; }
+.container                 { background: var(--mb-paper);
+                             box-shadow: 0 18px 50px rgba(15,23,42,0.18); }
 .tab-content.active        { background: var(--mb-paper) !important; }
 .mb-dialog                 { background: var(--mb-paper); }
 
@@ -1910,8 +1910,8 @@ body                       { background: #E8E9E6 !important; }
 
 .app-title-bar h1,
 h1, .section-title,
-.step-label                { color: var(--mb-ink) !important; }
-.app-title-bar p           { color: var(--mb-ink-soft) !important; }
+.step-label                { color: var(--mb-ink); }
+.app-title-bar p           { color: var(--mb-ink-soft); }
 
 /* ── Every control, at rest, is the toolbar's silver ───────────── */
 button:not(.tab):not(.figma-btn):not(.mark-dropdown-item),
@@ -1922,7 +1922,7 @@ button:not(.tab):not(.figma-btn):not(.mark-dropdown-item),
     color: var(--mb-ink) !important;
     border: 1px solid var(--mb-line-strong) !important;
     box-shadow: none !important;
-    text-shadow: none !important;
+    text-shadow: none;
     transition: background 0.15s, border-color 0.15s !important;
 }
 
@@ -1953,11 +1953,11 @@ button:not(.tab):not(.figma-btn):not(.mark-dropdown-item):hover,
 .content-img-delete,
 .objective-format-btn.clear,
 .mb-dialog-ok.is-danger {
-    background: var(--mb-red) !important;
+    background: var(--mb-red);
     background-color: #F8F4F3 !important;
-    color: var(--mb-red-ink) !important;
-    border: 1px solid var(--mb-red-line) !important;
-    box-shadow: none !important;
+    color: var(--mb-red-ink);
+    border: 1px solid var(--mb-red-line);
+    box-shadow: none;
 }
 
 [data-act^="delete"]:hover,
@@ -1984,9 +1984,9 @@ button:not(.tab):not(.figma-btn):not(.mark-dropdown-item):hover,
 
 /* clearAndStartManual is a reset, not a delete — silver, not red. */
 [data-act="clearAndStartManual"] {
-    background: var(--mb-btn) !important;
-    color: var(--mb-ink) !important;
-    border: 1px solid var(--mb-line-strong) !important;
+    background: var(--mb-btn);
+    color: var(--mb-ink);
+    border: 1px solid var(--mb-line-strong);
 }
 [data-act="clearAndStartManual"]:hover { background: var(--mb-btn-hover) !important; }
 
@@ -1996,7 +1996,7 @@ button:not(.tab):not(.figma-btn):not(.mark-dropdown-item):hover,
 .mb-dialog-ok              { background: var(--mb-btn) !important; }
 
 /* Borders and rules throughout drop to one hairline value. */
-.app-title-bar             { border-bottom-color: var(--mb-line) !important; }
+.app-title-bar             { border-bottom-color: var(--mb-line); }
 table, table th, table td  { border-color: var(--mb-line-strong) !important; }
 
 input[type="text"]:focus,
@@ -2187,9 +2187,9 @@ textarea:focus             { border-color: #A9AEB3 !important; outline: none; }
     font-weight: 600;
     cursor: pointer;
     text-align: start;
-    background: transparent !important;
-    border: 1px solid transparent !important;
-    color: var(--mb-ink) !important;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--mb-ink);
     min-height: 40px;
 }
 
@@ -2199,9 +2199,9 @@ textarea:focus             { border-color: #A9AEB3 !important; outline: none; }
 }
 
 .mb-lang-panel .mb-lang-opt.is-active {
-    background: #6E767D !important;
-    border-color: #6E767D !important;
-    color: #fff !important;
+    background: #6E767D;
+    border-color: #6E767D;
+    color: #fff;
 }
 
 .mb-lang-opt-code {
@@ -2534,9 +2534,9 @@ textarea.mb-tvqf-input { min-height: 0; resize: vertical; }
    preview button marks itself with colour rather than fighting a fill
    that would lose to `!important` anyway. */
 button#lg-preview-btn {
-    color: #5b21b6 !important;
-    border-color: #a78bfa !important;
-    font-weight: 700 !important;
+    color: #5b21b6;
+    border-color: #a78bfa;
+    font-weight: 700;
 }
 button#lg-preview-btn:disabled {
     color: #9ca3af !important;
@@ -2627,9 +2627,9 @@ button#lg-preview-btn:disabled {
     font-weight: 700; font-size: 1.05em;
 }
 .ws-modal .ws-head button.ws-x {
-    background: none !important; background-color: transparent !important;
-    border: none !important; box-shadow: none !important; cursor: pointer;
-    font-size: 1.5em; line-height: 1; color: #6b7280 !important; padding: 0 4px !important;
+    background: none; background-color: transparent;
+    border: none; box-shadow: none; cursor: pointer;
+    font-size: 1.5em; line-height: 1; color: #6b7280; padding: 0 4px;
 }
 .ws-modal .ws-head button.ws-x:hover { color: #111827 !important; background: none !important; }
 .ws-body { padding: 18px 20px; overflow-y: auto; }
@@ -2676,11 +2676,11 @@ button#lg-preview-btn:disabled {
    These eight rules mirror WS_PALETTE in word_settings.js. Changing one
    list means changing the other. */
 .ws-modal .ws-swatches button.ws-swatch {
-    width: 26px !important; height: 26px !important;
-    border-radius: 6px !important; cursor: pointer;
-    border: 2px solid transparent !important;
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, .18) inset !important;
-    padding: 0 !important; min-width: 0 !important; margin: 0 !important;
+    width: 26px; height: 26px;
+    border-radius: 6px; cursor: pointer;
+    border: 2px solid transparent;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, .18) inset;
+    padding: 0; min-width: 0; margin: 0;
 }
 .ws-modal .ws-swatches button.ws-swatch.ws-c-0070C0,
 .ws-modal .ws-swatches button.ws-swatch.ws-c-0070C0:hover {
@@ -2739,20 +2739,20 @@ button#lg-preview-btn:disabled {
 /* Same override problem, same fix — the footer buttons and the close
    × would otherwise all come out silver. */
 .ws-modal .ws-foot button.ws-btn {
-    border: 1px solid transparent !important; border-radius: 8px !important;
-    padding: 9px 18px !important; font-weight: 600; font-size: .92em;
-    cursor: pointer; box-shadow: none !important;
+    border: 1px solid transparent; border-radius: 8px;
+    padding: 9px 18px; font-weight: 600; font-size: .92em;
+    cursor: pointer; box-shadow: none;
 }
 .ws-modal .ws-foot button.ws-btn-ghost {
-    background: #f3f4f6 !important; background-color: #f3f4f6 !important;
-    color: #374151 !important; border-color: #e5e7eb !important;
+    background: #f3f4f6; background-color: #f3f4f6;
+    color: #374151; border-color: #e5e7eb;
 }
 .ws-modal .ws-foot button.ws-btn-ghost:hover {
     background: #e5e7eb !important; background-color: #e5e7eb !important;
 }
 .ws-modal .ws-foot button.ws-btn-primary {
-    background: #4A7C6A !important; background-color: #4A7C6A !important;
-    color: #fff !important; border-color: #4A7C6A !important;
+    background: #4A7C6A; background-color: #4A7C6A;
+    color: #fff; border-color: #4A7C6A;
 }
 .ws-modal .ws-foot button.ws-btn-primary:hover {
     background: #3E6A5A !important; background-color: #3E6A5A !important;
@@ -2773,8 +2773,8 @@ button#lg-preview-btn:disabled {
     font-size: .89em; color: #374151; padding: 3px 0;
 }
 .ws-modal .ws-checks input[type="checkbox"] {
-    width: 16px !important; height: 16px !important; flex-shrink: 0;
-    accent-color: #4A7C6A; margin: 0 !important;
+    width: 16px; height: 16px; flex-shrink: 0;
+    accent-color: #4A7C6A; margin: 0;
 }
 
 /* Link / QR modal (link_modal.js). Reuses the export-settings shell. */
@@ -2786,7 +2786,7 @@ button#lg-preview-btn:disabled {
 .ws-modal .lm-radios { display: flex; gap: 22px; flex-wrap: wrap; }
 .ws-modal .lm-radios .ws-check { gap: 9px; }
 .ws-modal .lm-radios input[type="radio"] {
-    width: 16px !important; height: 16px !important; margin: 0 !important; accent-color: #7c3aed;
+    width: 16px; height: 16px; margin: 0; accent-color: #7c3aed;
 }
 .lm-note {
     border-radius: 9px; padding: 10px 13px; margin: 12px 0 4px;
@@ -2806,14 +2806,14 @@ button#lg-preview-btn:disabled {
    bar, and the placeholder fainter still. Owning both colours in one
    rule is the only way to keep them in step. */
 .mb-criteria-title-bar {
-    background: linear-gradient(180deg, #4A5568 0%, #3C4655 100%) !important;
-    box-shadow: none !important;
+    background: linear-gradient(180deg, #4A5568 0%, #3C4655 100%);
+    box-shadow: none;
 }
 .mb-criteria-title,
 .criteria-table-container input.mb-criteria-title {
-    background: transparent !important;
-    border: none !important;
-    color: #ffffff !important;
+    background: transparent;
+    border: none;
+    color: #ffffff;
     -webkit-text-fill-color: #ffffff;
 }
 .mb-criteria-title::placeholder { color: rgba(255,255,255,.72) !important; opacity: 1; }
@@ -3163,8 +3163,8 @@ body.mb-readonly .container { padding-top: 44px; }
 .mb-fld-status.is-ok { color: #047857; }
 .mb-fld-status.is-warn { color: #b45309; }
 /* 3.62.2: the folder permission is a toolbar button, not a bar (folder_sync.js). */
-.mb-fld-chip[hidden] { display: none !important; }
-.figma-btn.mb-fld-chip { color: #1d4ed8 !important; border-color: #93c5fd !important; background: #eff6ff !important; font-weight: 700; }
+.mb-fld-chip[hidden] { display: none; }
+.figma-btn.mb-fld-chip { color: #1d4ed8; border-color: #93c5fd; background: #eff6ff; font-weight: 700; }
 .mb-ro-banner.mb-ro-banner button[data-ro="take"] { background: #b45309 !important; border-color: #b45309 !important; color: #fff !important; }
 
 /* ── Context bar: Module + Learning Outcome (3.23.0) ──────────────
@@ -3356,7 +3356,7 @@ html[dir="rtl"] .mb-sp[open] > summary::before { transform: rotate(-90deg); }
 .mb-sp.is-compact .mb-sp-empty { margin: 6px 0 0; }
 .mb-sp-filter { width: auto; max-width: 100%; padding: 6px 8px; border: 1px solid #93c5fd; border-radius: 8px; background: #fff; font-size: 0.85em; }
 #info-tab .mb-sp-btn, #activity-tab .mb-sp-btn, #assessment-tab .mb-sp-btn, .mb-cov-overlay .mb-cov-box button.mb-sp-btn {
-    width: auto; min-height: 36px; padding: 6px 12px !important; margin: 0; border-radius: 8px; font-size: 0.84em; font-weight: 700; cursor: pointer;
+    width: auto; min-height: 36px; padding: 6px 12px; margin: 0; border-radius: 8px; font-size: 0.84em; font-weight: 700; cursor: pointer;
 }
 #info-tab .mb-sp-btn.is-main, #activity-tab .mb-sp-btn.is-main, #assessment-tab .mb-sp-btn.is-main, .mb-cov-overlay .mb-cov-box button.mb-sp-btn.is-main {
     background: #0284c7 !important; border-color: #0284c7 !important; color: #fff !important;
@@ -3374,7 +3374,7 @@ html[dir="rtl"] .mb-sp[open] > summary::before { transform: rotate(-90deg); }
 .mb-sp-row.is-flash { animation: mbSpFlash 2.4s ease; border-radius: 8px; }
 @keyframes mbSpFlash { 0%, 60% { background: #fef9c3; box-shadow: 0 0 0 3px #fde047; } 100% { background: transparent; box-shadow: none; } }
 @media (prefers-reduced-motion: reduce) { .mb-sp-row.is-flash { animation: none; background: #fef9c3; } }
-.mb-sp-check { width: 18px !important; height: 18px; margin: 3px 0 0 !important; min-height: 0 !important; flex-shrink: 0; }
+.mb-sp-check { width: 18px; height: 18px; margin: 3px 0 0; min-height: 0; flex-shrink: 0; }
 .mb-sp-src { font-size: 1em; line-height: 1.4; cursor: help; }
 .mb-sp-body { min-width: 0; }
 .mb-sp-text { font-size: 0.9em; line-height: 1.55; color: #1f2937; overflow-wrap: anywhere; }
@@ -3390,7 +3390,7 @@ html[dir="rtl"] .mb-sp[open] > summary::before { transform: rotate(-90deg); }
 .mb-sp-also { font-size: 0.85em; letter-spacing: 1px; cursor: help; }
 .mb-sp-acts { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; }
 .mb-sp .mb-sp-row button.mb-sp-ico, .mb-sp .mb-sp-row button.mb-sp-mini {
-    width: auto; min-width: 30px; min-height: 30px !important; height: 30px; padding: 0 8px !important; margin: 0;
+    width: auto; min-width: 30px; min-height: 30px; height: 30px; padding: 0 8px; margin: 0;
     border-radius: 8px; font-size: 0.85em; font-weight: 700; line-height: 1; cursor: pointer;
     display: inline-flex; align-items: center; justify-content: center;
     background: #fff !important; border: 1px solid #cbd5e1 !important; color: #334155 !important;
@@ -3485,10 +3485,10 @@ html[dir="rtl"] .mb-sp[open] > summary::before { transform: rotate(-90deg); }
    to read as selected; the global button rule above flattens it. */
 #ws-overlay button.ws-nav-btn.is-on,
 #ws-overlay button.ws-sub-btn.is-on {
-    background: #e0e7ff !important;
-    border-color: #6366f1 !important;
-    color: #3730a3 !important;
-    box-shadow: inset 0 0 0 1px #6366f1 !important;
+    background: #e0e7ff;
+    border-color: #6366f1;
+    color: #3730a3;
+    box-shadow: inset 0 0 0 1px #6366f1;
     font-weight: 600;
 }
 #ws-overlay button.ws-sub-btn { border-radius: 999px; }
@@ -3529,7 +3529,7 @@ input.mb-seq-auto { background: #f1f5f9 !important; color: #475569; cursor: defa
 @keyframes mbFlashNew { from { box-shadow: 0 0 0 3px #a5b4fc; } to { box-shadow: 0 0 0 0 transparent; } }
 .content-section-item.mb-just-added { animation: mbFlashNew 1.6s ease-out; }
 /* The global button rule flattens it; the AI tool reads as its own thing. */
-button.mb-src-btn { background: #eef2ff !important; color: #3730a3 !important; border: 1px solid #a5b4fc !important; font-weight: 700 !important; }
+button.mb-src-btn { background: #eef2ff; color: #3730a3; border: 1px solid #a5b4fc; font-weight: 700; }
 button.mb-src-btn:hover { background: #e0e7ff !important; }
 
 /* 3.50.0 — assessment form: cells that grow with their text; the result
@@ -3542,7 +3542,7 @@ textarea.mb-asm-cell {
 .mb-asm-result { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
 .mb-asm-opts { display: flex; flex-wrap: wrap; gap: 8px 22px; color: #374151; font-weight: 600; }
 .mb-asm-box { font-size: 1.15em; color: #6b7280; }
-button.mb-asm-edit { padding: 6px 12px !important; border: 1px solid #cbd5e1 !important; border-radius: 8px !important; background: #f1f5f9 !important; color: #475569 !important; font-weight: 600 !important; font-size: 0.85em !important; cursor: pointer; }
+button.mb-asm-edit { padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 8px; background: #f1f5f9; color: #475569; font-weight: 600; font-size: 0.85em; cursor: pointer; }
 .mb-asm-note { flex-basis: 100%; margin: 2px 0 0; font-size: 0.82em; color: #64748b; }
 #asm-overlay .asm-presets { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 6px; }
 #asm-overlay button.asm-preset { padding: 6px 10px !important; border: 1px solid #c7d2fe !important; background: #eef2ff !important; color: #3730a3 !important; border-radius: 999px !important; font-size: 0.85em !important; cursor: pointer; }
@@ -3645,9 +3645,9 @@ button.mb-asm-edit { padding: 6px 12px !important; border: 1px solid #cbd5e1 !im
 .mb-mi-field > span { white-space: nowrap; }
 .mb-mi-field.mb-mi-full { flex: 1 1 100%; }
 .mb-mi-field input, .mb-mi-field select {
-    padding: 8px 10px !important; border: 1.5px solid #bae6fd !important; border-radius: 8px; font: inherit; font-weight: 500;
-    background: #fff; margin: 0 !important; min-height: 0 !important; }
-.mb-mi-field.mb-mi-full input { flex: 1 1 auto; width: auto !important; min-width: 0; }
+    padding: 8px 10px; border: 1.5px solid #bae6fd; border-radius: 8px; font: inherit; font-weight: 500;
+    background: #fff; margin: 0; min-height: 0; }
+.mb-mi-field.mb-mi-full input { flex: 1 1 auto; width: auto; min-width: 0; }
 .mb-cat-overlay { position: fixed; inset: 0; z-index: 10060; display: flex; align-items: center; justify-content: center;
     padding: 20px; background: rgba(15,23,42,.5); font-family: inherit; }
 .mb-cat-box { background: #fff; border-radius: 14px; max-width: 440px; width: 100%; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,.3); }
@@ -3680,7 +3680,7 @@ body:not(.mb-tpl-learnerGuide):not(.mb-tpl-lowLiteracy) [data-tpl-only]:not([dat
 }
 .mb-tpl-btn:hover { background: #fff; }
 .mb-tpl-btn:focus-visible { outline: 2px solid #667eea; outline-offset: 1px; }
-.mb-tpl-btn.is-active { background: #ccfbf1 !important; border-color: #0f766e !important; color: #115e59 !important; box-shadow: inset 3px 0 0 #0f766e; font-weight: 800; }
+.mb-tpl-btn.is-active { background: #ccfbf1; border-color: #0f766e; color: #115e59; box-shadow: inset 3px 0 0 #0f766e; font-weight: 800; }
 html[dir="rtl"] .mb-tpl-btn.is-active { box-shadow: inset -3px 0 0 #0f766e !important; }
 .mb-tpl-btn.is-soon { opacity: .6; }
 .mb-tpl-ico { flex-shrink: 0; }
@@ -3885,7 +3885,7 @@ button.mb-cmk-opt.is-on { outline: 3px solid #0f766e; outline-offset: 1px; }
     align-items: start; padding: 10px 12px; border-bottom: 1px solid #e5e7eb;
 }
 #work-team-container .team-head-row {
-    background: #eef2ff !important; border-bottom: 2px solid #c7d2fe; border-radius: 8px 8px 0 0; padding: 9px 12px;
+    background: #eef2ff; border-bottom: 2px solid #c7d2fe; border-radius: 8px 8px 0 0; padding: 9px 12px;
 }
 #work-team-container .team-head { font-weight: 700; color: #3730a3; font-size: .95em; text-align: start; }
 #work-team-container textarea.team-field {
@@ -4019,7 +4019,7 @@ button.mb-hw-chip#mb-hw-chip {
 button.mb-hw-chip#mb-hw-chip:hover { transform: translateY(-2px); box-shadow: 0 12px 26px rgba(79, 70, 229, .45); }
 .mb-hw-chip:focus-visible { outline: 3px solid #c7d2fe; outline-offset: 2px; }
 .mb-hw-chip small { font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(255, 255, 255, .22); }
-.mb-hw-chip[hidden], .mb-hw[hidden] { display: none !important; }
+.mb-hw-chip[hidden], .mb-hw[hidden] { display: none; }
 
 .mb-hw {
     position: fixed; inset-inline-end: 18px; bottom: 18px; z-index: 99990;
@@ -4032,7 +4032,7 @@ button.mb-hw-chip#mb-hw-chip:hover { transform: translateY(-2px); box-shadow: 0 
 .mb-hw-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px;
     background: linear-gradient(135deg, #eef2ff, #e0e7ff); border-bottom: 1px solid #c7d2fe; color: #3730a3; }
 .mb-hw-head strong { flex: 1 1 auto; font-size: 1em; }
-#mb-hw button.mb-hw-x { background-image: none !important; border: 0 !important; background: transparent !important; box-shadow: none !important; cursor: pointer; font-size: 1.1em; color: #4338ca; padding: 4px 8px; border-radius: 8px; }
+#mb-hw button.mb-hw-x { background-image: none; border: 0 !important; background: transparent !important; box-shadow: none; cursor: pointer; font-size: 1.1em; color: #4338ca; padding: 4px 8px; border-radius: 8px; }
 #mb-hw button.mb-hw-x:hover { background: rgba(67, 56, 202, .12) !important; }
 .mb-hw-dots { display: flex; flex-wrap: wrap; gap: 4px; padding: 10px 14px 6px; }
 #mb-hw button.mb-hw-dot { background-image: none !important; width: 26px; height: 26px; border-radius: 50%; border: 2px solid #d1d5db; background: #f9fafb;
@@ -4059,14 +4059,14 @@ button.mb-hw-chip#mb-hw-chip:hover { transform: translateY(-2px); box-shadow: 0 
 .mb-hw-tip { margin: 0 0 6px; padding: 8px 10px; border-radius: 8px; background: #fffbeb; border: 1px solid #fde68a; font-size: .86em; line-height: 1.55; color: #78350f; }
 .mb-hw-acts, .mb-hw-nav { display: flex; flex-wrap: wrap; gap: 8px; padding: 6px 14px; }
 .mb-hw-nav { justify-content: space-between; padding-bottom: 10px; }
-:is(#mb-hw, .mb-hw-helpcard, #mb-hw-chip) button.mb-hw-btn { background-image: none !important; box-shadow: none !important; border: 1px solid #c7d2fe !important; background-color: #fff !important; color: #3730a3 !important; border-radius: 10px; padding: 8px 12px;
+:is(#mb-hw, .mb-hw-helpcard, #mb-hw-chip) button.mb-hw-btn { background-image: none !important; box-shadow: none; border: 1px solid #c7d2fe !important; background-color: #fff !important; color: #3730a3 !important; border-radius: 10px; padding: 8px 12px;
     font: inherit; font-size: .88em; font-weight: 700; cursor: pointer; }
 :is(#mb-hw, .mb-hw-helpcard, #mb-hw-chip) button.mb-hw-btn:hover:not(:disabled) { background-color: #eef2ff !important; }
 :is(#mb-hw, .mb-hw-helpcard, #mb-hw-chip) button.mb-hw-btn:disabled { opacity: .45; cursor: default; }
 :is(#mb-hw, .mb-hw-helpcard, #mb-hw-chip) button.mb-hw-btn.is-primary { background-color: #4f46e5 !important; border-color: #4f46e5 !important; color: #fff !important; }
 :is(#mb-hw, .mb-hw-helpcard, #mb-hw-chip) button.mb-hw-btn.is-primary:hover:not(:disabled) { background-color: #4338ca !important; }
 .mb-hw-btn:focus-visible, .mb-hw-hide:focus-visible { outline: 3px solid #818cf8; outline-offset: 2px; }
-#mb-hw button.mb-hw-hide { background-image: none !important; border: 0 !important; background: transparent !important; box-shadow: none !important; color: #6b7280 !important; font: inherit; font-size: .78em; cursor: pointer; padding: 4px 14px 10px; text-align: start; text-decoration: underline; }
+#mb-hw button.mb-hw-hide { background-image: none; border: 0 !important; background: transparent !important; box-shadow: none; color: #6b7280 !important; font: inherit; font-size: .78em; cursor: pointer; padding: 4px 14px 10px; text-align: start; text-decoration: underline; }
 #mb-hw button.mb-hw-hide:hover { color: #374151 !important; }
 
 /* the short spotlight when «Go to this tab» lands */
