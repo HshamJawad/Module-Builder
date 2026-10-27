@@ -294,16 +294,6 @@
             to { opacity: 1; }
         }
 
-        .action-buttons {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin-bottom: 30px;
-            padding-bottom: 30px;
-            border-bottom: 2px solid #e0e0e0;
-            flex-wrap: wrap;
-        }
-
         .btn-action {
             color: white;
             border: none;
@@ -329,33 +319,6 @@
 
         .btn-action:active {
             transform: translateY(0);
-        }
-
-        .btn-save {
-            background: #10b981;
-        }
-
-        .btn-save:hover {
-            background: #059669;
-            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
-        }
-
-        .btn-load {
-            background: #3b82f6;
-        }
-
-        .btn-load:hover {
-            background: #2563eb;
-            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
-        }
-
-        .btn-export-word {
-            background: #8b5cf6;
-        }
-
-        .btn-export-word:hover {
-            background: #7c3aed;
-            box-shadow: 0 5px 15px rgba(139, 92, 246, 0.4);
         }
 
         .btn-clear {
@@ -532,24 +495,6 @@
             border-color: #667eea;
         }
 
-        .criteria-item {
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 15px;
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-
-        .criteria-number {
-            min-width: 40px;
-            font-weight: 600;
-            font-size: 1.1em;
-            color: #333;
-        }
-
         .criteria-text {
             flex: 1;
         }
@@ -608,25 +553,7 @@
             width: 8%;
         }
 
-        .criteria-table .criteria-row-remove {
-            text-align: center;
-            width: 5%;
-        }
-
         /* criteria edit checkboxes removed */
-
-        .resource-row {
-            display: flex;
-            gap: 15px;
-            align-items: flex-start;
-        }
-
-        .resource-number {
-            min-width: 30px;
-            font-weight: 600;
-            font-size: 1.2em;
-            color: #333;
-        }
 
         .resource-name {
             flex: 1;
@@ -669,22 +596,6 @@
         .resource-quantity::-webkit-outer-spin-button {
             opacity: 1;
             height: 40px;
-        }
-
-        .resource-name-input {
-            flex: 1;
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 1em;
-            transition: border-color 0.3s;
-            text-align: start;   /* logical: follows the element's dir */
-            direction: inherit;   /* was ltr — now follows the field\'s own dir attribute, set by contentLang */
-        }
-
-        .resource-name-input:focus {
-            outline: none;
-            border-color: #667eea;
         }
 
         .btn-remove {
@@ -988,54 +899,6 @@
         }
         .content-img-delete:hover { background: #dc2626; }
 
-        .btn-export {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 15px 40px;
-            border-radius: 10px;
-            font-size: 1.1em;
-            font-weight: 600;
-            cursor: pointer;
-            width: 100%;
-            transition: transform 0.2s, box-shadow 0.2s;
-            margin-top: 30px;
-        }
-
-        .btn-export:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-export:active {
-            transform: translateY(0);
-        }
-
-        .btn-activity-sheet {
-            background: #3b82f6;
-            color: white;
-            border: none;
-            padding: 20px 40px;
-            border-radius: 10px;
-            font-size: 1.2em;
-            font-weight: 600;
-            cursor: pointer;
-            width: 100%;
-            transition: transform 0.2s, box-shadow 0.2s;
-            margin-top: 40px;
-            margin-bottom: 40px;
-        }
-
-        .btn-activity-sheet:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
-            background: #2563eb;
-        }
-
-        .btn-activity-sheet:active {
-            transform: translateY(0);
-        }
-
         .footer {
             text-align: center;
             color: #888;
@@ -1097,102 +960,9 @@
         }
 
         /* Modal Styles */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.6);
-            z-index: 9999;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .modal-overlay.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: 16px;
-            max-width: 600px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-            position: relative;
-        }
-
-        .modal-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 30px;
-            border-radius: 16px 16px 0 0;
-            text-align: center;
-            color: white;
-            position: relative;
-        }
-
-        .modal-close {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            color: white;
-            font-size: 24px;
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.3s;
-        }
-
-        .modal-close:hover {
-            background: rgba(255, 255, 255, 0.3);
-        }
 
         .modal-body {
             padding: 30px;
-        }
-
-        .contact-item {
-            background: #f9fafb;
-            border: 2px solid #e5e7eb;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 15px;
-        }
-
-        .contact-item h4 {
-            color: #374151;
-            font-size: 0.9em;
-            font-weight: 600;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .contact-item p,
-        .contact-item a {
-            color: #667eea;
-            font-size: 1em;
-            margin: 0;
-            word-break: break-word;
-        }
-
-        .contact-item a {
-            text-decoration: none;
-        }
-
-        .contact-item a:hover {
-            text-decoration: underline;
         }
 
         /* Objective Formatting Controls */
@@ -1588,7 +1358,6 @@
             }
 
             /* ── Resource / step rows ── */
-            .resource-row { flex-wrap: wrap; gap: 8px; }
             .step-header   { flex-wrap: wrap; gap: 8px; }
 
             /* ── Scrollable tables ── */
@@ -1604,12 +1373,6 @@
             .objective-format-btn { padding: 4px 8px !important; font-size: 0.78em !important; }
 
             /* ── Modal ── */
-            .modal-content {
-                max-height: 92vh;
-                margin: 4vh auto;
-                border-radius: 16px;
-                padding: 20px 16px;
-            }
 
             /* ── LO sheets summary grid: 1 column ── */
             #lo-sheets-summary > div > div { grid-template-columns: 1fr !important; gap: 10px !important; }
@@ -2228,23 +1991,11 @@ button:not(.tab):not(.figma-btn):not(.mark-dropdown-item):hover,
 [data-act="clearAndStartManual"]:hover { background: var(--mb-btn-hover) !important; }
 
 /* ── Remaining coloured leftovers in the stylesheet itself ─────── */
-.btn-export,
-.btn-activity-sheet {
-    background: var(--mb-btn) !important;
-    color: var(--mb-ink) !important;
-    border: 1px solid var(--mb-line-strong) !important;
-}
-.btn-export:hover,
-.btn-activity-sheet:hover {
-    background: var(--mb-btn-hover) !important;
-    box-shadow: none !important;
-}
 
 .export-info               { background: var(--mb-paper-sunk); border-color: var(--mb-line); }
 .mb-dialog-ok              { background: var(--mb-btn) !important; }
 
 /* Borders and rules throughout drop to one hairline value. */
-.action-buttons            { border-bottom-color: var(--mb-line) !important; }
 .app-title-bar             { border-bottom-color: var(--mb-line) !important; }
 table, table th, table td  { border-color: var(--mb-line-strong) !important; }
 
@@ -2660,94 +2411,20 @@ html[lang^="ar"] body { font-size: 1em; }
    that most projects will never open. A neutral bar says "there is more
    here" without competing with the Proceed button below it, and it
    matches the toolbar and the icon buttons, which are the tool's other
-   two neutral surfaces. */
-.mb-fold-bar {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 14px 18px;
-    cursor: pointer;
-    background: linear-gradient(135deg, #f3f4f6 0%, #dfe3e8 100%);
-    color: var(--mb-ink, #374151);
-    border-bottom: 1px solid #cbd5e1;
-    font-weight: 700;
-    font-size: 1.05em;
-    list-style: none;               /* Firefox + standards */
-    user-select: none;
-}
-.mb-fold-bar::-webkit-details-marker { display: none; }   /* Safari/Chrome */
-.mb-fold-bar:hover  { background: linear-gradient(135deg, #e9ecef 0%, #d3d9e0 100%); }
-.mb-fold-bar:focus-visible { outline: 3px solid #667eea; outline-offset: -3px; }
-
-.mb-fold-icon  { font-size: 1.2em; flex-shrink: 0; }
-.mb-fold-title { flex: 1; min-width: 0; }
+   two neutral surfaces. */   /* Safari/Chrome */
 
 /* margin-inline-start, not margin-left: the chevron has to sit at the
    END of the bar, which is the left edge in an Arabic interface. */
-.mb-fold-chevron {
-    flex-shrink: 0;
-    margin-inline-start: auto;
-    transition: transform 0.22s ease;
-}
-.mb-fold[open] > .mb-fold-bar .mb-fold-chevron { transform: rotate(180deg); }
-
-@media (prefers-reduced-motion: reduce) {
-    .mb-fold-chevron { transition: none; }
-}
-
-.mb-fold-body { padding: 18px; background: var(--mb-paper-sunk, #f9fafb); }
 
 /* The note and the clear button share a row: the destructive control
    sits at the END of it, away from the fields it would empty. */
-.mb-fold-head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-.mb-fold-head .mb-fold-note { flex: 1; min-width: 200px; }
-
-.mb-fold-clear {
-    flex-shrink: 0;
-    padding: 7px 13px;
-    border: 1px solid #fee2e2;
-    border-radius: 8px;
-    background: #fef2f2;
-    color: #dc2626;
-    font-family: inherit;
-    font-size: 0.85em;
-    font-weight: 600;
-    cursor: pointer;
-}
-.mb-fold-clear:hover { background: #fee2e2; color: #b91c1c; }
-.mb-fold-clear:focus-visible { outline: 2px solid #dc2626; outline-offset: 2px; }
 
 /* Divides the two halves of one card — it is a section heading, not a
    second bar. */
-.mb-tvqf-subhead {
-    margin: 22px 0 4px;
-    padding-top: 16px;
-    border-top: 1px solid var(--mb-line, #e5e7eb);
-    font-size: 1em;
-    font-weight: 700;
-    color: var(--mb-ink, #374151);
-}
-.mb-fold-note {
-    margin: 0 0 14px;
-    font-size: 0.9em;
-    color: var(--mb-ink-soft, #6b7280);
-    line-height: 1.6;
-}
 
 /* ── The field grid ─────────────────────────────────────────
    auto-fit rather than a fixed column count, so the card reflows on a
    phone without a media query of its own. */
-.mb-tvqf-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 14px;
-}
 
 .mb-tvqf-field { display: flex; flex-direction: column; gap: 5px; }
 
@@ -3186,9 +2863,6 @@ button#lg-preview-btn:disabled {
 
 .mb-lib-body { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 12px 16px; }
 .mb-lib-foot { padding: 10px 16px; border-top: 1px solid #e2e8f0; background: #fff; }
-
-.mb-lib-project { display: grid; gap: 6px; margin-bottom: 12px; }
-.mb-lib-project label { font-weight: 600; font-size: .85em; color: #475569; }
 .mb-lib-project select,
 .mb-lib-sort select {
   width: 100%; min-width: 0; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px;
@@ -3783,8 +3457,6 @@ html[dir="rtl"] .mb-sp[open] > summary::before { transform: rotate(-90deg); }
 .mb-cov-overlay .mb-cov-box button.mb-cov-mode.is-ai { border-color: #0284c7 !important; color: #075985 !important; }
 .mb-cov-overlay .mb-cov-box button.mb-cov-mode:disabled { opacity: .6; cursor: progress; }
 .mb-cov-overlay .mb-cov-box button.mb-cov-mode.is-on { background: #0c4a6e !important; color: #fff !important; border-color: #0c4a6e !important; }
-.mb-cov-mode-tip { flex: 1 1 100%; font-size: 0.8em; color: #475569; margin: 0; }
-.mb-cov-ai-msg { font-size: 0.82em; color: #0f766e; font-weight: 600; }
 .mb-cov-overlay .mb-cov-box button.mb-cov-cell.is-pick { background: #fff !important; color: #94a3b8 !important; border: 1px dashed #cbd5e1 !important; }
 .mb-cov-overlay .mb-cov-box button.mb-cov-cell.is-pick.is-on { background: #fffbeb !important; color: #92400e !important; border: 1px solid #fcd34d !important; }
 .mb-tab-tools { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; }
@@ -4051,10 +3723,8 @@ html[dir="rtl"] .mb-tpl-btn.is-active { box-shadow: inset -3px 0 0 #0f766e !impo
 .lg-part { display: flex; flex-direction: column; gap: 8px; }
 .lg-part-head { font-weight: 800; color: #0f766e; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
 .lg-sub { font-size: .9em; font-weight: 600; color: #374151; }
-.lg-row { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; font-size: .92em; }
 .lg-lines { width: 64px; padding: 5px 8px; border: 1.5px solid #d1d5db; border-radius: 6px; margin-inline-start: 6px; }
 .lg-check { display: flex; align-items: center; gap: 6px; cursor: pointer; }
-.lg-fill { align-self: flex-start; }
 /* 3.79.0: the learning outcomes card has its own heading, with the numbering button at its far end;
    «Each learning unit includes the following:» is a card of its own below it. */
 .lg-outcomes-card, .lg-inc-card { margin-top: 14px; }
@@ -4197,7 +3867,6 @@ button.mb-cmk-opt.is-on { outline: 3px solid #0f766e; outline-offset: 1px; }
 
 /* ── 3.76.0: the reflection — «contributes» on the heading line, 📝 under the questions ── */
 .lg-refl-contrib { font-weight: 600; font-size: .9em; color: #374151; margin: 0; cursor: pointer; }
-.lg-paste-row { display: flex; margin: -2px 0 4px; }
 
 /* ── 3.77.0: the reflection's tools on one line — Paste text, Clear, answer lines ── */
 .lg-tools-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; margin: -2px 0 4px; }
@@ -4288,10 +3957,6 @@ button.mb-cmk-opt.is-on { outline: 3px solid #0f766e; outline-offset: 1px; }
 
 /* 3.79.0 — Tools & Resources tab */
 .tr-bar { display: flex; flex-wrap: wrap; gap: 8px; }
-.tr-entry { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-.tr-num { color: #6b7280; font-weight: 600; min-width: 28px; text-align: end; }
-.tr-input { flex: 1; padding: 9px 12px; border: 2px solid #d1d5db; border-radius: 6px; font-size: 0.97em; background: #fff; }
-.tr-empty { margin: 0; }
 .tr-text { width: 100%; min-height: 220px; padding: 10px 12px; border: 2px solid #d1d5db; border-radius: 8px; font-size: 0.97em; line-height: 1.8; background: #fff; resize: vertical; box-sizing: border-box; }
 .tr-style.is-on { background: #4338ca !important; color: #fff !important; }
 
