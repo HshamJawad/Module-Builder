@@ -126,7 +126,7 @@ async function mbAnalyzeModuleStructure() {
 
     try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 45000);
+        const timeout = setTimeout(() => controller.abort(), 150000);   // 3.81.13: current models think before answering; matches the backend's 150 s limit
         let res;
         try {
             res = await fetch(MB_AI_ENDPOINT, {
