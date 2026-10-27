@@ -208,7 +208,20 @@ var mbState = {
 
     /* 3.64.0 — content_map.js: the distribution method, 'default' |
        'manual' | 'ai' (🗺️ Coverage). */
-    cmMode: 'default'
+    cmMode: 'default',
+
+    /* 3.81.12: keys that used to be created on first use by the files named
+       beside them, and so were not in this list. Declared here with the
+       value they already had when absent (null / '' / true / false), so
+       nothing behaves differently — but now the whole state is readable in
+       one place, and tools/check-state.js can flag a misspelt key. */
+    assessmentResults: null,    // assessment_results.js — null = the tool's default options
+    ratingScale: null,          // rating_scale.js — null = the default scale
+    moduleCategories: null,     // module_identity.js — null = the standard list
+    structureProposal: null,    // content_map.js / module-ai.js — the open mapping proposal
+    mapAllTasks: false,         // module-ai.js — map every task, not only the open outcome's
+    cmFilter: '',               // content_map.js — outcome filter ('' = all, '!' = unmapped)
+    cmOpen: true                // content_map.js — the coverage panel is expanded
 };
 
 /* Map of textarea id → mbState key, for the four fields above. */
