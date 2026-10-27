@@ -84,6 +84,7 @@ not the test, unless the behaviour was meant to change.
 ```
 cd tests && npx eslint -c eslint.config.js ..     # undefined names, duplicate keys, dead code
 node ../tools/check-globals.js                    # top-level names defined in two scripts
+node ../tools/check-css.js                        # mb-styles.css: parses, no duplicate or unused rules
 node --test unit/*.test.js                        # project migration (bilang.js)
 node ../tools/bump-version.js 3.81.8              # release: version.json + sw.js + ?v= tags
 ```
