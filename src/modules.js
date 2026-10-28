@@ -177,6 +177,21 @@ function _mbApplyDacumModuleFields(module, dacumModule, exportData) {
        prerequisites, outcome hours. Reference data on the module. */
     if (dacumModule.curriculum && typeof dacumModule.curriculum === 'object') module.curriculum = dacumModule.curriculum;
     else delete module.curriculum;
+    /* 3.81.14: the CUR «Tools and resources» card of DACUM Live Pro (3.142+).
+       Its one list joins this module's Tools & Resources list (items not
+       there yet are added; nothing written here is changed), and the
+       recommended resources / learner's guide join the project's
+       References (no duplicates). Absent before, then nothing happens. */
+    try {
+        const cur = module.curriculum;
+        if (cur && typeof cur.toolsText === 'string' && typeof mbToolsParse === 'function' && typeof _trAddItems === 'function') {
+            const items = mbToolsParse(cur.toolsText);
+            if (items.length) _trAddItems(module, items);
+        }
+        if (cur && Array.isArray(cur.resources) && typeof _srcAddReference === 'function') {
+            cur.resources.forEach(r => { const t = String(r == null ? '' : r).trim(); if (t) _srcAddReference(t); });
+        }
+    } catch (e) { console.warn('[ModuleBuilder←DACUM] tools/resources skipped:', e); }
     /* Verified Occupational Reference Data — occupation-level evidence
        from DACUM's supplementary verification. Reference only: it is
        never turned into outcomes or content. */
