@@ -1,3 +1,12 @@
+# الإصدار 3.81.15 (٢ تشرين الثاني ٢٠٢٦) — التطبيق المثبّت لا يفشل عند إعادة الفتح على Cloudflare
+
+**ملفات:** `sw.js` (‏mb-3.81.15)، `manifest.webmanifest`، `version.json`، `index.html`، `wrangler.jsonc` (جديد)، `.assetsignore` (جديد)
+
+- Cloudflare يحوّل `/index.html` إلى `/`، والمتصفح يرفض أن تُجاب صفحة بردٍّ جاء عبر تحويل (ERR_FAILED عند إعادة فتح التطبيق المثبّت). التطبيق صار يفتح عنوان المجلد مباشرة (`start_url: ./`، والمعرّف `id` باقٍ على `./index.html`)، والـ service worker يطلب عنوان المجلد ولا يعيد استجابة محوّلة لتحميل صفحة.
+- إضافة `wrangler.jsonc` و`.assetsignore` لنشر المستودع على Cloudflare (Workers) دون المساس بـ GitHub Pages.
+
+---
+
 # الإصدار 3.81.14 (٢٨ تشرين الأول ٢٠٢٦) — استقبال «الأدوات والموارد» من بطاقة CUR في DACUM Live Pro
 
 **ملفات:** `src/modules.js`، `tests/specs/dacum-cur-tools.spec.js` (جديد)، `sw.js` (‏mb-3.81.14)، `version.json`، `index.html`

@@ -1,0 +1,9 @@
+{
+  "name": "modulebuilder",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    // The repository root: index.html is the app. .assetsignore keeps
+    // tests, tools and repository files out of the published site.
+    "directory": "./"
+  }
+}
