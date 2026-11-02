@@ -3,7 +3,7 @@
   "name": "Module Builder",
   "short_name": "Module Builder",
   "description": "Competency-based training module development tool — works offline. أداة بناء الوحدات التدريبية — تعمل دون إنترنت.",
-  "start_url": "./index.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui", "browser"],

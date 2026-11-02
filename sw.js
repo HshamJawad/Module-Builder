@@ -25,7 +25,7 @@
 // Playwright suite checks that every tag is listed here).
 // ============================================================
 
-const CACHE_VERSION = 'mb-3.81.14';
+const CACHE_VERSION = 'mb-3.81.15';
 const CACHE_NAME    = 'module-builder-' + CACHE_VERSION;
 const BASE          = self.registration ? self.registration.scope : '/';
 const OFFLINE_URL   = BASE + 'index.html';
@@ -201,10 +201,28 @@ function canonical(req) {
   return u.href;
 }
 
+// A page load may not be answered with a response that came through a
+// redirect (ERR_FAILED). Hosts such as Cloudflare redirect /index.html to /,
+// which broke the installed app on every reopen. plain() returns a clean
+// copy of such a response; ordinary responses pass through untouched.
+async function plain(response) {
+  if (!response || !response.redirected) return response;
+  var body = await response.blob();
+  return new Response(body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: response.headers
+  });
+}
+
 async function networkFirst(request) {
   var key = canonical(request);
+  // Ask for the folder address directly instead of /index.html (no redirect).
+  var target = (request.mode === 'navigate' && /\/index\.html$/.test(key))
+    ? key.slice(0, -'index.html'.length)
+    : key;
   try {
-    var res = await fetch(key, { cache: 'no-cache' });
+    var res = await plain(await fetch(target, { cache: 'no-cache' }));
     if (res && res.status === 200 && res.type === 'basic') {
       var cache = await caches.open(CACHE_NAME);
       cache.put(key, res.clone());
