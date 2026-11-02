@@ -1,5 +1,5 @@
 {
-  "name": "modulebuilder",
+  "name": "module-builder",
   "compatibility_date": "2026-10-01",
   "assets": {
     // The repository root: index.html is the app. .assetsignore keeps
