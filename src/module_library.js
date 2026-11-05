@@ -1200,19 +1200,82 @@ function mbLibraryBoot(exportData) {
 /* 3.24.0: a handoff written by DACUM Live Pro while this tab is open
    (its "↩ Back to Module Builder") is imported at once — no reload. The
    module and outcome on screen stay selected when they still exist. */
+/* One import of a handoff arriving while this tab is open — from
+   localStorage (same site) or from a message (DACUM on another site). */
+function _mbImportDacumLive(data) {
+    var keepLo = mbState.currentLOId;
+    return _mbLibQueue(function () { return _mbDacumImportNow(data); }).then(function () {
+        if (keepLo && (mbState.learningOutcomesData || []).some(function (l) { return l.id === keepLo; })
+            && typeof _applyLOSwitch === 'function') _applyLOSwitch(keepLo);
+        if (typeof renderSourceBrowser === 'function') renderSourceBrowser();
+    });
+}
+
 window.addEventListener('storage', function (e) {
     if (!e || e.key !== MB_KEYS.dacumImport || !e.newValue || !mbLib.booted) return;
     var data = null;
     try { data = JSON.parse(e.newValue); } catch (err) { return; }
     try { mbRemoveSetting(MB_KEYS.dacumImport); } catch (err) { /* ignore */ }
     if (!data || !data.modules || !data.modules.length) return;
-    var keepLo = mbState.currentLOId;
-    _mbLibQueue(function () { return _mbDacumImportNow(data); }).then(function () {
-        if (keepLo && (mbState.learningOutcomesData || []).some(function (l) { return l.id === keepLo; })
-            && typeof _applyLOSwitch === 'function') _applyLOSwitch(keepLo);
-        if (typeof renderSourceBrowser === 'function') renderSourceBrowser();
-    });
+    _mbImportDacumLive(data);
 });
+
+/* 3.81.16 — DACUM Live Pro on another address (pro.dacumtools.com).
+   localStorage is shared only inside one site, so the handoff also
+   arrives as a message. It is accepted from DACUM's own addresses only,
+   never from this site (same site → the storage listener above), and a
+   transfer id is handled once. A tab that is still starting asks the
+   tab that opened it ("mb-ready") and waits briefly; the answer is
+   filed exactly like a handoff found in storage at start-up. */
+var MB_DACUM_ORIGINS = ['https://pro.dacumtools.com', 'https://hshamjawad.github.io'];
+var _mbSeenTransfers = {};
+var _mbBootWaiter = null;
+
+function mbDacumOrigins() {
+    var extra = Array.isArray(window.MB_EXTRA_DACUM_ORIGINS) ? window.MB_EXTRA_DACUM_ORIGINS : [];
+    return MB_DACUM_ORIGINS.concat(extra);
+}
+function mbDacumOriginOk(origin) {
+    return !!origin && origin !== location.origin && mbDacumOrigins().indexOf(origin) >= 0;
+}
+
+window.addEventListener('message', function (e) {
+    var d = e && e.data;
+    if (!d || d.type !== 'dacum-modules-export' || !mbDacumOriginOk(e.origin)) return;
+    var data = d.payload;
+    if (!data || !Array.isArray(data.modules) || !data.modules.length) return;
+    var ack = function () { try { e.source.postMessage({ type: 'mb-imported', id: d.id }, e.origin); } catch (err) { /* ignore */ } };
+    if (_mbSeenTransfers[d.id]) { ack(); return; }
+    _mbSeenTransfers[d.id] = true;
+    if (_mbBootWaiter) { _mbBootWaiter(data); ack(); return; }
+    var run = function () { _mbImportDacumLive(data).then(ack, ack); };
+    if (mbLib.booted) run();
+    else window.addEventListener('mb:libraryready', run, { once: true });
+});
+
+/** Start-up: when DACUM (another site) opened this tab, ask it for the
+ *  handoff and wait a moment. Resolves at once when there is no such
+ *  opener or a handoff is already waiting in localStorage. */
+function mbAwaitCrossSiteHandoff() {
+    return new Promise(function (resolve) {
+        var op = window.opener;
+        if (!op || op === window) { resolve(); return; }
+        var sameSite = false;
+        try { sameSite = !!String(op.location.href); } catch (err) { sameSite = false; }
+        if (sameSite) { resolve(); return; }
+        try { if (mbGetSetting(MB_KEYS.dacumImport) !== null) { resolve(); return; } } catch (err) { /* ignore */ }
+        var done = false, timer = null;
+        function finish(data) {
+            if (done) return;
+            done = true; clearTimeout(timer); _mbBootWaiter = null;
+            if (data) { try { mbSetSetting(MB_KEYS.dacumImport, JSON.stringify(data)); } catch (err) { /* ignore */ } }
+            resolve();
+        }
+        _mbBootWaiter = finish;
+        timer = setTimeout(function () { finish(null); }, 800);
+        mbDacumOrigins().forEach(function (o) { try { op.postMessage({ type: 'mb-ready' }, o); } catch (err) { /* ignore */ } });
+    });
+}
 
 /** No IndexedDB (Safari private mode and the like): one project, in memory. */
 function _mbBootInMemory(exportData) {
