@@ -1,3 +1,12 @@
+# الإصدار 3.81.16 (٥ تشرين الثاني ٢٠٢٦) — Module Builder وDACUM Live Pro على عنوانين منفصلين
+
+**ملفات:** `src/module_library.js`، `src/modules.js`، `src/ta_finder.js`، `index.html`، `sw.js` (‏mb-3.81.16)، `version.json`، `tests/specs/dacum-crosssite.spec.js` (جديد)
+
+- `localStorage` لا يُشارَك إلا داخل الموقع الواحد، فلم يعد نقل الوحدات من DACUM Live Pro (`pro.dacumtools.com`) إلى Module Builder (`modules.dacumtools.com`) ممكناً عبره. صار النقل أيضاً برسالة بين النافذتين (`postMessage`) تُقبل من عناوين DACUM المعتمدة فقط ولا تُقبل من غيرها، وكل نقلة تُعالَج مرة واحدة. التبويب الذي يبدأ لتوّه يسأل التبويب الذي فتحه (`mb-ready`) وينتظر 0.8 ثانية، والمفتوح أصلاً يستلمها فوراً. على موقع واحد يبقى النقل بـ `localStorage` كما كان.
+- رابط «DACUM Live Pro» والعنوان الافتراضي صارا `https://pro.dacumtools.com/`.
+
+---
+
 # الإصدار 3.81.15 (٢ تشرين الثاني ٢٠٢٦) — التطبيق المثبّت لا يفشل عند إعادة الفتح على Cloudflare
 
 **ملفات:** `sw.js` (‏mb-3.81.15)، `manifest.webmanifest`، `version.json`، `index.html`، `wrangler.jsonc` (جديد)، `.assetsignore` (جديد)

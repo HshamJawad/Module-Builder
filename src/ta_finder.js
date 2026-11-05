@@ -306,9 +306,10 @@ window.addEventListener('mb:langchange', function () {
    "↩ Back to Module Builder": it sends the module again and returns to
    this tab (window name "module-builder"), which imports it at once
    (storage listener in module_library.js) — no reload, sheets kept.
-   Both tools must be served from the same site (as the handoff itself
-   already requires: it travels in localStorage). */
-var MB_DACUM_DEFAULT_URL = 'https://hshamjawad.github.io/DACUMLivePro/';
+   On one site the handoff travels in localStorage; on separate sites
+   (pro. / modules.dacumtools.com) DACUM also posts it as a message
+   (module_library.js). */
+var MB_DACUM_DEFAULT_URL = 'https://pro.dacumtools.com/';
 try { if (!window.name) window.name = 'module-builder'; } catch (e) { /* ignore */ }
 
 function _mbOpenNamedWindow(url, name) {

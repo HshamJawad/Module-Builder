@@ -21,6 +21,8 @@ var MB_MODULE_SELECTORS = ['current-module-selector', 'info-module-selector', 'a
  * whatever happens to the asynchronous boot that follows.
  */
 async function initializeLearningOutcomes() {
+    // DACUM Live Pro on another site: its handoff comes by message (module_library.js).
+    if (typeof mbAwaitCrossSiteHandoff === 'function') await mbAwaitCrossSiteHandoff();
     let exportData = null;
     try {
         const raw = mbGetSetting(MB_KEYS.dacumImport);
